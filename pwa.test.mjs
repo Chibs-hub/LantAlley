@@ -140,6 +140,34 @@ test("audio generation collects the Entrance tutorial lines", () => {
   }
 });
 
+test("Kon's spoken replies have clips, not just the requests", () => {
+  const indexJs = read("audio-index.js");
+  const map = JSON.parse(indexJs.slice(indexJs.indexOf("{"), indexJs.lastIndexOf("}") + 1));
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(read("moonview-inn-interactions.js"), context);
+  vm.runInContext(read("n2-home-inn-stage.js"), context);
+  const stage = context.N2HomeInnStage;
+
+  // Praise and correction are spoken too. Without clips they came out in the
+  // device voice, so Kon sounded like a different character mid-encounter.
+  for (const item of [...stage.encounters, ...stage.practice, ...stage.challenge]) {
+    for (const correct of [true, false]) {
+      const line = stage.getKonResponse(item, correct);
+      assert.ok(map[line], `no clip for Kon's ${correct ? "praise" : "correction"}: ${line}`);
+    }
+  }
+});
+
+test("advancing waits for speech instead of a fixed delay", () => {
+  const app = read("app.js");
+  // A 1.1s timer cut Kon off mid-sentence; the clip must finish first.
+  assert.match(app, /clip\.addEventListener\("ended", onDone\)/);
+  assert.match(app, /window\.speechSynthesis\.speaking/);
+  // and a stall must never strand the learner
+  assert.match(app, /setTimeout\(onDone, 20000\)/);
+});
+
 test("playback prefers the clip and falls back to speech synthesis", () => {
   const app = read("app.js");
   assert.match(app, /function playClip/);

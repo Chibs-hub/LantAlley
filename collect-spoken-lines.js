@@ -40,4 +40,18 @@ if (stage.intro) {
   (item.interaction && item.interaction.replies || []).forEach((reply) => add(reply.label));
 });
 
+// Kon speaks after every answer too. These were falling back to the device
+// voice, so praise and correction sounded like a different character from the
+// request that preceded them.
+[...stage.encounters, ...stage.practice, ...stage.challenge].forEach((item) => {
+  add(stage.getKonResponse(item, true));
+  add(stage.getKonResponse(item, false));
+  Object.keys(item.replyResponses || {}).forEach((key) => {
+    add(stage.getKonResponse(item, false, key));
+  });
+  (item.options || []).forEach((option) => {
+    add(stage.getKonResponse(item, false, option.key));
+  });
+});
+
 console.log(JSON.stringify([...lines]));

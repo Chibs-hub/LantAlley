@@ -1509,11 +1509,54 @@
     var expectedPhase = state.stagePhase;
     var expectedIndex = state.encounterIndex;
     $("next-row").style.display = "none";
-    setTimeout(function(){
+
+    function go(){
       if(state.currentKey !== stage.key || !state.answered) return;
       if(state.stagePhase !== expectedPhase || state.encounterIndex !== expectedIndex) return;
       continueStageEncounter(stage);
-    }, delay);
+    }
+
+    // Kon's reply is usually longer than the base delay, and cutting the
+    // audio off mid-sentence loses the very listening practice this is for.
+    // Wait for speech to finish, then pause briefly so it does not feel abrupt.
+    var settle = 700;
+    var clip = currentClip;
+    // Deliberately not checking clip.paused: play() is async, so a clip that is
+    // about to start still reports paused at this moment.
+    if(clip && !clip.ended){
+      var advanced = false;
+      var onDone = function(){
+        if(advanced) return;
+        advanced = true;
+        setTimeout(go, settle);
+      };
+      clip.addEventListener("ended", onDone);
+      clip.addEventListener("error", onDone);
+      // Safety net so a stalled or blocked clip never strands the learner.
+      setTimeout(onDone, 20000);
+      return;
+    }
+
+    if("speechSynthesis" in window && window.speechSynthesis.speaking){
+      var polled = false;
+      var poll = setInterval(function(){
+        if(polled) return;
+        if(!window.speechSynthesis.speaking){
+          polled = true;
+          clearInterval(poll);
+          setTimeout(go, settle);
+        }
+      }, 150);
+      setTimeout(function(){
+        if(polled) return;
+        polled = true;
+        clearInterval(poll);
+        go();
+      }, 12000);
+      return;
+    }
+
+    setTimeout(go, delay);
   }
 
   function showFeedback(isCorrect, text){
