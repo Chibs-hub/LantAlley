@@ -19,7 +19,7 @@ test("Moonview Inn provides five ordered N2 encounters", () => {
   assert.equal(stage.encounters.length, 5);
   assert.deepEqual(
     Array.from(stage.encounters, (item) => item.focusWord),
-    ["揃える", "代える", "暖める", "調整", "引き受ける"],
+    ["揃える", "代える", "温める", "調整", "引き受ける"],
   );
   assert.ok(stage.encounters.every((item) => item.level === "N2"));
 });
@@ -127,7 +127,7 @@ test("practice shows the complete Japanese request while challenge stays audio-o
   const practiceText = stage.getWrittenPrompt(practiceItem, "practice");
   assert.equal(practiceText, practiceItem.jp);
   assert.doesNotMatch(practiceText, /＿＿/);
-  assert.match(stage.getWrittenPrompt(stage.practice.find((item) => item.focusWord === "暖める"), "practice"), /暖めて/);
+  assert.match(stage.getWrittenPrompt(stage.practice.find((item) => item.focusWord === "温める"), "practice"), /温めて/);
   assert.equal(stage.getWrittenPrompt(stage.challenge[0], "challenge"), "音声を聞いてください。")
 });
 
@@ -207,7 +207,7 @@ test("non-dialogue harder items have exactly one explained N2 near-miss", () => 
   vm.createContext(context);
   vm.runInContext(readFileSync(stageUrl, "utf8"), context);
   const stage = context.N2HomeInnStage;
-  const verifiedNearMisses = ["整う", "代わる", "暖まる", "調節する"];
+  const verifiedNearMisses = ["揃う", "代わる", "温まる", "調節する"];
 
   for (const item of [...stage.practice, ...stage.challenge].filter((entry) => entry.mechanic !== "undertake")) {
     const nearMisses = item.options.filter((option) => option.nearMiss);
@@ -395,6 +395,41 @@ test("the arrange scene never states its own grouping rule", () => {
     assert.ok(item.interaction.room.groups.every((g) => !/colour|color|size|large|small|red|blue/i.test(g[1])), item.variant);
   }
   assert.match(html, /timeline\.style\.gridTemplateColumns/);
+});
+
+test("warming food and drink uses 温める, never 暖める", () => {
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(readFileSync(stageUrl, "utf8"), context);
+  const stage = context.N2HomeInnStage;
+
+  // 暖める is for air, rooms and bodies; food and drink take 温める.
+  // Getting this wrong teaches a collocation error, so guard the whole file.
+  assert.doesNotMatch(readFileSync(stageUrl, "utf8"), /暖/, "暖 must not appear anywhere in the stage data");
+
+  const warm = stage.encounters.find((item) => item.mechanic === "warm");
+  assert.equal(warm.focusWord, "温める");
+  assert.match(warm.jp, /温めて/);
+});
+
+test("each near-miss is the true intransitive partner of its target", () => {
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(readFileSync(stageUrl, "utf8"), context);
+  const stage = context.N2HomeInnStage;
+
+  // 揃える pairs with 揃う, not 整う (which pairs with 整える). Presenting the
+  // wrong partner teaches a false relationship in the exact spot meant to
+  // drill that distinction.
+  const pairs = { "揃える": "揃う", "代える": "代わる", "温める": "温まる" };
+
+  for (const item of [...stage.practice, ...stage.challenge]) {
+    const partner = pairs[item.focusWord];
+    if (!partner) continue;
+    const nearMiss = item.options.find((option) => option.nearMiss);
+    assert.equal(nearMiss.label, partner, `${item.focusWord} should pair with ${partner}`);
+    assert.match(nearMiss.explanation, new RegExp(partner));
+  }
 });
 
 test("encounter titles are story beats, not the answer in English", () => {

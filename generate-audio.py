@@ -104,8 +104,18 @@ async def main():
     ) % (VOICE, json.dumps(index, ensure_ascii=False, indent=2, sort_keys=True))
     open(INDEX_JS, 'w', encoding='utf-8', newline='').write(body)
 
+    # Drop clips for lines that no longer exist, so edited sentences do not
+    # leave their old audio behind to be shipped and cached forever.
+    wanted = {key_for(text) + '.mp3' for text in lines}
+    pruned = 0
+    for name in os.listdir(OUT_DIR):
+        if name.endswith('.mp3') and name not in wanted:
+            os.remove(os.path.join(OUT_DIR, name))
+            pruned += 1
+            print('  pruned    %s' % name)
+
     total = sum(os.path.getsize(os.path.join(OUT_DIR, f)) for f in os.listdir(OUT_DIR))
-    print('\n%d lines: %d rendered, %d unchanged' % (len(lines), made, skipped))
+    print('\n%d lines: %d rendered, %d unchanged, %d pruned' % (len(lines), made, skipped, pruned))
     print('%s  %.0f KB total' % (OUT_DIR, total / 1024))
     print('wrote %s' % INDEX_JS)
 

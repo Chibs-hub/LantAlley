@@ -45,27 +45,27 @@ Moonview Inn teaches these five N2 words:
 | --- | --- | --- |
 | 揃える | make uniform along some attribute | Group the cushions by the attribute the sentence names (色 / 大きさ). |
 | 代える | replace one thing with another | Put the named worn item in the bin, then its fresh counterpart in the fitting. Order matters. |
-| 暖める | warm something deliberately | Drag the named dish onto the stove. One action, nothing else. |
+| 温める | warm something deliberately | Drag the named dish onto the stove. One action, nothing else. |
 | 調整 | reconcile several conditions | Read the times from the Japanese only, set the schedule, confirm. |
 | 引き受ける | undertake, accept responsibility | Choose the reply that takes the job on. The reply is the whole answer. |
 
 Each harder item carries one close N2 near-miss, used for feedback when the player acts wrongly:
 
-- 揃える versus 整う (something becomes arranged).
+- 揃える versus 揃う (the items come to match by themselves).
 - 代える versus 代わる (something takes another's place).
-- 暖める versus 暖まる (something becomes warm).
+- 温める versus 温まる (something becomes warm).
 - 調整 versus 調節 (controlling a degree, such as temperature).
 - 引き受ける versus 引き止める (stopping someone from leaving).
 
 ### The shared room
 
-`揃える`, `代える` and `暖める` all render one identical room:
+`揃える`, `代える` and `温める` all render one identical room:
 
 - 4 cushions varying in colour, size and facing, plus 2 unlabelled mats.
 - A used towel and a burnt-out bulb, each beside a fresh one, plus a bin and a fitting.
 - Cold tea and cold soup, plus a stove.
 
-Ten draggable objects, five drop zones, every time. Dropping a cushion on a mat is 揃える; a worn item in the bin is 代える; a dish on the stove is 暖める. Performing the wrong one gives "That is a different action from the one the request asked for."
+Ten draggable objects, five drop zones, every time. Dropping a cushion on a mat is 揃える; a worn item in the bin is 代える; a dish on the stove is 温める. Performing the wrong one gives "That is a different action from the one the request asked for."
 
 The three attributes of the cushions are deliberately crossed, so grouping by colour, by size and by facing all produce different answers. Facing is never asked for; it exists so the correct grouping cannot be guessed.
 
@@ -119,7 +119,7 @@ Run all automated tests from PowerShell in the project folder:
 node --test moonview-inn-interactions.test.mjs n2-home-inn-stage.test.mjs entrance-stage.test.mjs pwa.test.mjs
 ```
 
-Current verified result: 66 tests passed, 0 failed.
+Current verified result: 68 tests passed, 0 failed.
 
 Beyond the mechanics, the tests now guard the design rule itself:
 
@@ -146,6 +146,20 @@ An artifact cannot load sibling `.js` files or local images, which is why the bu
 ## 9. Change log and reasons
 
 Newest first. Each entry records why the change was made, because the reasoning is harder to recover than the code.
+
+### 2026-08-21 - Two Japanese corrections before sharing
+
+Found while reviewing whether the project was fit to share. Both were teaching errors, not style preferences.
+
+**暖める to 温める.** 暖める is for air, rooms and bodies (部屋を暖める). Food and drink take 温める. The game was using 暖める for tea, rice and soup across four items and the rendered audio, teaching a collocation a native speaker would immediately flag. The word is replaced everywhere, including its 温まる near-miss, and the three affected clips were re-rendered.
+
+**揃える now pairs with 揃う, not 整う.** The near-miss explanation presented 整う as the intransitive partner of 揃える, but 整う pairs with 整える. The item exists precisely to drill that transitive/intransitive distinction, so naming the wrong partner taught a false relationship in the worst possible place.
+
+Two tests lock these in: no `暖` may appear anywhere in the stage data, and every near-miss must be the true intransitive partner of its target.
+
+`generate-audio.py` now also prunes clips whose line no longer exists, so edited sentences do not leave stale audio behind to be cached forever. The re-run rendered 3 lines, kept 33, and pruned 3.
+
+Still open for a native reviewer: `代える` is used for swapping a towel or a bulb, where `取り替える` is more idiomatic.
 
 ### 2026-08-21 - Pre-rendered neural audio replaces device speech synthesis
 
@@ -271,7 +285,7 @@ The old single-file `lantern-alley.html` had no `<meta charset>`, so browsers de
 
 - Only Alley Entrance and Moonview Inn are active.
 - The game does not cover all N2 vocabulary.
-- **Japanese needs a native-speaker review before release.** Specific known doubts: `暖める` is used for tea and food, where `温める` is conventional; and the 揃える near-miss is `整う`, though the true transitive/intransitive pair is `揃う`.
+- **Japanese still needs a native-speaker review before release.** The two known errors are fixed (see section 9). One open question remains: `代える` is used for swapping a towel or bulb, where `取り替える` is more idiomatic.
 - 引き受ける is the one word not answered through the shared room; it is a spoken reply. Extending the shared-scene principle to it and to 調整 is listed in section 11.
 - Cushion grouping uses red versus blue as one axis. Size and facing also distinguish every cushion and `aria-label` spells out 赤/青, but a colour-blind-safe palette would be better.
 - The icons are simple hand-drawn SVG line art, intended as placeholders until real illustrations are produced.
