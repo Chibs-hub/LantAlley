@@ -36,9 +36,9 @@
       actionType:"object interaction",
       label:"At the washstand",
       narration:"コン：「座る場所はきれいになりました。お客様は旅のあとで顔を洗いますが、前のお客様のタオルがまだ残っています。」",
-      jp:"古いタオルを新しいものに代えてください。",
-      romaji:"Furui taoru o atarashii mono ni kaete kudasai.",
-      meaning:"Please replace the old towel with a new one.",
+      jp:"古いタオルを洗濯かごに入れて、新しいタオルに代えてください。",
+      romaji:"Furui taoru o sentakukago ni irete, atarashii taoru ni kaete kudasai.",
+      meaning:"Put the old towel in the laundry basket, then replace it with a new one.",
       successReply:"ありがとうございます。新しいタオルになりました。これでお客様が使えます。",
       retryReply:"頼まれた物と、古い物を置く場所を確認してください。",
       hint:"代える means to substitute or replace one thing with another.",
@@ -216,7 +216,7 @@
 
   var practiceVariantsA = [
     {jp:"二つのマットに、同じ向きの座布団を二枚ずつ揃えてください。", romaji:"Futatsu no matto ni, onaji muki no zabuton o nimai zutsu soroete kudasai.", narration:"The cushions have been used again and now face different directions.", meaning:"Please place two cushions facing the same direction on each mat.", successReply:"座布団の向きが揃いました。これで朝食の準備を続けられます。"},
-    {jp:"汚れたシーツを新しいものに代えてください。", romaji:"Yogoreta shiitsu o atarashii mono ni kaete kudasai.", narration:"A marked sheet remains beside the fresh linen.", meaning:"Please replace the stained sheet with a new one.", successReply:"新しいシーツになりました。これで今夜のお客様を迎えられます。"},
+    {jp:"汚れたシーツを洗濯かごに入れて、新しいシーツに代えてください。", romaji:"Yogoreta shiitsu o sentakukago ni irete, atarashii shiitsu ni kaete kudasai.", narration:"A marked sheet remains beside the fresh linen.", meaning:"Put the stained sheet in the laundry basket, then replace it with a new one.", successReply:"新しいシーツになりました。これで今夜のお客様を迎えられます。"},
     {jp:"ごはんを温めてください。", romaji:"Gohan o atatamete kudasai.", narration:"The evening meal has gone cold.", meaning:"Please warm the rice.", successReply:"ごはんが温まりました。みんなで食事にしましょう。"},
     {jp:"Cグループは12時以降、Dグループは14時までに到着します。準備に2時間必要なので、到着時間を調整してください。", romaji:"C guruupu wa juuniji ikou, D guruupu wa juuyoji made ni touchaku shimasu. Junbi ni nijikan hitsuyou na node, touchaku jikan o chousei shite kudasai.", narration:"Two afternoon groups need separate arrival times, with two hours needed between them.", meaning:"Coordinate the two arrival times using the stated limits.", successReply:"Cグループは12時、Dグループは14時になりました。これで準備時間を取れます。"},
     {jp:"朝食の配膳を引き受けてください。", romaji:"Choushoku no haizen o hikiukete kudasai.", narration:"The breakfast shift still needs someone responsible for serving it.", meaning:"Please undertake serving breakfast.", successReply:"ありがとうございます。明日の朝食の配膳をお願いします。"}
@@ -224,7 +224,7 @@
 
   var practiceVariantsB = [
     {jp:"二つのマットに、同じ大きさの座布団を二枚ずつ揃えてください。", romaji:"Futatsu no matto ni, onaji ookisa no zabuton o nimai zutsu soroete kudasai.", narration:"The cushions are still mixed across the tatami.", meaning:"Please place two cushions of the same size on each mat.", successReply:"座布団の大きさが揃いました。これで部屋が整いました。"},
-    {jp:"切れた電球を新しいものに代えてください。", romaji:"Kireta denkyuu o atarashii mono ni kaete kudasai.", narration:"A lamp in the hallway has gone dark.", meaning:"Please replace the burned-out bulb with a new one.", successReply:"新しい電球がつきました。これで廊下が明るくなります。"},
+    {jp:"切れた電球を回収箱に入れて、新しい電球に代えてください。", romaji:"Kireta denkyuu o kaishuubako ni irete, atarashii denkyuu ni kaete kudasai.", narration:"A lamp in the hallway has gone dark.", meaning:"Put the burned-out bulb in the recycling box, then replace it with a new one.", successReply:"新しい電球がつきました。これで廊下が明るくなります。"},
     {jp:"スープを温めてください。", romaji:"Suupu o atatamete kudasai.", narration:"A guest returns late to a counter of cold dishes.", meaning:"Please warm the soup.", successReply:"スープが温まりました。お客様に出しましょう。"},
     {jp:"Aグループは15時以降、Bグループは17時までに到着します。ロビーの準備に2時間必要なので、到着時間を調整してください。", romaji:"A guruupu wa juugoji ikou, B guruupu wa juushichiji made ni touchaku shimasu. Robii no junbi ni nijikan hitsuyou na node, touchaku jikan o chousei shite kudasai.", narration:"Both groups are currently set for 15:00. Group A cannot arrive before 15:00, Group B must arrive by 17:00, and the lobby needs two hours between groups.", meaning:"Coordinate the arrival times using the groups' limits and the two-hour lobby preparation time.", successReply:"Aグループは15時、Bグループは17時になりました。これでロビーを準備できます。"},
     {jp:"荷物を運ぶ仕事を引き受けてください。", romaji:"Nimotsu o hakobu shigoto o hikiukete kudasai.", narration:"The innkeeper needs someone to take responsibility for moving the luggage.", meaning:"Please undertake the job of carrying the luggage.", successReply:"ありがとうございます。明日の朝、荷物をお願いします。"}

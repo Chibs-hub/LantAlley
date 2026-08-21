@@ -717,7 +717,16 @@
   .answer-workspace .inn-icon{width:26px;height:26px}
   .answer-workspace .inn-caption{font-size:.72rem;max-width:13ch}
   .answer-workspace .inn-tray{gap:8px}
-  .answer-workspace .inn-drop-zone > .inn-placed-object{position:absolute;top:4px;right:4px;width:48px;height:48px;min-width:48px;min-height:48px;padding:5px;box-shadow:0 2px 0 #80643f}
+  /* Objects sitting in a zone flow above its caption. They used to be
+     absolutely positioned at the top-right, which covered the label:
+     "タオル掛け" rendered as "タオル…" with the icon on top of it. */
+  .inn-drop-zone > .inn-placed-object{position:static;top:auto;right:auto;flex:0 0 auto}
+  span.inn-placed-object{display:inline-flex;align-items:center;justify-content:center;padding:0;border:0;background:transparent;box-shadow:none;min-width:0;min-height:0}
+  button.inn-placed-object{min-width:0;min-height:0;padding:5px;box-shadow:0 2px 0 #80643f}
+  .answer-workspace .inn-drop-zone > .inn-placed-object{width:auto;height:auto;min-width:0;min-height:0}
+  .answer-workspace button.inn-placed-object{padding:5px}
+  /* A zone holding an object needs room for both it and the caption. */
+  .answer-workspace .inn-drop-zone:has(.inn-placed-object){min-height:96px}
   .answer-workspace .inn-room:has(.inn-replies){min-height:0;background:transparent;border:0;box-shadow:none;overflow:visible}
   .answer-workspace .inn-room:has(.inn-replies):before{display:none}
   .answer-workspace .inn-room:has(.inn-replies) .inn-workspace{min-height:0;padding:0}

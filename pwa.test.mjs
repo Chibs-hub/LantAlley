@@ -230,6 +230,15 @@ test("the shared object room uses a compact destination and material grid", () =
   const css = read("styles.css");
   assert.match(css, /\.answer-workspace \.inn-room,.answer-workspace \.inn-workspace\{min-height:0/);
   assert.match(css, /\.answer-workspace \.inn-scene-zones\{[^}]*minmax\(104px,1fr\)/);
-  assert.match(css, /\.answer-workspace \.inn-drop-zone > \.inn-placed-object\{[^}]*position:absolute/);
   assert.match(css, /\.answer-workspace \.inn-tray\{[^}]*gap:8px/);
+});
+
+test("objects inside a zone flow above its caption instead of covering it", () => {
+  const css = read("styles.css");
+  // position:absolute put the object over the label, so "タオル掛け" rendered
+  // as "タオル…" with an icon on top of it.
+  assert.match(css, /\.inn-drop-zone > \.inn-placed-object\{[^}]*position:static/);
+  assert.doesNotMatch(css, /\.inn-drop-zone > \.inn-placed-object\{[^}]*position:absolute/);
+  // and the zone has to be tall enough to hold both
+  assert.match(css, /\.inn-drop-zone:has\(\.inn-placed-object\)\{[^}]*min-height/);
 });

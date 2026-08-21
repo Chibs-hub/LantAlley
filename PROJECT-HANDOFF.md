@@ -120,7 +120,7 @@ Run all automated tests from PowerShell in the project folder:
 node --test moonview-inn-interactions.test.mjs n2-home-inn-stage.test.mjs entrance-stage.test.mjs pwa.test.mjs
 ```
 
-Current verified result: 76 tests passed, 0 failed.
+Current verified result: 77 tests passed, 0 failed.
 
 Beyond the mechanics, the tests now guard the design rule itself:
 
@@ -149,6 +149,16 @@ An artifact cannot load sibling `.js` files or local images, which is why the bu
 ## 9. Change log and reasons
 
 Newest first. Each entry records why the change was made, because the reasoning is harder to recover than the code.
+
+### 2026-08-21 - Zone captions uncovered, Entrance pacing, and 代える asks for both steps
+
+Three problems from phone testing.
+
+**Objects covered their zone's caption.** `.inn-placed-object` was `position:absolute` at the zone's top-right, so the icon sat on top of the label: タオル掛け rendered as "タオル…", and 照明 and ベッド were half-hidden. Placed objects now flow above the caption and the zone grows to fit both. Verified: all three captions render in full with no overlap and every object inside its zone.
+
+**The Entrance talked over itself.** The speech-aware pacing added earlier only covered the inn's advance path. The Entrance tutorial still stepped on fixed 2,600 ms and 6,600 ms timers, and the clips run longer than that, so Kon was cut off twice before the player was even asked anything. The wait logic is now a shared `afterSpeech()` helper used by both the tutorial chain and `scheduleCorrectAdvance`, so a third caller cannot reintroduce the bug by copying the old pattern.
+
+**代える hid half its task.** Binning the old towel was required but never asked for, so the player had to guess it from an English instruction line. Rather than automate the step away, the Japanese now names both actions: 古いタオルを洗濯かごに入れて、新しいタオルに代えてください。The order is part of what the sentence teaches instead of an unstated rule, which keeps the two-step meaning of 代える intact. Same for the bulb (回収箱) and sheet. Three clips re-rendered, three pruned.
 
 ### 2026-08-21 - Entering the alley goes straight to the Entrance
 

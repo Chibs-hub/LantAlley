@@ -258,6 +258,42 @@
     speakWithSynthesis(text, mode);
   }
 
+  // Run `next` once Kon has finished the line now playing, then pause briefly.
+  // Every place that used a fixed timer cut her off mid-sentence, which throws
+  // away the listening practice the line exists to give.
+  function afterSpeech(next, fallbackDelay, settle){
+    settle = settle === undefined ? 700 : settle;
+    var fired = false;
+    var onDone = function(){
+      if(fired) return;
+      fired = true;
+      setTimeout(next, settle);
+    };
+
+    // Not checking clip.paused: play() is async, so a clip about to start
+    // still reports paused here.
+    var clip = currentClip;
+    if(clip && !clip.ended){
+      clip.addEventListener("ended", onDone);
+      clip.addEventListener("error", onDone);
+      setTimeout(onDone, 20000);
+      return;
+    }
+
+    if("speechSynthesis" in window && window.speechSynthesis.speaking){
+      var poll = setInterval(function(){
+        if(!window.speechSynthesis.speaking){
+          clearInterval(poll);
+          onDone();
+        }
+      }, 150);
+      setTimeout(function(){ clearInterval(poll); onDone(); }, 20000);
+      return;
+    }
+
+    setTimeout(next, fallbackDelay === undefined ? 900 : fallbackDelay);
+  }
+
   function speakWithSynthesis(text, mode){
     mode = mode || "ask";
     if(!state.voiceOn) return;
@@ -680,7 +716,10 @@
     $("meaning-line").classList.remove("show");
     setEntranceFoxPose("talkBase");
     speak(greeting.jp, "hello");
-    setTimeout(function(){
+
+    // Each tutorial line waits for the previous one to finish. Fixed 2.6s and
+    // 6.6s timers used to talk over Kon, and the clips run longer than that.
+    afterSpeech(function(){
       if(state.currentKey !== "entrance" || state.answered) return;
       entranceTutorialState = LanternAlleyLogic.advanceTutorial(entranceTutorialState);
       var world = LanternAlleyLogic.getTutorialStep(entranceTutorialState);
@@ -689,17 +728,18 @@
       $("meaning-line").classList.remove("show");
       setEntranceFoxPose("talkBase");
       speak(world.jp, "hello");
-    }, 2600);
-    setTimeout(function(){
-      if(state.currentKey !== "entrance" || state.answered) return;
-      entranceTutorialState = LanternAlleyLogic.advanceTutorial(entranceTutorialState);
-      var request = LanternAlleyLogic.getTutorialStep(entranceTutorialState);
-      $("jp-line").textContent = request.jp;
-      $("romaji-line").textContent = request.romaji;
-      setEntranceFoxPose("invite");
-      setEntranceChoicesDisabled(false);
-      speak(request.jp, "ask");
-    }, 6600);
+
+      afterSpeech(function(){
+        if(state.currentKey !== "entrance" || state.answered) return;
+        entranceTutorialState = LanternAlleyLogic.advanceTutorial(entranceTutorialState);
+        var request = LanternAlleyLogic.getTutorialStep(entranceTutorialState);
+        $("jp-line").textContent = request.jp;
+        $("romaji-line").textContent = request.romaji;
+        setEntranceFoxPose("invite");
+        setEntranceChoicesDisabled(false);
+        speak(request.jp, "ask");
+      });
+    });
   }
 
   function renderHud(){
@@ -1523,47 +1563,9 @@
       continueStageEncounter(stage);
     }
 
-    // Kon's reply is usually longer than the base delay, and cutting the
-    // audio off mid-sentence loses the very listening practice this is for.
-    // Wait for speech to finish, then pause briefly so it does not feel abrupt.
-    var settle = 700;
-    var clip = currentClip;
-    // Deliberately not checking clip.paused: play() is async, so a clip that is
-    // about to start still reports paused at this moment.
-    if(clip && !clip.ended){
-      var advanced = false;
-      var onDone = function(){
-        if(advanced) return;
-        advanced = true;
-        setTimeout(go, settle);
-      };
-      clip.addEventListener("ended", onDone);
-      clip.addEventListener("error", onDone);
-      // Safety net so a stalled or blocked clip never strands the learner.
-      setTimeout(onDone, 20000);
-      return;
-    }
-
-    if("speechSynthesis" in window && window.speechSynthesis.speaking){
-      var polled = false;
-      var poll = setInterval(function(){
-        if(polled) return;
-        if(!window.speechSynthesis.speaking){
-          polled = true;
-          clearInterval(poll);
-          setTimeout(go, settle);
-        }
-      }, 150);
-      setTimeout(function(){
-        if(polled) return;
-        polled = true;
-        clearInterval(poll);
-        go();
-      }, 12000);
-      return;
-    }
-
-    setTimeout(go, delay);
+    // Kon's reply runs longer than the old fixed delay, so wait for her to
+    // finish rather than talking over the listening practice.
+    afterSpeech(go, delay);
   }
 
   function showFeedback(isCorrect, text){
