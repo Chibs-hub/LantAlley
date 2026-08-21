@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
+import vm from "node:vm";
 
 const read = (name) => readFileSync(new URL("./" + name, import.meta.url), "utf8");
 
@@ -86,6 +87,29 @@ test("spoken Japanese in the stage data has a clip", () => {
   assert.ok(requests.length >= 5);
   for (const jp of requests) {
     assert.ok(map[jp], `no audio clip for request: ${jp}`);
+  }
+});
+
+test("every spoken Entrance tutorial line uses a pre-rendered clip", () => {
+  const indexJs = read("audio-index.js");
+  const map = JSON.parse(indexJs.slice(indexJs.indexOf("{"), indexJs.lastIndexOf("}") + 1));
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(read("entrance-stage-logic.js"), context);
+
+  const entrance = context.LanternAlleyLogic;
+  let state = entrance.createTutorial();
+  const spoken = [entrance.getTutorialStep(state).jp];
+  state = entrance.advanceTutorial(state);
+  spoken.push(entrance.getTutorialStep(state).jp);
+  state = entrance.advanceTutorial(state);
+  spoken.push(entrance.getTutorialStep(state).jp);
+  state = entrance.completeTutorial(state);
+  spoken.push(entrance.getTutorialStep(state).jp);
+
+  assert.equal(spoken.length, 4);
+  for (const jp of spoken) {
+    assert.ok(map[jp], `Entrance falls back to device speech for: ${jp}`);
   }
 });
 

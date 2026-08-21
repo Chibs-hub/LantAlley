@@ -35,11 +35,22 @@ EXTRACT = r'''
 const fs = require('fs'), vm = require('vm');
 const ctx = {};
 vm.createContext(ctx);
+vm.runInContext(fs.readFileSync('entrance-stage-logic.js', 'utf8'), ctx);
 vm.runInContext(fs.readFileSync('moonview-inn-interactions.js', 'utf8'), ctx);
 vm.runInContext(fs.readFileSync('n2-home-inn-stage.js', 'utf8'), ctx);
+const E = ctx.LanternAlleyLogic;
 const S = ctx.N2HomeInnStage;
 const out = new Set();
 const add = (t) => { if (typeof t === 'string' && /[ぁ-んァ-ン一-龯]/.test(t)) out.add(t.trim()); };
+
+let tutorial = E.createTutorial();
+add(E.getTutorialStep(tutorial).jp);
+tutorial = E.advanceTutorial(tutorial);
+add(E.getTutorialStep(tutorial).jp);
+tutorial = E.advanceTutorial(tutorial);
+add(E.getTutorialStep(tutorial).jp);
+tutorial = E.completeTutorial(tutorial);
+add(E.getTutorialStep(tutorial).jp);
 
 [...S.encounters, ...S.practice, ...S.challenge].forEach((item) => {
   add(item.jp);

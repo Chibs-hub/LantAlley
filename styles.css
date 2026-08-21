@@ -613,6 +613,11 @@
   .inn-drop-zone:disabled{opacity:.5;cursor:not-allowed}
   .inn-tray{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-self:stretch;position:relative;z-index:1}
   .inn-object.dragging{position:fixed;box-shadow:0 14px 24px rgba(0,0,0,.28);cursor:grabbing}
+  /* Tap-to-place: the chosen object lifts, and the places it can go pulse. */
+  .inn-object.selected{background:#ffe0a3;border-color:#d08d38;box-shadow:0 0 0 3px rgba(208,141,56,.35),0 6px 0 #80643f;transform:translateY(-3px)}
+  .inn-scene-zones.awaiting-drop .inn-drop-zone{border-color:#d08d38;background:#fffdf6;animation:zone-ready 1.4s ease-in-out infinite}
+  @keyframes zone-ready{50%{box-shadow:0 0 0 4px rgba(208,141,56,.22)}}
+  @media(prefers-reduced-motion:reduce){.inn-scene-zones.awaiting-drop .inn-drop-zone{animation:none;box-shadow:0 0 0 3px rgba(208,141,56,.25)}}
   @media(prefers-reduced-motion:reduce){.inn-drop-zone{transition:none}}
   .inn-object:hover,.inn-action:hover,.inn-drop-zone:hover,.inn-object:focus-visible,.inn-action:focus-visible,.inn-drop-zone:focus-visible{transform:translateY(-2px);outline:3px solid #d08d38;outline-offset:2px}
   .inn-drop-zone:has(.inn-object){transform:none}
@@ -637,5 +642,18 @@
   .schedule-handle{position:absolute;top:1px;width:14px;height:14px;border-radius:50%;background:#8da486;border:2px solid #40503d;transform:translateX(-50%);transition:left .08s linear,background .15s,border-color .15s}
   .schedule-handle.out-of-range{background:#e0a898;border-color:#9f5546}
   .inn-drop-zone:disabled,.inn-object:disabled{opacity:.35;cursor:not-allowed;box-shadow:none;transform:none}
-  @media(max-width:620px){.schedule-controls{grid-template-columns:1fr}.inn-room,.inn-workspace{min-height:390px}.shoji{width:90px;height:110px}}
+  @media(max-width:620px){
+    .schedule-controls{grid-template-columns:1fr}
+    /* Let the room shrink to its content: a forced min-height pushed the
+       destinations off-screen and made the reach even longer. */
+    .inn-room,.inn-workspace{min-height:0}
+    .inn-workspace{padding:12px;gap:10px}
+    .shoji{width:70px;height:86px;top:10px;right:12px;opacity:.5}
+    .inn-scene-zones{padding:10px;gap:8px;grid-template-columns:repeat(auto-fit,minmax(88px,1fr))}
+    .inn-tray{gap:8px}
+    .inn-object,.inn-drop-zone{min-width:0}
+    .inn-object:has(.inn-caption),.inn-action:has(.inn-caption),.inn-drop-zone:has(.inn-caption){min-width:84px;min-height:66px;padding:8px}
+    .inn-caption{font-size:.72rem;max-width:12ch}
+    .inn-icon{width:26px;height:26px}
+  }
   @media(prefers-reduced-motion:reduce){.inn-object,.inn-action,.inn-drop-zone{transition:none}.tea-steam:before,.tea-steam:after{animation:none}.schedule-handle{transition:none}}

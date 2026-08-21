@@ -101,6 +101,8 @@
   var activeFoxEl = null;
   var activeFoxImgEl = null;
   var innInteractionState = null;
+  // Item chosen by tapping, waiting for a destination tap.
+  var roomPick = null;
   var waveTimer = null;
   var waveFrameIndex = 0;
   var WAVE_FRAME_SETS = null;
@@ -800,6 +802,9 @@
       if(moved){
         el.classList.remove("dragging");
         el.style.left = ""; el.style.top = ""; el.style.width = ""; el.style.height = "";
+        // The browser fires a click after the drag; flag it so the tap-to-select
+        // handler ignores that one and does not re-select what we just placed.
+        el.dataset.dragged = "1";
         var target = null;
         getZones().forEach(function(zone){
           zone.classList.remove("drop-hover");
@@ -929,15 +934,71 @@
         }
       }
 
+      // Tap-to-place, so a phone never has to drag an object the full height of
+      // the screen. Dragging still works; this is the shorter path, and it is
+      // also what makes the room usable by keyboard.
+      function selectItem(button, kind, itemKey){
+        var already = button.classList.contains("selected");
+        // Clear across the whole scene, not just the tray: worn items sit
+        // inside their source zone.
+        Array.prototype.forEach.call(
+          scene.querySelectorAll(".inn-object.selected"),
+          function(el){ el.classList.remove("selected"); }
+        );
+        zonesEl.classList.remove("awaiting-drop");
+
+        if(already){
+          roomPick = null;
+          $("inn-status").textContent = "";
+          return;
+        }
+        roomPick = {kind:kind, item:itemKey};
+        button.classList.add("selected");
+        zonesEl.classList.add("awaiting-drop");
+        $("inn-status").textContent = "置く場所を選んでください。";
+        // On a phone the destinations can sit off-screen above the tray.
+        // "nearest" leaves them alone when they are already visible.
+        if(zonesEl.scrollIntoView){
+          try{ zonesEl.scrollIntoView({block:"nearest", behavior:"smooth"}); }catch(e){ zonesEl.scrollIntoView(); }
+        }
+      }
+
+      // Every movable object gets both paths: drag, or tap then tap a place.
+      // Worn items live inside their source zone rather than the tray, so this
+      // has to be shared rather than living in tray() alone.
+      function makeMovable(button, kind, itemKey){
+        makeDraggable(button, allZones, function(zone){
+          roomPick = null;
+          dropped(kind, itemKey, zone);
+        });
+        button.addEventListener("click", function(event){
+          event.stopImmediatePropagation();
+          // A finished drag also emits a click; ignore that one.
+          if(button.dataset.dragged === "1"){ delete button.dataset.dragged; return; }
+          selectItem(button, kind, itemKey);
+        });
+        return button;
+      }
+
       function tray(markup, label, kind, itemKey){
         var button = document.createElement("button");
         button.className = "inn-object";
         button.innerHTML = markup;
         button.setAttribute("aria-label", label);
         button.title = label;
-        makeDraggable(button, allZones, function(zone){ dropped(kind, itemKey, zone); });
+        makeMovable(button, kind, itemKey);
         trayEl.appendChild(button);
       }
+
+      allZones().forEach(function(zone){
+        zone.addEventListener("click", function(event){
+          event.stopImmediatePropagation();
+          if(!roomPick) return;
+          var pick = roomPick;
+          roomPick = null;
+          dropped(pick.kind, pick.item, zone);
+        });
+      });
 
       room.cushions.forEach(function(entry){
         if(assign[entry[0]]) return;
@@ -953,7 +1014,7 @@
           oldObject.innerHTML = iconMarkup(swap.oldIcon);
           oldObject.setAttribute("aria-label", swap.oldLabel);
           oldObject.title = swap.oldLabel;
-          makeDraggable(oldObject, allZones, function(zone){ dropped("old", swap.key, zone); });
+          makeMovable(oldObject, "old", swap.key);
           source.insertBefore(oldObject, source.firstChild);
         }
         if(st.removed === swap.key && st.installed !== swap.key){

@@ -119,7 +119,7 @@ Run all automated tests from PowerShell in the project folder:
 node --test moonview-inn-interactions.test.mjs n2-home-inn-stage.test.mjs entrance-stage.test.mjs pwa.test.mjs
 ```
 
-Current verified result: 68 tests passed, 0 failed.
+Current verified result: 69 tests passed, 0 failed.
 
 Beyond the mechanics, the tests now guard the design rule itself:
 
@@ -146,6 +146,26 @@ An artifact cannot load sibling `.js` files or local images, which is why the bu
 ## 9. Change log and reasons
 
 Newest first. Each entry records why the change was made, because the reasoning is harder to recover than the code.
+
+### 2026-08-21 - Tap-to-place, so mobile does not require long drags
+
+On a phone the tray sits below the destinations, so answering meant dragging an object almost the full height of the screen, one-handed, while the page tried to scroll under the finger.
+
+Now every movable object supports both:
+
+- **Tap the object, then tap where it goes.** The object lifts, the destinations pulse, and the status line reads 置く場所を選んでください。Tapping the same object again deselects.
+- **Dragging still works**, unchanged, for anyone who prefers it.
+
+Two details that were easy to get wrong:
+
+- A finished drag also emits a `click`. Without a guard that click would immediately re-select the object that was just placed, so `makeDraggable` sets `data-dragged` and the tap handler skips that one event.
+- Worn items are rendered **inside** their source zone, not in the tray. The wiring therefore lives in `makeMovable()` shared by both, and the item's click uses `stopImmediatePropagation` so tapping it does not also fire the enclosing zone's drop handler.
+
+This is also an accessibility win: the objects and zones are real `<button>`s, so the whole room is now operable by keyboard, which dragging never was.
+
+Mobile layout was tightened at the same time. The `max-width:620px` rule had been *raising* `min-height` to 390px, which pushed destinations further off-screen; it now lets the room shrink to its content and reduces icon, padding and gap sizes.
+
+Selecting an object also scrolls the destinations into view with `block:"nearest"`, which does nothing when they are already visible.
 
 ### 2026-08-21 - Two Japanese corrections before sharing
 
