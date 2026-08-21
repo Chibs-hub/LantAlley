@@ -19,7 +19,7 @@ The project is not a complete JLPT N2 course. Only the first N2 stage is impleme
 
 No installation or package manager is required.
 
-1. Open `lantern-alley.html` in Microsoft Edge, Google Chrome, or another modern browser.
+1. Open `index.html` in Microsoft Edge, Google Chrome, or another modern browser.
 2. Select `Enter the Alley`.
 3. Open `Moonview Inn` from the map.
 4. If an older version is visible after an update, press `Ctrl+F5`.
@@ -90,14 +90,17 @@ Important: browser progress is not part of the project folder. Copying or zippin
 
 | File or folder | Purpose |
 | --- | --- |
-| `lantern-alley.html` | Main application: layout, styles, map, controller, speech, progress, scene rendering, the SVG icon set and the drag-and-drop implementation. |
+| `index.html` | Page markup only. Loads styles.css and the four scripts. |
+| `styles.css` | All styling. |
+| `app.js` | Application: map, controller, speech, progress, scene rendering, SVG icons, drag-and-drop. |
 | `n2-home-inn-stage.js` | Moonview Inn content: the shared `ROOM` definition, per-encounter requirements, Japanese sentences, near-miss explanations, phase rules, mastery rules. |
 | `moonview-inn-interactions.js` | Pure state engine for the five interactions. Node-testable, no DOM. |
 | `entrance-stage-logic.js` | Alley Entrance fox pose and dialogue behavior. |
-| `build-artifact.py` | Builds `lantern-alley-artifact.html`: inlines the three scripts and the fox images so the page is fully self-contained. |
-| `fox-datauris.json` | The fox poses pre-encoded as 320px WebP data URIs, consumed by the build script. |
+| `build-artifact.py` | Builds `lantern-alley-artifact.html`: inlines CSS, all four scripts and every local image. |
+| `optimize-fox-poses.py` | Regenerates `assets/fox/*.webp` from the full-size masters. |
+| `assets/fox/`, `assets/kon/` | Web-sized WebP images the app actually loads. |
 | `lantern-alley-artifact.html` | Generated. Do not edit by hand; it is overwritten by the build script. |
-| `assets/fox-poses/` | Original full-size fox pose images. |
+| `assets/fox-poses/` | Full-size PNG masters. Not loaded by the app. |
 | `research/` | N5-N2 vocabulary source files and the extraction script. |
 | `*.test.mjs` | Automated behavior and regression tests. |
 | `docs/superpowers/` | Design and implementation planning documents. Note these predate the redesign in section 9 and describe the older tag-matching mechanics. |
@@ -110,7 +113,7 @@ Run all automated tests from PowerShell in the project folder:
 node --test moonview-inn-interactions.test.mjs n2-home-inn-stage.test.mjs entrance-stage.test.mjs
 ```
 
-Current verified result: 51 tests passed, 0 failed.
+Current verified result: 58 tests passed, 0 failed.
 
 Beyond the mechanics, the tests now guard the design rule itself:
 
@@ -123,7 +126,7 @@ Beyond the mechanics, the tests now guard the design rule itself:
 
 ## 8. Publishing to the Artifact
 
-The desktop shortcut points at a published Claude Artifact, not at the local file. The two are separate: editing `lantern-alley.html` does **not** update the shortcut until the artifact is republished.
+The desktop shortcut points at a published Claude Artifact, not at the local file. The two are separate: editing the source files does **not** update the shortcut until the artifact is republished.
 
 To republish:
 
@@ -137,6 +140,21 @@ An artifact cannot load sibling `.js` files or local images, which is why the bu
 ## 9. Change log and reasons
 
 Newest first. Each entry records why the change was made, because the reasoning is harder to recover than the code.
+
+### 2026-08-21 - Split the monolith and externalized the images (groundwork for PWA/mobile)
+
+Preparation for packaging the game as a web/mobile app. The single 1.2 MB `lantern-alley.html` is gone, replaced by `index.html` + `styles.css` + `app.js`.
+
+Why each part mattered:
+
+- **1084 KB of the HTML was four base64 Kon wave frames** inside the script. A browser cannot cache a data URI separately from the page, so every visit re-downloaded them. They are now `assets/kon/*.webp`, 36 KB total.
+- **The fox poses were 1254px PNGs, about 2 MB each.** They render at 92px. The app was shipping roughly 18 MB of images no phone needs; they are now 320px WebP in `assets/fox/`, 69 KB for all nine. The full-size PNGs stay in `assets/fox-poses/` as masters.
+- **CSS and JS were inline**, so any edit invalidated the whole file for returning visitors. Split out so they cache independently.
+- **The page had no DOCTYPE, `<head>`, `<body>` or viewport meta.** Without `viewport` a phone renders it at desktop width and zooms out, which would have made every touch target unusably small.
+
+Total payload: about 18 MB down to 276 KB. Git was initialized first, so each step is revertible.
+
+`build-artifact.py` was rewritten to inline the split files, since the Claude Artifact cannot load sibling files. The artifact dropped from 1.26 MB to 0.31 MB.
 
 ### 2026-08-21 - Replacement actions now use real object locations
 
@@ -204,7 +222,7 @@ Answers became draggable objects moved onto zones in the room, and visible capti
 
 ### 2026-08-20 - UTF-8 charset fix
 
-`lantern-alley.html` had no `<meta charset>`, so browsers decoded the Japanese and emoji as Latin-1 and rendered mojibake. Added as the first line of the file.
+The old single-file `lantern-alley.html` had no `<meta charset>`, so browsers decoded the Japanese and emoji as Latin-1 and rendered mojibake. Added as the first line of the file.
 
 ### 2026-08-20 - Okurigana corrections
 
@@ -220,7 +238,6 @@ Answers became draggable objects moved onto zones in the room, and visible capti
 - The icons are simple hand-drawn SVG line art, intended as placeholders until real illustrations are produced.
 - Browser speech synthesis varies by machine and may be unavailable without a Japanese voice installed.
 - Player progress cannot be exported or imported.
-- `lantern-alley.html` is large and holds most of the application in one file.
 - The project is not initialized as a Git repository.
 - `docs/superpowers/` describes the superseded design.
 
@@ -231,7 +248,6 @@ Answers became draggable objects moved onto zones in the room, and visible capti
 3. Extend the shared-room principle to 調整 and 引き受ける, so all five verbs compete over one scene.
 4. Initialize Git before multiple people edit the project.
 5. Add a player progress export and import feature.
-6. Split `lantern-alley.html` into separate CSS, UI and controller files before adding many stages.
 7. Select the next small group of manually reviewed N2 words from the research CSV.
 8. Add end-to-end browser tests covering every mechanic and mobile screen sizes.
 
