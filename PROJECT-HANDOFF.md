@@ -24,7 +24,7 @@ No installation or package manager is required.
 3. Open `Moonview Inn` from the map.
 4. If an older version is visible after an update, press `Ctrl+F5`.
 
-The game uses browser speech synthesis for Japanese audio. Voice availability and pronunciation quality depend on the browser and Windows voice installation.
+Japanese audio plays from pre-rendered neural-voice MP3s, so pronunciation is identical on every device. If a line has no clip the game falls back to browser speech synthesis.
 
 ## 3. The central design rule
 
@@ -100,6 +100,9 @@ Important: browser progress is not part of the project folder. Copying or zippin
 | `optimize-fox-poses.py` | Regenerates `assets/fox/*.webp` from the full-size masters. |
 | `manifest.webmanifest` | PWA manifest: name, icons, standalone display. |
 | `sw.js` | Service worker. Pre-caches the app shell for offline play. |
+| `generate-audio.py` | Renders every spoken line to MP3 with a neural voice. Re-run after changing any Japanese. |
+| `audio-index.js` | Generated. Maps each line to its clip; imported by both the page and `sw.js`. |
+| `assets/audio/` | Generated MP3 clips, named by hash of the sentence. |
 | `icons/`, `make-icons.py` | PWA icon set and the script that regenerates it. |
 | `assets/fox/`, `assets/kon/` | Web-sized WebP images the app actually loads. |
 | `lantern-alley-artifact.html` | Generated. Do not edit by hand; it is overwritten by the build script. |
@@ -116,7 +119,7 @@ Run all automated tests from PowerShell in the project folder:
 node --test moonview-inn-interactions.test.mjs n2-home-inn-stage.test.mjs entrance-stage.test.mjs pwa.test.mjs
 ```
 
-Current verified result: 62 tests passed, 0 failed.
+Current verified result: 66 tests passed, 0 failed.
 
 Beyond the mechanics, the tests now guard the design rule itself:
 
@@ -143,6 +146,21 @@ An artifact cannot load sibling `.js` files or local images, which is why the bu
 ## 9. Change log and reasons
 
 Newest first. Each entry records why the change was made, because the reasoning is harder to recover than the code.
+
+### 2026-08-21 - Pre-rendered neural audio replaces device speech synthesis
+
+All 36 spoken lines are now MP3s rendered with `ja-JP-NanamiNeural` via `edge-tts` (free, no API key). `generate-audio.py` regenerates them; clips are named by a hash of the sentence, so re-running only renders lines that actually changed.
+
+Why this mattered more than it sounds:
+
+- **The Challenge phase is audio-only.** If the device has no Japanese voice, that phase was not degraded, it was unplayable. iOS Safari frequently has none and additionally requires a user gesture before `speechSynthesis` will make a sound.
+- **Pronunciation is the product.** Device voices vary from decent to robotic; a language app cannot teach a pronunciation that changes per phone.
+
+`speak()` now tries the clip first and falls back to `speechSynthesis` when a line has no clip, or when autoplay is blocked. Nothing breaks if a clip is missing.
+
+`audio-index.js` assigns to `self`, not `window`, so `sw.js` can `importScripts()` the same file to build its pre-cache list. The audio paths therefore have one source of truth rather than being copied into the worker by hand. All 36 clips are cached; audio works offline.
+
+**Generation needs network; playback never does.** Re-run `generate-audio.py` after editing any Japanese, then bump `CACHE_VERSION` in `sw.js`.
 
 ### 2026-08-21 - Installable as a PWA, plays offline
 

@@ -207,7 +207,56 @@
   }
   initVoices();
 
+  var currentClip = null;
+
+  // Pre-rendered neural audio, when we have a clip for this exact line.
+  // Falls back to speechSynthesis, which on iOS often has no Japanese voice
+  // at all - and the Challenge phase is audio-only, so that would be fatal.
+  function playClip(text, mode){
+    var src = window.LanternAlleyAudio && window.LanternAlleyAudio[text];
+    if(!src) return false;
+
+    if(currentClip){
+      currentClip.pause();
+      currentClip = null;
+    }
+    if("speechSynthesis" in window) window.speechSynthesis.cancel();
+
+    var audio = new Audio(src);
+    audio.preload = "auto";
+    currentClip = audio;
+
+    var fox = activeFoxEl;
+    var stopTalk = function(){
+      if(fox) fox.classList.remove("talking");
+      stopWave();
+    };
+    if(fox){
+      audio.addEventListener("playing", function(){ fox.classList.add("talking"); startWave(mode); });
+      audio.addEventListener("ended", stopTalk);
+      audio.addEventListener("error", stopTalk);
+    }
+
+    var started = audio.play();
+    if(started && started.catch){
+      started.catch(function(){
+        // Autoplay blocked (iOS before a gesture) or the file is missing.
+        stopTalk();
+        currentClip = null;
+        speakWithSynthesis(text, mode);
+      });
+    }
+    return true;
+  }
+
   function speak(text, mode){
+    mode = mode || "ask";
+    if(!state.voiceOn) return;
+    if(playClip(text, mode)) return;
+    speakWithSynthesis(text, mode);
+  }
+
+  function speakWithSynthesis(text, mode){
     mode = mode || "ask";
     if(!state.voiceOn) return;
     if(!("speechSynthesis" in window)){
@@ -1030,8 +1079,9 @@
       var selectedKey = action.key || (nearMiss && nearMiss.key) || "";
       if(state.stagePhase === "challenge") answerStage(false, prompt, selectedKey);
       else{
-        showKonStageResponse(stage, prompt, false);
-        showFeedback(false, result.reason);
+        showKonStageResponse(stage, prompt, false, selectedKey);
+        if(prompt.replyResponses && prompt.replyResponses[selectedKey]) $("feedback-row").classList.remove("show");
+        else showFeedback(false, result.reason);
         setTimeout(function(){ if(!state.answered) renderInnInteraction(prompt, true); }, 900);
       }
       return;
@@ -1298,10 +1348,10 @@
     }
   }
 
-  function showKonStageResponse(stage, prompt, isCorrect){
+  function showKonStageResponse(stage, prompt, isCorrect, selectedKey){
     if(!stage || !stage.getKonResponse) return;
     if(konResponseTimer){ clearTimeout(konResponseTimer); konResponseTimer = null; }
-    var response = stage.getKonResponse(prompt, isCorrect);
+    var response = stage.getKonResponse(prompt, isCorrect, selectedKey);
     $("jp-line").textContent = response;
     $("romaji-line").textContent = "";
     $("romaji-line").style.display = "none";
@@ -1323,7 +1373,7 @@
   function answerStage(isCorrect, prompt, selectedKey){
     var stage = getLocation(prompt.stageKey);
     var items = state.phaseItems || stage.getPhaseItems(state.stagePhase);
-    showKonStageResponse(stage, prompt, isCorrect);
+    showKonStageResponse(stage, prompt, isCorrect, selectedKey);
 
     if(state.stagePhase === "challenge"){
       state.answered = true;

@@ -56,6 +56,48 @@ test("the page links the manifest, iOS tags, and registers the worker", () => {
   assert.match(html, /location\.protocol\.indexOf\("http"\) === 0/);
 });
 
+test("every pre-rendered audio clip exists and is reachable offline", () => {
+  const indexJs = read("audio-index.js");
+  const map = JSON.parse(indexJs.slice(indexJs.indexOf("{"), indexJs.lastIndexOf("}") + 1));
+  const lines = Object.keys(map);
+
+  assert.ok(lines.length > 20, "expected a clip for every spoken line");
+
+  for (const line of lines) {
+    const rel = map[line];
+    assert.match(rel, /^assets\/audio\/[0-9a-f]{12}\.mp3$/, `odd clip path for "${line}"`);
+    assert.equal(existsSync(new URL("./" + rel, import.meta.url)), true, `missing clip: ${rel}`);
+  }
+
+  // The worker imports this same file to build its pre-cache list, so the
+  // paths cannot drift apart. That only works if it assigns to `self`.
+  assert.match(indexJs, /^self\.LanternAlleyAudio = /m);
+  assert.match(read("sw.js"), /importScripts\("\.\/audio-index\.js"\)/);
+});
+
+test("spoken Japanese in the stage data has a clip", () => {
+  const indexJs = read("audio-index.js");
+  const map = JSON.parse(indexJs.slice(indexJs.indexOf("{"), indexJs.lastIndexOf("}") + 1));
+  const stage = read("n2-home-inn-stage.js");
+
+  // Every jp: request the player hears must be pre-rendered; a gap here means
+  // that line silently falls back to whatever voice the device happens to have.
+  const requests = [...stage.matchAll(/\bjp:"([^"]+)"/g)].map((m) => m[1]);
+  assert.ok(requests.length >= 5);
+  for (const jp of requests) {
+    assert.ok(map[jp], `no audio clip for request: ${jp}`);
+  }
+});
+
+test("playback prefers the clip and falls back to speech synthesis", () => {
+  const app = read("app.js");
+  assert.match(app, /function playClip/);
+  assert.match(app, /if\(playClip\(text, mode\)\) return;/);
+  assert.match(app, /speakWithSynthesis\(text, mode\)/);
+  // iOS blocks autoplay before a gesture; that rejection must fall back, not fail silently.
+  assert.match(app, /started\.catch/);
+});
+
 test("the shell list covers the scripts index.html actually loads", () => {
   const html = read("index.html");
   const sw = read("sw.js");

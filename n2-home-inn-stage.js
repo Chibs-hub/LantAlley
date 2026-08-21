@@ -101,6 +101,10 @@
       meaning:"Would you be willing to undertake guiding tomorrow's guests?",
       successReply:"ありがとうございます。今夜はここでゆっくり休んでください。",
       retryReply:"まだ仕事を引き受けた返事になっていません。",
+      replyResponses:{
+        ask:"朝八時からです。まだ人手が足りないので、手伝っていただけませんか。",
+        refuse:"そうですか。でも、明日はどうしても人手が必要です。少しだけでも手伝っていただけませんか。"
+      },
       hint:"引き受ける means to undertake, take over, or accept responsibility for something.",
       options:[
         {key:"accept", emoji:"", label:"はい、引き受けます。"},
@@ -296,6 +300,7 @@
       successReply:text.successReply,
       romaji:phase === "challenge" ? "" : (text.romaji || base.romaji),
       hint:phase === "challenge" ? "" : "Use the subject, object, and scene result to decide whether the request describes a deliberate action or a change of state.",
+      replyResponses:null,
       options:options
     });
   }
@@ -347,8 +352,9 @@
     return isCorrect ? 2600 : null;
   }
 
-  function getKonResponse(item, isCorrect){
+  function getKonResponse(item, isCorrect, selectedKey){
     if(isCorrect) return item.successReply || "ありがとうございます。頼まれたことができました。";
+    if(item.replyResponses && item.replyResponses[selectedKey]) return item.replyResponses[selectedKey];
     return item.retryReply || "もう一度、頼まれたことを確認してください。";
   }
 

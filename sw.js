@@ -7,7 +7,12 @@
  * Bump CACHE_VERSION whenever any shell file changes, or returning players
  * will keep the old build.
  */
-var CACHE_VERSION = "lantern-alley-v1";
+var CACHE_VERSION = "lantern-alley-v2";
+
+// audio-index.js assigns to `self`, so the worker and the page share one list
+// of clip paths. Importing it here means new lines are cached automatically
+// after regenerating audio - no second list to keep in sync.
+importScripts("./audio-index.js");
 
 var SHELL = [
   "./",
@@ -17,6 +22,7 @@ var SHELL = [
   "./entrance-stage-logic.js",
   "./moonview-inn-interactions.js",
   "./n2-home-inn-stage.js",
+  "./audio-index.js",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
@@ -35,6 +41,10 @@ var SHELL = [
   "./assets/fox/fox-try-again.webp",
   "./assets/fox/fox-listening.webp"
 ];
+
+Object.keys(self.LanternAlleyAudio || {}).forEach(function(line){
+  SHELL.push("./" + self.LanternAlleyAudio[line]);
+});
 
 self.addEventListener("install", function(event){
   event.waitUntil(

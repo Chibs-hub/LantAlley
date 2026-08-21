@@ -16,10 +16,11 @@ SCRIPTS = [
     'entrance-stage-logic.js',
     'moonview-inn-interactions.js',
     'n2-home-inn-stage.js',
+    'audio-index.js',
     'app.js',
 ]
 
-MIME = {'.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg', '.ico': 'image/x-icon'}
+MIME = {'.mp3': 'audio/mpeg', '.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg', '.ico': 'image/x-icon'}
 
 
 def read(path):

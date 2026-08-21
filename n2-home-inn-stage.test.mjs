@@ -198,7 +198,7 @@ test("Kon gives a contextual Japanese response after every stage answer", () => 
 
 test("the stage renderer speaks Kon's answer response before advancing", () => {
   assert.match(html, /function showKonStageResponse/);
-  assert.match(html, /stage\.getKonResponse\(prompt, isCorrect\)/);
+  assert.match(html, /stage\.getKonResponse\(prompt, isCorrect, selectedKey\)/);
   assert.match(html, /speak\(response, isCorrect \? "correct" : "wrong"\)/);
 });
 
@@ -247,6 +247,18 @@ test("the Learn offer includes a free overnight stay and leads into the next mor
   assert.match(offer.completionFeedback, /ありがとうございます.*今夜.*休んで/);
   assert.equal(offer.completionNextLabel, "次の朝へ");
   assert.match(stage.practice[0].narration, /おはようございます.*昨夜はよく眠れましたか/);
+});
+
+test("Kon answers clarification and refusal before asking again about the next-day job", () => {
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(readFileSync(stageUrl, "utf8"), context);
+  const stage = context.N2HomeInnStage;
+  const offer = stage.encounters.at(-1);
+
+  assert.match(stage.getKonResponse(offer, false, "ask"), /朝八時からです.*手伝っていただけませんか/);
+  assert.match(stage.getKonResponse(offer, false, "refuse"), /人手が必要です.*手伝っていただけませんか/);
+  assert.equal(stage.getKonResponse(offer, false, "unknown"), offer.retryReply);
 });
 
 test("heating requests use the appliance appropriate for each item", () => {
