@@ -815,17 +815,20 @@
   }
 
   function makeDraggable(el, getZones, onDrop){
-    var startX, startY, origLeft, origTop, w, h, dragging = false, moved = false;
+    var startX, startY, origLeft, origTop, w, h, dragging = false, moved = false, slop = 6;
     el.style.touchAction = "none";
     el.addEventListener("pointerdown", function(event){
       if(el.disabled) return;
       startX = event.clientX; startY = event.clientY; moved = false; dragging = true;
+      // A finger tap routinely slides several pixels, so a 6px threshold turned
+      // ordinary taps into drags that then landed on nothing.
+      slop = event.pointerType === "mouse" ? 6 : 16;
       try{ el.setPointerCapture(event.pointerId); }catch(err){}
     });
     el.addEventListener("pointermove", function(event){
       if(!dragging) return;
       var dx = event.clientX - startX, dy = event.clientY - startY;
-      if(!moved && Math.sqrt(dx*dx + dy*dy) > 6){
+      if(!moved && Math.sqrt(dx*dx + dy*dy) > slop){
         moved = true;
         var rect = el.getBoundingClientRect();
         origLeft = rect.left; origTop = rect.top; w = rect.width; h = rect.height;
@@ -1017,6 +1020,10 @@
       // has to be shared rather than living in tray() alone.
       function makeMovable(button, kind, itemKey){
         makeDraggable(button, allZones, function(zone){
+          // Released away from any destination, or back onto the zone the object
+          // already sits in: treat it as having picked the object up rather than
+          // doing nothing (which read as "it won't move") or scoring it wrong.
+          if(!zone || zone.contains(button)){ selectItem(button, kind, itemKey); return; }
           roomPick = null;
           dropped(kind, itemKey, zone);
         });

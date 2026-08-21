@@ -150,6 +150,16 @@ An artifact cannot load sibling `.js` files or local images, which is why the bu
 
 Newest first. Each entry records why the change was made, because the reasoning is harder to recover than the code.
 
+### 2026-08-21 - Objects sometimes refused to move on touch
+
+Reported as "it doesn't move sometimes", which is the signature of an intermittent input bug rather than a broken mechanic. Two causes, both silent:
+
+**The drag threshold was 6px.** A finger tap routinely slides further than that, so ordinary taps were being classified as drags. The threshold is now 16px for touch and pen, still 6px for a mouse, taken from `event.pointerType`.
+
+**A drag that landed on nothing did nothing.** `dropped()` returned early on a null zone, so a mis-aimed drag gave no feedback at all and looked like the object was stuck. Releasing away from any destination, or back onto the zone the object already occupies, now selects the object instead - the tap-to-place flow simply continues, and it is not scored as a wrong answer.
+
+Verified with synthetic touch events: a 10px jitter tap selects (previously did nothing), a genuine drag released over empty space picks the object up with no penalty, and the normal two-step swap still completes.
+
 ### 2026-08-21 - Zone captions uncovered, Entrance pacing, and 代える asks for both steps
 
 Three problems from phone testing.
