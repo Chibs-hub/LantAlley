@@ -115,7 +115,7 @@ test("the game exposes learn, practice, challenge, and focused retry flow", () =
   assert.match(html, /challengeMisses/);
   assert.match(html, /Review missed words/);
   assert.doesNotMatch(html, /state\.stagePhase === "challenge" \? "音声を聞いて、正しい行動を選んでください。" : prompt\.narration/);
-  assert.match(html, /getStorySetup\(prompt, state\.resumedStageEntry\)/);
+  assert.match(html, /getStorySetup\(prompt, state\.resumedStageEntry, state\.resumedAfterDecline\)/);
 });
 
 test("practice shows the complete Japanese request while challenge stays audio-only", () => {
@@ -227,7 +227,7 @@ test("dialogue replies are neutral, plausible, and do not reveal acceptance", ()
     assert.equal(item.options.some((option) => option.nearMiss), false, item.variant);
     assert.deepEqual(
       Array.from(item.interaction.replies, (reply) => reply.label),
-      ["はい、引き受けます。", "何時からですか。", "すみません、引き受けられません。"],
+      ["手伝います。", "手伝えません。"],
     );
     assert.equal(item.interaction.replies.every((reply) => !reply.icon), true);
   }
@@ -249,16 +249,32 @@ test("the Learn offer includes a free overnight stay and leads into the next mor
   assert.match(stage.practice[0].narration, /おはようございます.*昨夜はよく眠れましたか/);
 });
 
-test("Kon answers clarification and refusal before asking again about the next-day job", () => {
+test("declining the next-day job ends the stage and is welcomed back", () => {
   const context = {};
   vm.createContext(context);
   vm.runInContext(readFileSync(stageUrl, "utf8"), context);
   const stage = context.N2HomeInnStage;
   const offer = stage.encounters.at(-1);
 
-  assert.match(stage.getKonResponse(offer, false, "ask"), /朝八時からです.*手伝っていただけませんか/);
-  assert.match(stage.getKonResponse(offer, false, "refuse"), /人手が必要です.*手伝っていただけませんか/);
-  assert.equal(stage.getKonResponse(offer, false, "unknown"), offer.retryReply);
+  // Two answers only: take the work or not. Declining is a real choice, so it
+  // gets a disappointed reply and sends the player out rather than scoring
+  // them wrong and asking again.
+  assert.deepEqual(
+    Array.from(offer.interaction.replies, (reply) => reply.key),
+    ["accept", "decline"],
+  );
+  assert.ok(offer.declineReply, "declining needs its own reply");
+  assert.match(offer.declineReply, /残念/);
+  assert.match(offer.declineReply, /戻ってきて/, "and an open invitation to return");
+
+  // Coming back is a reunion, not a silent resume.
+  const welcome = stage.getStorySetup(offer, true, true);
+  assert.match(welcome, /^コン：「戻ってきてくれたんですね/);
+  assert.notEqual(welcome, stage.getStorySetup(offer, true, false));
+
+  assert.match(html, /function declineStageWork/);
+  assert.match(html, /state\.stageDeclined = true/);
+  assert.match(html, /declined:state\.stageDeclined/);
 });
 
 test("heating requests use the appliance appropriate for each item", () => {

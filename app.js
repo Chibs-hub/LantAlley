@@ -188,6 +188,8 @@
     challengeMisses:[],
     stageMastered:false,
     resumedStageEntry:false,
+    stageDeclined:false,
+    resumedAfterDecline:false,
     stageProgress:{homeInn:null},
     visited:{},
     starred:{}
@@ -342,6 +344,7 @@
           correctWords:Object.keys(state.challengeCorrectWords),
           misses:state.challengeMisses.map(function(item){ return item.focusWord; }),
           mastered:state.stageMastered,
+          declined:state.stageDeclined,
           medal:state.stageMastered ? "gold" : (state.stagePhase === "challenge" || state.stagePhase === "review" ? "silver" : (state.stagePhase === "practice" ? "bronze" : "none"))
         };
       }
@@ -511,7 +514,16 @@
     return prompt;
   }
 
+  // Kon greets a returning player once. Both render paths ask for this, so the
+  // flags are cleared when the encounter advances rather than on render.
+  function stageNarrationFor(loc, prompt){
+    if(!(loc.encounters && loc.getStorySetup)) return prompt.narration;
+    return loc.getStorySetup(prompt, state.resumedStageEntry, state.resumedAfterDecline);
+  }
+
   function continueStageEncounter(loc){
+    state.resumedStageEntry = false;
+    state.resumedAfterDecline = false;
     var items = state.phaseItems || loc.getPhaseItems(state.stagePhase);
     if(state.encounterIndex >= items.length - 1){
       advanceStagePhase(loc);
@@ -599,8 +611,7 @@
     $("encounter-status").style.display = "block";
     $("encounter-progress").textContent = String(state.encounterIndex + 1);
     $("encounter-total").textContent = String((state.phaseItems || loc.getPhaseItems(state.stagePhase)).length);
-    $("narration").textContent = loc.getStorySetup(prompt, state.resumedStageEntry);
-    state.resumedStageEntry = false;
+    $("narration").textContent = stageNarrationFor(loc, prompt);
     $("jp-line").textContent = loc.getWrittenPrompt(prompt, state.stagePhase);
     $("romaji-line").textContent = prompt.romaji;
     $("romaji-line").style.display = state.romajiOn && state.stagePhase !== "challenge" ? "block" : "none";
@@ -646,6 +657,9 @@
       state.challengeMisses = loc.challenge.filter(function(item){ return (resumed.misses || []).indexOf(item.focusWord) >= 0; });
       state.stageMastered = !!resumed.mastered;
       state.resumedStageEntry = true;
+      // Coming back after turning the work down earns a warmer greeting.
+      state.resumedAfterDecline = !!resumed.declined;
+      state.stageDeclined = false;
     }
 
     var avatarSlot = $("avatar-slot");
@@ -675,7 +689,7 @@
     $("encounter-status").style.display = loc.encounters ? "block" : "none";
     $("encounter-progress").textContent = "1";
     $("encounter-total").textContent = loc.encounters ? String(loc.encounters.length) : "1";
-    $("narration").textContent = prompt.narration;
+    $("narration").textContent = stageNarrationFor(loc, prompt);
     $("jp-line").textContent = prompt.jp;
     $("romaji-line").textContent = prompt.romaji;
     $("romaji-line").style.display = state.romajiOn ? "block" : "none";
@@ -1143,6 +1157,7 @@
         button.setAttribute("aria-label", reply.label);
         button.addEventListener("click", function(event){
           event.stopImmediatePropagation();
+          if(reply.key === "decline"){ declineStageWork(prompt); return; }
           performInnAction({type:"respond", key:reply.key});
         });
         actions.appendChild(button);
@@ -1150,6 +1165,34 @@
       work.appendChild(actions);
       $("inn-status").textContent = "";
     }
+  }
+
+  // Turning the work down is a legitimate answer, not a mistake: Kon is
+  // disappointed, the player leaves the inn, and no heart is lost. Returning
+  // later is greeted warmly rather than silently resumed.
+  function declineStageWork(prompt){
+    if(state.answered) return;
+    state.answered = true;
+
+    var reply = prompt.declineReply || "そうですか……。";
+    $("jp-line").textContent = reply;
+    $("romaji-line").textContent = "";
+    $("romaji-line").style.display = "none";
+    $("meaning-line").classList.remove("show");
+    setEntranceFoxPose("tryAgain");
+    speak(reply, "wrong");
+
+    state.stageDeclined = true;
+    saveStageProgress();
+
+    showFeedback(false, "You turned the work down. Kon will welcome you back whenever you return.");
+    $("next-row").style.display = "block";
+    $("btn-next").textContent = "宿を出る →";
+
+    afterSpeech(function(){
+      if(state.currentKey !== "home-inn" || !state.answered) return;
+      showMap();
+    }, 1400);
   }
 
   function updateTeaVisual(interaction){

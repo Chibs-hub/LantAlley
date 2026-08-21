@@ -101,15 +101,14 @@
       meaning:"Would you be willing to undertake guiding tomorrow's guests?",
       successReply:"ありがとうございます。今夜はここでゆっくり休んでください。",
       retryReply:"まだ仕事を引き受けた返事になっていません。",
-      replyResponses:{
-        ask:"朝八時からです。まだ人手が足りないので、手伝っていただけませんか。",
-        refuse:"そうですか。でも、明日はどうしても人手が必要です。少しだけでも手伝っていただけませんか。"
-      },
+      // Declining is a real choice, not a mistake: Kon is disappointed and the
+      // player leaves the inn. Coming back later is welcomed warmly.
+      declineReply:"そうですか……。残念ですが、仕方がありません。気が変わったら、いつでも戻ってきてください。",
+      returnReply:"コン：「戻ってきてくれたんですね！とても嬉しいです。さあ、一緒に働きましょう。」",
       hint:"引き受ける means to undertake, take over, or accept responsibility for something.",
       options:[
-        {key:"accept", emoji:"", label:"はい、引き受けます。"},
-        {key:"ask", emoji:"", label:"何時からですか。"},
-        {key:"refuse", emoji:"", label:"すみません、引き受けられません。"}
+        {key:"accept", emoji:"", label:"手伝います。"},
+        {key:"decline", emoji:"", label:"手伝えません。"}
       ],
       correct:"accept",
       completionFeedback:"コン：「ありがとうございます。今夜はここでゆっくり休んでください。」",
@@ -165,9 +164,8 @@
       controlHelp:"Choose your reply.",
       clue:"The innkeeper has asked you something and is waiting for an answer.",
       replies:[
-        {key:"accept", label:"はい、引き受けます。"},
-        {key:"ask", label:"何時からですか。"},
-        {key:"refuse", label:"すみません、引き受けられません。"}
+        {key:"accept", label:"手伝います。"},
+        {key:"decline", label:"手伝えません。"}
       ]
     }
   ];
@@ -187,9 +185,8 @@
       controlHelp:"Choose your reply.",
       clue:"The innkeeper has asked you something and is waiting for an answer.",
       replies:[
-        {key:"accept", label:"はい、引き受けます。"},
-        {key:"ask", label:"何時からですか。"},
-        {key:"refuse", label:"すみません、引き受けられません。"}
+        {key:"accept", label:"手伝います。"},
+        {key:"decline", label:"手伝えません。"}
       ]
     }
   ];
@@ -343,7 +340,12 @@
     return item.jp;
   }
 
-  function getStorySetup(item, resumed){
+  function getStorySetup(item, resumed, afterDecline){
+    if(afterDecline){
+      // The player left rather than taking the work on, so this is a reunion,
+      // not a resume.
+      return "コン：「戻ってきてくれたんですね！とても嬉しいです。」 " + item.narration;
+    }
     if(!resumed) return item.narration;
     return "コン：「お帰りなさい。続きから始めましょう。」 " + item.narration;
   }

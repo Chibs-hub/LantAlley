@@ -47,7 +47,7 @@ Moonview Inn teaches these five N2 words:
 | 代える | replace one thing with another | Put the named worn item in the bin, then its fresh counterpart in the fitting. Order matters. |
 | 温める | warm something deliberately | Move the named dish to the appliance the request names (コンロ / 電子レンジ). One action. |
 | 調整 | reconcile several conditions | Read the times from the Japanese only, set the schedule, confirm. |
-| 引き受ける | undertake, accept responsibility | Choose the reply that takes the job on. The reply is the whole answer. |
+| 引き受ける | undertake, accept responsibility | Choose 手伝います。 or 手伝えません。 Declining ends the stage; returning is welcomed. |
 
 Each harder item carries one close N2 near-miss, used for feedback when the player acts wrongly:
 
@@ -149,6 +149,23 @@ An artifact cannot load sibling `.js` files or local images, which is why the bu
 ## 9. Change log and reasons
 
 Newest first. Each entry records why the change was made, because the reasoning is harder to recover than the code.
+
+### 2026-08-21 - Declining Kon's offer is a real choice, not a wrong answer
+
+The final encounter offered three replies (accept, ask when, refuse) and treated anything but acceptance as a mistake to retry. Refusing is a legitimate answer to 引き受けていただけませんか, so the branch is now real:
+
+- Two replies only: 手伝います。 / 手伝えません。
+- Declining plays a disappointed line from Kon, costs no heart, and returns the player to the map.
+- The refusal is stored as `declined` in the stage progress.
+- Coming back later is greeted with コン：「戻ってきてくれたんですね！とても嬉しいです。」 rather than the neutral resume line.
+
+One bug surfaced while wiring it: **two render paths were setting the narration**, and the general location render overwrote the story-aware one, so the welcome-back line never appeared. Both now call one `stageNarrationFor()` helper, and the one-shot resume flags are cleared when the encounter advances rather than during render - the two paths were previously consuming each other's flag.
+
+Verified end to end: declining gives the sad reply with 3/3 hearts intact and exits to the map; returning shows the warm greeting; accepting still completes the stage.
+
+### 2026-08-21 - Illustrated room visual direction proposed (not implemented)
+
+A visual mockup proposes replacing the answer area's repeated dashed button grid with an illustrated inn room. Kon's Japanese request becomes the strongest visual element, romaji stays optional, the always-visible English interaction instruction moves outside the answer scene, movable objects sit on a wooden shelf, and room destinations use recognizable pictures with labels appearing only on selection or focus. The proposal preserves the identical shared room and does not reveal which action the Japanese requested. This is a design proposal only; the game source has not yet been changed to match it.
 
 ### 2026-08-21 - The request names the appliance it requires
 
