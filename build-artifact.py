@@ -39,6 +39,19 @@ html = re.sub(r'<!DOCTYPE html>\s*<html[^>]*>\s*<head>\s*', '', html, flags=re.I
 html = re.sub(r'\s*</head>\s*<body>\s*', '\n', html, flags=re.I)
 html = re.sub(r'\s*</body>\s*</html>\s*$', '\n', html, flags=re.I)
 
+# Strip the PWA wiring: an artifact is sandboxed, cannot register a service
+# worker, and has no sibling manifest or icon files to fetch.
+html = re.sub(r'[ \t]*<link rel="manifest"[^>]*>\n?', '', html)
+html = re.sub(r'[ \t]*<link rel="apple-touch-icon"[^>]*>\n?', '', html)
+html = re.sub(r'[ \t]*<link rel="icon"[^>]*>\n?', '', html)
+html = re.sub(r'[ \t]*<meta name="apple-mobile-web-app[^>]*>\n?', '', html)
+html = re.sub(r'[ \t]*<!-- iOS ignores the manifest[^>]*-->\n?', '', html)
+html = re.sub(
+    r'\n<script>\s*// Service workers need http\(s\)[\s\S]*?</script>\n',
+    '\n',
+    html,
+)
+
 # Inline the stylesheet.
 html = html.replace(
     '<link rel="stylesheet" href="styles.css">',

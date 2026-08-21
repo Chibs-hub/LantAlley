@@ -7,6 +7,12 @@
 <meta name="description" content="A small Japanese story-walk for JLPT N2 action verbs.">
 <title>Lantern Alley</title>
 <link rel="icon" href="lantern-alley.ico">
+<link rel="manifest" href="manifest.webmanifest">
+<!-- iOS ignores the manifest, so it needs its own tags. -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Lantern Alley">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600;800&family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
@@ -124,6 +130,18 @@
 <script src="moonview-inn-interactions.js"></script>
 <script src="n2-home-inn-stage.js"></script>
 <script src="app.js"></script>
+
+<script>
+  // Service workers need http(s); opening this file directly with file://
+  // simply skips registration and the game still runs online.
+  if("serviceWorker" in navigator && location.protocol.indexOf("http") === 0){
+    window.addEventListener("load", function(){
+      navigator.serviceWorker.register("sw.js").catch(function(err){
+        console.warn("Offline support unavailable:", err.message);
+      });
+    });
+  }
+</script>
 
 </body>
 </html>
