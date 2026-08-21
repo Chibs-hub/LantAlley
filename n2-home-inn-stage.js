@@ -141,7 +141,7 @@
       {key:"microwave", icon:"microwave", label:"電子レンジ"}
     ]
   };
-  var ROOM_HELP = "Drag objects between the places shown. Follow Kon's Japanese request to decide what to move.";
+  var ROOM_HELP = "Tap an object, then tap where it goes. Dragging works too.";
   var ROOM_CLUE = "座布団は畳の上にあり、古いタオルはタオル掛け、汚れたシーツはベッド、切れた電球は照明にあります。新しい物と料理は棚に置かれています。";
 
   function roomScene(extra){

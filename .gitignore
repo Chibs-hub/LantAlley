@@ -7,3 +7,6 @@ output/
 node_modules/
 .DS_Store
 Thumbs.db
+
+# Superpowers tooling scratch state
+.superpowers/

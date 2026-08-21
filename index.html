@@ -77,49 +77,60 @@
   </section>
 
   <section id="screen-game" class="frame">
-    <div class="hud">
-      <button class="breadcrumb" id="btn-back-map">&larr; Lantern Alley</button>
-      <div class="hud-hearts" id="hud-hearts" aria-label="Hearts remaining"></div>
-      <div class="hud-stars"><span id="hud-star-count">0</span> <span>⭐</span></div>
-    </div>
-
-    <div class="scene-label" id="scene-label">Location</div>
-    <div class="stage-phase-row" id="stage-phase-row">
-      <span class="stage-phase-badge" id="stage-phase-badge">Learn</span>
-      <button class="btn btn-ghost stage-restart" id="btn-restart-learn">Restart from Learn</button>
-    </div>
-    <div class="encounter-status" id="encounter-status">Encounter <span id="encounter-progress">1</span> of <span id="encounter-total">5</span></div>
-    <p class="narration" id="narration"></p>
-
-    <div class="romaji-toggle">
-      <span>ふりがな &mdash; show romaji</span>
-      <button class="switch on" id="romaji-switch" aria-pressed="true" aria-label="Toggle romaji"></button>
-    </div>
-
-    <div class="dialogue">
-      <div class="avatar" id="avatar-slot">🦊</div>
-      <div class="speech">
-        <div class="speech-top">
-          <div class="jp-line jp" id="jp-line"></div>
-          <button class="speak-btn" id="speak-btn" title="Play audio" aria-label="Play Japanese audio">🔊</button>
+    <div class="game-layout">
+      <div class="stage-bar">
+        <div class="hud">
+          <button class="breadcrumb" id="btn-back-map">&larr; Lantern Alley</button>
+          <div class="hud-hearts" id="hud-hearts" aria-label="Hearts remaining"></div>
+          <div class="hud-stars"><span id="hud-star-count">0</span> <span>⭐</span></div>
         </div>
-        <div class="romaji-line" id="romaji-line"></div>
-        <div class="meaning-line" id="meaning-line"></div>
+
+        <div class="stage-meta">
+          <div class="scene-label" id="scene-label">Location</div>
+          <div class="stage-phase-row" id="stage-phase-row">
+            <span class="stage-phase-badge" id="stage-phase-badge">Learn</span>
+            <button class="btn btn-ghost stage-restart" id="btn-restart-learn">Restart from Learn</button>
+          </div>
+          <div class="encounter-status" id="encounter-status">Encounter <span id="encounter-progress">1</span> of <span id="encounter-total">5</span></div>
+        </div>
       </div>
-    </div>
 
-    <div class="scene" id="scene"></div>
+      <div class="learning-context">
+        <p class="narration" id="narration"></p>
 
-    <button class="hint-btn" id="hint-btn">Need a hint?</button>
-    <div class="hint-box" id="hint-box"></div>
+        <div class="romaji-toggle">
+          <span>ふりがな &mdash; show romaji</span>
+          <button class="switch on" id="romaji-switch" aria-pressed="true" aria-label="Toggle romaji"></button>
+        </div>
 
-    <div class="feedback-row" id="feedback-row">
-      <div class="stamp" id="stamp"></div>
-      <div class="feedback-text" id="feedback-text"></div>
-    </div>
+        <div class="dialogue">
+          <div class="avatar" id="avatar-slot">🦊</div>
+          <div class="speech">
+            <div class="speech-top">
+              <div class="jp-line jp" id="jp-line"></div>
+              <button class="speak-btn" id="speak-btn" title="Play audio" aria-label="Play Japanese audio">🔊</button>
+            </div>
+            <div class="romaji-line" id="romaji-line"></div>
+            <div class="meaning-line" id="meaning-line"></div>
+          </div>
+        </div>
+      </div>
 
-    <div class="next-row" id="next-row" style="display:none;">
-      <button class="btn btn-primary" id="btn-next">Back to the Alley &rarr;</button>
+      <div class="answer-workspace">
+        <div class="scene" id="scene"></div>
+
+        <button class="hint-btn" id="hint-btn">Need a hint?</button>
+        <div class="hint-box" id="hint-box"></div>
+
+        <div class="feedback-row" id="feedback-row">
+          <div class="stamp" id="stamp"></div>
+          <div class="feedback-text" id="feedback-text"></div>
+        </div>
+
+        <div class="next-row" id="next-row" style="display:none;">
+          <button class="btn btn-primary" id="btn-next">Back to the Alley &rarr;</button>
+        </div>
+      </div>
     </div>
   </section>
 

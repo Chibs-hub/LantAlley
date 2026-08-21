@@ -841,7 +841,9 @@
       }
     }
     var scene = $("scene");
-    scene.innerHTML = '<details class="inn-instruction"><summary>How to interact</summary><span>'+interaction.controlHelp+'</span></details>'
+    // Always visible, not a collapsed <details>: the tap-to-place shortcut is
+    // useless if the only place it is mentioned is behind a disclosure arrow.
+    scene.innerHTML = '<p class="inn-instruction">'+interaction.controlHelp+'</p>'
       + '<div class="inn-clue">'+interaction.clue+'</div>'
       + '<div class="inn-room"><div class="shoji" aria-hidden="true"></div><div class="inn-workspace" id="inn-workspace">'
       + '<div class="inn-scene-zones" id="inn-scene-zones"></div>'

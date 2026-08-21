@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
@@ -113,6 +114,32 @@ test("every spoken Entrance tutorial line uses a pre-rendered clip", () => {
   }
 });
 
+test("audio generation collects the Entrance tutorial lines", () => {
+  const result = spawnSync(process.execPath, ["collect-spoken-lines.js"], {
+    cwd: new URL(".", import.meta.url),
+    encoding: "utf8",
+  });
+  assert.equal(result.status, 0, result.stderr);
+  const collected = JSON.parse(result.stdout);
+
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(read("entrance-stage-logic.js"), context);
+  const entrance = context.LanternAlleyLogic;
+  let state = entrance.createTutorial();
+  const spoken = [entrance.getTutorialStep(state).jp];
+  state = entrance.advanceTutorial(state);
+  spoken.push(entrance.getTutorialStep(state).jp);
+  state = entrance.advanceTutorial(state);
+  spoken.push(entrance.getTutorialStep(state).jp);
+  state = entrance.completeTutorial(state);
+  spoken.push(entrance.getTutorialStep(state).jp);
+
+  for (const jp of spoken) {
+    assert.ok(collected.includes(jp), `audio generation omitted Entrance line: ${jp}`);
+  }
+});
+
 test("playback prefers the clip and falls back to speech synthesis", () => {
   const app = read("app.js");
   assert.match(app, /function playClip/);
@@ -131,4 +158,50 @@ test("the shell list covers the scripts index.html actually loads", () => {
   for (const src of scripts) {
     assert.ok(sw.includes('"./' + src + '"'), `sw.js does not pre-cache ${src}`);
   }
+});
+
+test("the game screen separates context from the answer workspace", () => {
+  const html = read("index.html");
+  const regions = ["stage-bar", "learning-context", "answer-workspace"];
+
+  for (const name of regions) {
+    assert.equal(
+      (html.match(new RegExp(`class="${name}(?:"| )`, "g")) || []).length,
+      1,
+      `${name} must appear exactly once`,
+    );
+  }
+
+  assert.ok(html.indexOf('class="stage-bar') < html.indexOf('class="learning-context'));
+  assert.ok(html.indexOf('class="learning-context') < html.indexOf('class="answer-workspace'));
+  for (const id of ["jp-line", "scene", "feedback-row", "btn-next"]) {
+    assert.equal((html.match(new RegExp(`id="${id}"`, "g")) || []).length, 1);
+  }
+});
+
+test("the stage shell adapts from split workspace to sticky mobile request", () => {
+  const css = read("styles.css");
+  assert.match(css, /\.stage\{[^}]*max-width:1100px/);
+  assert.match(css, /\.game-layout\{[^}]*display:grid/);
+  assert.match(css, /grid-template-columns:minmax\(300px,38fr\) minmax\(0,62fr\)/);
+  assert.match(css, /@media\(max-width:760px\)/);
+  assert.match(css, /@media\(min-width:761px\) and \(max-height:800px\)/);
+  assert.match(css, /\.learning-context\{display:contents\}/);
+  assert.match(css, /\.learning-context \.dialogue\{[^}]*position:sticky/);
+});
+
+test("each interaction uses the adaptive answer workspace", () => {
+  const css = read("styles.css");
+  assert.match(css, /\.answer-workspace \.scene\{[^}]*background:transparent[^}]*border:0/);
+  assert.match(css, /\.answer-workspace \.inn-replies/);
+  assert.match(css, /\.answer-workspace \.schedule-controls/);
+  assert.match(css, /\.answer-workspace \.duo-stage/);
+});
+
+test("the shared object room uses a compact destination and material grid", () => {
+  const css = read("styles.css");
+  assert.match(css, /\.answer-workspace \.inn-room,.answer-workspace \.inn-workspace\{min-height:0/);
+  assert.match(css, /\.answer-workspace \.inn-scene-zones\{[^}]*minmax\(104px,1fr\)/);
+  assert.match(css, /\.answer-workspace \.inn-drop-zone > \.inn-placed-object\{[^}]*position:absolute/);
+  assert.match(css, /\.answer-workspace \.inn-tray\{[^}]*gap:8px/);
 });

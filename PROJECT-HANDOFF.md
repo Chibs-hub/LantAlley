@@ -90,17 +90,18 @@ Important: browser progress is not part of the project folder. Copying or zippin
 
 | File or folder | Purpose |
 | --- | --- |
-| `index.html` | Page markup only. Loads styles.css and the four scripts. |
+| `index.html` | Page markup only. Loads styles.css and the five scripts. |
 | `styles.css` | All styling. |
 | `app.js` | Application: map, controller, speech, progress, scene rendering, SVG icons, drag-and-drop. |
 | `n2-home-inn-stage.js` | Moonview Inn content: the shared `ROOM` definition, per-encounter requirements, Japanese sentences, near-miss explanations, phase rules, mastery rules. |
 | `moonview-inn-interactions.js` | Pure state engine for the five interactions. Node-testable, no DOM. |
 | `entrance-stage-logic.js` | Alley Entrance fox pose and dialogue behavior. |
-| `build-artifact.py` | Builds `lantern-alley-artifact.html`: inlines CSS, all four scripts and every local image. |
+| `build-artifact.py` | Builds `lantern-alley-artifact.html`: inlines CSS, all five scripts and every local image or audio clip. |
 | `optimize-fox-poses.py` | Regenerates `assets/fox/*.webp` from the full-size masters. |
 | `manifest.webmanifest` | PWA manifest: name, icons, standalone display. |
 | `sw.js` | Service worker. Pre-caches the app shell for offline play. |
 | `generate-audio.py` | Renders every spoken line to MP3 with a neural voice. Re-run after changing any Japanese. |
+| `collect-spoken-lines.js` | Collects spoken Japanese from the Entrance and Moonview Inn for audio generation. |
 | `audio-index.js` | Generated. Maps each line to its clip; imported by both the page and `sw.js`. |
 | `assets/audio/` | Generated MP3 clips, named by hash of the sentence. |
 | `icons/`, `make-icons.py` | PWA icon set and the script that regenerates it. |
@@ -119,7 +120,7 @@ Run all automated tests from PowerShell in the project folder:
 node --test moonview-inn-interactions.test.mjs n2-home-inn-stage.test.mjs entrance-stage.test.mjs pwa.test.mjs
 ```
 
-Current verified result: 69 tests passed, 0 failed.
+Current verified result: 74 tests passed, 0 failed.
 
 Beyond the mechanics, the tests now guard the design rule itself:
 
@@ -129,6 +130,8 @@ Beyond the mechanics, the tests now guard the design rule itself:
 - Practice narration describes evidence without naming the required English action. This test has already caught a real leak, where a narration used the word "replacement".
 - Encounter titles are story beats and never contain an action verb.
 - The Learn phase narrations run in story order.
+- Every spoken Entrance tutorial line has a pre-rendered audio clip, so it cannot silently fall back to a device voice.
+- The game screen keeps learning context and answer controls in separate adaptive regions, with a split desktop workspace and sticky mobile request.
 
 ## 8. Publishing to the Artifact
 
@@ -146,6 +149,32 @@ An artifact cannot load sibling `.js` files or local images, which is why the bu
 ## 9. Change log and reasons
 
 Newest first. Each entry records why the change was made, because the reasoning is harder to recover than the code.
+
+### 2026-08-21 - Mobile: tap-to-place made visible, and the continue button pinned
+
+Two problems reported from a real phone.
+
+**Dragging still felt mandatory.** Tap-to-place had shipped, but the instruction read "Drag objects between the places shown" and never mentioned tapping. Worse, that text sat inside a collapsed `<details>`, so most players never opened it. A shortcut nobody is told about does not exist. The instruction is now a plain always-visible line leading with the easier path: "Tap an object, then tap where it goes. Dragging works too."
+
+**The continue button was below the fold.** On a phone the answer room is taller than the screen, so the button after it required scrolling to find. Below 760px `.next-row` is now `position:sticky; bottom:0` with a fade behind it and a full-width target, respecting `env(safe-area-inset-bottom)` for notched phones. Desktop keeps it in normal flow.
+
+Verified at 390x844: the instruction is visible without interaction, and the continue button pins to the viewport bottom at any scroll position with a 340x49 target. At 1366x768 it stays static.
+
+### 2026-08-21 - Adaptive stage shell keeps the request beside the answer
+
+The game screen was a 680px vertical stack, so learners often had to scroll past Kon's Japanese request before they could see all destinations, objects, or schedule controls. The screen now expands to 1100px and uses a 38/62 learning-context and answer-workspace split on wide displays.
+
+Below 760px the regions stack, the complete Japanese request stays sticky for the full answer workspace, and the page uses one natural scroll rather than a nested answer pane. Screens 800px high or shorter reduce decorative padding and room height without shrinking Japanese text or touch targets. Object rooms, schedules, reply choices, and the Entrance tutorial each use the same shell with interaction-specific density.
+
+The shared object room was compacted separately because its source objects were stretching destination rows and making the answer area taller than the viewport. Destination zones now use a denser adaptive grid, objects already located in the room are positioned without increasing row height, and the answer tray wraps with smaller gaps while preserving 48px controls.
+
+Rendered checks verified scroll-free task layouts at 1366x768 and 1024x768. At 390x844 the layout stacks without horizontal overflow, and Kon's complete Japanese request remains fixed at the top while the learner scrolls through the answer room. The browser console was clean in a fresh standalone-artifact preview.
+
+The title and map remain at their previous 680px width. The service-worker cache is `lantern-alley-v6`, and the standalone artifact was rebuilt.
+
+### 2026-08-21 - Alley Entrance now uses the same neural voice
+
+The Entrance tutorial was not included in audio generation, so its four lines fell back to the browser's device voice while Moonview Inn used `ja-JP-NanamiNeural`. `collect-spoken-lines.js` now walks the Entrance tutorial flow as well as the inn stage. Four matching clips were added, the offline cache was refreshed, and regression tests require both the generator and `audio-index.js` to cover every spoken Entrance line.
 
 ### 2026-08-21 - Tap-to-place, so mobile does not require long drags
 
@@ -183,7 +212,7 @@ Still open for a native reviewer: `代える` is used for swapping a towel or a 
 
 ### 2026-08-21 - Pre-rendered neural audio replaces device speech synthesis
 
-All 36 spoken lines are now MP3s rendered with `ja-JP-NanamiNeural` via `edge-tts` (free, no API key). `generate-audio.py` regenerates them; clips are named by a hash of the sentence, so re-running only renders lines that actually changed.
+All 40 spoken lines are now MP3s rendered with `ja-JP-NanamiNeural` via `edge-tts` (free, no API key). `generate-audio.py` regenerates them; clips are named by a hash of the sentence, so re-running only renders lines that actually changed.
 
 Why this mattered more than it sounds:
 
@@ -192,7 +221,7 @@ Why this mattered more than it sounds:
 
 `speak()` now tries the clip first and falls back to `speechSynthesis` when a line has no clip, or when autoplay is blocked. Nothing breaks if a clip is missing.
 
-`audio-index.js` assigns to `self`, not `window`, so `sw.js` can `importScripts()` the same file to build its pre-cache list. The audio paths therefore have one source of truth rather than being copied into the worker by hand. All 36 clips are cached; audio works offline.
+`audio-index.js` assigns to `self`, not `window`, so `sw.js` can `importScripts()` the same file to build its pre-cache list. The audio paths therefore have one source of truth rather than being copied into the worker by hand. All 40 clips are cached; audio works offline.
 
 **Generation needs network; playback never does.** Re-run `generate-audio.py` after editing any Japanese, then bump `CACHE_VERSION` in `sw.js`.
 
