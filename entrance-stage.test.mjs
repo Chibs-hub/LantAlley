@@ -3,7 +3,9 @@ import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
 
-const html = readFileSync(new URL("./lantern-alley.html", import.meta.url), "utf8");
+const html = ["./index.html", "./styles.css", "./app.js"]
+  .map((name) => readFileSync(new URL(name, import.meta.url), "utf8"))
+  .join(String.fromCharCode(10));
 
 test("greeting rests on the transparent fox after speech", () => {
   const logicUrl = new URL("./entrance-stage-logic.js", import.meta.url);
@@ -55,7 +57,7 @@ test("talking mouth uses a gentle happy shape", () => {
 
 test("entrance uses fixed pose assets instead of a mouth overlay", () => {
   assert.match(html, /ENTRANCE_FOX_POSES/);
-  assert.match(html, /fox-neutral-no-mouth-transparent\.png/);
+  assert.match(html, /fox-neutral-no-mouth-transparent\.webp/);
   assert.match(html, /live-mouth/);
   assert.match(html, /talkBase/);
   assert.doesNotMatch(html, /kon-mouth-overlay/);

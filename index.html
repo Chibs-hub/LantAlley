@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e1830">
+<meta name="description" content="A small Japanese story-walk for JLPT N2 action verbs.">
+<title>Lantern Alley</title>
+<link rel="icon" href="lantern-alley.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600;800&family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="glow-orb a"></div>
+<div class="glow-orb b"></div>
+<div class="glow-orb c"></div>
+
+<div class="stage">
+
+  <section id="screen-title" class="frame">
+    <div class="brand-mark">🏮</div>
+    <h1>Lantern Alley</h1>
+    <div class="jp-subtitle jp">言葉の路地</div>
+    <p class="lede">
+      Dusk falls over a Tokyo backstreet. A kitsune spirit named Kon waits somewhere inside
+      &mdash; but the alley is yours to wander. Visit its stalls and corners in any order,
+      listen to Kon speak Japanese aloud, and answer by acting it out in the scene.
+    </p>
+    <div id="progress-note" class="progress-note" style="display:none;"></div>
+    <div class="title-actions">
+      <button class="btn btn-primary" id="btn-start">Enter the Alley</button>
+      <button class="btn btn-ghost" id="btn-restart" style="display:none;">Start Over</button>
+    </div>
+  </section>
+
+  <section id="screen-map" class="frame">
+    <div class="map-top">
+      <div class="map-heading">
+        <h2>Lantern Alley</h2>
+        <span>Tap a spot to visit it</span>
+      </div>
+      <div class="map-stats">
+        <span id="map-stars">⭐ 0/5</span>
+        <span id="map-visited">🏮 0/6</span>
+      </div>
+    </div>
+
+    <div class="toast" id="map-toast"></div>
+
+    <div class="map-wrap">
+      <svg class="map-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M12,80 L30,48"></path>
+        <path d="M30,48 L14,18"></path>
+        <path d="M30,48 L58,68"></path>
+        <path d="M14,18 L46,14"></path>
+        <path d="M46,14 L74,30"></path>
+        <path d="M74,30 L58,68"></path>
+        <path d="M58,68 L86,56"></path>
+        <path d="M74,30 L86,56"></path>
+      </svg>
+      <div id="map-nodes"></div>
+    </div>
+
+    <p class="map-legend">✓ = visited &nbsp;&middot;&nbsp; ⭐ = answered perfectly on the first try</p>
+    <div class="map-actions">
+      <button class="btn btn-ghost btn-small" id="btn-map-restart">Reset Journey</button>
+    </div>
+  </section>
+
+  <section id="screen-game" class="frame">
+    <div class="hud">
+      <button class="breadcrumb" id="btn-back-map">&larr; Lantern Alley</button>
+      <div class="hud-hearts" id="hud-hearts" aria-label="Hearts remaining"></div>
+      <div class="hud-stars"><span id="hud-star-count">0</span> <span>⭐</span></div>
+    </div>
+
+    <div class="scene-label" id="scene-label">Location</div>
+    <div class="stage-phase-row" id="stage-phase-row">
+      <span class="stage-phase-badge" id="stage-phase-badge">Learn</span>
+      <button class="btn btn-ghost stage-restart" id="btn-restart-learn">Restart from Learn</button>
+    </div>
+    <div class="encounter-status" id="encounter-status">Encounter <span id="encounter-progress">1</span> of <span id="encounter-total">5</span></div>
+    <p class="narration" id="narration"></p>
+
+    <div class="romaji-toggle">
+      <span>ふりがな &mdash; show romaji</span>
+      <button class="switch on" id="romaji-switch" aria-pressed="true" aria-label="Toggle romaji"></button>
+    </div>
+
+    <div class="dialogue">
+      <div class="avatar" id="avatar-slot">🦊</div>
+      <div class="speech">
+        <div class="speech-top">
+          <div class="jp-line jp" id="jp-line"></div>
+          <button class="speak-btn" id="speak-btn" title="Play audio" aria-label="Play Japanese audio">🔊</button>
+        </div>
+        <div class="romaji-line" id="romaji-line"></div>
+        <div class="meaning-line" id="meaning-line"></div>
+      </div>
+    </div>
+
+    <div class="scene" id="scene"></div>
+
+    <button class="hint-btn" id="hint-btn">Need a hint?</button>
+    <div class="hint-box" id="hint-box"></div>
+
+    <div class="feedback-row" id="feedback-row">
+      <div class="stamp" id="stamp"></div>
+      <div class="feedback-text" id="feedback-text"></div>
+    </div>
+
+    <div class="next-row" id="next-row" style="display:none;">
+      <button class="btn btn-primary" id="btn-next">Back to the Alley &rarr;</button>
+    </div>
+  </section>
+
+  <footer class="credits">Lantern Alley &middot; a small Japanese story-walk</footer>
+</div>
+
+<script src="entrance-stage-logic.js"></script>
+<script src="moonview-inn-interactions.js"></script>
+<script src="n2-home-inn-stage.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>

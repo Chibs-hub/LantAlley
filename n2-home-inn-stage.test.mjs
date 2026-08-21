@@ -4,7 +4,9 @@ import test from "node:test";
 import vm from "node:vm";
 
 const stageUrl = new URL("./n2-home-inn-stage.js", import.meta.url);
-const html = readFileSync(new URL("./lantern-alley.html", import.meta.url), "utf8");
+const html = ["./index.html", "./styles.css", "./app.js"]
+  .map((name) => readFileSync(new URL(name, import.meta.url), "utf8"))
+  .join(String.fromCharCode(10));
 
 test("Moonview Inn provides five ordered N2 encounters", () => {
   assert.equal(existsSync(stageUrl), true, "N2 home and inn stage data must exist");

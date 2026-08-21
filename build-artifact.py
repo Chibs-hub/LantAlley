@@ -1,51 +1,72 @@
-import json
+"""Build lantern-alley-artifact.html: a single self-contained page.
 
-proj = r'.'
-scratch = r'.'
+The published Claude Artifact cannot load sibling .js/.css files or local
+images, so everything gets inlined here. The source of truth is the split
+files (index.html + styles.css + app.js + assets); this output is generated
+and should never be edited by hand.
+"""
+import base64
+import os
+import re
 
-with open(proj + r'\lantern-alley.html', 'r', encoding='utf-8') as f:
-    html = f.read()
+INDEX = 'index.html'
+OUT = 'lantern-alley-artifact.html'
 
-with open(scratch + r'\fox-datauris.json', 'r', encoding='utf-8') as f:
-    fox = json.load(f)
+SCRIPTS = [
+    'entrance-stage-logic.js',
+    'moonview-inn-interactions.js',
+    'n2-home-inn-stage.js',
+    'app.js',
+]
 
-scripts = {}
-for name in ['entrance-stage-logic.js', 'moonview-inn-interactions.js', 'n2-home-inn-stage.js']:
-    with open(proj + '\\' + name, 'r', encoding='utf-8') as f:
-        scripts[name] = f.read()
+MIME = {'.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg', '.ico': 'image/x-icon'}
 
-old_tags = '<script src="entrance-stage-logic.js"></script>\n<script src="moonview-inn-interactions.js"></script>\n<script src="n2-home-inn-stage.js"></script>'
 
-new_tags = (
-    '<script>' + scripts['entrance-stage-logic.js'] + '</script>\n' +
-    '<script>' + scripts['moonview-inn-interactions.js'] + '</script>\n' +
-    '<script>' + scripts['n2-home-inn-stage.js'] + '</script>'
+def read(path):
+    return open(path, encoding='utf-8').read()
+
+
+def data_uri(path):
+    ext = os.path.splitext(path)[1].lower()
+    payload = base64.b64encode(open(path, 'rb').read()).decode('ascii')
+    return 'data:' + MIME.get(ext, 'application/octet-stream') + ';base64,' + payload
+
+
+html = read(INDEX)
+
+# The artifact host supplies its own <!doctype>/<head>/<body> wrapper.
+html = re.sub(r'<!DOCTYPE html>\s*<html[^>]*>\s*<head>\s*', '', html, flags=re.I)
+html = re.sub(r'\s*</head>\s*<body>\s*', '\n', html, flags=re.I)
+html = re.sub(r'\s*</body>\s*</html>\s*$', '\n', html, flags=re.I)
+
+# Inline the stylesheet.
+html = html.replace(
+    '<link rel="stylesheet" href="styles.css">',
+    '<style>\n' + read('styles.css') + '</style>',
 )
 
-assert old_tags in html, 'script tag block not found'
-html = html.replace(old_tags, new_tags)
+# Inline each script in place, preserving load order.
+for name in SCRIPTS:
+    tag = '<script src="' + name + '"></script>'
+    if tag not in html:
+        raise SystemExit('missing script tag for ' + name)
+    html = html.replace(tag, '<script>\n' + read(name) + '</script>')
 
-path_map = {
-    'assets/fox-poses/fox-neutral-idle.png': fox['idle'],
-    'assets/fox-poses/fox-neutral-no-mouth-transparent.png': fox['talkBase'],
-    'assets/fox-poses/fox-wave-closed-smile.png': fox['waveClosed'],
-    'assets/fox-poses/fox-wave-small-open-mouth.png': fox['waveSmall'],
-    'assets/fox-poses/fox-wave-konnichiwa-mouth.png': fox['waveOpen'],
-    'assets/fox-poses/fox-invite-bow.png': fox['invite'],
-    'assets/fox-poses/fox-celebration.png': fox['celebrate'],
-    'assets/fox-poses/fox-try-again.png': fox['tryAgain'],
-    'assets/fox-poses/fox-listening.png': fox['listen'],
-}
-count = 0
-for old, new in path_map.items():
-    n = html.count(old)
-    assert n == 1, old + ' found ' + str(n) + ' times'
-    html = html.replace(old, new)
-    count += 1
+# Inline every local image the page references.
+images = sorted(set(re.findall(r'["\']((?:assets/[^"\']+|[\w.-]+\.ico))["\']', html)))
+inlined = 0
+for rel in images:
+    path = rel.replace('/', os.sep)
+    if not os.path.isfile(path):
+        print('  skip (not found):', rel)
+        continue
+    html = html.replace('"' + rel + '"', '"' + data_uri(path) + '"')
+    inlined += 1
 
-with open(scratch + r'\lantern-alley-artifact.html', 'w', encoding='utf-8') as f:
-    f.write(html)
+open(OUT, 'w', encoding='utf-8', newline='').write(html)
 
-print('replaced', count, 'image paths')
 size = len(html.encode('utf-8'))
-print('output size:', size, 'bytes (~%.2f MB)' % (size/1024/1024))
+print('inlined %d scripts, 1 stylesheet, %d images' % (len(SCRIPTS), inlined))
+print('%s  %.2f MB' % (OUT, size / 1024 / 1024))
+if size > 16 * 1024 * 1024:
+    raise SystemExit('ERROR: exceeds the 16 MB artifact limit')

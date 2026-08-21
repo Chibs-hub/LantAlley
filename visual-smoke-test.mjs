@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { writeFileSync } from "node:fs";
 
 const targets = await fetch("http://127.0.0.1:9223/json").then((response) => response.json());
-const page = targets.find((target) => target.type === "page" && target.url.includes("lantern-alley.html"));
+const page = targets.find((target) => target.type === "page" && (target.url.includes("index.html") || target.url.includes("localhost")));
 assert.ok(page, "Lantern Alley page is not open in the verification browser");
 
 const socket = new WebSocket(page.webSocketDebuggerUrl);
