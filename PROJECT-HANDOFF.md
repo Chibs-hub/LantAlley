@@ -150,6 +150,12 @@ An artifact cannot load sibling `.js` files or local images, which is why the bu
 
 Newest first. Each entry records why the change was made, because the reasoning is harder to recover than the code.
 
+### 2026-08-21 - Entering the alley goes straight to the Entrance
+
+"Enter the Alley" opened the map, which asks a first-time player to choose a destination before anything has explained what the game is or how to answer. The Entrance is where Kon teaches both, so a player with no progress now lands there directly.
+
+Returning players still get the map, which is the more useful landing screen once the tutorial is done. The switch is simply whether `state.visited.entrance` is set.
+
 ### 2026-08-21 - Wait for Kon to finish speaking before advancing
 
 The encounter advanced on a fixed 1,100 ms timer after a correct answer, but Kon's spoken reply runs far longer than that. She was cut off mid-sentence and the next question loaded over her, which throws away the listening practice the reply exists to give.

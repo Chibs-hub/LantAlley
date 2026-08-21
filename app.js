@@ -353,7 +353,14 @@
     $("btn-restart").style.display = "inline-block";
   }
 
-  $("btn-start").addEventListener("click", function(){ showMap(); });
+  $("btn-start").addEventListener("click", function(){
+    // The alley opens at its entrance. Sending a first-time player straight
+    // there means Kon explains the game before they are asked to choose a
+    // destination from a map that means nothing to them yet. Once they have
+    // been through it, the map is the more useful landing screen.
+    if(!state.visited.entrance) enterLocation("entrance");
+    else showMap();
+  });
   $("btn-restart").addEventListener("click", function(){
     applyProgress(null);
     state.currentKey = null;
