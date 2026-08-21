@@ -45,7 +45,7 @@ Moonview Inn teaches these five N2 words:
 | --- | --- | --- |
 | 揃える | make uniform along some attribute | Group the cushions by the attribute the sentence names (色 / 大きさ). |
 | 代える | replace one thing with another | Put the named worn item in the bin, then its fresh counterpart in the fitting. Order matters. |
-| 温める | warm something deliberately | Drag the named dish onto the stove. One action, nothing else. |
+| 温める | warm something deliberately | Move the named dish to the appliance the request names (コンロ / 電子レンジ). One action. |
 | 調整 | reconcile several conditions | Read the times from the Japanese only, set the schedule, confirm. |
 | 引き受ける | undertake, accept responsibility | Choose the reply that takes the job on. The reply is the whole answer. |
 
@@ -63,9 +63,9 @@ Each harder item carries one close N2 near-miss, used for feedback when the play
 
 - 4 cushions varying in colour, size and facing, plus 2 unlabelled mats.
 - A used towel and a burnt-out bulb, each beside a fresh one, plus a bin and a fitting.
-- Cold tea and cold soup, plus a stove.
+- Cold tea, soup and rice, plus a stove and a microwave.
 
-Ten draggable objects, five drop zones, every time. Dropping a cushion on a mat is 揃える; a worn item in the bin is 代える; a dish on the stove is 温める. Performing the wrong one gives "That is a different action from the one the request asked for."
+Ten draggable objects, five drop zones, every time. Dropping a cushion on a mat is 揃える; a worn item in the bin is 代える; a dish on the named appliance is 温める. Performing the wrong one gives "That is a different action from the one the request asked for."
 
 The three attributes of the cushions are deliberately crossed, so grouping by colour, by size and by facing all produce different answers. Facing is never asked for; it exists so the correct grouping cannot be guessed.
 
@@ -120,7 +120,7 @@ Run all automated tests from PowerShell in the project folder:
 node --test moonview-inn-interactions.test.mjs n2-home-inn-stage.test.mjs entrance-stage.test.mjs pwa.test.mjs
 ```
 
-Current verified result: 77 tests passed, 0 failed.
+Current verified result: 78 tests passed, 0 failed.
 
 Beyond the mechanics, the tests now guard the design rule itself:
 
@@ -149,6 +149,18 @@ An artifact cannot load sibling `.js` files or local images, which is why the bu
 ## 9. Change log and reasons
 
 Newest first. Each entry records why the change was made, because the reasoning is harder to recover than the code.
+
+### 2026-08-21 - The request names the appliance it requires
+
+The room offers a コンロ and a 電子レンジ, and the engine rejects the wrong one, but the Japanese only said 温めてください. The learner had to work out which appliance suits tea versus rice - kitchen sense, not Japanese. Same flaw as the 代える bin step: a requirement the player must infer rather than read.
+
+The appliance is now named, which also puts the で particle to work:
+
+- お茶をコンロでもう一度温めてください。
+- スープをコンロで温めてください。
+- ごはんを電子レンジで温めてください。
+
+A test enforces this generally: for every warm item, the Japanese must contain the word for the appliance its target dish requires. Adding a dish that needs an unstated appliance now fails the suite.
 
 ### 2026-08-21 - Objects sometimes refused to move on touch
 

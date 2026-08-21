@@ -397,6 +397,28 @@ test("the arrange scene never states its own grouping rule", () => {
   assert.match(html, /timeline\.style\.gridTemplateColumns/);
 });
 
+test("the request names the appliance it requires", () => {
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(readFileSync(stageUrl, "utf8"), context);
+  const stage = context.N2HomeInnStage;
+
+  // The engine rejects the wrong appliance, so making the learner guess which
+  // one tests kitchen sense rather than Japanese. If it is required, say it.
+  const applianceWord = { stove: "コンロ", microwave: "電子レンジ" };
+
+  for (const item of [...stage.encounters, ...stage.practice, ...stage.challenge]) {
+    if (item.mechanic !== "warm") continue;
+    const dish = item.interaction.room.dishes.find((d) => d.key === item.interaction.target);
+    assert.ok(dish, `no dish for target ${item.interaction.target}`);
+    assert.match(
+      item.jp,
+      new RegExp(applianceWord[dish.appliance]),
+      `${item.jp} requires the ${dish.appliance} but never names it`,
+    );
+  }
+});
+
 test("warming food and drink uses 温める, never 暖める", () => {
   const context = {};
   vm.createContext(context);
