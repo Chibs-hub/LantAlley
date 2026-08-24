@@ -8,15 +8,19 @@
     {kind:"complete", jp:"上手です！日本語を聞いて行動できました。これから路地を歩いて、行きたい場所を選んでください。", romaji:"Jouzu desu! Nihongo o kiite koudou dekimashita. Kore kara roji o aruite, ikitai basho o erande kudasai.", destination:"map"}
   ];
   var tutorialActions = [
-    {key:"bow", emoji:"🙇", label:"お辞儀"},
-    {key:"wave", emoji:"👋", label:"手を振る"},
-    {key:"clap", emoji:"👏", label:"拍手"}
+    {key:"bow", emoji:"🙇", label:"Bow"},
+    {key:"wave", emoji:"👋", label:"Wave"},
+    {key:"clap", emoji:"👏", label:"Clap"}
   ];
 
   function createTutorial(){ return {index:0}; }
   function advanceTutorial(state){ return {index:Math.min(2, Number(state && state.index || 0) + 1)}; }
   function completeTutorial(){ return {index:3}; }
   function getTutorialStep(state){ return tutorialSteps[Math.max(0, Math.min(3, Number(state && state.index || 0)))]; }
+  function getTutorialProgress(state){
+    var index = Math.max(0, Math.min(3, Number(state && state.index || 0)));
+    return {current:Math.min(3, index + 1), total:3};
+  }
   function getTutorialActions(){ return tutorialActions.map(function(item){ return {key:item.key, emoji:item.emoji, label:item.label}; }); }
   function getHowToInteract(){ return "Choose the action Kon asks for."; }
 
@@ -47,16 +51,131 @@
     };
   }
 
+  function createDialogueFlow(options){
+    options = options || {};
+    var render = options.render || function(){};
+    var stopVoice = options.stopVoice || function(){};
+    var schedule = options.schedule || function(next, delay){ return setTimeout(next, delay); };
+    var cancelSchedule = options.cancelSchedule || function(timer){ clearTimeout(timer); };
+    var fullText = "";
+    var visibleLength = 0;
+    var phase = "idle";
+    var continuation = null;
+    var revealTimer = null;
+
+    function publish(){
+      render(fullText.slice(0, visibleLength), phase);
+    }
+
+    function clearReveal(){
+      if(revealTimer !== null){
+        cancelSchedule(revealTimer);
+        revealTimer = null;
+      }
+    }
+
+    function revealNext(){
+      revealTimer = null;
+      if(phase !== "speaking" || visibleLength >= fullText.length) return;
+      visibleLength += 1;
+      publish();
+      if(visibleLength < fullText.length) revealTimer = schedule(revealNext, 38);
+    }
+
+    function finishLine(){
+      clearReveal();
+      visibleLength = fullText.length;
+      phase = continuation ? "ready" : "waiting";
+      publish();
+    }
+
+    function start(text, animate){
+      clearReveal();
+      fullText = String(text || "");
+      continuation = null;
+      if(animate){
+        visibleLength = 0;
+        phase = "speaking";
+        publish();
+        revealTimer = schedule(revealNext, 38);
+      }else{
+        visibleLength = fullText.length;
+        phase = "waiting";
+        publish();
+      }
+    }
+
+    function setContinuation(next){
+      continuation = typeof next === "function" ? next : null;
+      if(phase === "waiting" && continuation){
+        phase = "ready";
+        publish();
+      }
+    }
+
+    function replay(animate){
+      clearReveal();
+      if(animate){
+        visibleLength = 0;
+        phase = "speaking";
+        publish();
+        revealTimer = schedule(revealNext, 38);
+      }else{
+        visibleLength = fullText.length;
+        phase = continuation ? "ready" : "waiting";
+        publish();
+      }
+    }
+
+    function voiceFinished(){
+      if(phase === "speaking") finishLine();
+    }
+
+    function activate(){
+      if(phase === "speaking"){
+        stopVoice();
+        finishLine();
+        return "completed";
+      }
+      if(phase === "ready" && continuation){
+        var next = continuation;
+        continuation = null;
+        phase = "waiting";
+        publish();
+        next();
+        return "advanced";
+      }
+      return "ignored";
+    }
+
+    function activateFromSurface(isExplicitControl){
+      if(isExplicitControl) return "ignored";
+      return activate();
+    }
+
+    return {
+      start:start,
+      replay:replay,
+      setContinuation:setContinuation,
+      voiceFinished:voiceFinished,
+      activate:activate,
+      activateFromSurface:activateFromSurface,
+      getText:function(){ return fullText; }
+    };
+  }
+
   root.LanternAlleyLogic = {
     createTutorial:createTutorial,
     advanceTutorial:advanceTutorial,
     completeTutorial:completeTutorial,
     getTutorialStep:getTutorialStep,
+    getTutorialProgress:getTutorialProgress,
     getTutorialActions:getTutorialActions,
     getHowToInteract:getHowToInteract,
     getSpeechEndPose:getSpeechEndPose,
     shouldUseTransparentFox:shouldUseTransparentFox,
     getTransparentFoxStyle:getTransparentFoxStyle,
-    getHappyMouthStyle:getHappyMouthStyle
+    getHappyMouthStyle:getHappyMouthStyle,
+    createDialogueFlow:createDialogueFlow
   };
 })(typeof window !== "undefined" ? window : globalThis);

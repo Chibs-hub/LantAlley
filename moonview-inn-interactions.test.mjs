@@ -69,6 +69,21 @@ test("replace acts only on the object the sentence named", () => {
   assert.equal(engine.apply(removed.state, { type: "placeClean", item: "sheet", target: "towel" }).outcome, "wrong");
 });
 
+test("only bulb replacement changes the illustrated room lighting", () => {
+  const engine = loadEngine();
+  assert.equal(engine.getRoomLightState(engine.create("replace"), "bulb"), "dim");
+  assert.equal(
+    engine.getRoomLightState({ mechanic: "replace", removed: "bulb", installed: null, done: false }, "bulb"),
+    "dim",
+  );
+  assert.equal(
+    engine.getRoomLightState({ mechanic: "replace", removed: "bulb", installed: "bulb", done: true }, "bulb"),
+    "bright",
+  );
+  assert.equal(engine.getRoomLightState(engine.create("replace"), "towel"), "normal");
+  assert.equal(engine.getRoomLightState(engine.create("warm"), "tea"), "normal");
+});
+
 test("warm heats only the named item with its required appliance, in a single action", () => {
   const engine = loadEngine();
   const initial = engine.create("warm");

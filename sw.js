@@ -7,7 +7,7 @@
  * Bump CACHE_VERSION whenever any shell file changes, or returning players
  * will keep the old build.
  */
-var CACHE_VERSION = "lantern-alley-v16";
+var CACHE_VERSION = "lantern-alley-v35";
 
 // audio-index.js assigns to `self`, so the worker and the page share one list
 // of clip paths. Importing it here means new lines are cached automatically
@@ -23,6 +23,7 @@ var SHELL = [
   "./moonview-inn-interactions.js",
   "./n2-home-inn-stage.js",
   "./audio-index.js",
+  "./lantern-map.js",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
@@ -31,15 +32,20 @@ var SHELL = [
   "./assets/kon/kon-wave-left.webp",
   "./assets/kon/kon-wave-right.webp",
   "./assets/kon/kon-wave-both.webp",
-  "./assets/fox/fox-neutral-idle.webp",
+  "./assets/inn/room-empty-v4.png",
+  "./assets/inn/room-objects-v2.png",
+  "./assets/map/lantern-alley-map-v1.jpg",
+  "./assets/entrance/wooden-gate-v1.png",
+  "./assets/entrance/player-actions-v1.png",
+  "./assets/fox/fox-neutral-idle-transparent-v2.webp",
   "./assets/fox/fox-neutral-no-mouth-transparent.webp",
-  "./assets/fox/fox-wave-closed-smile.webp",
-  "./assets/fox/fox-wave-small-open-mouth.webp",
-  "./assets/fox/fox-wave-konnichiwa-mouth.webp",
-  "./assets/fox/fox-invite-bow.webp",
-  "./assets/fox/fox-celebration.webp",
-  "./assets/fox/fox-try-again.webp",
-  "./assets/fox/fox-listening.webp"
+  "./assets/fox/fox-wave-closed-smile-transparent-v2.webp",
+  "./assets/fox/fox-wave-small-open-mouth-transparent-v2.webp",
+  "./assets/fox/fox-wave-konnichiwa-mouth-transparent-v2.webp",
+  "./assets/fox/fox-invite-bow-transparent-v2.webp",
+  "./assets/fox/fox-celebration-transparent-v2.webp",
+  "./assets/fox/fox-try-again-transparent-v2.webp",
+  "./assets/fox/fox-listening-transparent-v2.webp"
 ];
 
 Object.keys(self.LanternAlleyAudio || {}).forEach(function(line){

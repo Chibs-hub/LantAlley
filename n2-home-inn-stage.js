@@ -138,7 +138,32 @@
     heatingAppliances:[
       {key:"stove", icon:"stove", label:"コンロ"},
       {key:"microwave", icon:"microwave", label:"電子レンジ"}
-    ]
+    ],
+    // The room art contains fixtures only. Every answer object is a separate
+    // sprite, so moving one never leaves a duplicate baked into the background.
+    visual:{
+      background:"assets/inn/room-empty-v4.png",
+      spriteSheet:"assets/inn/room-objects-v2.png",
+      sprites:{
+        c1:{col:0,row:0}, c2:{col:1,row:0}, c3:{col:2,row:0}, c4:{col:3,row:0},
+        towelUsed:{col:0,row:1}, towelClean:{col:1,row:1},
+        bulbBroken:{col:2,row:1}, bulbNew:{col:3,row:1},
+        sheetStained:{col:0,row:2}, sheetFresh:{col:1,row:2},
+        kettle:{col:2,row:2}, pot:{col:3,row:2}, rice:{col:0,row:3}
+      },
+      // Percentages are measured against the 3:2 illustrated room.
+      hotspots:{
+        "install-towel":{x:2,y:19,w:19,h:25},
+        "remove-laundry":{x:1,y:45,w:18,h:18},
+        "remove-recycle":{x:19,y:45,w:8,h:18},
+        "install-bulb":{x:45,y:23,w:11,h:15},
+        stove:{x:56,y:34,w:15,h:8},
+        microwave:{x:57,y:45,w:14,h:11},
+        "install-sheet":{x:77,y:53,w:23,h:29},
+        g1:{x:19,y:63,w:26,h:16},
+        g2:{x:48,y:63,w:25,h:16}
+      }
+    }
   };
   var ROOM_HELP = "Tap an object, then tap where it goes. Dragging works too.";
   var ROOM_CLUE = "座布団は畳の上にあり、古いタオルはタオル掛け、汚れたシーツはベッド、切れた電球は照明にあります。新しい物と料理は棚に置かれています。";

@@ -1,6 +1,6 @@
 # Lantern Alley Project Handoff
 
-Last updated: 2026-08-21
+Last updated: 2026-08-24
 
 ## 1. Project summary
 
@@ -13,6 +13,8 @@ The current build is a focused prototype. It contains:
 - Five N2 action words, each answered by a physical or social action.
 - Learn, Practice, Challenge, focused review, medals, and saved progress.
 
+The current opening is a cinematic alley cover. A first visit and `最初から` both lead to Kon's three-beat Entrance tutorial; returning learners may continue to the open destination map. The Entrance is one illustrated scene with a front-facing bow action. Bulb replacement darkens the room before installation and produces a warm light transition after the decisive installation action.
+
 The project is not a complete JLPT N2 course. Only the first N2 stage is implemented.
 
 ## 2. How to run the game
@@ -20,7 +22,7 @@ The project is not a complete JLPT N2 course. Only the first N2 stage is impleme
 No installation or package manager is required.
 
 1. Open `index.html` in Microsoft Edge, Google Chrome, or another modern browser.
-2. Select `Enter the Alley`.
+2. Select `路地へ入る`.
 3. Open `Moonview Inn` from the map.
 4. If an older version is visible after an update, press `Ctrl+F5`.
 
@@ -65,18 +67,18 @@ Each harder item carries one close N2 near-miss, used for feedback when the play
 - A used towel and a burnt-out bulb, each beside a fresh one, plus a bin and a fitting.
 - Cold tea, soup and rice, plus a stove and a microwave.
 
-Ten draggable objects, five drop zones, every time. Dropping a cushion on a mat is 揃える; a worn item in the bin is 代える; a dish on the named appliance is 温める. Performing the wrong one gives "That is a different action from the one the request asked for."
+Thirteen movable objects and nine fixture destinations are present every time. Three worn items begin in the room; the wooden supply shelf begins with four cushions, three fresh replacements and three dishes. Dropping a cushion on a mat is 揃える; moving a worn item to its stated basket and then installing its fresh counterpart is 代える; moving a dish to the named appliance is 温める. Performing a different action gives "That is a different action from the one the request asked for."
 
 The three attributes of the cushions are deliberately crossed, so grouping by colour, by size and by facing all produce different answers. Facing is never asked for; it exists so the correct grouping cannot be guessed.
 
 ### Learning phases
 
 - Learn: 5 guided encounters, one per target word, full Japanese sentence shown.
-- Practice: 10 interleaved encounters, two situations per word. The target verb is blanked (`＿＿`) but the disambiguating noun stays visible.
+- Practice: 10 interleaved encounters, two situations per word. The complete Japanese request remains visible.
 - Challenge: 10 audio-focused encounters. Romaji, English meaning and hints are hidden.
 - Mastery: at least 8 of 10 correct, with all five target words answered correctly at least once.
 - Focused review: missed words return before the player retries the Challenge.
-- Correct answers advance automatically after about 1.1 seconds.
+- Kon's Japanese lines reveal progressively while she speaks. Clicking any non-control area of the game stops the voice and reveals the full line; clicking a non-control area again advances when a continuation is allowed. Buttons, inputs and draggable objects keep their own actions. A request waiting for an answer cannot be skipped.
 
 ## 5. Progress and scoring
 
@@ -95,8 +97,9 @@ Important: browser progress is not part of the project folder. Copying or zippin
 | `app.js` | Application: map, controller, speech, progress, scene rendering, SVG icons, drag-and-drop. |
 | `n2-home-inn-stage.js` | Moonview Inn content: the shared `ROOM` definition, per-encounter requirements, Japanese sentences, near-miss explanations, phase rules, mastery rules. |
 | `moonview-inn-interactions.js` | Pure state engine for the five interactions. Node-testable, no DOM. |
-| `entrance-stage-logic.js` | Alley Entrance fox pose and dialogue behavior. |
-| `build-artifact.py` | Builds `lantern-alley-artifact.html`: inlines CSS, all five scripts and every local image or audio clip. |
+| `lantern-map.js` | Map and stage-system model. Node-testable, no DOM. |
+| `entrance-stage-logic.js` | Alley Entrance fox poses plus the shared, testable dialogue reveal/advance controller. |
+| `build-artifact.mjs`, `build-artifact.py` | Build `lantern-alley-artifact.html`: inline CSS, all five scripts and every local image or audio clip. Use `node build-artifact.mjs`; it is the maintained builder. The Python one still works but needs the full interpreter path, because bare `python` on this machine is the Microsoft Store alias stub. |
 | `optimize-fox-poses.py` | Regenerates `assets/fox/*.webp` from the full-size masters. |
 | `manifest.webmanifest` | PWA manifest: name, icons, standalone display. |
 | `sw.js` | Service worker. Pre-caches the app shell for offline play. |
@@ -105,22 +108,23 @@ Important: browser progress is not part of the project folder. Copying or zippin
 | `audio-index.js` | Generated. Maps each line to its clip; imported by both the page and `sw.js`. |
 | `assets/audio/` | Generated MP3 clips, named by hash of the sentence. |
 | `icons/`, `make-icons.py` | PWA icon set and the script that regenerates it. |
-| `assets/fox/`, `assets/kon/` | Web-sized WebP images the app actually loads. |
+| `assets/fox/`, `assets/kon/` | Web-sized character images the app actually loads. |
+| `assets/inn/` | The empty illustrated room background and transparent 4 by 4 movable-object sprite sheet. |
 | `lantern-alley-artifact.html` | Generated. Do not edit by hand; it is overwritten by the build script. |
 | `assets/fox-poses/` | Full-size PNG masters. Not loaded by the app. |
 | `research/` | N5-N2 vocabulary source files and the extraction script. |
 | `*.test.mjs` | Automated behavior and regression tests. |
-| `docs/superpowers/` | Design and implementation planning documents. Note these predate the redesign in section 9 and describe the older tag-matching mechanics. |
+| `docs/superpowers/` | Design and implementation planning documents. The 2026-08-24 specs are current; earlier ones predate the redesign in section 9 and describe the superseded tag-matching mechanics. |
 
 ## 7. Testing and verification
 
 Run all automated tests from PowerShell in the project folder:
 
 ```powershell
-node --test moonview-inn-interactions.test.mjs n2-home-inn-stage.test.mjs entrance-stage.test.mjs pwa.test.mjs
+node --test entrance-stage.test.mjs lantern-map.test.mjs moonview-inn-interactions.test.mjs n2-home-inn-stage.test.mjs pwa.test.mjs
 ```
 
-Current verified result: 78 tests passed, 0 failed.
+Current verified result: 119 tests passed, 0 failed. `app.js`, `n2-home-inn-stage.js` and `sw.js` pass `node --check`. The rebuilt standalone artifact is 12.91 MB, below the 16 MB limit.
 
 Beyond the mechanics, the tests now guard the design rule itself:
 
@@ -139,7 +143,7 @@ The desktop shortcut points at a published Claude Artifact, not at the local fil
 
 To republish:
 
-1. Run `python build-artifact.py` to regenerate `lantern-alley-artifact.html`.
+1. Run `node build-artifact.mjs` to regenerate `lantern-alley-artifact.html`.
 2. Publish that file to the existing artifact URL, passing the URL so it updates in place rather than creating a second artifact.
 
 Current artifact: `https://claude.ai/code/artifact/951c7147-1dcf-4b9d-aced-2928ce94eb74`
@@ -148,7 +152,278 @@ An artifact cannot load sibling `.js` files or local images, which is why the bu
 
 ## 9. Change log and reasons
 
+### 2026-08-24 - Illustrated build committed and published; handoff corrected
+
+The illustrated Entrance, map system and inn artwork had been verified but left uncommitted and unpublished across sessions. All of it is now in git as one commit, and the 12.91 MB artifact is published to the live URL.
+
+Four inaccuracies in this document were corrected while doing so:
+
+- Section 7's test command omitted `lantern-map.test.mjs`, so it reported 112 tests when the suite is 119. Corrected to the five-module command already documented further down.
+- The file table said Python is not installed. It is; bare `python` is the Microsoft Store alias stub, so the Python builder needs the full interpreter path. `node build-artifact.mjs` remains the maintained one.
+- `docs/superpowers/` was described as entirely predating the redesign, but now also holds the current 2026-08-24 specs.
+- `lantern-map.js` was missing from the file table.
+
+### 2026-08-24 - Larger Entrance cast and separate dialogue dock approved
+
+The owner approved bringing the Entrance closer to the supplied mock: a much larger learner blended into the alley, Kon standing separately in the scene, and a bottom dock that keeps dialogue and action cards separate from both characters. The existing transparent assets will be reused unless rendered scaling proves inadequate. A regression contract was added before implementation to require avatar relocation, restoration for other stages, large desktop cast dimensions and a bottom-aligned dialogue area.
+
+Rendered QA found that the older Entrance pose files contained opaque pale canvases, so CSS alone could not blend the enlarged Kon into the alley. Eight replacement PNG cutouts are now stored under `assets/fox/*-transparent-v2.png`. Each file was checked as `Format32bppArgb` with corner alpha `0`; failed checkerboard generations were rejected and regenerated from the original pose sources. Runtime and offline-cache wiring are the next steps.
+
+The PWA regression contract now requires cache version `lantern-alley-v35` and all eight transparent version 2 poses in the offline shell before production wiring.
+
+Production now uses the transparent version 2 pose set for every Entrance Kon state, including idle, wave variants, invitation, celebration, correction and listening. The service worker was bumped to `lantern-alley-v35` and now pre-caches this exact pose set; the existing transparent no-mouth speech base remains unchanged.
+
+The first artifact rebuild correctly embedded the new files but failed the repository's 16 MB delivery limit at 27.34 MB because the eight lossless PNG cutouts add roughly 11 MB. The approved visual design is unchanged; the next correction is to encode the same alpha cutouts as efficient WebP assets and update the contracts and references before rebuilding.
+
+The eight cutouts were resized to a maximum 512-pixel edge and encoded as alpha WebP at quality 86 with alpha quality 100. Metadata checks report `hasAlpha: true` for every result. The production set totals 314,954 bytes instead of 11,664,030 bytes, and all runtime, test and offline-cache references now point to `*-transparent-v2.webp`.
+
+The rebuilt self-contained artifact now succeeds at 12.91 MB with 6 scripts, 1 stylesheet and 77 images inlined. A test run issued immediately before that rebuild still saw the previous oversized artifact and failed only its file-size assertion; this assertion must be rerun against the new 12.91 MB output during final verification.
+
+Fresh-origin rendered QA passed at 1280x720 and 390x844. On desktop, the learner and transparent Kon stand independently in the alley above separate wooden dialogue and action docks. On mobile, both characters remain above the dialogue, the dialogue remains above the action cards, all three English action labels are visible, and the complete stage fits in the viewport without requiring a page scroll. No pose shows an opaque square or checkerboard.
+
+Final verification on 2026-08-24 rebuilt the artifact at 13,536,996 bytes (12.91 MB), passed all 119 defined tests, passed `node --check app.js`, and passed `git diff --check` with only the repository's existing LF-to-CRLF warnings. No commit, push, publish or deployment was performed.
+
+After verification, the eight unused 11 MB PNG intermediates were removed from `assets/fox`; the eight referenced alpha WebP production files remain. The original full-resolution generated outputs remain recoverable in Codex's generated-image folder.
+
+The Entrance now relocates the live Kon avatar into the scene while preserving the same element and speech pose system; entering any other stage restores it to `dialogue-shell`. On desktop the learner is 170 x 340 px and Kon occupies a 170 x 220 px scene layer. The dialogue and action cards use adjacent wood-framed bottom panels, with a Kon name tab and HOW TO INTERACT embedded above the choices. Mobile keeps the characters large at 112 x 224 and 112 x 145 px, then stacks dialogue above the action row when choices appear.
+
+Initial mobile render QA found the stacked dock covering Kon and the learner's legs, while the HOW TO INTERACT copy overlapped the cards. A regression contract now requires both characters to rise above the dock, 162 px of dock clearance, and a 42 px instruction band above the action cards before the mobile CSS correction.
+
+The mobile correction raises both scene characters to a 302 px bottom offset while choices are present, reserves 162 px beneath the dialogue, and increases the action dock's top padding to 42 px. The interaction sentence therefore has its own band and neither character sits behind the dialogue card.
+
+Clean mobile render QA then exposed opaque pale canvases inside Kon's listening and other pose files. This defeats the approved requirement that the larger character blend into the alley. A regression contract now requires versioned transparent production cutouts for all eight previously opaque Entrance poses before their generated replacements are wired into the app.
+
+### 2026-08-24 - Entrance action-card labels corrected to English
+
+The owner clarified that the words beneath the illustrated Entrance actions are control descriptions, so they must be English even though Kon's spoken request remains Japanese. A regression contract now requires `Bow`, `Wave` and `Clap` in both the shared tutorial model and the rendered app data before the production labels are changed.
+
+The production action-card labels are now `Bow`, `Wave` and `Clap` in both `entrance-stage-logic.js` and `app.js`. The Japanese request, hint and response text are unchanged, so the player still demonstrates comprehension of Kon's Japanese rather than reading a translated answer sentence.
+
+The offline-delivery contract now requires cache version 34 before rebuilding, so installed copies receive the corrected labels rather than retaining the version 33 shell.
+
+`sw.js` now uses `lantern-alley-v34` for this label correction.
+
+The standalone artifact was rebuilt with the corrected English action labels: 6 scripts, 1 stylesheet and 77 images inlined, 12.58 MB total.
+
+Verification passed: the artifact contains all three English labels, `node --check app.js` passed, `git diff --check` found no whitespace errors, and the five defined suites passed 117 of 117 tests.
+
+### 2026-08-24 - Clear zabuton direction and illustrated Entrance gate planned
+
+The owner confirmed two visual corrections. Moonview Inn must show unmistakable vertical versus horizontal zabuton without changing the Japanese question. The Entrance must match the approved wooden-gate reference more closely, using a dedicated gate scene and one consistent human character for idle, bow, wave and clap. Regression contracts were added before production changes.
+
+Generated and saved two project assets: `assets/entrance/wooden-gate-v1.png` (1536 x 1024) and `assets/entrance/player-actions-v1.png` (1774 x 887, true RGBA transparency). The gate contains no characters or UI. The pose sheet contains the same learner in idle, bow, wave and clap poses with equal horizontal cells.
+
+Moonview Inn now renders cushions from their actual `color`, `size` and `dir` data instead of the inconsistent first row of the old sprite sheet. The base silhouette is landscape; 縦向き rotates 90 degrees and 横向き remains horizontal. Woven seams, curved padding and a central tuft make each object read as a zabuton at small sizes.
+
+The Entrance bow contract was updated before implementation: the learner must switch to the dedicated side-view bow cell rather than distort or rotate a front-facing SVG. The pose holds for the existing 1.25-second decisive-action window and reduced-motion still shows the correct static pose.
+
+Production now uses the dedicated gate background and transparent four-pose learner sheet. The old inline stick-figure SVG and its limb-distortion animations were removed. Both the learner in the scene and the three answer cards use the same character artwork, with the bow card and performed bow showing the unmistakable side-view pose. The Entrance header was restyled as a compact wooden plaque so it belongs to the gate scene while preserving the existing Japanese lesson and answer logic.
+
+The offline-delivery regression contract now requires both new Entrance images, cache version 33, the new bow artwork rule, and the complete removal of `PLAYER_SVG`. This was added before changing the service worker or rebuilding the standalone artifact.
+
+`sw.js` now pre-caches both Entrance production assets and uses `lantern-alley-v33`, ensuring returning installed-app users do not remain on the old entrance scene.
+
+The standalone desktop artifact was rebuilt from the updated sources. It inlines 6 scripts, 1 stylesheet and 77 images and is 12.58 MB, below the 16 MB artifact limit.
+
+Rendered QA used a clean local origin to avoid the old service-worker cache. At 1280 x 720, the gate, learner and all three illustrated action cards remain inside the 1000 px stage. At 390 x 844, the Entrance is 374.4 px wide with no horizontal overflow; all three cards are visible. The Moonview shelf also shows the four zabuton as unmistakable portrait/landscape pairs, with the full illustrated room remaining 331.2 px wide. The old localhost preview may show stale emoji cards until its v33 worker takes control after reload.
+
+Final verification: the standalone build completed at 12.58 MB, `node --check app.js` passed, `git diff --check` found no whitespace errors, and the five defined automated suites passed 117 of 117 tests. Unfiltered `node --test` additionally discovers `visual-smoke-test.mjs`; that optional script could not connect to its separate expected browser endpoint at `127.0.0.1:9223`, while in-app rendered QA was completed through the clean preview above.
+
+### 2026-08-24 - Entrance rendered QA found header stretching and weak dialogue contrast
+
+At a 1280 x 720 desktop viewport, CSS Grid stretched the Entrance header row to 216px and the pale speech card inherited white scene text. Added a regression contract before correcting the row sizing and explicit speech color.
+
+The Entrance grid now uses an auto-sized header plus a flexible scene row, and the speech card explicitly uses dark text. This preserves the full-height alley composition without wasting the upper third of the screen.
+
+The regression suite passed 21 of 21 Entrance tests, then `lantern-alley-artifact.html` was rebuilt with the corrected CSS (6 scripts, 1 stylesheet and 75 images inlined; 8.40 MB).
+
+Rendered action QA exposed a second issue: rotating the front-facing player by 28 degrees looked like a sideways lean, not an お辞儀. The bow contract now requires vertical lowering and foreshortening of the upper body while the legs remain fixed.
+
+The bow now compresses the upper-body depth to 72% and lowers it 12px at the hold point, then returns upright. Reduced-motion users receive the same recognizable bowed pose without animation.
+
+The revised bow passed all 21 Entrance tests and the standalone desktop artifact was rebuilt again with the final motion.
+
+Returning-player QA found that `最初から` cleared progress but opened the map, which skipped Kon's required greeting and mechanics lesson. A regression assertion now requires reset to re-enter the Entrance.
+
+`最初から` now clears saved progress and immediately starts the Entrance greeting, matching the first-time route.
+
+The reset route passed the complete 21-test Entrance suite and the standalone artifact was rebuilt with the corrected flow.
+
+Phone QA at 390 x 844 found no horizontal overflow, but the opening Kon still had an opaque white square. A regression contract now requires the transparent fox source and a small CSS smile for the static title pose.
+
+The title now uses `fox-neutral-no-mouth-transparent.webp` inside a positioned wrapper, with a small CSS smile aligned beneath the nose. The background scene can show cleanly around Kon at every breakpoint.
+
+The transparent title pose passed all 21 Entrance tests and the standalone artifact was rebuilt (6 scripts, 1 stylesheet and 75 images inlined; 8.42 MB).
+
+Final offline review found that the Entrance QA fixes were made after cache v31 was introduced. The delivery regression now requires v32 so installed users cannot remain on the earlier redesigned shell.
+
+`sw.js` now uses `lantern-alley-v32`; installing the final build replaces v31 and discards older shell caches on activation.
+
+Final verification: JavaScript syntax checks passed, all 114 self-contained automated tests passed with zero failures, `git diff --check` found no whitespace errors, and `lantern-alley-artifact.html` is 8,824,384 bytes. No commit, push, publish or deployment was performed.
+
+Rendered QA used the rebuilt standalone artifact at 1280 x 720, 390 x 844 and 320 x 720. The opening and Entrance had no horizontal overflow, the Entrance header remained compact, actions stayed hidden until the request, reset returned to the greeting, and the browser console reported no warnings or errors.
+
 Newest first. Each entry records why the change was made, because the reasoning is harder to recover than the code.
+
+### 2026-08-24 - Cinematic opening, Entrance, bow, and room-light design approved
+
+The approved direction makes the first experience part of the same illustrated world as the map. The opening becomes a full-scene cover using the Lantern Alley artwork, a large `言葉の路地` title, Kon in the foreground, one Japanese entry action, and only a compact saved-progress note when needed. The Entrance becomes a dedicated gate scene with Kon and the learner together, three-step progress, dialogue along the bottom, and picture-first actions shown only when Kon asks the learner to act. `HOW TO INTERACT` remains the only English helper and sits outside the answer content.
+
+The learner's bow will keep both feet planted and move the straight upper body from the hips through a 25 to 30 degree bend, brief pause, and natural return. Bulb-replacement encounters will begin dim, stay dim after the broken bulb is removed, then brighten with a warm fixture-centered glow as soon as the new bulb is installed. This visual result adds no extra answer step and has a reduced-motion path. The complete approved contract is `docs/superpowers/specs/2026-08-24-opening-entrance-lighting-redesign.md`. Production code has not changed at this checkpoint; the next step is implementation planning.
+
+Implementation is authorized. The TDD sequence is recorded in `docs/superpowers/plans/2026-08-24-opening-entrance-lighting-implementation.md`: cinematic opening, dedicated Entrance and corrected bow, pure bulb light state and visual feedback, then offline rebuild and adaptive verification. The project owner requested implementation now, so execution will continue inline in this task. No commit, push, or remote publication is authorized.
+
+TDD Task 1 starts with an opening-screen regression contract. It requires the project-owned alley artwork, Japanese title and entry controls, compact returning-progress state, and removal of the long legacy English introduction. Production opening markup and styling remain unchanged until this test fails for those expected missing cinematic elements.
+
+The Task 1 red check failed on the legacy title card as expected. The opening now uses the illustrated alley as a full-scene cover, with a dominant `言葉の路地`, small `LANTERN ALLEY`, foreground Kon, and one Japanese entry action. Returning progress is a compact Japanese status line; `路地へ戻る` and the secondary `最初から` appear only when progress exists. The long English premise paragraph is removed because the Entrance tutorial teaches it inside the world.
+
+TDD Task 2 starts with three focused contracts: a pure 1/3, 2/3, 3/3 tutorial progress model; a dedicated illustrated Entrance scene whose picture actions remain hidden until the request; and a corrected 1.2-second bow with stable legs, a hip pivot, a 28-degree bend, and reduced-motion handling. Production Entrance logic, composition, and motion remain unchanged until these checks fail for the expected missing behavior.
+
+The Task 2 red run failed on all three intended boundaries. The Entrance now has a pure three-beat progress helper and visible `路地の入口 1 / 3` state, while the existing fourth completion step still opens the map. The game shell receives a dedicated illustrated Entrance class: Kon and the learner occupy the same alley scene, dialogue remains along the lower edge, and the picture-first actions plus `HOW TO INTERACT` stay invisible until the request. The learner SVG now names its stable leg group separately; the complete upper body pivots from the hips to 28 degrees for 1.2 seconds before the answer resolves, with an explicit reduced-motion pose.
+
+The first cross-stage Task 3 red run caught one Entrance compatibility regression: changing the semantic helper source to uppercase broke the existing control-help contract. The source is restored to `How to interact`, while CSS renders it visually uppercase. This preserves the approved appearance and the established readable label; the bulb-light tests remain intentionally red.
+
+TDD Task 3 starts with a pure lighting-state matrix and rendered-effect contract. Only replacement of the bulb may return `dim` before installation or `bright` after it; towel replacement and warming must remain `normal`. The room effect must use pointer-transparent overlays, a fixture-centered warm result, and an explicit reduced-motion path. Production interaction logic and room styling remain unchanged until these checks fail for the expected missing helper and classes.
+
+The Task 3 red checks failed because the lighting helper and visual classes did not exist. `MoonviewInnInteractions.getRoomLightState()` now returns `dim` only for an uninstalled bulb, `bright` after that bulb is installed, and `normal` for every other target or mechanic. `app.js` maps that pure state onto the illustrated viewport. Pointer-transparent CSS layers darken the room without obscuring objects, then remove the darkness and pulse a warm radial glow from the wall fixture over 650 milliseconds. Reduced-motion mode changes directly to the settled warm state. `applyReplace()` is unchanged, so installing the bulb remains the decisive final action with no added step.
+
+TDD Task 4 starts at offline delivery. The new regression check requires cache version `lantern-alley-v31` and requires the standalone artifact to include the cinematic Japanese opening, Entrance progress model, corrected 1.2-second bow, and bulb dim/bright state system. The source implementation is green, but `sw.js` and the generated standalone file remain unchanged until this delivery test fails on the old cache and artifact.
+
+The Task 4 red run failed first on the expected old cache version. `sw.js` is now `lantern-alley-v31`, ensuring returning installed-app users receive the redesigned shell. The standalone artifact still needs regeneration before the complete delivery contract can pass.
+
+`node build-artifact.mjs` regenerated `lantern-alley-artifact.html` from the updated source. The builder inlined 6 scripts, 1 stylesheet, and 75 images; the standalone file is 8.40 MB. Delivery tests and rendered desktop/phone verification are still required before completion.
+
+### 2026-08-24 - Illustrated map and future-stage system approved for specification
+
+The approved map direction replaces the abstract dashed-node graph with one elevated illustrated Lantern Alley neighborhood. Six stable places form the world: 路地の入口, 月見宿, 灯り市, 夕月茶屋, 路地駅 and 灯守神社. Selecting a destination updates one compact story panel explaining why Kon would go there; entering remains a separate primary action. Desktop shows the complete alley, while phone keeps the same spatial arrangement and stacks the detail panel below it.
+
+Only the Entrance and Moonview Inn are implemented today. The four future places must therefore use an honest 準備中 state with no dead or disabled enter button until each full story, lesson, interaction, audio set, tests and responsive scene are complete. The approved behavior and future-stage contract are documented in `docs/superpowers/specs/2026-08-24-lantern-alley-map-stage-system-design.md`. This entry records design approval only; production map files have not yet changed.
+
+Implementation is authorized. The task-by-task TDD and verification sequence is documented in `docs/superpowers/plans/2026-08-24-lantern-alley-map-stage-system-implementation.md`. No production map source has changed at this checkpoint.
+
+TDD Task 1 started with `lantern-map.test.mjs`. The red contract requires six stable map destinations while proving that the four future places resolve to `preparing` and return no navigation action. Production map code is intentionally still absent until this test fails for the expected missing-module reason.
+
+The Task 1 red test failed only because `lantern-map.js` was absent. The minimal map model now defines six frozen destination records, resolves completed/in-progress/available/preparing from existing progress, and returns navigation actions only for the Entrance and Moonview Inn. `index.html` loads the model before `app.js`; no renderer or visual map changes are included in this step.
+
+TDD Task 2 started with semantic-shell and interaction-boundary checks. They require one live destination detail region, `aria-pressed` map selection, a separate model-derived navigation action, and no visible action when a selected place is Preparing. The existing lesson test now explicitly distinguishes the two playable stage engines from the six-place visual map.
+
+The Task 2 checks failed on the legacy graph and direct-entry renderer. The map markup now has one destination layer and one Japanese `aria-live` detail shelf. `app.js` renders all six model destinations, updates `aria-pressed` selection without navigating, and shows a separate action only when `LanternAlleyMap.getAction()` returns the Entrance or Moonview Inn. Future places update their story and 準備中 status but expose no enter control.
+
+The first Task 2 green run caught a progress regression: removing the old node label also removed Moonview Inn's medal. The selected destination status now carries the existing bronze, silver or gold medal beside 学習中 or 完了. Navigation still reads the already-resolved action and cannot enter a Preparing place.
+
+TDD Task 3 started with the visual contract. It requires a project-owned `assets/map/lantern-alley-map-v1.jpg`, a complete 3:2 map, selected-state styling, 44px compact destination controls and removal of the obsolete dashed graph and circular-node CSS.
+
+The Task 3 test failed because the approved artwork was not yet owned by the project. The generated 1200 by 800 map was copied non-destructively to `assets/map/lantern-alley-map-v1.jpg`. The old graph CSS is replaced by the illustrated 3:2 scene, labeled lantern pins, explicit selected/completed/preparing states and a wood-and-washi Kon detail shelf. The map width also responds to viewport height so common desktop screens keep the complete map and detail together; phone widths retain 44px controls and stack the action below the story.
+
+TDD Task 4 started with offline and standalone-delivery checks. They require the service worker to cache both the map model and exact artwork, and require `lantern-alley-artifact.html` to contain all six Japanese destinations, the semantic live detail, model-driven rendering and the exact embedded JPEG without a remaining local map URL.
+
+The Task 4 red run failed exactly at the delivery boundary: `lantern-map.js` and the map JPEG were absent from the offline shell, and the old standalone file contained neither destination data nor artwork. `sw.js` now pre-caches both under `lantern-alley-v30`. The standalone file still needs regeneration before this cycle can turn green.
+
+The first rebuild reported only five inlined scripts and the standalone test remained red because `build-artifact.mjs` used a hard-coded list that omitted `lantern-map.js`. The already-failing exact-artifact test covers this regression. The builder now places the map model before `app.js`; the next rebuild must report six scripts and embed the six destination records.
+
+Rendered phone verification found a separate navigation bug: switching from the title to the map preserved the title button's lower scroll position, leaving the map header above the viewport. A new red regression check requires `showMap()` to reset the document to the top before rendering the destination view.
+
+The phone scroll regression failed against the existing `showMap()` and is now fixed with an immediate top reset before map rendering. This affects only navigation into the map; map selection itself does not change scroll position.
+
+Implementation is complete. The production map now shows the approved elevated Lantern Alley artwork from `assets/map/lantern-alley-map-v1.jpg`, with six Japanese destinations rendered from the testable `lantern-map.js` model. The Entrance and Moonview Inn have real enter/replay/continue actions; 灯り市, 夕月茶屋, 路地駅 and 灯守神社 remain selectable 準備中 places with story context and no dead action. Selection updates one `aria-live` Kon detail shelf, preserves Moonview Inn medals, and map entry resets to the top on phone screens.
+
+Final verification passed all five self-contained automated test modules: 106 tests with 0 failures. Run them with `node --test entrance-stage.test.mjs lantern-map.test.mjs moonview-inn-interactions.test.mjs n2-home-inn-stage.test.mjs pwa.test.mjs`. Do not use bare `node --test` as the automated-suite command: Node also discovers `visual-smoke-test.mjs`, which is a manual browser-driving screenshot script that requires a browser already listening on port 9223. `lantern-map.js`, `app.js` and `build-artifact.mjs` pass `node --check`, and `git diff --check` reports only the repository's existing LF-to-CRLF notices. Browser walkthrough completed the Entrance, opened the map, selected a Preparing destination with no enter button, and entered Moonview Inn through the separate map action. Desktop, 390px and 320px rendered checks kept all six destinations visible with no horizontal scrolling; the 320px layout kept the full map, Kon story and primary action organized in one column. The service-worker cache is `lantern-alley-v30`. The rebuilt standalone artifact inlines 6 scripts, 1 stylesheet and 75 images, is 7.96 MB, and embeds the exact map JPEG. The local desktop file is updated; the remote Claude Artifact URL has not been republished.
+
+### 2026-08-24 - Authentic washitsu light correction
+
+The recessed wall box in version 3 reads as a display niche rather than a believable room light. Reference review found wood-framed washi wall sconces used in Japanese rooms and ryokan, including fixtures with replaceable E17 bulbs. The approved correction replaces only that niche with a compact wood-and-washi wall sconce whose open underside keeps the bulb replacement action understandable. `assets/inn/room-empty-v4.png` is saved at the original 1536 by 1024 dimensions and is now the shared-room background. The existing 45/23/11/15 percent hotspot centers the draggable bulb over the sconce's underside socket. The offline cache is `lantern-alley-v29`.
+
+Browser verification at 1366 by 768 confirmed the broken bulb sprite sits over the underside socket and the complete fixture remains inside the room. At 390 by 844 the sconce stays recognizable, the shelf remains five columns, and there is no horizontal overflow. The browser console had no warnings or errors. The standalone artifact embeds the exact version 4 image, was rebuilt with 5 scripts, 1 stylesheet and 74 images, and is 8,089,398 bytes. All 97 tests pass, and the changed JavaScript files pass syntax checks.
+
+### 2026-08-24 - Integrated room shelf and lower light fixture
+
+The approved visual correction makes the illustrated room and its draggable supply shelf read as one continuous game surface, matching the latest mockup while keeping every item as a real accessible control. The light fixture and its drop target moved lower so the bulb is not cut off by the top of the room. Desktop keeps one ten-item shelf row; narrow screens use a five-column, two-row shelf directly below the room. `assets/inn/room-empty-v3.png` was generated as a precise edit of version 2: only the upper-center light niche moved downward, with the shelf intentionally left to accessible HTML. The room renderer wraps the picture and shelf in one framed composite; the bulb hotspot is aligned at 45/23/11/15 percent, and the offline cache is `lantern-alley-v28`.
+
+Browser checks at 1366 by 768 and 390 by 844 measured a zero-pixel gap between room and shelf, no horizontal overflow, a fully inset bulb target, and ten versus five shelf columns. A tap-placement check moved one cushion out of the shelf and into the first mat, proving the controls remained functional after nesting. The browser console had no warnings or errors. The standalone artifact was rebuilt with 5 scripts, 1 stylesheet and 74 images and is 8,122,514 bytes. All 97 tests pass, and the three changed JavaScript files pass syntax checks.
+
+### 2026-08-24 - Conversation controls expanded to the full game surface
+
+The learner no longer has to target Kon's speech bubble. Any click or tap on a non-control area inside the active game screen now uses the same dialogue flow: while Kon speaks it stops the voice and reveals the complete line; once `▼` is ready, the next background click advances. Clicking an answer, draggable object, audio button, hint, navigation control, input, label or other explicit control performs only that control's action and never also advances the conversation. Unanswered requests remain locked.
+
+The shared dialogue controller exposes the surface-routing rule, with focused tests proving that two background clicks finish then advance, while controls are ignored in both speaking and ready states. Browser verification found one related state-loss bug: replaying a story line through the audio button used the normal new-line path and cleared its pending continuation. Replay now has a separate controller path that restarts text and audio while preserving the continuation. The offline cache is `lantern-alley-v27`. All 97 tests pass, both edited JavaScript files pass syntax checks, and the rebuilt standalone artifact is 8,284,350 bytes. Desktop and 390 by 844 browser checks confirmed background finish/advance, control protection, replay preservation, unanswered-request locking, no horizontal overflow and zero console errors.
+
+### 2026-08-24 - Click once to finish Kon's line, then click again to continue
+
+Kon's dialogue now reveals progressively while her MP3 or device voice plays. The speech bubble shows `»` while speaking and `▼` when the next dialogue or question is ready. A first click, tap, Enter or Space during speech cancels the current audio and reveals the entire Japanese line without advancing. A second activation advances only when the story has registered a continuation. Requests that still need a learner action ignore further dialogue clicks, so answers and drag controls cannot be bypassed.
+
+Natural speech completion reveals the full line and arms a single click instead of automatically changing the question. Correct-answer responses and the Entrance introduction use the same controller. The speaker button replays the complete stored line even if only part of it is currently visible. Browser testing verified the partial-line state, first-click completion, second-click progression, unanswered-question lock, keyboard activation and the compact visual indicator. The offline cache is now `lantern-alley-v26`.
+
+Five controller behavior tests cover first-click cancellation, exactly-once advancement, unanswered-question protection, natural speech completion and complete-line replay. A sixth regression check requires the rebuilt standalone artifact to contain the controller and its accessible dialogue controls. `node build-artifact.mjs` rebuilt the standalone file with five inlined scripts, one stylesheet and 74 images. All 94 tests pass, both edited JavaScript files pass syntax checks, and the artifact is 8,283,336 bytes. An uncached standalone browser run confirmed partial text, first-click completion, second-click progression and zero console errors.
+
+### 2026-08-24 - Room-object visibility and destination-separation correction started
+
+The latest visual review found three concrete interaction failures in the illustrated room: the large red cushion crosses into the neighboring sprite cell, a dragged item can render behind the room because it has no explicit stacking level, and the microwave target overlaps both the futon and the second mat targets. Regression checks were added first. They require transparent gutters around every sprite cell, a visible high-layer drag state, permanently recognizable mat edges, and a three-percent safety gap between appliance targets and the mats or futon. These checks are intentionally red until the corrected artwork and UI implementation are applied.
+
+The revised non-destructive background is now saved as `assets/inn/room-empty-v2.png`. It preserves the same room style and fixture set, moves the appliance cabinet into a separate center-right kitchen area, keeps the futon at the far-right edge with open floor between them, and gives both mats darker raised woven borders. Production still points to version 1 until the matching hotspot update is applied and verified.
+
+The corrected object sheet is saved non-destructively as `assets/inn/room-objects-v2.png`. Each original object was alpha-cropped, uniformly reduced to preserve the large-versus-small cushion distinction, centered in an exact 314-pixel cell, and surrounded by transparent padding. This removes neighboring-cell fragments without changing the objects themselves. Production still points to version 1 until the visual contract passes against the new sheet.
+
+Production now uses both version 2 assets. The hotspot map was realigned to the new artwork: the kitchen targets occupy the center-right cabinet, the futon starts at 77 percent of the room width, and the two mat targets sit lower in the room. Appliance targets now have at least a three-percent safety gap from every mat and the futon. The drag state uses a high stacking layer and ignores pointer hit-testing while moving, so the item stays visible without blocking destination detection. Both mat hotspots have a permanent woven overlay and inset edge, while labels remain hidden. The offline cache is now `lantern-alley-v21` and pre-caches only the version 2 production artwork.
+
+Uncached browser testing found that the general drag rule was still losing `position: fixed` in the CSS cascade: the later illustrated-object rule restored `position: relative`, so a dragged item received its shelf offset twice and moved outside the viewport. A new regression check now requires an illustrated-room-specific fixed-position override. That check is red until the cascade correction is applied.
+
+The illustrated-room-specific drag override is now placed after the regular illustrated object state and keeps the moving object fixed to viewport coordinates. It also suppresses the shelf hover translation during the drag. The cache is now `lantern-alley-v22`, ensuring returning browsers receive this final cascade correction.
+
+A second uncached pointer test confirmed the object is visible and fixed at a high layer, but the synthetic pointer stream stops after the first move and never reaches release. The current hypothesis is that applying `pointer-events: none` to the original element conflicts with its pointer capture. Because drop detection already compares pointer coordinates against every destination rectangle, disabling pointer events is unnecessary. A regression check now requires the moving source to retain pointer events through release; it is red until that focused correction is applied.
+
+The dragged source now retains pointer events while remaining fixed at z-index 1000. This allows its existing pointer capture to receive the full movement and release stream; destination detection still uses pointer coordinates and is unchanged. The cache is now `lantern-alley-v23` so the pointer correction replaces the earlier version 22 styles.
+
+The version 23 browser check rejected that hypothesis: the synthetic drag still stopped after the first move. The remaining root cause is listener scope. `makeDraggable` listens for movement and release only on the original button, so any failed pointer capture lets the stream leave the element and strands it in the dragging state. A new regression check requires temporary window-level move and release listeners for the duration of an active drag, with cleanup after release. This check is red until the event-tracking correction is applied.
+
+`makeDraggable` now installs window-level pointer move, release and cancel listeners only while a drag is active, filters them to the initiating pointer ID, and removes all three listeners on completion. Pointer capture remains as the preferred path, while the window listeners provide a fallback when capture is unavailable. The cache is now `lantern-alley-v24` because `app.js` changed.
+
+At 390 by 844, the room and shelf fit without horizontal overflow, but browser geometry found a separate compact-layout issue: a legacy 64-pixel minimum height enlarges illustrated appliance hotspots beyond their mapped fixtures. The stove then overlaps the microwave, and the microwave overlaps the second mat. New red checks require the stove and microwave metadata to have a real gap and require illustrated hotspots to keep their mapped bounds instead of inheriting the legacy card minimum.
+
+Illustrated hotspots now keep their percentage-mapped dimensions instead of inheriting the old 64-pixel answer-card minimum. The stove, microwave and mats were tightened to their visible fixture bounds with three-percent vertical safety gaps. This removes compact-layout overlap while preserving the background alignment. The cache is now `lantern-alley-v25`.
+
+Final uncached interaction verification succeeded at 1280 by 720 and 390 by 844: a real pointer drag moved one cushion from the shelf to a mat, removed the active drag state, cleared hover state, and updated the count to 1 of 4. Compact geometry showed separate gaps between stove, microwave, mats and futon, with no horizontal overflow and no console errors. The artifact check verifies the exact version 2 background and sprite bytes, the window-level drag tracking, the compact hotspot override, and the absence of external room paths. It does not check the cache version because the standalone artifact intentionally omits the service worker.
+
+`node build-artifact.mjs` rebuilt `lantern-alley-artifact.html` from the corrected source. It inlined five scripts, one stylesheet and 74 images; the resulting standalone file is 7.90 MB. It embeds both version 2 room assets as image data rather than external paths. The standalone artifact intentionally omits the service worker; cache version 25 applies to the regular local/PWA build.
+
+Final verification for this correction: all 88 automated tests pass, all three edited JavaScript files pass syntax checks, the artifact is 8,278,679 bytes and below the 16 MB limit, and desktop plus phone browser runs completed a real drag with no console errors.
+
+### 2026-08-24 - Illustrated room implemented and verified
+
+The approved version 3 room is implemented in the game. The production artwork is saved in `assets/inn/`: `room-empty-v1.png` is a 1536 by 1024 room with recognizable fixtures and no movable answers, and `room-objects-v1.png` is a transparent 4 by 4 sprite sheet containing all 13 movable items. The shared `ROOM.visual` data maps each movable item to one sprite cell and each of the nine valid destinations to a bounded percentage hotspot over its real fixture. The separation prevents a moved item from remaining duplicated in the background. A visual-contract regression test enforces the complete map and passes with all 13 items and all nine destinations present exactly once. Existing Japanese-learning behavior, tap and drag controls, replacement order, appliance rules, and responsive stage layout remain unchanged. The implementation checklist is in `docs/superpowers/plans/2026-08-24-illustrated-room-implementation.md`.
+
+Renderer integration checks require and now pass for the approved 3:2 room artwork, fixture-aligned hotspots, responsive image shelf, and captions that stay hidden until hover, focus, or selection.
+
+The renderer now builds that illustrated surface: the empty room is the interaction background, destination buttons sit over their actual fixtures, and independent sprites move among the room and wooden supply shelf. Cushions remain visible on their mat, removed items remain visible in the correct basket or recycling box, installed items appear on their fitting, and warmed dishes appear on the named appliance with steam. Object names stay hidden until hover, keyboard focus, or selection. On phones the supply shelf changes from ten columns to five so its objects remain large enough to tap.
+
+Both illustrated room assets are now in the service worker shell, and the cache version is `lantern-alley-v20`. The offline regression check prevents either image from being omitted in a future update. Version 20 includes the placed-object visibility fix, caption-position correction, and phone shelf ordering for returning users.
+
+Desktop visual verification found that the old towel and burnt bulb buttons were present and correctly mapped, but a legacy `.answer-workspace` width rule won the CSS cascade and collapsed their inner sprites to 0 by 0 pixels. A focused regression check now reproduces that specificity conflict before the override is added.
+
+The illustrated-room override now has enough specificity to restore a real sprite box inside every occupied hotspot while keeping the hotspot's mapped size. This is intentionally scoped to `.inn-room-illustrated`; the schedule and dialogue layouts retain their existing answer-workspace rules.
+
+The first browser reload still showed the collapsed objects because cache version 17 had already stored the pre-fix stylesheet. Inspection of the loaded CSS rules confirmed the new selector was absent. The cache was therefore advanced to version 18 rather than changing the renderer again.
+
+Tap-to-place verification then moved both red cushions onto one mat and confirmed their shelf buttons disappeared. The focused mat's label appeared directly over the cushion, however, which added text back on top of the image. A regression check now requires hotspot captions to sit outside the object picture.
+
+Hotspot captions now open just above their fixture instead of covering it; the wall light is the only exception and opens downward because it sits at the top edge. Names remain available on hover or keyboard focus without obscuring the answer image.
+
+At a 390 by 844 phone viewport, the room scales to 331 by 221 and the shelf correctly becomes five columns, but the shelf begins below the first screen because the full Japanese room description is always expanded. New adaptive checks require that description to be an optional Japanese disclosure and require the phone shelf to precede the room; selecting an item then uses the existing automatic scroll to reveal its destination.
+
+The room description is now collapsed under `部屋の様子`, and the phone layout places the five-column supply shelf before the room. The desktop layout keeps the approved room-first composition. On a phone, tapping an item immediately uses the existing `scrollIntoView` path to bring the illustrated destinations into view.
+
+The existing Python artifact builder could not run on this machine because neither `python` nor `py` is installed. `build-artifact.mjs` now provides the same dependency-free inlining and 16 MB limit check through the Node runtime already used by the tests. The Python builder remains available for other environments.
+
+The Node build produced an 8.75 MB `lantern-alley-artifact.html` with 74 local images inlined. A regression check now verifies that the illustrated room is present as image data, no `assets/inn/` path remains external, and the result stays below the artifact host's 16 MB limit.
+
+Final verification: 82 automated tests pass. Desktop testing completed one arrange, one two-step towel replacement and one stove-based tea warming; each moved sprite disappeared from its prior location and appeared once at its destination. At 390 by 844, the shelf rendered in five columns before the room, the room measured 331 by 221, and selecting an item automatically scrolled 165 pixels to expose the destination hotspots.
+
+### 2026-08-21 - Illustrated room mockup now uses recognizable physical objects (not implemented)
+
+The first mockups still represented the room with abstract line icons and CSS shapes, so several destinations did not resemble a real towel rack, lamp, appliance, bed, or Japanese room. Version 3 replaces that placeholder scene with generated soft 3D ryokan artwork. It visibly includes the two mats, old towel and rack, laundry basket, recycling box, burnt-out bulb and light fixture, worn bedding, stove, microwave, four distinct cushions, fresh towel, new bulb, clean sheet, tea, soup, and rice. Text remains outside the room artwork; the picture is intended to become the interactive surface itself. This remains a mockup and has not changed the game source.
+
+### 2026-08-21 - Illustrated room mockup revised after the latest behavior changes (not implemented)
+
+The second visual mockup was checked against the newest handoff before presentation. It keeps the tap-first instruction visible outside the answer scene, preserves appliance names in Japanese, supports the explicitly requested two-step replacement action, assumes the new touch tolerance and no-penalty missed drops, and does not turn the real 手伝います / 手伝えません branch back into a right-or-wrong reply. The missing Kon preview image was also fixed. This remains a visual proposal; no game source or behavior was changed.
 
 ### 2026-08-21 - Declining Kon's offer is a real choice, not a wrong answer
 
@@ -407,8 +682,8 @@ The old single-file `lantern-alley.html` had no `<meta charset>`, so browsers de
 - The icons are simple hand-drawn SVG line art, intended as placeholders until real illustrations are produced.
 - Browser speech synthesis varies by machine and may be unavailable without a Japanese voice installed.
 - Player progress cannot be exported or imported.
-- The project is not initialized as a Git repository.
-- `docs/superpowers/` describes the superseded design.
+- The repository currently contains approved uncommitted work from several editing sessions; preserve unrelated changes and do not reset them.
+- `docs/superpowers/` contains both current implementation records and older superseded design notes. Check each document's status before using it.
 
 ## 11. Recommended next work
 

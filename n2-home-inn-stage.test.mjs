@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
+import { inflateSync } from "node:zlib";
 
 const stageUrl = new URL("./n2-home-inn-stage.js", import.meta.url);
 const html = ["./index.html", "./styles.css", "./app.js"]
@@ -45,6 +46,15 @@ test("Moonview Inn mixes visible, object, and social actions", () => {
   assert.ok(types.includes("visible movement"));
   assert.ok(types.includes("object interaction"));
   assert.ok(types.includes("social dialogue"));
+});
+
+test("bulb installation drives a non-blocking dim-to-warm room effect", () => {
+  assert.match(html, /MoonviewInnInteractions\.getRoomLightState\(innInteractionState, interaction\.target\)/);
+  assert.match(html, /room-light-" \+ roomLightState/);
+  assert.match(html, /\.room-light-dim::before\{[^}]*opacity:/);
+  assert.match(html, /\.room-light-bright::after\{[^}]*animation:room-light-warm/);
+  assert.match(html, /\.inn-room-viewport::before,\.inn-room-viewport::after\{[^}]*pointer-events:none/);
+  assert.match(html, /@media\(prefers-reduced-motion:reduce\)[^{]*\{[\s\S]*?\.room-light-bright::after\{animation:none/);
 });
 
 test("encounter lookup clamps to the available stage", () => {
@@ -339,12 +349,13 @@ test("every learning item maps to a direct interaction and phase variant", () =>
   }
 });
 
-test("the current map contains only the entrance and Moonview Inn", () => {
+test("only the Entrance and Moonview Inn are playable while the map model can show future places", () => {
   for (const removedKey of ["crossroads", "stars", "fruit", "tea", "festival"]) {
     assert.doesNotMatch(html, new RegExp(`key:\"${removedKey}\"`));
   }
   assert.match(html, /key:"entrance"/);
   assert.match(html, /locations\.push\(N2HomeInnStage\)/);
+  assert.match(html, /<script src="lantern-map\.js"><\/script>/);
 });
 
 test("the page loads the interaction engine and persists stage progress", () => {
@@ -563,6 +574,13 @@ test("arrange requests describe making two matching pairs on the mats", () => {
   }
 });
 
+test("zabuton silhouettes visibly distinguish vertical and horizontal direction", () => {
+  assert.match(html, /var rot = a\.dir === "up" \? 90 : 0;/);
+  assert.match(html, /function roomSpriteMarkup\(room, key\)\{[\s\S]*?cushionMarkup\(cushion\[1\]\)/);
+  assert.match(html, /cushion-weave/);
+  assert.match(html, /cushion-tuft/);
+});
+
 test("replacement objects start in a real location and use the correct removal destination", () => {
   const context = {};
   vm.createContext(context);
@@ -582,6 +600,138 @@ test("replacement objects start in a real location and use the correct removal d
     [byKey.bulb.sourceLabel, byKey.bulb.removalLabel, byKey.bulb.installLabel],
     ["照明", "回収箱", "照明"],
   );
+});
+
+test("the illustrated room maps every movable object and destination exactly once", () => {
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(readFileSync(stageUrl, "utf8"), context);
+  const room = context.N2HomeInnStage.encounters[0].interaction.room;
+  const visual = room.visual;
+
+  assert.ok(visual, "the shared room needs illustrated visual metadata");
+  assert.equal(visual.background, "assets/inn/room-empty-v4.png");
+  assert.equal(existsSync(new URL("./" + visual.background, import.meta.url)), true);
+  assert.equal(existsSync(new URL("./" + visual.spriteSheet, import.meta.url)), true);
+
+  const movable = [
+    ...room.cushions.map(([key]) => key),
+    ...room.swaps.flatMap((swap) => [swap.oldIcon, swap.newIcon]),
+    ...room.dishes.map((dish) => dish.icon),
+  ];
+  assert.equal(new Set(movable).size, movable.length, "movable visual keys must be unique");
+  assert.deepEqual(Object.keys(visual.sprites).sort(), movable.sort());
+
+  const destinations = [
+    ...room.groups.map(([key]) => key),
+    ...new Set(room.swaps.map((swap) => "remove-" + swap.removalKey)),
+    ...room.swaps.map((swap) => "install-" + swap.key),
+    ...room.heatingAppliances.map((appliance) => appliance.key),
+  ];
+  assert.equal(new Set(destinations).size, destinations.length, "destination keys must be unique");
+  assert.deepEqual(Object.keys(visual.hotspots).sort(), destinations.sort());
+
+  for (const [key, cell] of Object.entries(visual.sprites)) {
+    assert.ok(Number.isInteger(cell.col) && cell.col >= 0 && cell.col < 4, `${key} has an invalid sprite column`);
+    assert.ok(Number.isInteger(cell.row) && cell.row >= 0 && cell.row < 4, `${key} has an invalid sprite row`);
+  }
+  for (const [key, spot] of Object.entries(visual.hotspots)) {
+    for (const edge of ["x", "y", "w", "h"]) {
+      assert.ok(spot[edge] >= 0 && spot[edge] <= 100, `${key}.${edge} must be a percentage`);
+    }
+    assert.ok(spot.x + spot.w <= 100 && spot.y + spot.h <= 100, `${key} exceeds the room bounds`);
+  }
+
+  assert.ok(
+    visual.hotspots["install-bulb"].y >= 9,
+    "the bulb target must sit below the clipped top edge",
+  );
+});
+
+test("the illustrated room keeps appliance targets safely away from mats and the futon", () => {
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(readFileSync(stageUrl, "utf8"), context);
+  const hotspots = context.N2HomeInnStage.encounters[0].interaction.room.visual.hotspots;
+  const protectedTargets = [hotspots.g1, hotspots.g2, hotspots["install-sheet"]];
+  const gap = 3;
+
+  function overlapsWithGap(a, b) {
+    return !(
+      a.x + a.w + gap <= b.x ||
+      b.x + b.w + gap <= a.x ||
+      a.y + a.h + gap <= b.y ||
+      b.y + b.h + gap <= a.y
+    );
+  }
+
+  for (const appliance of [hotspots.stove, hotspots.microwave]) {
+    for (const target of protectedTargets) {
+      assert.equal(overlapsWithGap(appliance, target), false, "appliance drop targets need a visible safety gap");
+    }
+  }
+  assert.equal(overlapsWithGap(hotspots.stove, hotspots.microwave), false, "stove and microwave targets must not overlap");
+});
+
+test("every occupied sprite cell has a transparent gutter", () => {
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(readFileSync(stageUrl, "utf8"), context);
+  const visual = context.N2HomeInnStage.encounters[0].interaction.room.visual;
+  const png = readFileSync(new URL("./" + visual.spriteSheet, import.meta.url));
+  const width = png.readUInt32BE(16);
+  const height = png.readUInt32BE(20);
+  const bitDepth = png[24];
+  const colorType = png[25];
+
+  assert.equal(bitDepth, 8, "sprite sheet must use 8-bit channels");
+  assert.equal(colorType, 6, "sprite sheet must be RGBA");
+  assert.equal(width % 4, 0, "sprite columns must be exact pixel cells");
+  assert.equal(height % 4, 0, "sprite rows must be exact pixel cells");
+
+  const idat = [];
+  for (let offset = 8; offset < png.length;) {
+    const length = png.readUInt32BE(offset);
+    const type = png.toString("ascii", offset + 4, offset + 8);
+    if (type === "IDAT") idat.push(png.subarray(offset + 8, offset + 8 + length));
+    offset += 12 + length;
+  }
+  const filtered = inflateSync(Buffer.concat(idat));
+  const stride = width * 4;
+  const pixels = Buffer.alloc(stride * height);
+  function paeth(a, b, c) {
+    const p = a + b - c;
+    const pa = Math.abs(p - a), pb = Math.abs(p - b), pc = Math.abs(p - c);
+    return pa <= pb && pa <= pc ? a : pb <= pc ? b : c;
+  }
+  for (let y = 0; y < height; y += 1) {
+    const filter = filtered[y * (stride + 1)];
+    for (let x = 0; x < stride; x += 1) {
+      const source = filtered[y * (stride + 1) + 1 + x];
+      const left = x >= 4 ? pixels[y * stride + x - 4] : 0;
+      const above = y ? pixels[(y - 1) * stride + x] : 0;
+      const upperLeft = y && x >= 4 ? pixels[(y - 1) * stride + x - 4] : 0;
+      const value = filter === 0 ? source
+        : filter === 1 ? source + left
+        : filter === 2 ? source + above
+        : filter === 3 ? source + Math.floor((left + above) / 2)
+        : source + paeth(left, above, upperLeft);
+      pixels[y * stride + x] = value & 255;
+    }
+  }
+
+  const cellWidth = width / 4;
+  const cellHeight = height / 4;
+  const gutter = 6;
+  for (const [key, cell] of Object.entries(visual.sprites)) {
+    for (let y = cell.row * cellHeight; y < (cell.row + 1) * cellHeight; y += 1) {
+      for (let x = cell.col * cellWidth; x < (cell.col + 1) * cellWidth; x += 1) {
+        const edge = x < cell.col * cellWidth + gutter || x >= (cell.col + 1) * cellWidth - gutter
+          || y < cell.row * cellHeight + gutter || y >= (cell.row + 1) * cellHeight - gutter;
+        if (edge) assert.equal(pixels[y * stride + x * 4 + 3], 0, `${key} bleeds into a neighboring sprite cell`);
+      }
+    }
+  }
 });
 
 test("Moonview Inn displays medals and saves after stage movement", () => {

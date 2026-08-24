@@ -18,9 +18,9 @@
       hint:"「お辞儀」は、体を前に傾ける日本のあいさつです。",
       type:"choice",
       options:[
-        {key:"bow", emoji:"🙇", label:"お辞儀"},
-        {key:"wave", emoji:"👋", label:"手を振る"},
-        {key:"clap", emoji:"👏", label:"拍手"}
+        {key:"bow", emoji:"🙇", label:"Bow"},
+        {key:"wave", emoji:"👋", label:"Wave"},
+        {key:"clap", emoji:"👏", label:"Clap"}
       ],
       correct:"bow",
       followUpCorrect:{
@@ -42,61 +42,18 @@
   var KON_PHOTO_WAVE_BOTH = "assets/kon/kon-wave-both.webp";
   var KON_PHOTO_SRC = "assets/kon/kon-idle.webp";
 
-  var PLAYER_SVG =
-    '<svg viewBox="0 0 100 100" aria-hidden="true">' +
-      '<defs>' +
-        '<linearGradient id="playerRobeGrad" x1="0" y1="0" x2="0" y2="1">' +
-          '<stop offset="0%" stop-color="#2f4874"></stop>' +
-          '<stop offset="100%" stop-color="#1b2a4a"></stop>' +
-        '</linearGradient>' +
-        '<linearGradient id="playerSkinGrad" x1="0" y1="0" x2="0" y2="1">' +
-          '<stop offset="0%" stop-color="#f0c093"></stop>' +
-          '<stop offset="100%" stop-color="#d9a26e"></stop>' +
-        '</linearGradient>' +
-        '<linearGradient id="playerHairGrad" x1="0" y1="0" x2="0" y2="1">' +
-          '<stop offset="0%" stop-color="#3a332e"></stop>' +
-          '<stop offset="100%" stop-color="#201b18"></stop>' +
-        '</linearGradient>' +
-      '</defs>' +
-      '<ellipse cx="50" cy="95" rx="20" ry="4.5" fill="rgba(36,31,28,0.18)"></ellipse>' +
-      '<g class="player-root">' +
-        '<path d="M40,78 L40,91 Q40,94 43,94 L46,94 Q48,94 48,91 L48,78 Z" fill="#20304f"></path>' +
-        '<path d="M52,78 L52,91 Q52,94 55,94 L58,94 Q60,94 60,91 L60,78 Z" fill="#20304f"></path>' +
-        '<g class="player-upper-group">' +
-          '<g class="player-arm-left">' +
-            '<path d="M37,52 C31,58 29,66 31,74" stroke="url(#playerRobeGrad)" stroke-width="7" fill="none" stroke-linecap="round"></path>' +
-            '<circle cx="31" cy="75" r="4" fill="url(#playerSkinGrad)"></circle>' +
-          '</g>' +
-          '<g class="player-arm-right">' +
-            '<path d="M63,52 C69,58 71,66 69,74" stroke="url(#playerRobeGrad)" stroke-width="7" fill="none" stroke-linecap="round"></path>' +
-            '<circle cx="69" cy="75" r="4" fill="url(#playerSkinGrad)"></circle>' +
-          '</g>' +
-          '<path d="M38,50 C35,60 35,70 40,78 L60,78 C65,70 65,60 62,50 C58,45 42,45 38,50 Z" fill="url(#playerRobeGrad)"></path>' +
-          '<rect x="39" y="63" width="22" height="6" rx="2" fill="#c2543a"></rect>' +
-          '<g class="player-head-group">' +
-            '<rect x="46" y="41" width="8" height="7" fill="url(#playerSkinGrad)"></rect>' +
-            '<circle cx="50" cy="33" r="13" fill="url(#playerSkinGrad)"></circle>' +
-            '<path d="M37,31 C36,19 42,13 50,13 C58,13 64,19 63,31 C63,24 58,20 50,20 C42,20 37,24 37,31 Z" fill="url(#playerHairGrad)"></path>' +
-            '<circle cx="46" cy="34" r="1.3" fill="#241f1c"></circle>' +
-            '<circle cx="54" cy="34" r="1.3" fill="#241f1c"></circle>' +
-            '<path d="M46,39 Q50,41.5 54,39" stroke="#241f1c" stroke-width="1.3" fill="none" stroke-linecap="round"></path>' +
-            '<ellipse cx="44" cy="37" rx="2.4" ry="1.4" fill="#c2543a" opacity="0.35"></ellipse>' +
-            '<ellipse cx="56" cy="37" rx="2.4" ry="1.4" fill="#c2543a" opacity="0.35"></ellipse>' +
-          '</g>' +
-        '</g>' +
-      '</g>' +
-    '</svg>';
+  var PLAYER_ACTION_SPRITE = "assets/entrance/player-actions-v1.png";
 
   var ENTRANCE_FOX_POSES = {
-    idle:"assets/fox/fox-neutral-idle.webp",
+    idle:"assets/fox/fox-neutral-idle-transparent-v2.webp",
     talkBase:"assets/fox/fox-neutral-no-mouth-transparent.webp",
-    waveClosed:"assets/fox/fox-wave-closed-smile.webp",
-    waveSmall:"assets/fox/fox-wave-small-open-mouth.webp",
-    waveOpen:"assets/fox/fox-wave-konnichiwa-mouth.webp",
-    invite:"assets/fox/fox-invite-bow.webp",
-    celebrate:"assets/fox/fox-celebration.webp",
-    tryAgain:"assets/fox/fox-try-again.webp",
-    listen:"assets/fox/fox-listening.webp"
+    waveClosed:"assets/fox/fox-wave-closed-smile-transparent-v2.webp",
+    waveSmall:"assets/fox/fox-wave-small-open-mouth-transparent-v2.webp",
+    waveOpen:"assets/fox/fox-wave-konnichiwa-mouth-transparent-v2.webp",
+    invite:"assets/fox/fox-invite-bow-transparent-v2.webp",
+    celebrate:"assets/fox/fox-celebration-transparent-v2.webp",
+    tryAgain:"assets/fox/fox-try-again-transparent-v2.webp",
+    listen:"assets/fox/fox-listening-transparent-v2.webp"
   };
   var activeFoxEl = null;
   var activeFoxImgEl = null;
@@ -212,6 +169,17 @@
   initVoices();
 
   var currentClip = null;
+  var dialogueFlow = null;
+
+  function stopCurrentVoice(){
+    if(currentClip){
+      currentClip.pause();
+      currentClip = null;
+    }
+    if("speechSynthesis" in window) window.speechSynthesis.cancel();
+    if(activeFoxEl) activeFoxEl.classList.remove("talking");
+    stopWave();
+  }
 
   // Pre-rendered neural audio, when we have a clip for this exact line.
   // Falls back to speechSynthesis, which on iOS often has no Japanese voice
@@ -237,9 +205,13 @@
     };
     if(fox){
       audio.addEventListener("playing", function(){ fox.classList.add("talking"); startWave(mode); });
-      audio.addEventListener("ended", stopTalk);
       audio.addEventListener("error", stopTalk);
     }
+    audio.addEventListener("ended", function(){
+      stopTalk();
+      currentClip = null;
+      if(dialogueFlow) dialogueFlow.voiceFinished();
+    });
 
     var started = audio.play();
     if(started && started.catch){
@@ -253,59 +225,34 @@
     return true;
   }
 
-  function speak(text, mode){
+  function speak(text, mode, isReplay){
     mode = mode || "ask";
+    if(dialogueFlow){
+      if(isReplay) dialogueFlow.replay(state.voiceOn);
+      else dialogueFlow.start(text, state.voiceOn);
+    }
     if(!state.voiceOn) return;
     if(playClip(text, mode)) return;
     speakWithSynthesis(text, mode);
   }
 
-  // Run `next` once Kon has finished the line now playing, then pause briefly.
-  // Every place that used a fixed timer cut her off mid-sentence, which throws
-  // away the listening practice the line exists to give.
-  function afterSpeech(next, fallbackDelay, settle){
-    settle = settle === undefined ? 700 : settle;
-    var fired = false;
-    var onDone = function(){
-      if(fired) return;
-      fired = true;
-      setTimeout(next, settle);
-    };
-
-    // Not checking clip.paused: play() is async, so a clip about to start
-    // still reports paused here.
-    var clip = currentClip;
-    if(clip && !clip.ended){
-      clip.addEventListener("ended", onDone);
-      clip.addEventListener("error", onDone);
-      setTimeout(onDone, 20000);
-      return;
-    }
-
-    if("speechSynthesis" in window && window.speechSynthesis.speaking){
-      var poll = setInterval(function(){
-        if(!window.speechSynthesis.speaking){
-          clearInterval(poll);
-          onDone();
-        }
-      }, 150);
-      setTimeout(function(){ clearInterval(poll); onDone(); }, 20000);
-      return;
-    }
-
-    setTimeout(next, fallbackDelay === undefined ? 900 : fallbackDelay);
+  // A completed reply waits for the learner. During speech, the first click
+  // reveals the line; only the following click can run this continuation.
+  function afterSpeech(next){
+    if(dialogueFlow) dialogueFlow.setContinuation(next);
   }
 
   function speakWithSynthesis(text, mode){
     mode = mode || "ask";
     if(!state.voiceOn) return;
     if(!("speechSynthesis" in window)){
-      if(activeFoxEl){
-        activeFoxEl.classList.add("talking");
-        startWave(mode);
-        var dur = Math.min(4000, Math.max(900, text.length * 90));
-        setTimeout(function(){ activeFoxEl.classList.remove("talking"); stopWave(); }, dur);
-      }
+      var dur = Math.min(4000, Math.max(900, text.length * 90));
+      if(activeFoxEl){ activeFoxEl.classList.add("talking"); startWave(mode); }
+      setTimeout(function(){
+        if(activeFoxEl) activeFoxEl.classList.remove("talking");
+        stopWave();
+        if(dialogueFlow) dialogueFlow.voiceFinished();
+      }, dur);
       return;
     }
     try{
@@ -318,9 +265,16 @@
       if(activeFoxEl){
         var fox = activeFoxEl;
         u.onstart = function(){ fox.classList.add("talking"); startWave(mode); };
-        var stopTalk = function(){ fox.classList.remove("talking"); stopWave(); };
+        var stopTalk = function(){
+          fox.classList.remove("talking");
+          stopWave();
+          if(dialogueFlow) dialogueFlow.voiceFinished();
+        };
         u.onend = stopTalk;
         u.onerror = stopTalk;
+      }else{
+        u.onend = function(){ if(dialogueFlow) dialogueFlow.voiceFinished(); };
+        u.onerror = u.onend;
       }
       window.speechSynthesis.speak(u);
     }catch(e){ /* speech unsupported, text remains visible */ }
@@ -377,19 +331,53 @@
 
   var $ = function(id){ return document.getElementById(id); };
 
+  var dialoguePanel = $("dialogue-panel");
+  var dialogueContinue = $("dialogue-continue");
+  dialogueFlow = LanternAlleyLogic.createDialogueFlow({
+    render:function(visible, phase){
+      $("jp-line").textContent = visible;
+      dialoguePanel.classList.toggle("dialogue-speaking", phase === "speaking");
+      dialoguePanel.classList.toggle("dialogue-ready", phase === "ready");
+      dialogueContinue.textContent = phase === "speaking" ? "»" : (phase === "ready" ? "▼" : "");
+      var actionable = phase === "speaking" || phase === "ready";
+      dialoguePanel.tabIndex = actionable ? 0 : -1;
+      dialoguePanel.setAttribute("aria-label", phase === "speaking" ? "コンの話を最後まで表示" : (phase === "ready" ? "次へ進む" : "コンの会話"));
+    },
+    stopVoice:stopCurrentVoice,
+    schedule:function(next, delay){ return setTimeout(next, delay); },
+    cancelSchedule:function(timer){ clearTimeout(timer); }
+  });
+
+  dialoguePanel.addEventListener("click", function(){ dialogueFlow.activate(); });
+  dialoguePanel.addEventListener("keydown", function(event){
+    if(event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    dialogueFlow.activate();
+  });
+
   var screenTitle = $("screen-title");
   var screenMap = $("screen-map");
   var screenGame = $("screen-game");
+  var selectedMapKey = "home-inn";
+  var selectedMapAction = null;
+  var mapDetailAction = $("map-detail-action");
+
+  screenGame.addEventListener("click", function(event){
+    var target = event.target;
+    var controlSelector = "button, a, input, select, textarea, summary, label, [role='button'], [contenteditable='true'], [draggable='true']";
+    var isExplicitControl = !!(target && target.closest && target.closest(controlSelector));
+    dialogueFlow.activateFromSurface(isExplicitControl);
+  });
 
   var saved = loadProgress();
   applyProgress(saved);
   if(visitedCount() > 0){
     var note = $("progress-note");
-    note.style.display = "block";
-    note.textContent = "Kon remembers you — " + visitedCount() + "/" + locations.length +
-      " spots explored, " + starCount() + " star" + (starCount() === 1 ? "" : "s") + " earned.";
-    $("btn-start").textContent = "Return to the Alley";
-    $("btn-restart").style.display = "inline-block";
+    note.hidden = false;
+    note.textContent = "コンが覚えています　訪れた場所 " + visitedCount() + "/" + locations.length +
+      "　星 " + starCount();
+    $("btn-start").textContent = "路地へ戻る";
+    $("btn-restart").hidden = false;
   }
 
   $("btn-start").addEventListener("click", function(){
@@ -404,16 +392,14 @@
     applyProgress(null);
     state.currentKey = null;
     saveProgress();
-    $("progress-note").style.display = "none";
-    $("btn-restart").style.display = "none";
-    $("btn-start").textContent = "Enter the Alley";
-    showMap();
+    $("progress-note").hidden = true;
+    $("btn-restart").hidden = true;
+    $("btn-start").textContent = "路地へ入る";
+    enterLocation("entrance");
   });
-  $("btn-map-restart").addEventListener("click", function(){
-    applyProgress(null);
-    state.currentKey = null;
-    saveProgress();
-    renderMap();
+  mapDetailAction.addEventListener("click", function(){
+    var action = selectedMapAction;
+    if(action) enterLocation(action.locationKey);
   });
   $("btn-back-map").addEventListener("click", function(){ showMap(); });
   $("btn-restart-learn").addEventListener("click", restartStageLearning);
@@ -430,55 +416,60 @@
     screenTitle.style.display = "none";
     screenGame.style.display = "none";
     screenMap.style.display = "block";
+    window.scrollTo({top:0,left:0,behavior:"auto"});
     renderMap();
   }
 
   function renderMap(){
-    $("map-stars").textContent = "⭐ " + starCount() + "/" + CHALLENGE_KEYS.length;
-    $("map-visited").textContent = "🏮 " + visitedCount() + "/" + locations.length;
-
-    var nodesEl = $("map-nodes");
-    nodesEl.innerHTML = "";
-    locations.forEach(function(loc){
-      var locked = loc.type === "finale" && !allChallengesVisited();
+    var destinationsEl = $("map-destinations");
+    var completedCount = 0;
+    destinationsEl.innerHTML = "";
+    LanternAlleyMap.destinations.forEach(function(place){
+      var progressState = LanternAlleyMap.resolveState(place.key, state);
+      var statusLabel = LanternAlleyMap.stateLabels[progressState];
+      if(progressState === "completed") completedCount += 1;
       var btn = document.createElement("button");
-      btn.className = "map-node" + (state.visited[loc.key] ? " visited" : "") + (locked ? " locked" : "");
-      btn.style.left = loc.pos.x + "%";
-      btn.style.top = loc.pos.y + "%";
-      btn.setAttribute("data-key", loc.key);
-      btn.setAttribute("aria-label", loc.name + (locked ? " (locked)" : ""));
-
-      var badge = "";
-      if(state.starred[loc.key]) badge = '<span class="badge star">★</span>';
-      else if(state.visited[loc.key]) badge = '<span class="badge">✓</span>';
-      var medal = "";
-      if(loc.key === "home-inn" && state.stageProgress.homeInn){
-        var medalIcons = {bronze:"🥉",silver:"🥈",gold:"🥇"};
-        medal = '<span class="medal" aria-label="'+state.stageProgress.homeInn.medal+' medal">'+(medalIcons[state.stageProgress.homeInn.medal] || "")+'</span>';
-      }
-
+      btn.type = "button";
+      btn.className = "map-destination state-" + progressState;
+      btn.style.left = place.position.x + "%";
+      btn.style.top = place.position.y + "%";
+      btn.setAttribute("data-map-key", place.key);
+      btn.setAttribute("aria-label", place.name + "、" + statusLabel);
+      btn.setAttribute("aria-pressed", String(place.key === selectedMapKey));
       btn.innerHTML =
-        '<span class="node-circle">' + loc.icon + badge + '</span>' +
-        '<span class="node-label">' + loc.name + medal + '</span>';
-
+        '<span class="map-pin" aria-hidden="true"></span>' +
+        '<span class="map-destination-label">' + place.name + '</span>';
       btn.addEventListener("click", function(){
-        if(locked){
-          showToast(loc.finaleUnlockNote || "This spot isn't open yet.");
-          return;
-        }
-        enterLocation(loc.key);
+        selectMapDestination(place.key);
       });
-      nodesEl.appendChild(btn);
+      destinationsEl.appendChild(btn);
     });
+    $("map-progress-text").textContent = "灯り " + completedCount + " / " + LanternAlleyMap.destinations.length;
+    renderMapDetail();
   }
 
-  var toastTimer = null;
-  function showToast(msg){
-    var el = $("map-toast");
-    el.textContent = msg;
-    el.classList.add("show");
-    if(toastTimer) clearTimeout(toastTimer);
-    toastTimer = setTimeout(function(){ el.classList.remove("show"); }, 3200);
+  function selectMapDestination(key){
+    if(!LanternAlleyMap.getDestination(key)) return;
+    selectedMapKey = key;
+    renderMap();
+  }
+
+  function renderMapDetail(){
+    var place = LanternAlleyMap.getDestination(selectedMapKey) || LanternAlleyMap.getDestination("home-inn");
+    var progressState = LanternAlleyMap.resolveState(place.key, state);
+    var action = LanternAlleyMap.getAction(place.key, state);
+    var statusText = LanternAlleyMap.stateLabels[progressState];
+    if(place.key === "home-inn" && state.stageProgress.homeInn){
+      var medalIcons = {bronze:"🥉",silver:"🥈",gold:"🥇"};
+      statusText += " " + (medalIcons[state.stageProgress.homeInn.medal] || "");
+    }
+    selectedMapAction = action;
+    $("map-detail-status").textContent = statusText;
+    $("map-detail-name").textContent = place.name;
+    $("map-detail-story").textContent = place.story;
+    $("map-detail-focus").textContent = place.focus;
+    mapDetailAction.style.display = action ? "inline-flex" : "none";
+    mapDetailAction.textContent = action ? action.label : "";
   }
 
   $("romaji-switch").addEventListener("click", function(){
@@ -490,7 +481,7 @@
 
   $("speak-btn").addEventListener("click", function(){
     var loc = getLocation(state.currentKey);
-    if(loc) speak(getActivePrompt(loc).jp);
+    if(loc) speak(dialogueFlow.getText() || getActivePrompt(loc).jp, "ask", true);
   });
 
   $("hint-btn").addEventListener("click", function(){
@@ -631,6 +622,8 @@
     screenTitle.style.display = "none";
     screenMap.style.display = "none";
     screenGame.style.display = "block";
+    screenGame.classList.toggle("entrance-stage", loc.key === "entrance");
+    $("entrance-progress").hidden = loc.key !== "entrance";
 
     state.currentKey = key;
     state.mistakesThisVisit = 0;
@@ -663,8 +656,12 @@
     }
 
     var avatarSlot = $("avatar-slot");
+    var dialogueShell = $("dialogue-shell");
+    if(avatarSlot.parentElement !== dialogueShell){
+      dialogueShell.insertBefore(avatarSlot, $("dialogue-panel"));
+    }
     var transparentFox = LanternAlleyLogic.shouldUseTransparentFox(loc.key, !!loc.encounters);
-    avatarSlot.parentElement.classList.toggle("entrance-dialogue", transparentFox);
+    dialogueShell.classList.toggle("entrance-dialogue", transparentFox);
     avatarSlot.classList.add("avatar-animated");
     avatarSlot.classList.toggle("entrance-fox", transparentFox);
     var initialFoxSrc = transparentFox ? ENTRANCE_FOX_POSES.idle : KON_PHOTO_SRC;
@@ -685,7 +682,7 @@
 
     var prompt = getActivePrompt(loc);
     $("stage-phase-row").style.display = loc.encounters ? "flex" : "none";
-    $("scene-label").textContent = loc.encounters ? loc.label + " - " + prompt.label : loc.label;
+    $("scene-label").textContent = loc.key === "entrance" ? "路地の入口" : (loc.encounters ? loc.label + " - " + prompt.label : loc.label);
     $("encounter-status").style.display = loc.encounters ? "block" : "none";
     $("encounter-progress").textContent = "1";
     $("encounter-total").textContent = loc.encounters ? String(loc.encounters.length) : "1";
@@ -697,7 +694,7 @@
     $("meaning-line").classList.remove("show");
     $("hint-box").textContent = prompt.hint;
     $("hint-box").classList.remove("show");
-    $("hint-btn").style.display = loc.type === "finale" ? "none" : "block";
+    $("hint-btn").style.display = loc.type === "finale" || loc.key === "entrance" ? "none" : "block";
     $("feedback-row").classList.remove("show");
     $("next-row").style.display = "none";
 
@@ -717,11 +714,19 @@
   function setEntranceChoicesDisabled(disabled){
     var buttons = document.querySelectorAll("#scene .hotspot");
     for(var i=0;i<buttons.length;i++) buttons[i].disabled = disabled;
+    $("scene").classList.toggle("entrance-actions-visible", !disabled);
+  }
+
+  function renderEntranceTutorialProgress(){
+    if(state.currentKey !== "entrance" || !entranceTutorialState) return;
+    var progress = LanternAlleyLogic.getTutorialProgress(entranceTutorialState);
+    $("entrance-progress-current").textContent = String(progress.current);
   }
 
   function startEntranceGreeting(loc){
-    setEntranceChoicesDisabled(true);
     entranceTutorialState = LanternAlleyLogic.createTutorial();
+    setEntranceChoicesDisabled(true);
+    renderEntranceTutorialProgress();
     var greeting = LanternAlleyLogic.getTutorialStep(entranceTutorialState);
     $("jp-line").textContent = greeting.jp;
     $("romaji-line").textContent = greeting.romaji;
@@ -736,6 +741,7 @@
     afterSpeech(function(){
       if(state.currentKey !== "entrance" || state.answered) return;
       entranceTutorialState = LanternAlleyLogic.advanceTutorial(entranceTutorialState);
+      renderEntranceTutorialProgress();
       var world = LanternAlleyLogic.getTutorialStep(entranceTutorialState);
       $("jp-line").textContent = world.jp;
       $("romaji-line").textContent = world.romaji;
@@ -746,6 +752,7 @@
       afterSpeech(function(){
         if(state.currentKey !== "entrance" || state.answered) return;
         entranceTutorialState = LanternAlleyLogic.advanceTutorial(entranceTutorialState);
+        renderEntranceTutorialProgress();
         var request = LanternAlleyLogic.getTutorialStep(entranceTutorialState);
         $("jp-line").textContent = request.jp;
         $("romaji-line").textContent = request.romaji;
@@ -802,16 +809,37 @@
   function cushionMarkup(a){
     var fill = a.color === "red" ? "#c2543a" : "#3f6ea8";
     var scale = a.size === "large" ? 1 : 0.62;
-    var rot = a.dir === "up" ? 0 : 90;
+    // The base zabuton is landscape. Rotate only 縦向き so the long edge is
+    // visibly vertical; the old sprite cells contradicted two data labels.
+    var rot = a.dir === "up" ? 90 : 0;
     var t = 'rotate(' + rot + ' 16 16) translate(16 16) scale(' + scale + ') translate(-16 -16)';
     return '<span class="inn-icon cushion-icon" aria-hidden="true"><svg viewBox="0 0 32 32">'
       + '<g transform="' + t + '">'
-      + '<rect x="4" y="9" width="24" height="14" rx="4" fill="' + fill + '" stroke="#3e3024" stroke-width="2"/>'
-      + '<line x1="4" y1="16" x2="28" y2="16" stroke="#3e3024" stroke-width="1.5" opacity="0.55"/>'
+      + '<rect class="cushion-body" x="3" y="9" width="26" height="14" rx="4" fill="' + fill + '" stroke="#39271d" stroke-width="1.5"/>'
+      + '<path class="cushion-weave" d="M6 12h20M5 16h22M6 20h20" stroke="#f3d7ad" stroke-width=".7" opacity=".34"/>'
+      + '<path d="M4 13Q16 17 28 13M4 19Q16 15 28 19" stroke="#2d211b" stroke-width=".7" opacity=".42" fill="none"/>'
+      + '<circle class="cushion-tuft" cx="16" cy="16" r="2" fill="#513226" stroke="#f0c991" stroke-width=".6"/>'
       + '</g></svg></span>';
   }
   function cushionLabel(a){
     return "座布団 - " + (a.color === "red" ? "赤" : "青") + "、" + (a.size === "large" ? "大" : "小") + "、" + (a.dir === "up" ? "縦向き" : "横向き");
+  }
+  function roomSpriteMarkup(room, key){
+    var cushion = (room.cushions || []).filter(function(entry){ return entry[0] === key; })[0];
+    if(cushion) return cushionMarkup(cushion[1]);
+    var cell = room.visual && room.visual.sprites[key];
+    if(!cell) return iconMarkup(key);
+    return '<span class="inn-sprite inn-sprite-' + key + '" aria-hidden="true"'
+      + ' style="--sprite-col:' + cell.col + ';--sprite-row:' + cell.row + '"></span>';
+  }
+  function positionRoomHotspot(room, zone, key){
+    var spot = room.visual && room.visual.hotspots[key];
+    if(!spot) return;
+    zone.classList.add("inn-hotspot");
+    zone.style.left = spot.x + "%";
+    zone.style.top = spot.y + "%";
+    zone.style.width = spot.w + "%";
+    zone.style.height = spot.h + "%";
   }
   function addFloorLabel(zonesEl, text){
     if(!text) return;
@@ -829,18 +857,15 @@
   }
 
   function makeDraggable(el, getZones, onDrop){
-    var startX, startY, origLeft, origTop, w, h, dragging = false, moved = false, slop = 6;
+    var startX, startY, origLeft, origTop, w, h, activePointer = null, dragging = false, moved = false, slop = 6;
     el.style.touchAction = "none";
-    el.addEventListener("pointerdown", function(event){
-      if(el.disabled) return;
-      startX = event.clientX; startY = event.clientY; moved = false; dragging = true;
-      // A finger tap routinely slides several pixels, so a 6px threshold turned
-      // ordinary taps into drags that then landed on nothing.
-      slop = event.pointerType === "mouse" ? 6 : 16;
-      try{ el.setPointerCapture(event.pointerId); }catch(err){}
-    });
-    el.addEventListener("pointermove", function(event){
-      if(!dragging) return;
+    function removeWindowTracking(){
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", finish);
+      window.removeEventListener("pointercancel", finish);
+    }
+    function move(event){
+      if(!dragging || event.pointerId !== activePointer) return;
       var dx = event.clientX - startX, dy = event.clientY - startY;
       if(!moved && Math.sqrt(dx*dx + dy*dy) > slop){
         moved = true;
@@ -859,10 +884,12 @@
           zone.classList.toggle("drop-hover", hit);
         });
       }
-    });
+    }
     function finish(event){
-      if(!dragging) return;
+      if(!dragging || event.pointerId !== activePointer) return;
       dragging = false;
+      activePointer = null;
+      removeWindowTracking();
       if(moved){
         el.classList.remove("dragging");
         el.style.left = ""; el.style.top = ""; el.style.width = ""; el.style.height = "";
@@ -879,8 +906,18 @@
       }
       moved = false;
     }
-    el.addEventListener("pointerup", finish);
-    el.addEventListener("pointercancel", finish);
+    el.addEventListener("pointerdown", function(event){
+      if(el.disabled || dragging) return;
+      startX = event.clientX; startY = event.clientY; moved = false; dragging = true;
+      activePointer = event.pointerId;
+      // A finger tap routinely slides several pixels, so a 6px threshold turned
+      // ordinary taps into drags that then landed on nothing.
+      slop = event.pointerType === "mouse" ? 6 : 16;
+      window.addEventListener("pointermove", move);
+      window.addEventListener("pointerup", finish);
+      window.addEventListener("pointercancel", finish);
+      try{ el.setPointerCapture(event.pointerId); }catch(err){}
+    });
   }
 
   function innButton(label, className, action){
@@ -905,16 +942,35 @@
       }
     }
     var scene = $("scene");
+    var isObjectRoom = prompt.mechanic === "arrange" || prompt.mechanic === "replace" || prompt.mechanic === "warm";
+    var roomVisual = isObjectRoom && interaction.room && interaction.room.visual;
+    var roomSurface = roomVisual
+      ? '<div class="inn-room-composite"><div class="inn-room-viewport"><img class="inn-room-art" src="' + roomVisual.background + '" alt="">'
+        + '<div class="inn-scene-zones" id="inn-scene-zones"></div></div>'
+        + '<div class="inn-supply-shelf"><div class="inn-tray" id="inn-tray"></div></div></div>'
+      : '<div class="shoji" aria-hidden="true"></div>'
+        + '<div class="inn-scene-zones" id="inn-scene-zones"></div>'
+        + '<div class="inn-tray" id="inn-tray"></div>';
+    var clueSurface = roomVisual
+      ? '<details class="inn-clue"><summary>部屋の様子</summary><span>' + interaction.clue + '</span></details>'
+      : '<div class="inn-clue">' + interaction.clue + '</div>';
     // Always visible, not a collapsed <details>: the tap-to-place shortcut is
     // useless if the only place it is mentioned is behind a disclosure arrow.
     scene.innerHTML = '<p class="inn-instruction">'+interaction.controlHelp+'</p>'
-      + '<div class="inn-clue">'+interaction.clue+'</div>'
-      + '<div class="inn-room"><div class="shoji" aria-hidden="true"></div><div class="inn-workspace" id="inn-workspace">'
-      + '<div class="inn-scene-zones" id="inn-scene-zones"></div>'
-      + '<div class="inn-tray" id="inn-tray"></div>'
+      + clueSurface
+      + '<div class="inn-room' + (roomVisual ? ' inn-room-illustrated' : '') + '"><div class="inn-workspace" id="inn-workspace">'
+      + roomSurface
       + '<div class="inn-content" id="inn-content"></div>'
       + '<div class="inn-status" id="inn-status" aria-live="polite"></div>'
       + '</div></div>';
+    if(roomVisual){
+      scene.querySelector(".inn-room-illustrated").style.setProperty(
+        "--inn-sprite-sheet",
+        'url("' + roomVisual.spriteSheet + '")'
+      );
+      var roomLightState = MoonviewInnInteractions.getRoomLightState(innInteractionState, interaction.target);
+      scene.querySelector(".inn-room-viewport").classList.add("room-light-" + roomLightState);
+    }
     var work = $("inn-content");
     var zonesEl = $("inn-scene-zones");
     var trayEl = $("inn-tray");
@@ -940,20 +996,23 @@
         zone.setAttribute("aria-label", group[1]);
         var held = "";
         room.cushions.forEach(function(entry){
-          if(assign[entry[0]] === key) held += cushionMarkup(entry[1]);
+          if(assign[entry[0]] === key) held += roomSpriteMarkup(room, entry[0]);
         });
         zone.innerHTML = '<span class="mat-items">' + held + '</span><span class="inn-caption">' + group[1] + '</span>';
+        positionRoomHotspot(room, zone, key);
         zonesEl.appendChild(zone);
       });
       var removalZones = {};
       var sourceZones = {};
       room.swaps.forEach(function(swap){
         if(!removalZones[swap.removalKey]){
-          var removal = iconButton(swap.removalIcon, swap.removalLabel, swap.removalLabel, "inn-drop-zone laundry-basket", {type:"noop"});
+          var removal = innButton('<span class="inn-caption">' + swap.removalLabel + '</span>', "inn-drop-zone laundry-basket", {type:"noop"});
+          removal.setAttribute("aria-label", swap.removalLabel);
           removal.dataset.key = "remove-" + swap.removalKey;
           removal.dataset.verb = "replace";
           removal.dataset.action = "remove";
           removal.dataset.accepts = "";
+          positionRoomHotspot(room, removal, removal.dataset.key);
           removalZones[swap.removalKey] = removal;
           zonesEl.appendChild(removal);
         }
@@ -966,13 +1025,18 @@
         source.dataset.action = "install";
         source.dataset.item = swap.key;
         source.setAttribute("aria-label", swap.sourceLabel);
-        source.innerHTML = iconMarkup(swap.sourceIcon) + '<span class="inn-caption">' + swap.sourceLabel + '</span>';
+        source.innerHTML = '<span class="inn-caption">' + swap.sourceLabel + '</span>';
+        positionRoomHotspot(room, source, source.dataset.key);
         sourceZones[swap.key] = source;
         zonesEl.appendChild(source);
       });
+      var heatingZones = {};
       room.heatingAppliances.forEach(function(appliance){
-        var heatingZone = iconButton(appliance.icon, appliance.label, appliance.label, "inn-drop-zone heating-zone", {type:"noop"});
+        var heatingZone = innButton('<span class="inn-caption">' + appliance.label + '</span>', "inn-drop-zone heating-zone", {type:"noop"});
+        heatingZone.setAttribute("aria-label", appliance.label);
         heatingZone.dataset.key = appliance.key;
+        positionRoomHotspot(room, heatingZone, appliance.key);
+        heatingZones[appliance.key] = heatingZone;
         zonesEl.appendChild(heatingZone);
       });
 
@@ -1072,41 +1136,47 @@
 
       room.cushions.forEach(function(entry){
         if(assign[entry[0]]) return;
-        tray(cushionMarkup(entry[1]), cushionLabel(entry[1]), "cushion", entry[0]);
+        tray(roomSpriteMarkup(room, entry[0]) + '<span class="inn-caption">' + cushionLabel(entry[1]) + '</span>', cushionLabel(entry[1]), "cushion", entry[0]);
       });
       room.swaps.forEach(function(swap){
         var source = sourceZones[swap.key];
         if(st.installed === swap.key){
-          source.insertAdjacentHTML("afterbegin", '<span class="inn-placed-object">' + iconMarkup(swap.newIcon) + '</span>');
+          source.insertAdjacentHTML("afterbegin", '<span class="inn-placed-object">' + roomSpriteMarkup(room, swap.newIcon) + '</span>');
         }else if(st.removed !== swap.key){
           var oldObject = document.createElement("button");
           oldObject.className = "inn-object inn-placed-object";
-          oldObject.innerHTML = iconMarkup(swap.oldIcon);
+          oldObject.innerHTML = roomSpriteMarkup(room, swap.oldIcon) + '<span class="inn-caption">' + swap.oldLabel + '</span>';
           oldObject.setAttribute("aria-label", swap.oldLabel);
           oldObject.title = swap.oldLabel;
           makeMovable(oldObject, "old", swap.key);
           source.insertBefore(oldObject, source.firstChild);
         }
         if(st.removed === swap.key && st.installed !== swap.key){
-          removalZones[swap.removalKey].insertAdjacentHTML("afterbegin", '<span class="inn-placed-object">' + iconMarkup(swap.oldIcon) + '</span>');
+          removalZones[swap.removalKey].insertAdjacentHTML("afterbegin", '<span class="inn-placed-object">' + roomSpriteMarkup(room, swap.oldIcon) + '</span>');
         }
-        if(st.installed !== swap.key) tray(iconMarkup(swap.newIcon) + '<span class="inn-caption">' + swap.newLabel + '</span>', swap.newLabel, "new", swap.key);
+        if(st.installed !== swap.key) tray(roomSpriteMarkup(room, swap.newIcon) + '<span class="inn-caption">' + swap.newLabel + '</span>', swap.newLabel, "new", swap.key);
       });
       room.dishes.forEach(function(dish){
         if(st.item === dish.key) return;
-        tray(iconMarkup(dish.icon) + '<span class="inn-caption">' + dish.label + '</span>', dish.label, "dish", dish.key);
+        tray(roomSpriteMarkup(room, dish.icon) + '<span class="inn-caption">' + dish.label + '</span>', dish.label, "dish", dish.key);
       });
-
-      var tea = document.createElement("div"); tea.className = "tea-visual"; tea.id = "tea-visual";
-      tea.innerHTML = '<span class="tea-steam" aria-hidden="true"></span><span class="tea-state" id="tea-state"></span>';
-      work.appendChild(tea);
-      updateTeaVisual(interaction);
+      if(st.item){
+        var heatedDish = room.dishes.filter(function(dish){ return dish.key === st.item; })[0];
+        if(heatedDish && heatingZones[heatedDish.appliance]){
+          heatingZones[heatedDish.appliance].insertAdjacentHTML(
+            "afterbegin",
+            '<span class="inn-placed-object inn-heated-object">' + roomSpriteMarkup(room, heatedDish.icon) + '</span>'
+              + '<span class="inn-heat-waves" aria-hidden="true">〰</span>'
+          );
+          heatingZones[heatedDish.appliance].classList.add("filled", "heated");
+        }
+      }
 
       if(verb === "arrange"){
         var n = room.cushions.filter(function(e){ return assign[e[0]]; }).length;
-        $("inn-status").textContent = n + " of " + room.cushions.length + " cushions placed.";
+        $("inn-status").textContent = n + " / " + room.cushions.length + " 枚の座布団を置きました。";
       }else if(verb === "replace"){
-        $("inn-status").textContent = st.removed ? "The old one is out. What goes in its place?" : "";
+        $("inn-status").textContent = st.removed ? "古い物を外しました。次に新しい物を選んでください。" : "";
       }else{
         $("inn-status").textContent = "";
       }
@@ -1256,23 +1326,24 @@
 
     if(loc.type === "choice"){
       if(loc.interactiveDuo){
+        scene.appendChild($("avatar-slot"));
         var stage = document.createElement("div");
         stage.className = "duo-stage";
-        stage.innerHTML = '<div class="player-figure" id="player-figure">' + PLAYER_SVG + '</div><div class="player-caption">You</div>';
+        stage.innerHTML = '<div class="player-figure" id="player-figure" style="--player-action-sprite:url(\'' + PLAYER_ACTION_SPRITE + '\')"><span class="entrance-player-art" aria-hidden="true"></span></div><div class="player-caption">You</div>';
         scene.appendChild(stage);
         var how = document.createElement("div");
-        how.className = "inn-control-help";
+        how.className = "inn-control-help entrance-control-help";
         how.innerHTML = '<strong>How to interact</strong><span>' + LanternAlleyLogic.getHowToInteract() + '</span>';
         scene.appendChild(how);
       }
 
       var wrap = document.createElement("div");
-      wrap.className = "hotspots";
+      wrap.className = "hotspots entrance-action-grid";
       loc.options.forEach(function(opt){
         var btn = document.createElement("button");
         btn.className = "hotspot";
         btn.setAttribute("data-key", opt.key);
-        btn.innerHTML = '<span class="emoji">'+opt.emoji+'</span><span>'+opt.label+'</span>';
+        btn.innerHTML = '<span class="entrance-action-art entrance-action-art-'+opt.key+'" aria-hidden="true" style="--player-action-sprite:url(\'' + PLAYER_ACTION_SPRITE + '\')"></span><span>'+opt.label+'</span>';
         btn.addEventListener("click", function(){
           var key = this.getAttribute("data-key");
           if(loc.interactiveDuo){
@@ -1405,7 +1476,7 @@
     setTimeout(function(){
       if(playerEl) playerEl.classList.remove("action-" + optKey);
       resolveDuoAnswer(optKey === loc.correct, loc);
-    }, 900);
+    }, 1250);
   }
 
   function resolveDuoAnswer(isCorrect, loc){
@@ -1414,6 +1485,8 @@
     if(isCorrect){
       state.answered = true;
       entranceTutorialState = LanternAlleyLogic.completeTutorial(entranceTutorialState);
+      renderEntranceTutorialProgress();
+      setEntranceChoicesDisabled(true);
       var completeStep = LanternAlleyLogic.getTutorialStep(entranceTutorialState);
       var fu = {jp:completeStep.jp, romaji:completeStep.romaji, meaning:""};
       $("jp-line").textContent = fu.jp;

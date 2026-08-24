@@ -29,6 +29,11 @@
     return false;
   }
 
+  function getRoomLightState(state, target){
+    if(!state || state.mechanic !== "replace" || target !== "bulb") return "normal";
+    return state.installed === "bulb" ? "bright" : "dim";
+  }
+
   function applyArrange(state, action){
     var next = clone(state);
     var spec = action.items || [];
@@ -149,6 +154,7 @@
     create:create,
     apply:apply,
     isComplete:isComplete,
+    getRoomLightState:getRoomLightState,
     serialize:serialize,
     restore:restore
   };
