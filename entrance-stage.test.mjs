@@ -382,3 +382,32 @@ test("audio replay preserves the pending dialogue continuation", () => {
   assert.equal(flow.activateFromSurface(false), "advanced");
   assert.equal(advanced, 1);
 });
+
+test("the finished Entrance keeps Kon's reply, the result and the continue button on screen", () => {
+  // #screen-game.entrance-stage is overflow:hidden, so anything after #scene is
+  // clipped rather than merely pushed below the fold. On a short phone that hid
+  // the result and the only way forward, leaving the stage a dead end.
+  assert.match(html, /screenGame\.classList\.add\("entrance-complete"\)/);
+  assert.match(html, /screenGame\.classList\.remove\("entrance-complete"\)/);
+
+  // The spent action dock gives up its slot.
+  assert.match(html, /\.entrance-stage\.entrance-complete \.entrance-action-grid/);
+
+  // Desktop: the button takes the dock slot inside the stage.
+  assert.match(html, /@media\(min-width:761px\)\{\s*\.entrance-stage \.next-row\{position:absolute/);
+
+  // Phone: fixed positioning is what escapes the clip; sticky cannot pin
+  // inside a non-scrolling overflow:hidden box.
+  assert.match(
+    html,
+    /\.entrance-stage\.entrance-complete \.feedback-row,\s*\.entrance-stage\.entrance-complete \.next-row\{position:fixed/,
+  );
+
+  // The lift that puts those rows above the dialogue must stay phone-only,
+  // or on desktop it also lifts #scene over Kon's speech card.
+  const mobileBlock = html.slice(html.indexOf("@media(max-width:760px)"));
+  assert.ok(
+    mobileBlock.includes(".entrance-stage.entrance-complete .answer-workspace{z-index:21}"),
+    "the workspace lift must live inside the phone media block",
+  );
+});

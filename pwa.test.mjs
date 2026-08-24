@@ -238,7 +238,7 @@ test("the offline delivery contains the cinematic opening, Entrance, and room li
   const sw = read("sw.js");
   const artifact = read("lantern-alley-artifact.html");
 
-  assert.match(sw, /lantern-alley-v36/);
+  assert.match(sw, /lantern-alley-v40/);
   for (const pose of [
     "fox-neutral-idle-transparent-v2.webp",
     "fox-wave-closed-smile-transparent-v2.webp",
@@ -260,6 +260,21 @@ test("the offline delivery contains the cinematic opening, Entrance, and room li
   assert.match(artifact, /getRoomLightState/);
   assert.match(artifact, /room-light-dim/);
   assert.match(artifact, /room-light-bright/);
+});
+
+test("the standalone artifact keeps the completed Entrance controls visible on a phone", () => {
+  const artifact = read("lantern-alley-artifact.html");
+
+  assert.match(
+    artifact,
+    /\.entrance-stage\.entrance-complete \.next-row\{position:fixed;left:0;right:0;z-index:20/,
+    "the built artifact can clip the Alley button below the phone viewport",
+  );
+  assert.match(
+    artifact,
+    /\.entrance-stage\.entrance-complete \.learning-context\{position:fixed;left:8px;right:8px;bottom:calc\(124px/,
+    "Kon's final line can cover the completed Entrance controls",
+  );
 });
 
 test("the self-contained artifact includes the illustrated room", () => {

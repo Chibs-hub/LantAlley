@@ -49,7 +49,7 @@ Moonview Inn teaches these five N2 words:
 | 代える | replace one thing with another | Put the named worn item in the bin, then its fresh counterpart in the fitting. Order matters. |
 | 温める | warm something deliberately | Move the named dish to the appliance the request names (コンロ / 電子レンジ). One action. |
 | 調整 | reconcile several conditions | Read the times from the Japanese only, set the schedule, confirm. |
-| 引き受ける | undertake, accept responsibility | Choose 手伝います。 or 手伝えません。 Declining ends the stage; returning is welcomed. |
+| 引き受ける | undertake, accept responsibility | Accept or decline the named duty. Declining is treated as an incorrect answer, and Kon explains that help is still needed. |
 
 Each harder item carries one close N2 near-miss, used for feedback when the player acts wrongly:
 
@@ -73,11 +73,11 @@ The three attributes of the cushions are deliberately crossed, so grouping by co
 
 ### Learning phases
 
-- Learn: 5 guided encounters, one per target word, full Japanese sentence shown.
-- Practice: 10 interleaved encounters, two situations per word. The complete Japanese request remains visible.
-- Challenge: 10 audio-focused encounters. Romaji, English meaning and hints are hidden.
-- Mastery: at least 8 of 10 correct, with all five target words answered correctly at least once.
-- Focused review: missed words return before the player retries the Challenge.
+- Day 1 - Learn (一日目・基礎 ★☆☆): 5 guided encounters, one per target word, full Japanese sentence shown.
+- Day 2 - Practice (二日目・実践 ★★☆): 5 interleaved encounters, one changed situation per word. The complete Japanese request remains visible.
+- Day 3 - Challenge (三日目・挑戦 ★★★): 5 new audio-focused encounters, one per word. Romaji, English meaning and hints are hidden.
+- Mastery: all 5 Challenge words correct.
+- Focused review: only missed words return; recalling them completes the stage without replaying the full Challenge.
 - Kon's Japanese lines reveal progressively while she speaks. Clicking any non-control area of the game stops the voice and reveals the full line; clicking a non-control area again advances when a continuation is allowed. Buttons, inputs and draggable objects keep their own actions. A request waiting for an answer cannot be skipped.
 
 ## 5. Progress and scoring
@@ -124,7 +124,7 @@ Run all automated tests from PowerShell in the project folder:
 node --test entrance-stage.test.mjs lantern-map.test.mjs moonview-inn-interactions.test.mjs n2-home-inn-stage.test.mjs pwa.test.mjs
 ```
 
-Current verified result: 119 tests passed, 0 failed. `app.js`, `n2-home-inn-stage.js` and `sw.js` pass `node --check`. The rebuilt standalone artifact is 12.91 MB, below the 16 MB limit.
+Current verified result: 122 tests passed, 0 failed. `app.js`, `n2-home-inn-stage.js` and `sw.js` pass `node --check`. The rebuilt standalone artifact is 12.92 MB, below the 16 MB limit.
 
 Beyond the mechanics, the tests now guard the design rule itself:
 
@@ -151,6 +151,77 @@ Current artifact: `https://claude.ai/code/artifact/951c7147-1dcf-4b9d-aced-2928c
 An artifact cannot load sibling `.js` files or local images, which is why the build step inlines everything.
 
 ## 9. Change log and reasons
+
+### 2026-08-24 - The finished Entrance was clipped away, not just below the fold
+
+The first fix for the missing continue button was incomplete. It rescued `#next-row` but not `#feedback-row`, and it only held on tall screens.
+
+The real cause is that `#screen-game.entrance-stage` is `overflow:hidden` so the alley cannot spill. Everything after `#scene` - the hint button, the result stamp and the continue button - is therefore *clipped away*, not merely pushed below the fold, and cannot be reached by scrolling. It also explains why the shared mobile sticky rule never helped: `position:sticky` needs a scrolling ancestor, and this box does not scroll.
+
+Worse, the first fix's `.entrance-stage .next-row{position:absolute}` outranked that shared sticky rule on specificity, so it disabled pinning on phones as well.
+
+Measured at 360x640 before the fix: the button sat at 687px in a 640px viewport with the result at 782px, both outside the stage box. At 390x844 the same code passed, which is why the first round of phone QA missed it.
+
+The fix:
+
+- Desktop (761px and up) keeps the button in the spent action dock's slot, with the result just above it.
+- Phones use `position:fixed`, the only way out of an `overflow:hidden` box.
+- `.answer-workspace` is `z-index:2`, so a z-index on the rows inside it could not beat `.learning-context` at `z-index:5` and the dialogue painted over them. The workspace is lifted instead - but only inside the phone media block, because on desktop that also lifts `#scene` over Kon's speech card. Both states were verified by hit-testing, not by position alone.
+- The dialogue is pinned too on phones. The stage is taller than a short screen, so the dialogue was anchored to a stage bottom below the viewport while the dock was anchored to the viewport, and the two collided over Kon's reply.
+
+Verified at 360x640, 390x844 and 1280x720: Kon's reply, the result and the button are all on screen, none overlapping, and each is the topmost element at its own centre. Cache bumped to `lantern-alley-v37`.
+
+A regression test now pins the whole contract, including that the workspace lift stays phone-only.
+
+Note: two audio tests fail against a concurrent session's in-progress rework of `n2-home-inn-stage.js` into a three-day arc. Those lines have no clips yet. That work is deliberately left uncommitted here.
+
+### 2026-08-24 - One three-day agreement and explicit day difficulty approved
+
+The owner approved removing the end-of-Day-1 next-day work confirmation. Kon will ask once at the Inn entrance for three days of help. The phases become `一日目・基礎 ★☆☆`, `二日目・実践 ★★☆`, and `三日目・挑戦 ★★★`; the existing focused review remains part of Day 3. The `引き受ける` lesson becomes a normal same-day inn duty, and declining that duty is an incorrect answer that asks the learner to help rather than ending the stage. Regression expectations were updated first and are expected to fail until dialogue, phase metadata, transitions and obsolete decline state are corrected.
+
+The local OpenJLPT N2 source contains 1,793 entries, including 385 entries whose English meanings explicitly begin with `to`. Five locations with only five target verbs each would cover 25 verbs, so it cannot cover every N2 verb. The source also uses variants such as `暖める` for the project's context-correct `温める` and `引受る` for `引き受ける`, while verbal nouns such as `調整` are not counted by the simple English-meaning filter. A complete five-location curriculum therefore needs canonical aliases and multiple three-day chapters per location; this architectural curriculum expansion is not being silently folded into the current Inn dialogue change.
+
+Production now uses one three-day agreement in the Inn introduction. Day metadata and Japanese day announcements are supplied by the stage and rendered in the phase badge and first story beat. The Day 1 `引き受ける` request is now tonight's dinner service; declining any daily duty follows the ordinary incorrect-answer path, and obsolete decline/resume state and exit logic were removed. Every phase now uses the explicit replies `はい、引き受けます。` and `すみません、引き受けられません。`. Day completion and Challenge/Review completion controls now use Japanese story copy. Regression expectations were updated to the approved dialogue and sequence. The offline worker is now `lantern-alley-v40`. Changed neural voice clips and the standalone artifact still need regeneration.
+
+### 2026-08-24 - Shorter 5/5/5 Inn progression approved
+
+The owner found Practice and Challenge too repetitive and approved a smaller progression: 5 guided Learn encounters, 5 mixed Practice encounters using changed situations, 5 new audio-only Challenge encounters, then focused review of missed verbs only. Regression expectations now describe this 5/5/5 behavior and focused-review completion; they are expected to fail until the phase data, mastery threshold and review transition are updated.
+
+The stage data now contains one changed Practice situation and one distinct audio-only Challenge situation per target word. Perfect Challenge mastery is 5/5 with all five words covered; otherwise only missed verbs return, and recalling those completes the stage without replaying the full Challenge. Score copy now uses the actual Challenge length. The offline cache contract expects `lantern-alley-v39`, so the worker version remains the final production update before verification.
+
+Regression checks that previously selected the removed second Practice set by fixed array indexes now locate the corresponding retained Practice or Challenge situation by word and variant. The main learning-phase summary in this handoff now also reflects 5/5/5 and focused-review completion.
+
+The service worker now uses `lantern-alley-v39`, completing the offline update path for the shorter stage.
+
+The standalone artifact was rebuilt with the 5/5/5 stage: 6 scripts, 1 stylesheet and 77 images inlined, 13,545,596 bytes (12.92 MB). The full suite passes all 122 tests and the three production scripts pass syntax checks; final diff verification remains before handoff.
+
+### 2026-08-24 - Moonview Inn cinematic shell approved
+
+The owner approved matching Moonview Inn to the Alley Entrance: dark indigo framing, walnut stage and dialogue docks, cream washi speech, larger transparent Kon, and the illustrated room kept as the primary answer canvas. The existing learning interactions and content remain unchanged. A regression contract was added first and is expected to fail until the new `inn-stage` shell is wired and styled for desktop and mobile.
+
+The `home-inn` location now activates an isolated `inn-stage` visual shell. Desktop uses a compact wooden header, a Kon-and-dialogue dock beside the framed illustrated room, and a labelled interaction strip; phones stack the same pieces without sticky dialogue overlap. The cache contract now expects `lantern-alley-v38`, so the service worker version must be bumped before final verification.
+
+The service worker now uses `lantern-alley-v38`, preventing installed copies from retaining the previous Inn layout.
+
+`lantern-alley-artifact.html` was rebuilt with the Inn shell: 6 scripts, 1 stylesheet and 77 images inlined, 12.92 MB. Rendered desktop and phone checks plus the complete automated suite remain before final sign-off.
+
+Final automated verification passes all 121 tests, syntax checks for `app.js`, `n2-home-inn-stage.js` and `sw.js`, and `git diff --check` with only the repository's existing LF-to-CRLF warnings. The artifact is 13,545,291 bytes (12.92 MB). The available browser session blocked both `file://` and loopback preview URLs, so rendered viewport QA could not be completed in this run; no publish, commit, push or deployment was performed.
+
+### 2026-08-24 - Published Entrance still hides the Alley button on a phone
+
+The owner reported that after Kon says to explore the alley, no control appears. Reproduction separated the two delivery surfaces: the current source page shows `路地を見る` after a correct bow at 390x844, but `lantern-alley-artifact.html` was generated at 16:39 before the mobile completion CSS changed at 16:51. The standalone artifact therefore contains the button logic but not the later fixed-position phone layout, so its completed controls remain clipped by the Entrance stage.
+
+The explicit button remains preferable to an automatic transition because Kon asks the learner to choose a destination and the learner may still be reading the final Japanese line. A regression contract now requires the standalone artifact to contain the completed phone layout for both the Alley button and Kon's final dialogue before the artifact is rebuilt.
+
+Because the same CSS is part of the installable PWA shell, its cache contract now requires `lantern-alley-v37`; reusing version 36 would leave previously installed copies on the clipped layout even after the source and artifact are corrected.
+
+The service worker now uses `lantern-alley-v37`. The standalone artifact still needs rebuilding before the new delivery regression can pass.
+
+`lantern-alley-artifact.html` has now been rebuilt from the corrected mobile CSS: 6 scripts, 1 stylesheet and 77 images inlined, 12.91 MB. The next check is the green regression run and a fresh 390x844 completion render from the rebuilt artifact itself.
+
+The new artifact regression passes. Fresh browser QA then ran the rebuilt standalone artifact through the complete Entrance at 390x844: after Bow, `路地を見る` is visible at the bottom of the viewport while Kon's final Japanese remains readable above it; selecting the button opens the six-destination alley map with Moonview Inn available. No automatic transition was added.
+
+Final verification rebuilt the artifact at 13,540,033 bytes (12.91 MB), passed all 120 defined tests, passed syntax checks for `app.js`, `n2-home-inn-stage.js` and `sw.js`, and passed `git diff --check` with only the repository's existing LF-to-CRLF warnings. No commit, push, publish or deployment was performed, so the local artifact is corrected but the published Claude Artifact still requires explicit owner approval to republish.
 
 ### 2026-08-24 - Entrance had no way to continue to the alley
 

@@ -145,8 +145,6 @@
     challengeMisses:[],
     stageMastered:false,
     resumedStageEntry:false,
-    stageDeclined:false,
-    resumedAfterDecline:false,
     stageProgress:{homeInn:null},
     visited:{},
     starred:{}
@@ -298,7 +296,6 @@
           correctWords:Object.keys(state.challengeCorrectWords),
           misses:state.challengeMisses.map(function(item){ return item.focusWord; }),
           mastered:state.stageMastered,
-          declined:state.stageDeclined,
           medal:state.stageMastered ? "gold" : (state.stagePhase === "challenge" || state.stagePhase === "review" ? "silver" : (state.stagePhase === "practice" ? "bronze" : "none"))
         };
       }
@@ -509,12 +506,11 @@
   // flags are cleared when the encounter advances rather than on render.
   function stageNarrationFor(loc, prompt){
     if(!(loc.encounters && loc.getStorySetup)) return prompt.narration;
-    return loc.getStorySetup(prompt, state.resumedStageEntry, state.resumedAfterDecline);
+    return loc.getStorySetup(prompt, state.resumedStageEntry);
   }
 
   function continueStageEncounter(loc){
     state.resumedStageEntry = false;
-    state.resumedAfterDecline = false;
     var items = state.phaseItems || loc.getPhaseItems(state.stagePhase);
     if(state.encounterIndex >= items.length - 1){
       advanceStagePhase(loc);
@@ -596,13 +592,18 @@
     var prompt = getActivePrompt(loc);
     var phaseName = state.stagePhase === "review" ? "focused review" : state.stagePhase;
     var phaseLabels = {learn:"Learn / 学ぶ", practice:"Practice / 練習", challenge:"Challenge / 挑戦", review:"Review / 復習"};
+    var dayMeta = loc.getDayMeta ? loc.getDayMeta(state.stagePhase) : null;
     $("scene-label").textContent = prompt.stageLabel + " - " + prompt.label;
     $("stage-phase-row").style.display = "flex";
-    $("stage-phase-badge").textContent = phaseLabels[state.stagePhase] || phaseName;
+    $("stage-phase-badge").textContent = dayMeta ? dayMeta.label + "・" + dayMeta.mode + " " + dayMeta.stars : (phaseLabels[state.stagePhase] || phaseName);
     $("encounter-status").style.display = "block";
     $("encounter-progress").textContent = String(state.encounterIndex + 1);
     $("encounter-total").textContent = String((state.phaseItems || loc.getPhaseItems(state.stagePhase)).length);
-    $("narration").textContent = stageNarrationFor(loc, prompt);
+    var storyNarration = stageNarrationFor(loc, prompt);
+    if(state.encounterIndex === 0 && loc.getDayAnnouncement){
+      storyNarration = loc.getDayAnnouncement(state.stagePhase) + " " + storyNarration;
+    }
+    $("narration").textContent = storyNarration;
     $("jp-line").textContent = loc.getWrittenPrompt(prompt, state.stagePhase);
     $("romaji-line").textContent = prompt.romaji;
     $("romaji-line").style.display = state.romajiOn && state.stagePhase !== "challenge" ? "block" : "none";
@@ -623,6 +624,7 @@
     screenMap.style.display = "none";
     screenGame.style.display = "block";
     screenGame.classList.toggle("entrance-stage", loc.key === "entrance");
+    screenGame.classList.toggle("inn-stage", loc.key === "home-inn");
     screenGame.classList.remove("entrance-complete");
     $("entrance-progress").hidden = loc.key !== "entrance";
 
@@ -651,9 +653,6 @@
       state.challengeMisses = loc.challenge.filter(function(item){ return (resumed.misses || []).indexOf(item.focusWord) >= 0; });
       state.stageMastered = !!resumed.mastered;
       state.resumedStageEntry = true;
-      // Coming back after turning the work down earns a warmer greeting.
-      state.resumedAfterDecline = !!resumed.declined;
-      state.stageDeclined = false;
     }
 
     var avatarSlot = $("avatar-slot");
@@ -1228,7 +1227,6 @@
         button.setAttribute("aria-label", reply.label);
         button.addEventListener("click", function(event){
           event.stopImmediatePropagation();
-          if(reply.key === "decline"){ declineStageWork(prompt); return; }
           performInnAction({type:"respond", key:reply.key});
         });
         actions.appendChild(button);
@@ -1236,34 +1234,6 @@
       work.appendChild(actions);
       $("inn-status").textContent = "";
     }
-  }
-
-  // Turning the work down is a legitimate answer, not a mistake: Kon is
-  // disappointed, the player leaves the inn, and no heart is lost. Returning
-  // later is greeted warmly rather than silently resumed.
-  function declineStageWork(prompt){
-    if(state.answered) return;
-    state.answered = true;
-
-    var reply = prompt.declineReply || "そうですか……。";
-    $("jp-line").textContent = reply;
-    $("romaji-line").textContent = "";
-    $("romaji-line").style.display = "none";
-    $("meaning-line").classList.remove("show");
-    setEntranceFoxPose("tryAgain");
-    speak(reply, "wrong");
-
-    state.stageDeclined = true;
-    saveStageProgress();
-
-    showFeedback(false, "You turned the work down. Kon will welcome you back whenever you return.");
-    $("next-row").style.display = "block";
-    $("btn-next").textContent = "宿を出る →";
-
-    afterSpeech(function(){
-      if(state.currentKey !== "home-inn" || !state.answered) return;
-      showMap();
-    }, 1400);
   }
 
   function updateTeaVisual(interaction){
@@ -1636,14 +1606,14 @@
           if(state.mistakesThisVisit === 0 && !already) state.starred[stage.key] = true;
           saveProgress();
           renderHud();
-          showFeedback(true, "Challenge mastered: " + state.challengeScore + "/10, with all five words recalled.");
-          $("btn-next").textContent = "Back to the Alley →";
+          showFeedback(true, "三日目の挑戦を達成しました。" + state.challengeScore + "/" + items.length + "、五つの言葉を思い出せました。");
+          $("btn-next").textContent = "路地へ戻る →";
         }else{
-          showFeedback(false, "Challenge result: " + state.challengeScore + "/10. Review missed words, then retry the challenge.");
-          $("btn-next").textContent = "Review missed words →";
+          showFeedback(false, "三日目の結果は" + state.challengeScore + "/" + items.length + "です。間違えた言葉だけ復習しましょう。");
+          $("btn-next").textContent = "間違えた言葉を復習する →";
         }
       }else{
-        $("btn-next").textContent = "Next challenge →";
+        $("btn-next").textContent = "次の仕事へ →";
       }
       $("next-row").style.display = "block";
       saveStageProgress();
@@ -1654,16 +1624,21 @@
     if(isCorrect){
       state.answered = true;
       $("meaning-line").classList.add("show");
+      if(state.stagePhase === "review") state.challengeCorrectWords[prompt.focusWord] = true;
       var isFinalEncounter = state.encounterIndex === items.length - 1;
       if(isFinalEncounter && state.stagePhase === "review"){
-        showFeedback(true, "Focused review complete. Retry the full challenge to demonstrate mastery.");
-        $("btn-next").textContent = "Retry challenge →";
+        state.stageMastered = stage.isFocusedReviewComplete(items, Object.keys(state.challengeCorrectWords));
+        state.visited[stage.key] = true;
+        saveProgress();
+        renderHud();
+        showFeedback(true, "復習が終わりました。間違えた言葉をすべて思い出せました。");
+        $("btn-next").textContent = "路地へ戻る →";
       }else if(isFinalEncounter && state.stagePhase === "learn"){
         showFeedback(true, prompt.completionFeedback || "Learn phase complete. Now retrieve the same words in changed situations.");
         $("btn-next").textContent = prompt.completionNextLabel || "Start practice →";
       }else if(isFinalEncounter && state.stagePhase === "practice"){
-        showFeedback(true, "Practice complete. Romaji, English, and hints will now be hidden.");
-        $("btn-next").textContent = "Start challenge →";
+        showFeedback(true, "二日目の仕事が終わりました。三日目は音声だけで挑戦します。");
+        $("btn-next").textContent = "三日目へ →";
       }else{
         showFeedback(true, "Correct! " + prompt.meaning);
         $("btn-next").textContent = "Continue →";
