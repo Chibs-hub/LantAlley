@@ -152,6 +152,16 @@ An artifact cannot load sibling `.js` files or local images, which is why the bu
 
 ## 9. Change log and reasons
 
+### 2026-08-24 - Entrance had no way to continue to the alley
+
+After the bow, Kon said 「これから路地を歩いて、行きたい場所を選んでください。」 and the player was stranded: no button, no auto-advance.
+
+The button was being created correctly - `#next-row` was `display:block` with the text 路地を見る. The problem was purely layout. `.entrance-stage #scene` is `height:100%` and fills its whole grid row, so every sibling after it is pushed past the bottom of the stage. Measured at 1280x720: the button's top edge sat at 725px in a 720px viewport, with the stage ending at 692px. It was rendered, just permanently off-screen.
+
+Once the tutorial is answered the action dock has done its job, so a new `entrance-complete` state hides the dock and gives the continue button that slot. Measured after the fix: 587-636px on desktop and 687-756px at 390x844, both inside the viewport and inside the stage, with no horizontal overflow. The button navigates to the six-destination map.
+
+Cache bumped to `lantern-alley-v36`, and the pinned version assertion in `pwa.test.mjs` updated with it.
+
 ### 2026-08-24 - Illustrated build committed and published; handoff corrected
 
 The illustrated Entrance, map system and inn artwork had been verified but left uncommitted and unpublished across sessions. All of it is now in git as one commit, and the 12.91 MB artifact is published to the live URL.

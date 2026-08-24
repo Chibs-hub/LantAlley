@@ -623,6 +623,7 @@
     screenMap.style.display = "none";
     screenGame.style.display = "block";
     screenGame.classList.toggle("entrance-stage", loc.key === "entrance");
+    screenGame.classList.remove("entrance-complete");
     $("entrance-progress").hidden = loc.key !== "entrance";
 
     state.currentKey = key;
@@ -1518,6 +1519,10 @@
       showFeedback(true, msg);
       $("btn-next").textContent = "路地を見る";
       $("next-row").style.display = "block";
+      // The Entrance scene fills its grid row, so the continue button lands
+      // below the stage and off-screen. This hands it the finished action
+      // dock's slot instead.
+      screenGame.classList.add("entrance-complete");
     }else{
       state.mistakesThisVisit = Math.min(3, state.mistakesThisVisit + 1);
       renderHud();
