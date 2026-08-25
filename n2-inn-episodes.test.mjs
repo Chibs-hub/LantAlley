@@ -92,3 +92,17 @@ test("declining is never scored, because refusing is not a comprehension error",
     }
   }
 });
+
+test("the preview harness can walk the whole episode", () => {
+  const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  // Testing-only route so the new question types can be judged before the
+  // controller is rewritten around them.
+  assert.match(app, /function startEpisodePreview/);
+  assert.match(app, /function renderPreviewQuestion/);
+  assert.match(app, /LanternQuestionRenderer\.describe\(question/);
+  assert.match(app, /LanternQuestionRenderer\.renderInto/);
+  // Day 3 must stay audio-first in the preview too.
+  assert.match(app, /challenge \? "音声を聞いてください。" : question\.prompt\.jp/);
+  // Action questions need the room, which the harness does not build.
+  assert.match(app, /この問題は部屋の操作で答えます/);
+});

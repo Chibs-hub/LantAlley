@@ -418,12 +418,18 @@
   $("btn-back-map").addEventListener("click", function(){ showMap(); });
   $("btn-restart-learn").addEventListener("click", restartStageLearning);
   $("btn-next").addEventListener("click", function(){
+    if(previewState){ advanceEpisodePreview(); return; }
     var loc = getLocation(state.currentKey);
     if(loc && loc.encounters){
       continueStageEncounter(loc);
     }else{
       showMap();
     }
+  });
+
+  $("btn-preview-episode").addEventListener("click", function(event){
+    event.stopImmediatePropagation();
+    startEpisodePreview();
   });
 
   $("btn-skip-day").addEventListener("click", function(event){
@@ -564,6 +570,119 @@
   // and it only appears inside a stage that has days.
   var DAY_ORDER = ["learn", "practice", "challenge"];
 
+  // ---- Episode 1 preview (testing only) ----
+  //
+  // The new episode contract, its catalog and the question renderer are all
+  // built, but nothing routes a player through them yet: the Inn still runs the
+  // legacy encounter flow. This harness walks Episode 1 so the new question
+  // types can be judged before the controller is rewritten around them.
+  //
+  // Deliberately thin. It reuses the real renderer and the real episode data,
+  // but not the room interactions, so action questions show their prompt and a
+  // confirm rather than a working scene.
+  var previewState = null;
+
+  function previewQuestions(){
+    if(typeof N2InnEpisodes === "undefined") return [];
+    var episode = N2InnEpisodes.episodes[0];
+    var list = [];
+    episode.days.forEach(function(day){
+      day.questions.forEach(function(question){
+        list.push({day:day.day, mode:day.mode, question:question});
+      });
+    });
+    return list;
+  }
+
+  function startEpisodePreview(){
+    var list = previewQuestions();
+    if(!list.length) return;
+    previewState = {index:0, list:list, answered:false};
+    screenTitle.style.display = "none";
+    screenMap.style.display = "none";
+    screenGame.style.display = "block";
+    screenGame.classList.remove("entrance-stage");
+    renderPreviewQuestion();
+  }
+
+  function renderPreviewQuestion(){
+    var entry = previewState.list[previewState.index];
+    var question = entry.question;
+    var dayLabel = {1:"一日目・基礎 ★☆☆", 2:"二日目・実践 ★★☆", 3:"三日目・挑戦 ★★★"}[entry.day];
+
+    $("stage-phase-row").style.display = "flex";
+    $("btn-skip-day").style.display = "none";
+    $("stage-phase-badge").textContent = dayLabel;
+    $("scene-label").textContent = "Episode 1 preview - " + question.skill;
+    $("encounter-status").style.display = "block";
+    $("encounter-progress").textContent = String(previewState.index + 1);
+    $("encounter-total").textContent = String(previewState.list.length);
+    $("narration").textContent = question.sourceNote;
+    $("romaji-line").textContent = "";
+    $("meaning-line").textContent = "";
+    $("meaning-line").classList.remove("show");
+    $("hint-btn").style.display = "none";
+    $("hint-box").classList.remove("show");
+    $("feedback-row").classList.remove("show");
+    $("next-row").style.display = "none";
+
+    var challenge = entry.day === 3;
+    $("jp-line").textContent = challenge ? "音声を聞いてください。" : question.prompt.jp;
+    if(question.prompt.audio) speak(question.prompt.jp, "ask", false, $("jp-line").textContent);
+
+    var scene = $("scene");
+    scene.innerHTML = '<div class="inn-workspace">'
+      + '<p class="inn-instruction" id="inn-instruction"></p>'
+      + '<div class="question-controls" id="preview-controls"></div>'
+      + '<div class="inn-status" id="inn-status"></div></div>';
+
+    var spec = LanternQuestionRenderer.describe(question, {phase: challenge ? "challenge" : entry.mode});
+    $("inn-instruction").innerHTML = '<strong>How to interact</strong> <span>' + spec.howToInteract + '</span>';
+
+    var options = (question.answer && question.answer.options) || [];
+    if(!options.length){
+      // Action questions need the room, which this harness does not build.
+      $("inn-status").textContent = "この問題は部屋の操作で答えます（プレビューでは省略）。";
+    }
+
+    previewState.answered = false;
+    LanternQuestionRenderer.renderInto($("preview-controls"), question, function(value){
+      if(previewState.answered) return;
+      if(!options.length){
+        previewState.answered = true;
+        showFeedback(true, "Action question - skipped in preview.");
+        advancePreviewLater();
+        return;
+      }
+      var correct = value === question.answer.correctIndex;
+      previewState.answered = true;
+      $("jp-line").textContent = correct ? question.feedback.correct : question.feedback.incorrect;
+      speak($("jp-line").textContent, correct ? "correct" : "wrong");
+      showFeedback(correct, correct ? "正解です。" : "もう一度考えてみましょう。");
+      if(!correct){
+        setTimeout(function(){ if(previewState) renderPreviewQuestion(); }, 1800);
+        return;
+      }
+      advancePreviewLater();
+    }, {phase: challenge ? "challenge" : entry.mode});
+  }
+
+  function advancePreviewLater(){
+    $("btn-next").textContent = previewState.index >= previewState.list.length - 1 ? "路地へ戻る →" : "次へ →";
+    $("next-row").style.display = "block";
+  }
+
+  function advanceEpisodePreview(){
+    if(previewState.index >= previewState.list.length - 1){
+      previewState = null;
+      $("btn-skip-day").style.display = "inline-flex";
+      showMap();
+      return;
+    }
+    previewState.index += 1;
+    renderPreviewQuestion();
+  }
+
   function skipToNextDay(){
     var loc = getLocation(state.currentKey);
     if(!loc || !loc.encounters) return;
@@ -649,6 +768,7 @@
     $("scene-label").textContent = prompt.stageLabel + " - " + prompt.label;
     $("stage-phase-row").style.display = "flex";
     $("btn-skip-day").style.display = loc.getDayMeta ? "inline-flex" : "none";
+    $("btn-preview-episode").style.display = loc.getDayMeta ? "inline-flex" : "none";
     $("stage-phase-badge").textContent = dayMeta ? dayMeta.label + "・" + dayMeta.mode + " " + dayMeta.stars : (phaseLabels[state.stagePhase] || phaseName);
     $("encounter-status").style.display = "block";
     $("encounter-progress").textContent = String(state.encounterIndex + 1);
@@ -747,6 +867,7 @@
     var prompt = getActivePrompt(loc);
     $("stage-phase-row").style.display = loc.encounters ? "flex" : "none";
     $("btn-skip-day").style.display = (loc.encounters && loc.getDayMeta) ? "inline-flex" : "none";
+    $("btn-preview-episode").style.display = (loc.encounters && loc.getDayMeta) ? "inline-flex" : "none";
     $("scene-label").textContent = loc.key === "entrance" ? "路地の入口" : (loc.encounters ? loc.label + " - " + prompt.label : loc.label);
     $("encounter-status").style.display = loc.encounters ? "block" : "none";
     // Resuming into a stage never ran renderStagePrompt, so the day badge kept

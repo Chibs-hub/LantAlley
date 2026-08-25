@@ -170,6 +170,33 @@ An artifact cannot load sibling `.js` files or local images, which is why the bu
 
 ## 9. Change log and reasons
 
+### 2026-08-25 - Episode 1 preview route (testing only)
+
+Episode 1 has existed in the new contract with audio since Task 6, but nothing routed a player to it: the Inn still runs the legacy encounter flow, and `question-renderer.js` was loaded and never called. A second test control, **Preview Episode 1 (test)**, now walks the episode so the new question types can be judged before the controller is rewritten around them.
+
+Deliberately thin. It uses the real episode data and the real renderer, but not the room interactions, so the three action questions show their prompt and a confirm with 「この問題は部屋の操作で答えます（プレビューでは省略）。」 rather than a working scene. The point is to judge the questions, not to ship a second game loop.
+
+Walked all ten:
+
+| | Day | Skill | Answer |
+| --- | --- | --- | --- |
+| 1 | 一日目 | kanji | そろえて / ととのえて / あつめて |
+| 2 | 一日目 | vocabulary | 温めて / 暖めて / 冷やして |
+| 3 | 一日目 | vocabulary-action | room, skipped in preview |
+| 4 | 二日目 | vocabulary-action | room, skipped in preview |
+| 5 | 二日目 | vocabulary | 準備 / 案内 / 確認 |
+| 6 | 二日目 | reading | 13時 / 14時 / 12時 |
+| 7 | 三日目 | listening-task | room, skipped in preview |
+| 8 | 三日目 | listening-point | 掃除 / 案内 / 確認 |
+| 9 | 三日目 | quick-response | paraphrase of 引き受ける |
+| 10 | 三日目 | integrated | 部屋へ案内します。 and two others |
+
+Day 3 stays audio-first inside the preview as well, and the run ends by returning to the map.
+
+**Both test controls must be removed before this reaches learners.**
+
+Cache `lantern-alley-v69`, artifact 14.62 MB, 197 of 197 tests pass.
+
 ### 2026-08-25 - Kon's name tab landed on the narration
 
 The 「コン (Kon)」 tab is drawn as a `::before` hanging 29px above the speech card. In the Entrance that space is empty alley, but the Inn's stacked column puts the narration directly above, so the tab covered its last line. Measured: narration ended at y=241, the tab started at y=221 - a 20px overlap.
