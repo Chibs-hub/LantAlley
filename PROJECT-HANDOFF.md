@@ -170,6 +170,176 @@ An artifact cannot load sibling `.js` files or local images, which is why the bu
 
 ## 9. Change log and reasons
 
+### 2026-08-25 - Remaining graphics bugs fixed and a full playthrough verified
+
+**The supply shelf could not show what the sentence asks about.** Each zabuton was a 26px icon inside a 60px button, so colour, size and direction were indistinguishable - and those are exactly the three attributes the request names. The shelf art is now 48px. Measured afterwards, all three attributes are distinct: red rgb(194,84,58) against blue rgb(63,110,168); scale 1 against 0.62; and 21x39 portrait against 39x21 landscape for 縦向き versus 横向き. The tray does not overflow.
+
+**The unexplained drop shadow is resolved.** After the wood tokens were applied at the right specificity, both the room objects and the Day 2 buttons compute `rgba(55, 30, 18, 0.76)` with border `rgb(140, 86, 45)` at a 12px radius - the Entrance's values. The earlier rule enumeration that reported "no matching rule" was an unreliable probe rather than evidence; the computed style is the ground truth and it now matches.
+
+**Full playthrough from a cleared save:** Entrance tutorial with the bow card, 「路地を見る」 appearing and leading to the map, six destinations, the Inn entered in one click, the festival invitation with 「はい、喜んで手伝います。」, and Day 1 opening at 一日目・基礎 ★☆☆ with 1/5 and ten objects on the shelf.
+
+Encounter 1 solved by grouping on the named attribute: 正解 stamp, contextual reply, then a clean advance to 2/5 「At the washstand」. Encounter 2 solved as an ordered action: after the first step 「古い物を外しました。次に新しい物を選んでください。」, then 正解 and 「ありがとうございます。新しいタオルになりました。」 - so the 取り替える rewrite works end to end.
+
+Cache `lantern-alley-v64`, artifact 14.61 MB, 193 of 193 tests pass.
+
+No known visual or logic bugs remain open in the Inn.
+
+### 2026-08-25 - Full stage pass: three more bugs, and the room art is visible again
+
+Walked all fifteen items as data and then rendered each day.
+
+**Day 3 was still typing out its own request.** The previous fix routed both render paths through `getWrittenPrompt`, and it still showed the sentence, because `speak()` drives the clip *and* the on-screen reveal from the same string - so the reveal retyped the request a few milliseconds after `getWrittenPrompt` had correctly written 「音声を聞いてください。」. `speak()` now takes a separate `displayText`, so the audio and the written line can differ. Verified: during the reveal the line reads 「音」, and after it completes it still reads 「音声を聞いてください。」. A test fails if any request is spoken without a display override.
+
+**A clarifying question was wired to the refusal branch.** Encounter 5 has two option keys but carried three Japanese labels, so the `decline` key rendered as 「何時からですか。」 - asking when it starts ended the stage. Two labels for two keys now.
+
+**The illustrated room was hidden behind its own drop zones.** They were solid cream cards over the artwork. They keep the wood frame and drop shadow but now let the room show through, and each label sits on its own dark chip so it stays legible over the art. The two "overlapping" zone pairs found by the audit were 1px edge contacts, not real overlaps.
+
+Verified per day:
+
+| | Badge | Prompt | Answer surface | Room |
+| --- | --- | --- | --- | --- |
+| Day 1 | 一日目・基礎 ★☆☆ | full request, no overflow | 10 objects, 9 zones | art loaded |
+| Day 2 | 二日目・実践 ★★☆ | cloze | 揃えて / 揃って / 散らかして | none, by design |
+| Day 3 | 三日目・挑戦 ★★★ | 音声を聞いてください。 | 10 objects, 9 zones | art loaded |
+
+No English reaches any answer surface, and the shoji is gone from every scene.
+
+Cache `lantern-alley-v63`, artifact 14.61 MB, 191 of 191 tests pass.
+
+Still not addressed: the supply-shelf cushions render as small coloured bars that do not read as zabuton at that size.
+
+### 2026-08-25 - Day 2 dialogue item answered the wrong question; Day 3 revealed its request
+
+**The cloze had yes/no answers.** Day 2's dialogue item showed 「明日の朝食の配膳を（　　）くれませんか。」 above the replies 「はい、引き受けます。」 and 「すみません、引き受けられません。」. The question and the answers were about different things: `isWordChoiceDay` excluded the `undertake` mechanic while the prompt had already been swapped for its cloze. Every Day 2 item is now a cloze, including that one, so it offers 引き受けて / 引き止めて. The decline branch still lives on Day 1, where the offer is actually made. A test asserts no Day 2 option is a sentence reply.
+
+**Day 3 printed the request it is supposed to speak.** Two paths set the prompt: advancing an encounter goes through `getWrittenPrompt`, but entering a stage printed `prompt.jp` directly, so arriving at Challenge showed the sentence in writing instead of 「音声を聞いてください。」. A test now fails if any render path prints the request directly.
+
+**A regression I introduced last round.** I had added `word-break:keep-all` to the request line. Japanese has no spaces, so that stopped the line breaking at all and pushed it past the card edge - which is the clipped text in the screenshot. Reverted to wrapping anywhere, which is normal for Japanese.
+
+**And the stacking fix from last round was not working.** `#dialogue-shell` computes as **grid**, not flex, so `flex-direction:column` did nothing and the fox kept its own column. Collapsing the shell to `display:block` gives the sentence the full card: 275px of a 325px card, about 12 characters per line, no overflow.
+
+Cache `lantern-alley-v61`, artifact 14.61 MB, 190 of 190 tests pass.
+
+### 2026-08-25 - Day 1 request was wrapping to four characters per line
+
+Measured at 1152x927, the width the owner reported from: `#jp-line` was **86px** inside a 200px speech card, about **four characters per line** for a normal N2 request. The sentence is the one thing the learner must read, and it was the least readable element on screen.
+
+Cause: the Inn's dialogue is a flex row of the fox and the speech card, sitting in the split desktop layout's narrow context column. The fox took roughly 38% of a 325px column and left the speech 200px.
+
+A first attempt scoped the fix to `.dialogue:not(.entrance-dialogue)` and did nothing, because **Kon-led stages deliberately share `.entrance-dialogue` for the transparent fox** - `shouldUseTransparentFox("home-inn", true)` is true by design. Excluding that class excluded exactly the case that needed fixing. Scoping by `#screen-game:not(.entrance-stage)` targets the Inn while leaving the Entrance's own dock layout alone.
+
+Below 1400px the Inn now stacks the fox above the speech, so the sentence gets the full column: **432px, about 20 characters per line, two lines** instead of a stub. A test pins both rules.
+
+**Kon greeted three times in a row.** The day announcement, the welcome-back line and the situation were concatenated: 「一日目です…」「お帰りなさい…」「もうすぐ最初のお客様が…」. The day announcement already places the learner, so it now replaces the resume greeting rather than stacking with it. Resolving the greeting twice also consumed the one-shot resume flag on the first call and returned a different line on the second, so it is now resolved once.
+
+**The skip-day control** was present but at 75% opacity in a crowded header. It is now full opacity and will not wrap.
+
+Cache `lantern-alley-v59`, artifact 14.61 MB, 188 of 188 tests pass.
+
+Still open from this pass: the illustrated room draws placed objects as large pale cards over the artwork, and the supply shelf renders cushions as small coloured bars that do not read as zabuton at that size. Both are visual rather than functional, and neither has been changed yet.
+
+### 2026-08-25 - Day 2 questions rewritten for multiple choice
+
+The owner pointed out that Day 2's question and answer did not fit together, and they were right in the worst way: **the question contained its own answer.** Day 2 kept the Day 1 request 「二つのマットに、同じ向きの座布団を二枚ずつ揃えてください。」 - an imperative to perform an action - and then asked the learner to pick 揃える from a list. The verb was already printed in the prompt, so the item tested reading, not comprehension.
+
+Day 2 now has its own sentences, written as cloze with the verb removed and options in the form the blank requires:
+
+| Situation | Question | Choices |
+| --- | --- | --- |
+| cushions | 二つのマットに、同じ向きの座布団を二枚ずつ（　　）ください。 | 揃えて / 揃って / 散らかして |
+| linen | 汚れたシーツを洗濯かごに入れて、新しいシーツに（　　）ください。 | 取り替えて / 代えて / そのままにして |
+| rice | 冷めたごはんを、電子レンジで（　　）ください。 | 温めて / 温まって / 冷やして |
+| arrivals | 二つのグループの到着時間を（　　）ください。 | 調整して / 調節して / 放置して |
+| breakfast | 明日の朝食の配膳を（　　）くれませんか。 | 引き受けて / 引き止めて |
+
+A test now asserts every Day 2 prompt is a cloze and never contains the stem of its own answer, so this specific failure cannot return.
+
+**Two mistakes of mine were caught by existing tests, which is what they are for.** The first draft set the rice situation as 「冷めたスープを、コンロで」 while the underlying Day 2 interaction is rice in the microwave - the appliance test failed with "requires the microwave but never names it". The second draft replaced Kon's replies with generic word explanations, and the contextual-response test failed because a reply must still confirm what happened in the story, not just name the word. Both are fixed.
+
+Five tests encoded the old design - practice repeating the Day 1 request verbatim, and near misses always appearing in dictionary form. They now accept the te-form a blank requires, so 揃う on Day 3 and 揃って on Day 2 are both recognised as the same near miss.
+
+The audio-coverage test was rewritten to check prompts the player can actually reach, via `getPhaseItems`, rather than every `jp:` literal in the source. The old Day 2 request strings remain in the file as unused data, and requiring clips for them would render audio nobody hears.
+
+Ten clips regenerated, ten pruned. Cache `lantern-alley-v57`, artifact 14.61 MB, 187 of 187 tests pass.
+
+### 2026-08-25 - Click the map to enter, plus a testing skip-day control
+
+**Entering a stage now takes one click on the place itself.** Selecting a destination and then finding a separate action button made the map behave like a list with a picture behind it. Clicking a place runs its action directly. Places with no action - the 準備中 ones - still only select, so their story shows and nothing dead is offered. The detail button remains for keyboard users and as the visible label of what will happen.
+
+**Skip to next day (test).** A dashed, clearly labelled control in the day badge row that jumps to the next day without answering the current one, so a day can be reached without playing the previous one. It appears only inside a stage that has days, and the label and dashed border keep it from reading as part of the lesson. It has no effect on the last day beyond returning to the map.
+
+Rendered check: one click on 月見宿 entered the stage, and the control stepped 一日目・基礎 ★☆☆ to 二日目・実践 ★★☆ to 三日目・挑戦 ★★★.
+
+This control is a testing aid. It should be removed, or hidden behind a flag, before the game is shared with learners.
+
+Cache `lantern-alley-v56`, artifact 14.65 MB, 186 of 186 tests pass.
+
+### 2026-08-25 - Inn framing brought into line with the Entrance
+
+The owner reported that some scenes do not match the Entrance. Comparing computed styles rather than impressions:
+
+| Surface | Entrance | Inn, before |
+| --- | --- | --- |
+| Panel border | 2px #8c562d | 2px #9d7d50 |
+| Corner radius | 12px | 14px |
+| Instruction band | 2px, 12px radius | 1px rgba(203,145,85,.78), 9px radius |
+| Drop shadow | rgba(55,30,18,.76) | #80643f |
+
+Same game, two different woods. Shared tokens now live in `:root` - `--wood-edge`, `--wood-shadow`, `--wood-radius`, `--paper` - and the Inn adopts the Entrance's values rather than the reverse, because the Entrance is the approved illustrated look. The question renderer's controls use the same tokens, so anything built on the new contract inherits the look instead of drifting again.
+
+One override needed the selector `.inn-stage .inn-instruction` to match the existing specificity; a plain class selector lost to it silently, which is the usual way a "fix" appears to do nothing.
+
+Verified live: the Inn reply buttons and instruction band now compute to 2px #8c562d at a 12px radius with the Entrance's paper gradient.
+
+**Open cosmetic item.** The reply buttons still compute the old drop shadow #80643f rather than the token. Enumerating the matched rules at runtime found no stylesheet rule setting `box-shadow` on that element, which contradicts the computed value, so the cause is not yet identified. Border, radius and background all match, so the visible difference is small, but it is unexplained rather than accepted.
+
+Cache `lantern-alley-v55`, artifact 14.65 MB, 186 of 186 tests pass.
+
+### 2026-08-25 - Day 2 is a different exercise, and the day badge was never updating on resume
+
+**The shoji is gone entirely.** Suppressing it only for the schedule was not enough - the same absolutely positioned decoration then covered the reply buttons on the dialogue scene. It was backdrop for scenes with no illustrated room, but those scenes put their controls exactly where it sat. A backdrop that covers the answer is worse than no backdrop.
+
+**The real reason Day 2 looked like Day 1.** `renderStagePrompt` sets the day badge and the encounter counter, and it runs only when advancing an encounter or starting a phase - never when resuming into a stage from the map. A returning learner therefore saw the markup defaults: the badge read "Learn" and the counter read 1 of 5 regardless of the actual day. The content was different; the labelling said otherwise. Resume now sets both from the live phase.
+
+**Day 2 now asks the words a different way.** Repeating Day 1's drag with one attribute changed tested the same skill twice, and the owner asked for a different kind of question rather than the same exercise. Practice drops the room and asks the learner to name the action in Japanese, choosing between the verb, its intransitive partner and a plausible wrong action - 揃える / 揃う / 散らかす. With no objects to move there is no answering by trial and error, and the intransitive partner is a real N2 trap rather than an obviously silly option.
+
+The three days now differ in kind, not only in support:
+
+| Day | Question type | Support |
+| --- | --- | --- |
+| 一日目 基礎 | move the objects in the room | romaji, English meaning, hint |
+| 二日目 実践 | choose the Japanese word | romaji only |
+| 三日目 挑戦 | move the objects, prompt spoken only | none |
+
+Rendered check at day 2: badge 「二日目・実践 ★★☆」, choices 揃える / 揃う / 散らかす, zero draggable objects, no shoji, romaji visible, English meaning empty.
+
+The dialogue encounter keeps its own replies, and Challenge keeps the physical action so the audio-only day still tests comprehension through doing.
+
+Three tests added: the word-choice day exists and its options are Japanese, the shoji is gone from every scene, and resume sets the badge and counter from the live phase.
+
+Cache `lantern-alley-v54`, artifact 14.65 MB, 186 of 186 tests pass.
+
+### 2026-08-25 - A correct answer could strand the player; retry hardened
+
+Investigating a report that a mistake left no way to try again turned up a worse bug on the **correct** path.
+
+`scheduleCorrectAdvance` hides the Continue button and hands advancement to `afterSpeech`. But `afterSpeech` only called `dialogueFlow.setContinuation(next)` and **ignored the fallback delay it was passed**. Advancement therefore depended entirely on the voice reporting that it had finished. If a clip 404s, autoplay is blocked before the first gesture, the tab is muted, or synthesis has no Japanese voice, `voiceFinished()` never fires - and the player is left on a correct answer with the Continue button hidden and nothing to click.
+
+Two safety nets, because either alone still leaves a gap:
+
+- `afterSpeech` now arms a fallback that fires the continuation at `fallbackDelay + 6000`, guarded so it can only run once.
+- `scheduleCorrectAdvance` restores the Continue button at `delay + 2500` if the advance has not happened, so there is always a visible way forward.
+
+A test pins both. It previously asserted only that advancement waits for speech, which is exactly the behaviour that caused the stranding.
+
+**Retry after a mistake.** Learn and Practice already rebuilt the scene through the engine's wrong-answer path, and a rendered check confirms it: grouping the cushions by colour when the sentence asks for 向き shows Kon's correction and resets the tray to 10 objects with the scene answerable again. Two paths did *not* rebuild - a near-miss option chosen outside Challenge, and any wrong answer reaching `answerStage` outside Challenge - so both now call a shared `offerRetry`, which re-renders after 900ms and prints 「もう一度どうぞ。」.
+
+Challenge remains one attempt by design; a missed word returns in focused review.
+
+**Also fixed:** feedback read as a bare "Correct! " in Practice and Challenge. The English meaning was removed from those days by the difficulty ladder, and the string concatenated it unconditionally. It now falls back to 「正解です。」.
+
+Cache `lantern-alley-v52`, artifact 14.64 MB, 183 of 183 tests pass.
+
 ### 2026-08-25 - Schedule scene render fix and a real difficulty ladder
 
 Two problems reported from a screenshot of the 調整 encounter.

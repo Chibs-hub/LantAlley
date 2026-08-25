@@ -162,7 +162,12 @@ test("practice shows the complete Japanese request while challenge stays audio-o
   const practiceText = stage.getWrittenPrompt(practiceItem, "practice");
   assert.equal(practiceText, practiceItem.jp);
   assert.doesNotMatch(practiceText, /＿＿/);
-  assert.match(stage.getWrittenPrompt(stage.practice.find((item) => item.focusWord === "温める"), "practice"), /温めて/);
+  // Day 2 is a cloze, so the request must NOT contain the verb any more. What
+  // it must still contain is the appliance, since that is the detail the
+  // learner has to hear rather than guess.
+  const warmPractice = stage.getWrittenPrompt(stage.practice.find((item) => item.focusWord === "温める"), "practice");
+  assert.doesNotMatch(warmPractice, /温めて/);
+  assert.match(warmPractice, /電子レンジ|コンロ/);
   assert.equal(stage.getWrittenPrompt(stage.challenge[0], "challenge"), "音声を聞いてください。")
 });
 
@@ -246,7 +251,11 @@ test("non-dialogue harder items have exactly one explained N2 near-miss", () => 
   // 代わる was the near miss while the swap taught 代える. The swap now teaches
   // 取り替える, so the mistake worth drilling is 代える itself: the learner who
   // reaches for the person-substitution verb to swap an object.
-  const verifiedNearMisses = ["揃う", "代える", "温まる", "調節する"];
+  // Day 2 states its options in the form its blank requires, so the same near
+  // miss appears as 揃う on Day 3 and 揃って on Day 2.
+  const verifiedNearMisses = [
+    "揃う", "揃って", "代える", "代えて", "温まる", "温まって", "調節する", "調節して",
+  ];
 
   for (const item of [...stage.practice, ...stage.challenge].filter((entry) => entry.mechanic !== "undertake")) {
     const nearMisses = item.options.filter((option) => option.nearMiss);
@@ -362,7 +371,7 @@ test("schedule coordination distinguishes chousei from chousetsu", () => {
   assert.match(item.jp, /時間|予定/);
   assert.doesNotMatch(item.jp, /温度/);
   const nearMiss = item.options.find((option) => option.nearMiss);
-  assert.equal(nearMiss.label, "調節する");
+  assert.match(nearMiss.label, /調節/);
 });
 
 test("choosing a near-miss returns its specific distinction", () => {
@@ -526,7 +535,11 @@ test("each near-miss is the true intransitive partner of its target", () => {
     const partner = pairs[item.focusWord];
     if (!partner) continue;
     const nearMiss = item.options.find((option) => option.nearMiss);
-    assert.equal(nearMiss.label, partner, `${item.focusWord} should pair with ${partner}`);
+    // Accept the te-form Day 2 needs: 揃う appears as 揃って inside a blank.
+    assert.ok(
+      nearMiss.label === partner || nearMiss.label.startsWith(partner.slice(0, -1)),
+      `${item.focusWord} should pair with ${partner}, got ${nearMiss.label}`,
+    );
     assert.match(nearMiss.explanation, new RegExp(partner));
   }
 });
@@ -619,7 +632,9 @@ test("arrange requests describe making two matching pairs on the mats", () => {
   vm.createContext(context);
   vm.runInContext(readFileSync(stageUrl, "utf8"), context);
   const stage = context.N2HomeInnStage;
-  const arrangeItems = [...stage.encounters, ...stage.practice].filter((item) => item.focusWord === "揃える");
+  // Day 2 asks the same situation as a cloze, so only the acting days carry the
+  // full imperative.
+  const arrangeItems = [...stage.encounters, ...stage.challenge].filter((item) => item.focusWord === "揃える");
 
   for (const item of arrangeItems) {
     assert.match(item.jp, /二つのマットに、同じ.+の座布団を二枚ずつ揃えてください。/, item.variant);
@@ -849,4 +864,126 @@ test("each day withdraws one layer of support", () => {
 
   // Challenge is audio-first: the written prompt must not give the sentence away.
   assert.equal(stage.getWrittenPrompt(stage.getPhaseItems("challenge")[0], "challenge"), "音声を聞いてください。");
+});
+
+test("day 2 asks the words a different way, not the same drag again", () => {
+  // Repeating Day 1's object drag with one attribute changed tested the same
+  // skill twice. Practice now names the action in Japanese instead.
+  assert.match(html, /function isWordChoiceDay/);
+  assert.match(html, /function renderWordChoice/);
+  assert.match(html, /state\.stagePhase === "practice"/);
+  // Every Day 2 item is a cloze, including the dialogue one. Excluding it left
+  // a cloze prompt sitting above yes/no replies.
+  assert.doesNotMatch(html, /prompt\.mechanic !== "undertake"/);
+  // The choices must be Japanese, or the answer is readable without the language.
+  assert.match(html, /!\/\[A-Za-z\]\{2,\}\/\.test\(option\.label\)/);
+  assert.match(html, /Choose the word that matches the request\./);
+});
+
+test("the overlapping shoji decoration is gone from every scene", () => {
+  // It was absolutely positioned and covered the schedule board's cards and
+  // then the dialogue scene's reply buttons.
+  assert.doesNotMatch(html, /<div class="shoji"/);
+});
+
+test("resuming a stage shows the day you are actually on", () => {
+  // renderStagePrompt runs only on advance and on phase start, so entering a
+  // saved stage left the badge at its markup default of "Learn" and the
+  // counter at 1 of 5. Day 2 then looked exactly like Day 1.
+  assert.match(html, /var resumedMeta = loc\.getDayMeta/);
+  assert.match(html, /stage-phase-badge"\)\.textContent = resumedMeta\.label/);
+  assert.match(html, /encounter-progress"\)\.textContent = resumedItems \? String\(state\.encounterIndex \+ 1\)/);
+});
+
+test("day 2 questions never contain their own answer", () => {
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(readFileSync(new URL("./moonview-inn-interactions.js", import.meta.url), "utf8"), context);
+  vm.runInContext(readFileSync(stageUrl, "utf8"), context);
+  const stage = context.N2HomeInnStage;
+
+  // Day 2 reused the Day 1 request, which commanded an action and then asked
+  // for a word - and 「揃えてください」 already showed the answer. A cloze
+  // sentence keeps the Japanese as the only instruction without giving it away.
+  for (const item of stage.getPhaseItems("practice")) {
+    assert.match(item.jp, /（　　）/, `${item.focusWord} day 2 prompt is not a cloze`);
+    const answer = item.options.find((option) => option.key === item.correct).label;
+    const stem = answer.replace(/[てで]$/, "");
+    assert.equal(
+      item.jp.includes(stem),
+      false,
+      `${item.focusWord} day 2 prompt contains its own answer: ${stem}`,
+    );
+    assert.ok(item.options.length >= 2);
+  }
+});
+
+test("the Inn request is not squeezed into a stub column", () => {
+  // Kon-led stages share .entrance-dialogue for the transparent fox, so a
+  // selector excluding that class also excluded the Inn. Side by side in the
+  // narrow context column the fox took ~38% and left the sentence 200px, which
+  // wrapped a normal N2 request to about four characters per line.
+  // The shell computes as grid, so flex-direction did nothing; it has to be
+  // collapsed to a single column instead.
+  assert.match(html, /#screen-game:not\(\.entrance-stage\) \.dialogue\{display:block/);
+  assert.match(html, /#screen-game:not\(\.entrance-stage\) \.dialogue \.speech\{width:100%/);
+});
+
+test("every day 2 item answers its own question", () => {
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(readFileSync(new URL("./moonview-inn-interactions.js", import.meta.url), "utf8"), context);
+  vm.runInContext(readFileSync(stageUrl, "utf8"), context);
+  const stage = context.N2HomeInnStage;
+
+  // The dialogue item showed a cloze prompt above yes/no replies, so the
+  // question and the answers were about different things. A cloze must be
+  // answered by something that fits the blank.
+  for (const item of stage.getPhaseItems("practice")) {
+    assert.match(item.jp, /（　　）/, item.focusWord);
+    for (const option of item.options) {
+      assert.doesNotMatch(
+        option.label,
+        /^はい、|^すみません、|。$/,
+        `${item.focusWord} day 2 offers a sentence reply to a cloze: ${option.label}`,
+      );
+    }
+  }
+});
+
+test("entering Challenge does not reveal the request in writing", () => {
+  // Two paths set the prompt: advancing uses getWrittenPrompt, but entering a
+  // stage printed prompt.jp directly, so arriving at day 3 showed the sentence
+  // the learner is supposed to hear.
+  const writes = [...html.matchAll(/\$\("jp-line"\)\.textContent = ([^;]+);/g)].map((m) => m[1].trim());
+  const bare = writes.filter((expr) => expr === "prompt.jp");
+  assert.equal(bare.length, 0, `a render path prints the request directly: ${bare.join(", ")}`);
+});
+
+test("challenge speaks the request but never types it out", () => {
+  // speak() drives both the clip and the on-screen reveal, so the reveal was
+  // printing the very sentence day 3 asks the learner to listen for, undoing
+  // getWrittenPrompt a few milliseconds after it ran.
+  assert.match(html, /function speak\(text, mode, isReplay, displayText\)/);
+  assert.match(html, /dialogueFlow\.start\(displayText === undefined \? text : displayText/);
+  const calls = [...html.matchAll(/speak\(prompt\.jp[^)]*\)/g)].map((m) => m[0]);
+  assert.ok(calls.length >= 1);
+  for (const call of calls) {
+    assert.match(call, /getWrittenPrompt/, `a request is spoken without a display override: ${call}`);
+  }
+});
+
+test("the supply shelf shows colour, size and direction", () => {
+  // The shelf drew each zabuton as a 26px icon in a 60px button, so the three
+  // attributes the request asks about were not distinguishable.
+  assert.match(html, /\.inn-tray \.cushion-icon\{width:48px; height:48px;\}/);
+  assert.match(html, /\.inn-tray \.inn-icon\{width:44px; height:44px;\}/);
+});
+
+test("the Inn frames match the Entrance rather than a second wood", () => {
+  assert.match(html, /--wood-edge:#8c562d;/);
+  assert.match(html, /--wood-shadow:rgba\(55,30,18,\.76\);/);
+  assert.match(html, /--wood-radius:12px;/);
+  // The room must remain visible through its own drop zones.
+  assert.match(html, /\.inn-room-viewport \.inn-drop-zone\{[\s\S]*?background:rgba\(255,250,240,\.2\)/);
 });

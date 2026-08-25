@@ -225,11 +225,14 @@
     return true;
   }
 
-  function speak(text, mode, isReplay){
+  // `displayText` lets the audio and the written line differ. Day 3 speaks the
+  // request but must show 「音声を聞いてください。」; without this the reveal
+  // typed out the sentence the learner is supposed to be listening for.
+  function speak(text, mode, isReplay, displayText){
     mode = mode || "ask";
     if(dialogueFlow){
       if(isReplay) dialogueFlow.replay(state.voiceOn);
-      else dialogueFlow.start(text, state.voiceOn);
+      else dialogueFlow.start(displayText === undefined ? text : displayText, state.voiceOn);
     }
     if(!state.voiceOn) return;
     if(playClip(text, mode)) return;
@@ -238,8 +241,19 @@
 
   // A completed reply waits for the learner. During speech, the first click
   // reveals the line; only the following click can run this continuation.
-  function afterSpeech(next){
-    if(dialogueFlow) dialogueFlow.setContinuation(next);
+  function afterSpeech(next, fallbackDelay){
+    var fired = false;
+    function once(){
+      if(fired) return;
+      fired = true;
+      next();
+    }
+    if(dialogueFlow) dialogueFlow.setContinuation(once);
+    // The voice may never report finishing: a clip can 404, autoplay can be
+    // blocked before the first gesture, the tab can be muted, or synthesis can
+    // have no Japanese voice. Waiting only on the voice strands the player on a
+    // correct answer with no way forward, so always arm a fallback.
+    setTimeout(once, (fallbackDelay || 2600) + 6000);
   }
 
   function speakWithSynthesis(text, mode){
@@ -412,6 +426,11 @@
     }
   });
 
+  $("btn-skip-day").addEventListener("click", function(event){
+    event.stopImmediatePropagation();
+    skipToNextDay();
+  });
+
   function showMap(){
     screenTitle.style.display = "none";
     screenGame.style.display = "none";
@@ -440,7 +459,13 @@
         '<span class="map-pin" aria-hidden="true"></span>' +
         '<span class="map-destination-label">' + place.name + '</span>';
       btn.addEventListener("click", function(){
+        // Clicking the place on the map enters it. Selecting and then hunting
+        // for a separate action button made the map feel like a list with a
+        // picture behind it. Places with no action - the 準備中 ones - still
+        // just select, so their story shows and nothing dead is offered.
         selectMapDestination(place.key);
+        var action = LanternAlleyMap.getAction(place.key, state);
+        if(action) runMapAction(place.key);
       });
       destinationsEl.appendChild(btn);
     });
@@ -452,6 +477,11 @@
     if(!LanternAlleyMap.getDestination(key)) return;
     selectedMapKey = key;
     renderMap();
+  }
+
+  function runMapAction(key){
+    var action = LanternAlleyMap.getAction(key, state);
+    if(action) enterLocation(action.locationKey);
   }
 
   function renderMapDetail(){
@@ -529,6 +559,25 @@
     renderStagePrompt(loc);
   }
 
+  // Testing aid: jump straight to the next day without answering the current
+  // one. Marked in the label so it cannot be mistaken for part of the lesson,
+  // and it only appears inside a stage that has days.
+  var DAY_ORDER = ["learn", "practice", "challenge"];
+
+  function skipToNextDay(){
+    var loc = getLocation(state.currentKey);
+    if(!loc || !loc.encounters) return;
+    var at = DAY_ORDER.indexOf(state.stagePhase);
+    var next = DAY_ORDER[at + 1];
+    if(!next){
+      showMap();
+      return;
+    }
+    state.phaseItems = null;
+    state.answered = false;
+    startStagePhase(loc, next);
+  }
+
   function startStagePhase(loc, phase, items){
     state.stagePhase = phase;
     state.phaseItems = items || null;
@@ -599,13 +648,19 @@
     var dayMeta = loc.getDayMeta ? loc.getDayMeta(state.stagePhase) : null;
     $("scene-label").textContent = prompt.stageLabel + " - " + prompt.label;
     $("stage-phase-row").style.display = "flex";
+    $("btn-skip-day").style.display = loc.getDayMeta ? "inline-flex" : "none";
     $("stage-phase-badge").textContent = dayMeta ? dayMeta.label + "・" + dayMeta.mode + " " + dayMeta.stars : (phaseLabels[state.stagePhase] || phaseName);
     $("encounter-status").style.display = "block";
     $("encounter-progress").textContent = String(state.encounterIndex + 1);
     $("encounter-total").textContent = String((state.phaseItems || loc.getPhaseItems(state.stagePhase)).length);
+    // Resolve the greeting once. Calling stageNarrationFor twice consumed the
+    // resume flag on the first call and produced a different line on the second.
     var storyNarration = stageNarrationFor(loc, prompt);
     if(state.encounterIndex === 0 && loc.getDayAnnouncement){
-      storyNarration = loc.getDayAnnouncement(state.stagePhase) + " " + storyNarration;
+      // The day announcement already places the learner, so the welcome-back
+      // line on top of it made three Kon greetings before the situation.
+      // Prefer the day announcement and drop the resume greeting.
+      storyNarration = loc.getDayAnnouncement(state.stagePhase) + " " + prompt.narration;
     }
     $("narration").textContent = storyNarration;
     $("jp-line").textContent = loc.getWrittenPrompt(prompt, state.stagePhase);
@@ -617,7 +672,7 @@
     $("hint-box").classList.remove("show");
     $("hint-btn").style.display = state.stagePhase === "challenge" ? "none" : "block";
     renderInnInteraction(prompt, true);
-    speak(prompt.jp);
+    speak(prompt.jp, undefined, false, loc.getWrittenPrompt ? loc.getWrittenPrompt(prompt, state.stagePhase) : undefined);
   }
 
   function enterLocation(key){
@@ -688,12 +743,27 @@
 
     var prompt = getActivePrompt(loc);
     $("stage-phase-row").style.display = loc.encounters ? "flex" : "none";
+    $("btn-skip-day").style.display = (loc.encounters && loc.getDayMeta) ? "inline-flex" : "none";
     $("scene-label").textContent = loc.key === "entrance" ? "路地の入口" : (loc.encounters ? loc.label + " - " + prompt.label : loc.label);
     $("encounter-status").style.display = loc.encounters ? "block" : "none";
-    $("encounter-progress").textContent = "1";
-    $("encounter-total").textContent = loc.encounters ? String(loc.encounters.length) : "1";
+    // Resuming into a stage never ran renderStagePrompt, so the day badge kept
+    // its markup default of "Learn" and the counter stayed at 1 of 5 no matter
+    // which day the learner was actually on. That is why Day 2 looked like
+    // Day 1 even though its content differed.
+    var resumedMeta = loc.getDayMeta ? loc.getDayMeta(state.stagePhase) : null;
+    if(resumedMeta){
+      $("stage-phase-badge").textContent = resumedMeta.label + "・" + resumedMeta.mode + " " + resumedMeta.stars;
+    }
+    var resumedItems = loc.encounters ? (state.phaseItems || loc.getPhaseItems(state.stagePhase)) : null;
+    $("encounter-progress").textContent = resumedItems ? String(state.encounterIndex + 1) : "1";
+    $("encounter-total").textContent = resumedItems ? String(resumedItems.length) : "1";
     $("narration").textContent = stageNarrationFor(loc, prompt);
-    $("jp-line").textContent = prompt.jp;
+    // Day 3 is audio-first, so the written prompt must stay
+    // 「音声を聞いてください。」. This path runs when entering a stage and printed
+    // the sentence directly, so arriving at Challenge revealed the request.
+    $("jp-line").textContent = loc.getWrittenPrompt
+      ? loc.getWrittenPrompt(prompt, state.stagePhase)
+      : prompt.jp;
     $("romaji-line").textContent = prompt.romaji;
     $("romaji-line").style.display = state.romajiOn ? "block" : "none";
     $("meaning-line").textContent = prompt.meaning;
@@ -709,11 +779,11 @@
       renderStageIntro(loc);
     }else if(loc.encounters){
       renderInnInteraction(prompt, true);
-      speak(prompt.jp);
+      speak(prompt.jp, undefined, false, loc.getWrittenPrompt ? loc.getWrittenPrompt(prompt, state.stagePhase) : undefined);
     }else{
       renderScene(prompt);
       if(loc.key === "entrance") startEntranceGreeting(loc);
-      else speak(prompt.jp);
+      else speak(prompt.jp, undefined, false, loc.getWrittenPrompt ? loc.getWrittenPrompt(prompt, state.stagePhase) : undefined);
     }
   }
 
@@ -938,7 +1008,59 @@
     return button;
   }
 
+  // Day 2 asks the same words a different way. Repeating Day 1's drag with one
+  // attribute changed tested the same skill twice, so Practice drops the scene
+  // and asks the learner to name the action in Japanese instead, choosing
+  // between the verb, its intransitive partner and a plausible wrong action.
+  // No objects to move means no answering by trial and error.
+  function isWordChoiceDay(prompt){
+    // Every Day 2 item carries a cloze question, including the dialogue one.
+    // Excluding undertake left it showing a cloze prompt above yes/no replies:
+    // 「配膳を（　　）くれませんか」 answered by 「はい、引き受けます。」. The
+    // decline branch still lives on Day 1, where the offer is actually made.
+    return state.stagePhase === "practice"
+      && !!(prompt.options && prompt.options.length > 1)
+      && prompt.options.every(function(option){ return !/[A-Za-z]{2,}/.test(option.label); });
+  }
+
+  function renderWordChoice(prompt){
+    var scene = $("scene");
+    scene.innerHTML = '<div class="inn-workspace"><p class="inn-instruction" id="inn-instruction"></p>'
+      + '<div class="inn-clue" id="inn-clue"></div>'
+      + '<div class="inn-actions inn-replies" id="inn-word-choice"></div>'
+      + '<div class="inn-status" id="inn-status"></div></div>';
+    $("inn-instruction").innerHTML = '<strong>How to interact</strong> <span>Choose the word that matches the request.</span>';
+    $("inn-clue").textContent = prompt.interaction && prompt.interaction.clue ? prompt.interaction.clue : "";
+    var host = $("inn-word-choice");
+
+    prompt.options.forEach(function(option){
+      var button = document.createElement("button");
+      button.className = "inn-action reply-option";
+      button.textContent = option.label;
+      button.setAttribute("aria-label", option.label);
+      button.addEventListener("click", function(event){
+        event.stopImmediatePropagation();
+        if(state.answered) return;
+        if(option.key === prompt.correct){
+          answerStage(true, prompt, option.key);
+          return;
+        }
+        var stage = getLocation(state.currentKey);
+        state.mistakesThisVisit = Math.min(3, state.mistakesThisVisit + 1);
+        renderHud();
+        showKonStageResponse(stage, prompt, false, option.key);
+        showFeedback(false, option.explanation || stage.getWrongAnswerFeedback(prompt, option.key));
+        offerRetry(prompt);
+      });
+      host.appendChild(button);
+    });
+  }
+
   function renderInnInteraction(prompt, reset){
+    if(isWordChoiceDay(prompt)){
+      renderWordChoice(prompt);
+      return;
+    }
     var interaction = prompt.interaction;
     if(reset || !innInteractionState || innInteractionState.mechanic !== prompt.mechanic){
       innInteractionState = MoonviewInnInteractions.create(prompt.mechanic);
@@ -954,11 +1076,12 @@
       ? '<div class="inn-room-composite"><div class="inn-room-viewport"><img class="inn-room-art" src="' + roomVisual.background + '" alt="">'
         + '<div class="inn-scene-zones" id="inn-scene-zones"></div></div>'
         + '<div class="inn-supply-shelf"><div class="inn-tray" id="inn-tray"></div></div></div>'
-      // The shoji is backdrop for a dialogue scene. The schedule board is the
-        // content of its own scene, so drawing furniture over the timeline and
-        // the arrival cards obscures the thing being answered.
-      : (prompt.mechanic === "coordinate" ? '' : '<div class="shoji" aria-hidden="true"></div>')
-        + '<div class="inn-scene-zones" id="inn-scene-zones"></div>'
+      // The shoji was decoration for scenes with no illustrated room, but it is
+        // absolutely positioned and overlapped whatever those scenes actually
+        // use: the schedule board's timeline and cards, and the reply buttons
+        // on the dialogue scene. A backdrop that covers the answer is worse
+        // than no backdrop.
+      : '<div class="inn-scene-zones" id="inn-scene-zones"></div>'
         + '<div class="inn-tray" id="inn-tray"></div>';
     var clueSurface = roomVisual
       ? '<details class="inn-clue"><summary>部屋の様子</summary><span>' + interaction.clue + '</span></details>'
@@ -1285,6 +1408,7 @@
       else{
         showKonStageResponse(stage, prompt, false);
         showFeedback(false, near.explanation);
+        offerRetry(prompt);
       }
       return;
     }
@@ -1622,7 +1746,7 @@
       if(isCorrect){
         state.challengeScore += 1;
         state.challengeCorrectWords[prompt.focusWord] = true;
-        showFeedback(true, "Correct! " + prompt.meaning);
+        showFeedback(true, prompt.meaning ? "Correct! " + prompt.meaning : "正解です。");
       }else{
         state.mistakesThisVisit = Math.min(3, state.mistakesThisVisit + 1);
         state.challengeMisses.push(prompt);
@@ -1674,7 +1798,7 @@
         showFeedback(true, "二日目の仕事が終わりました。三日目は音声だけで挑戦します。");
         $("btn-next").textContent = "三日目へ →";
       }else{
-        showFeedback(true, "Correct! " + prompt.meaning);
+        showFeedback(true, prompt.meaning ? "Correct! " + prompt.meaning : "正解です。");
         $("btn-next").textContent = "Continue →";
       }
       $("next-row").style.display = "block";
@@ -1684,7 +1808,22 @@
       state.mistakesThisVisit = Math.min(3, state.mistakesThisVisit + 1);
       renderHud();
       showFeedback(false, stage.getWrongAnswerFeedback(prompt, selectedKey));
+      offerRetry(prompt);
     }
+  }
+
+  // Learn and Practice are for learning, so a wrong answer must leave the
+  // question answerable. Only Challenge is scored on one attempt. Without this
+  // the scene kept whatever state the failed attempt left behind and there was
+  // no way to try again.
+  function offerRetry(prompt){
+    if(state.stagePhase === "challenge") return;
+    setTimeout(function(){
+      if(state.answered) return;
+      if(state.currentKey !== "home-inn") return;
+      renderInnInteraction(prompt, true);
+      $("inn-status").textContent = "もう一度どうぞ。";
+    }, 900);
   }
 
   function scheduleCorrectAdvance(stage, isCorrect){
@@ -1703,6 +1842,14 @@
     // Kon's reply runs longer than the old fixed delay, so wait for her to
     // finish rather than talking over the listening practice.
     afterSpeech(go, delay);
+
+    // Bring the button back if the advance has not happened yet, so there is
+    // always a visible way forward even when the voice never reports back.
+    setTimeout(function(){
+      if(state.currentKey !== stage.key || !state.answered) return;
+      if(state.stagePhase !== expectedPhase || state.encounterIndex !== expectedIndex) return;
+      $("next-row").style.display = "block";
+    }, delay + 2500);
   }
 
   function showFeedback(isCorrect, text){

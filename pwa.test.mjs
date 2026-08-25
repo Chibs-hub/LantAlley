@@ -80,14 +80,24 @@ test("every pre-rendered audio clip exists and is reachable offline", () => {
 test("spoken Japanese in the stage data has a clip", () => {
   const indexJs = read("audio-index.js");
   const map = JSON.parse(indexJs.slice(indexJs.indexOf("{"), indexJs.lastIndexOf("}") + 1));
-  const stage = read("n2-home-inn-stage.js");
 
-  // Every jp: request the player hears must be pre-rendered; a gap here means
-  // that line silently falls back to whatever voice the device happens to have.
-  const requests = [...stage.matchAll(/\bjp:"([^"]+)"/g)].map((m) => m[1]);
+  // Check the prompts a player can actually reach rather than every jp: literal
+  // in the file. Day 2 now asks a cloze, so the old day-2 request strings stay
+  // in the source as unused data, and requiring clips for them would render
+  // audio nobody ever hears.
+  const context = {};
+  context.self = context;
+  vm.createContext(context);
+  vm.runInContext(read("moonview-inn-interactions.js"), context);
+  vm.runInContext(read("n2-home-inn-stage.js"), context);
+  const inn = context.N2HomeInnStage;
+  const requests = ["learn", "practice", "challenge"]
+    .flatMap((phase) => inn.getPhaseItems(phase))
+    .map((item) => item.jp);
+
   assert.ok(requests.length >= 5);
   for (const jp of requests) {
-    assert.ok(map[jp], `no audio clip for request: ${jp}`);
+    assert.ok(map[jp], `no audio clip for reachable request: ${jp}`);
   }
 });
 
@@ -163,8 +173,15 @@ test("speech completion arms dialogue advancement instead of advancing automatic
   const app = read("app.js");
   assert.match(app, /audio\.addEventListener\("ended", function\(\)/);
   assert.match(app, /dialogueFlow\.voiceFinished\(\)/);
-  assert.match(app, /dialogueFlow\.setContinuation\(next\)/);
+  assert.match(app, /dialogueFlow\.setContinuation\(once\)/);
   assert.doesNotMatch(app, /setTimeout\(onDone, 20000\)/);
+
+  // Waiting only on the voice stranded the player: a correct answer hid the
+  // Continue button, and if the clip never reported finishing - blocked
+  // autoplay, a muted tab, a missing file - nothing advanced. Both the
+  // fallback advance and the restored button must stay.
+  assert.match(app, /setTimeout\(once, \(fallbackDelay \|\| 2600\) \+ 6000\)/);
+  assert.match(app, /\$\("next-row"\)\.style\.display = "block";\s*\}, delay \+ 2500\)/);
 });
 
 test("playback prefers the clip and falls back to speech synthesis", () => {
@@ -238,7 +255,7 @@ test("the offline delivery contains the cinematic opening, Entrance, and room li
   const sw = read("sw.js");
   const artifact = read("lantern-alley-artifact.html");
 
-  assert.match(sw, /lantern-alley-v50/);
+  assert.match(sw, /lantern-alley-v64/);
   for (const pose of [
     "fox-neutral-idle-transparent-v2.webp",
     "fox-wave-closed-smile-transparent-v2.webp",
@@ -300,7 +317,7 @@ test("the self-contained artifact includes click-to-finish dialogue", () => {
   assert.match(artifact, /id="dialogue-panel"/);
   assert.match(artifact, /id="dialogue-continue"/);
   assert.match(artifact, /createDialogueFlow/);
-  assert.match(artifact, /dialogueFlow\.setContinuation\(next\)/);
+  assert.match(artifact, /dialogueFlow\.setContinuation\(once\)/);
 });
 
 test("the game screen separates context from the answer workspace", () => {

@@ -970,3 +970,98 @@
      unreadable columns. */
   .question-control{flex:1 1 100%;}
 }
+
+/* ---------- shared wood framing ----------
+   The Entrance and the Inn had drifted apart: the Entrance frames panels in
+   2px #8c562d with a 12px radius and a dark drop shadow, while the Inn used a
+   lighter 2px #9d7d50 with a 14px radius, and its instruction band used a 1px
+   border at 9px. Same game, two different woods. These tokens make the Inn
+   match the Entrance rather than restyling the Entrance, because the Entrance
+   is the approved illustrated look. */
+:root{
+  --wood-edge:#8c562d;
+  --wood-edge-soft:rgba(156,95,48,.8);
+  --wood-shadow:rgba(55,30,18,.76);
+  --wood-radius:12px;
+  --paper:linear-gradient(180deg,#fffaf0,#efe0be);
+}
+
+.inn-object,.inn-action,.inn-drop-zone{
+  border-color:var(--wood-edge);
+  border-radius:var(--wood-radius);
+  background:var(--paper);
+  box-shadow:0 5px 0 var(--wood-shadow);
+}
+.inn-instruction,
+.inn-stage .inn-instruction{
+  border:2px solid var(--wood-edge);
+  border-radius:var(--wood-radius);
+  background:var(--paper);
+}
+.inn-stage .inn-instruction::before{color:var(--wood-edge);}
+.inn-scene-zones{border-radius:var(--wood-radius);}
+.inn-clue{border-left-color:var(--wood-edge);}
+.question-control{
+  border-color:var(--wood-edge);
+  border-radius:var(--wood-radius);
+  background:var(--paper);
+}
+.question-control.is-primary{box-shadow:0 3px 0 var(--wood-shadow);}
+/* Raised to match the specificity of .inn-replies .reply-option and the
+   .inn-stage scoped rules, which kept the old lighter drop shadow. */
+.inn-replies .reply-option,
+.inn-stage .inn-object,
+.inn-stage .inn-action,
+.inn-stage .inn-drop-zone{box-shadow:0 5px 0 var(--wood-shadow);}
+
+/* Testing aid, not part of the lesson: dashed so it reads as a tool. */
+.stage-skip-day{border-style:dashed; opacity:.75; font-size:.72rem;}
+
+/* The Inn's dialogue sits in the narrow context column of the split desktop
+   layout. Side by side, the fox took about 38% of a 325px column and left the
+   speech card 200px, which wrapped a normal N2 sentence to two or three
+   characters per line. Below the width where that column stays comfortable,
+   stack the character above the speech so the sentence gets the full column. */
+/* Scope by the stage, not by the dialogue class: Kon-led stages deliberately
+   share .entrance-dialogue for the transparent fox, so excluding that class
+   also excluded the Inn, which is the case that needed fixing. The Entrance
+   itself has its own full-width dock layout and must keep it. */
+@media(max-width:1400px){
+  /* The shell computes as grid here, not flex, so flex-direction did nothing
+     and the fox kept its own column. Collapse it to a single column instead. */
+  #screen-game:not(.entrance-stage) .dialogue{display:block;}
+  #screen-game:not(.entrance-stage) .dialogue .speech{width:100%;}
+  #screen-game:not(.entrance-stage) .dialogue #avatar-slot{display:block; margin:0 auto 8px;}
+}
+/* Japanese has no spaces, so word-break:keep-all - which I added here - stopped
+   the line breaking at all and pushed it out past the card edge. Let it wrap
+   anywhere, which is normal for Japanese text. */
+.jp-line{overflow-wrap:anywhere; word-break:normal;}
+
+/* Testing aid: visible enough to find, distinct enough not to read as lesson UI. */
+.stage-skip-day{border-style:dashed; opacity:1; font-size:.72rem; white-space:nowrap;}
+
+/* Inside the illustrated room the drop zones were solid cream cards, so the
+   artwork was mostly hidden behind pale rectangles. They still need to read as
+   targets, so keep the frame and the drop shadow but let the room show through,
+   and put the label on its own chip so it stays legible over the art. */
+.inn-room-viewport .inn-drop-zone{
+  background:rgba(255,250,240,.2);
+  border-color:rgba(140,86,45,.9);
+  box-shadow:0 3px 0 rgba(55,30,18,.45);
+}
+.inn-room-viewport .inn-drop-zone:hover,
+.inn-room-viewport .inn-drop-zone.is-target{background:rgba(255,250,240,.45);}
+.inn-room-viewport .inn-drop-zone .inn-caption{
+  padding:1px 6px;
+  border-radius:6px;
+  background:rgba(46,28,16,.82);
+  color:#fff3dc;
+}
+
+/* The supply shelf drew each zabuton as a 26px icon inside a 60px button, so
+   colour, size and direction - the three things the sentence asks about - were
+   unreadable. Give the shelf's art most of the button. */
+.inn-tray .inn-icon{width:44px; height:44px;}
+.inn-tray .inn-object,.inn-tray .inn-action{min-width:64px; min-height:68px; padding:6px;}
+.inn-tray .cushion-icon{width:48px; height:48px;}

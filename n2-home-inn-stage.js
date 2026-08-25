@@ -282,12 +282,54 @@
     "コン：「最後のお客様も部屋に入りました。残る仕事は一つです。明日の朝、荷物を駅まで運ぶ人が必要です。」"
   ];
 
+  // Day 2 asks a different question, so it needs its own sentence. Reusing the
+  // Day 1 request was incoherent: it commanded an action and then asked for a
+  // word, and 「揃えてください」 already contained the answer. These are cloze
+  // sentences with the verb removed, and the options take the form the blank
+  // requires, so the sentence remains the only thing telling the learner what
+  // is being asked.
+  var practiceWordChoice = [
+    {
+      jp:"二つのマットに、同じ向きの座布団を二枚ずつ（　　）ください。",
+      romaji:"Futatsu no matto ni, onaji muki no zabuton o nimai zutsu (    ) kudasai.",
+      options:["揃えて", "揃って", "散らかして"],
+      successReply:"はい、座布団の向きを自分の手で同じにするので「揃える」です。"
+    },
+    {
+      jp:"汚れたシーツを洗濯かごに入れて、新しいシーツに（　　）ください。",
+      romaji:"Yogoreta shiitsu o sentakukago ni irete, atarashii shiitsu ni (    ) kudasai.",
+      options:["取り替えて", "代えて", "そのままにして"],
+      successReply:"はい、汚れたシーツを別の物と交換するので「取り替える」です。"
+    },
+    {
+      jp:"冷めたごはんを、電子レンジで（　　）ください。",
+      romaji:"Sameta gohan o, denshi renji de (    ) kudasai.",
+      options:["温めて", "温まって", "冷やして"],
+      successReply:"はい、冷めたごはんを自分で温かくするので「温める」です。"
+    },
+    {
+      jp:"二つのグループの到着時間を（　　）ください。",
+      romaji:"Futatsu no guruupu no touchaku jikan o (    ) kudasai.",
+      options:["調整して", "調節して", "放置して"],
+      successReply:"はい、Cグループは12時、Dグループは14時にしました。条件を合わせるのが「調整」です。"
+    },
+    {
+      jp:"明日の朝食の配膳を（　　）くれませんか。",
+      romaji:"Asu no choushoku no haizen o (    ) kuremasen ka.",
+      options:["引き受けて", "引き止めて", "引き出して"],
+      successReply:"はい、明日の朝食の配膳をお願いします。責任を持って受けるのが「引き受ける」です。"
+    }
+  ];
+
   var japaneseOptions = [
     ["揃える", "揃う", "散らかす"],
     ["取り替える", "代える", "取り替わる"],
     ["温める", "温まる", "冷やす"],
     ["調整する", "調節する", "放置する"],
-    ["はい、引き受けます。", "何時からですか。", "すみません、引き受けられません。"]
+    // Two labels for two keys. A third label meant the decline key was rendered
+    // as 「何時からですか。」 - a sensible clarifying question wired to the
+    // refusal branch, so asking when it starts ended the stage.
+    ["はい、引き受けます。", "すみません、引き受けられません。"]
   ];
 
   var nearMissExplanations = [
@@ -320,7 +362,7 @@
       return {
         key:option.key,
         emoji:option.emoji,
-        label:japaneseOptions[index][optionIndex],
+        label:phase === "practice" ? practiceWordChoice[index].options[optionIndex] : japaneseOptions[index][optionIndex],
         nearMiss:index !== 4 && optionIndex === 1,
         explanation:index !== 4 && optionIndex === 1 ? nearMissExplanations[index] : ""
       };
@@ -331,15 +373,15 @@
       interaction:variant ? alternateInteractions[index] : practiceInteractionsA[index],
       variant:phase + "-" + (variant ? "b" : "a"),
       narration:(variant ? evidenceNarrationsB[index] : evidenceNarrationsA[index]),
-      jp:text.jp,
+      jp:phase === "practice" ? practiceWordChoice[index].jp : text.jp,
       // Support is withdrawn one layer per day, so the three days differ in
       // difficulty rather than only in situation:
       //   Day 1 基礎   Japanese + romaji + English meaning + hint
       //   Day 2 実践   Japanese + romaji only
       //   Day 3 挑戦   audio only
       meaning:phase === "learn" ? text.meaning : "",
-      successReply:text.successReply,
-      romaji:phase === "challenge" ? "" : (text.romaji || base.romaji),
+      successReply:phase === "practice" ? practiceWordChoice[index].successReply : text.successReply,
+      romaji:phase === "challenge" ? "" : (phase === "practice" ? practiceWordChoice[index].romaji : (text.romaji || base.romaji)),
       hint:phase === "learn" ? "Use the subject, object, and scene result to decide whether the request describes a deliberate action or a change of state." : "",
       replyResponses:null,
       options:options
