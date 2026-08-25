@@ -1065,3 +1065,8 @@
 .inn-tray .inn-icon{width:44px; height:44px;}
 .inn-tray .inn-object,.inn-tray .inn-action{min-width:64px; min-height:68px; padding:6px;}
 .inn-tray .cushion-icon{width:48px; height:48px;}
+
+/* The 「コン (Kon)」 name tab hangs 29px above the speech card. In the Entrance
+   that space is empty scene; in the Inn the narration sits directly above, so
+   the tab landed on the last line of it. Reserve the tab's height there. */
+#screen-game:not(.entrance-stage) .dialogue{margin-top:38px;}

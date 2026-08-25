@@ -170,6 +170,14 @@ An artifact cannot load sibling `.js` files or local images, which is why the bu
 
 ## 9. Change log and reasons
 
+### 2026-08-25 - Kon's name tab landed on the narration
+
+The 「コン (Kon)」 tab is drawn as a `::before` hanging 29px above the speech card. In the Entrance that space is empty alley, but the Inn's stacked column puts the narration directly above, so the tab covered its last line. Measured: narration ended at y=241, the tab started at y=221 - a 20px overlap.
+
+Reserving 26px was not enough, since the tab sits 29px up: measured again at -3px, still touching. At 38px the tab clears the narration by 9px and still sits above its own card. A test pins the value.
+
+Cache `lantern-alley-v68`, artifact 14.61 MB, 196 of 196 tests pass.
+
 ### 2026-08-25 - Day 2 translation is a full sentence, and it leaves with the question
 
 **The blank is gone from the English.** It read 「Please (    ) two cushions…」, which is awkward, and it was unnecessary: English collapses the very distinction each item tests. 揃える and 揃う both come out as "arrange", 温める and 温まる both as "warm", so naming the verb in the translation does not reveal which Japanese word fits the blank. The translations are now plain sentences.

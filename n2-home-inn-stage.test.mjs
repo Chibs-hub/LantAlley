@@ -1029,3 +1029,9 @@ test("the day 2 translation belongs to the question, not to Kon's reply", () => 
   // and it comes back when the question does
   assert.match(html, /renderInnInteraction\(prompt, true\);\s*showPracticeTranslation\(true\);/);
 });
+
+test("the Kon name tab does not land on the narration", () => {
+  // The tab hangs 29px above the speech card. In the Entrance that space is
+  // empty scene; in the Inn the narration sits directly above it.
+  assert.match(html, /#screen-game:not\(\.entrance-stage\) \.dialogue\{margin-top:38px;\}/);
+});
