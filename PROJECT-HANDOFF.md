@@ -170,6 +170,20 @@ An artifact cannot load sibling `.js` files or local images, which is why the bu
 
 ## 9. Change log and reasons
 
+### 2026-08-25 - A wrong answer now says what the wrong answer meant
+
+Choosing wrongly showed 「もう一度考えてみましょう。」, which tells the learner nothing about the word they actually reached for. Every option now carries a gloss, shown when that option is picked: 「いいえ、分かりません。」 = "I don't know" - leaves the guest standing at the desk.
+
+The glosses name the word rather than only judging the choice, so the near misses teach: 暖める warms a room or the air rather than a drink; 引き止める stops someone leaving; 引き返す turns back the way you came; 片づける clears the cushions away so the guest has nowhere to sit.
+
+This is English, like the existing near-miss explanations and How to interact. It appears only after an answer, so it cannot be read instead of the Japanese.
+
+**A bug this surfaced.** Rewriting the episode left a reference to a `challenge` variable that no longer existed. It threw inside the question render, after the scene markup was written but before the answer controls were built - so the second question showed a running clock and no way to answer. The tests did not catch it because they read source text rather than running the render; the browser console did, immediately. Removed.
+
+Verified live: the briefing lists its four rules, question 1 shows three replies with the clock waiting on the audio, and choosing 「いいえ、分かりません。」 explains itself while Kon says 「お客様を待たせてしまいました。まず部屋へご案内します。」
+
+Cache `lantern-alley-v76`, artifact 7.62 MB, 200 of 200 tests pass.
+
 ### 2026-08-25 - An episode is a timed service hour, not a fourth run at the days
 
 The owner's objection was right: the episode repeated the same three situations - cushions, towel, tea - so it read as a replay rather than a new thing.

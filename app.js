@@ -774,13 +774,18 @@
       if(!correct && previewState.missed.indexOf(question.id) < 0) previewState.missed.push(question.id);
       $("jp-line").textContent = correct ? question.feedback.correct : question.feedback.incorrect;
       speak($("jp-line").textContent, correct ? "correct" : "wrong");
-      showFeedback(correct, correct ? "正解です。" : "もう一度考えてみましょう。");
+      // Say what the chosen answer actually meant. "Not that one" teaches
+      // nothing; naming the word the learner reached for is the lesson.
+      var note = (question.optionNotes || [])[value];
+      var chosen = (question.answer.options || [])[value];
+      showFeedback(correct, correct ? "正解です。"
+        : (note ? "「" + chosen + "」 = " + note : "もう一度考えてみましょう。"));
       if(!correct){
         setTimeout(function(){ if(previewState) renderPreviewQuestion(); }, 1800);
         return;
       }
       advancePreviewLater();
-    }, {phase: challenge ? "challenge" : entry.mode});
+    }, {phase: entry.mode});
   }
 
   function advancePreviewLater(){

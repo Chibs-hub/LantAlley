@@ -141,3 +141,25 @@ test("the episode opens with a transition and ends with a timed correction loop"
   assert.match(app, /repair\.token = \(repair\.token \|\| 0\) \+ 1;/);
   assert.match(app, /if\(!repair \|\| \(token !== undefined && repair\.token !== token\)\) return;/);
 });
+
+test("every option can explain itself when chosen", () => {
+  const context = {};
+  context.self = context;
+  vm.createContext(context);
+  for (const file of ["curriculum-catalog.js", "learning-content.js", "n2-inn-episodes.js"]) {
+    vm.runInContext(readFileSync(new URL("./" + file, import.meta.url), "utf8"), context);
+  }
+  const questions = context.N2InnEpisodes.episodes[0].days.flatMap((d) => d.questions);
+
+  // "Not that one" teaches nothing. A wrong choice must be answered with what
+  // the word the learner reached for actually means.
+  for (const q of questions) {
+    const options = q.answer.options || [];
+    assert.equal(q.optionNotes.length, options.length, `${q.id} notes do not match its options`);
+    for (const note of q.optionNotes) assert.ok(note.trim().length > 8, `${q.id} has an empty note`);
+  }
+
+  const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  assert.match(app, /var note = \(question\.optionNotes \|\| \[\]\)\[value\];/);
+  assert.match(app, /note \? "「" \+ chosen \+ "」 = " \+ note/);
+});
