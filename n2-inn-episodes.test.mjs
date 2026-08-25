@@ -163,3 +163,19 @@ test("every option can explain itself when chosen", () => {
   assert.match(app, /var note = \(question\.optionNotes \|\| \[\]\)\[value\];/);
   assert.match(app, /note \? "「" \+ chosen \+ "」 = " \+ note/);
 });
+
+test("the correction round is announced and shows its countdown", () => {
+  const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  const css = readFileSync(new URL("./styles.css", import.meta.url), "utf8");
+
+  // A stricter clock should not appear unannounced.
+  assert.match(app, /function renderRepairIntro/);
+  assert.match(app, /btn-repair-begin/);
+  assert.match(app, /短い問題は五秒です/);
+  assert.match(app, /時間が切れても間違いにはなりません/);
+
+  // The countdown states how much is left out of how much was given.
+  assert.match(app, /"のこり " \+ left\.toFixed\(1\) \+ " 秒 \/ " \+ card\.seconds \+ " 秒"/);
+  assert.match(app, /classList\.toggle\("is-urgent", left <= 2\)/);
+  assert.match(css, /\.repair-timer-fill\.is-urgent/);
+});

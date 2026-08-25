@@ -372,11 +372,33 @@
     ["はい、引き受けます。", "すみません、引き受けられません。"]
   ];
 
+  // These name the word the learner chose, never the one they should have
+  // chosen. A wrong answer can be retried, so revealing the target would end
+  // the question rather than teach it.
   var nearMissExplanations = [
-    "揃う is intransitive: the items come to match by themselves. 揃える is transitive: you make them match.",
-    "代える means substituting a person or role, as in 「コンに代えて私が案内します」. Swapping one object for another of the same kind is 取り替える.",
-    "温まる is intransitive: something becomes warm. 温める means you warm something.",
-    "調節 controls degree or quantity, such as temperature. 調整 coordinates conditions such as schedules."
+    "揃う is intransitive: it describes the cushions coming to match by themselves. Here you are the one making them match.",
+    "代える means substituting a person or role, as in 「コンに代えて私が案内します」. Here an object is being swapped for another of the same kind.",
+    "温まる is intransitive: it describes something becoming warm on its own. Here you are the one warming it.",
+    "調節 controls a degree or quantity, such as a temperature. Here several separate conditions have to be reconciled.",
+    "引き止める means stopping someone from leaving. Here you are being asked whether you will take the work on yourself."
+  ];
+
+  // What each action means, and what the request is actually asking for. Both
+  // in English, and neither names the target word.
+  var actionGlosses = {
+    arrange:"to make things match", scatter:"to scatter things about", open:"to open the window",
+    replace:"to swap an item for another of the same kind", fold:"to fold the robe", hide:"to hide the luggage",
+    warm:"to heat something up", pour:"to pour it away", cool:"to make it colder",
+    adjust:"to reconcile several conditions", lock:"to control a temperature", leave:"to walk out of the room",
+    accept:"to agree to do it", decline:"to turn it down"
+  };
+
+  var requiredActions = [
+    "group the cushions so they match on the one attribute the sentence names",
+    "put the used item in the bin the sentence names, then fit its fresh counterpart",
+    "move the dish the sentence names to the appliance the sentence names",
+    "choose a time that satisfies every condition given at once",
+    "answer the request Kon actually made"
   ];
 
   encounters.forEach(function(item, index){
@@ -509,10 +531,17 @@
     return item.retryReply || "もう一度、頼まれたことを確認してください。";
   }
 
+  // Never names the target. The learner can try again, so the feedback says
+  // what they chose and what the request wants - not which word to click.
   function getWrongAnswerFeedback(item, selectedKey){
     var selected = item.options.filter(function(option){ return option.key === selectedKey; })[0];
-    if(selected && selected.nearMiss) return selected.explanation;
-    return "That action does not fit this situation. Compare it with 「" + item.focusWord + "」 and try again.";
+    if(selected && selected.nearMiss && selected.explanation) return selected.explanation;
+
+    var index = encounters.map(function(entry){ return entry.focusWord; }).indexOf(item.focusWord);
+    var wanted = requiredActions[index] || "do what the sentence asks";
+    var chose = selected ? actionGlosses[selected.key] : null;
+    return (chose ? "You chose " + chose + ". " : "")
+      + "The request asks you to " + wanted + ".";
   }
 
   root.N2HomeInnStage = {

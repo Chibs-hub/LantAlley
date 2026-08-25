@@ -387,7 +387,10 @@ test("choosing a near-miss returns its specific distinction", () => {
   const nearMiss = item.options.find((option) => option.nearMiss);
   const feedback = stage.getWrongAnswerFeedback(item, nearMiss.key);
   assert.match(feedback, /intransitive/);
-  assert.match(feedback, /揃える/);
+  // Names 揃う, the word chosen, and not 揃える, the word wanted: the learner
+  // gets another attempt, so the target must stay unspoken.
+  assert.match(feedback, /揃う/);
+  assert.doesNotMatch(feedback, /揃える/);
 });
 
 test("every learning item maps to a direct interaction and phase variant", () => {
@@ -544,7 +547,10 @@ test("each near-miss is the true intransitive partner of its target", () => {
       nearMiss.label === partner || nearMiss.label.startsWith(partner.slice(0, -1)),
       `${item.focusWord} should pair with ${partner}, got ${nearMiss.label}`,
     );
-    assert.match(nearMiss.explanation, new RegExp(partner));
+    // The explanation names the word the learner chose, never the target: a
+    // wrong answer can be retried, so revealing it would end the question.
+    assert.match(nearMiss.explanation, new RegExp(partner.replace(/[うるく]$/, "")));
+    assert.equal(nearMiss.explanation.includes(item.focusWord), false, item.focusWord);
   }
 });
 
@@ -1038,4 +1044,29 @@ test("the Kon name tab does not land on the narration", () => {
   // The tab hangs 29px above the speech card. In the Entrance that space is
   // empty scene; in the Inn the narration sits directly above it.
   assert.match(html, /#screen-game:not\(\.entrance-stage\) \.dialogue\{margin-top:38px;\}/);
+});
+
+test("wrong-answer feedback never hands over the target word", () => {
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(readFileSync(new URL("./moonview-inn-interactions.js", import.meta.url), "utf8"), context);
+  vm.runInContext(readFileSync(stageUrl, "utf8"), context);
+  const stage = context.N2HomeInnStage;
+
+  // It used to say "Compare it with 「取り替える」 and try again", which ends the
+  // question instead of teaching it - a wrong answer here can be retried.
+  for (const phase of ["learn", "practice", "challenge"]) {
+    for (const item of stage.getPhaseItems(phase)) {
+      for (const option of item.options) {
+        if (option.key === item.correct) continue;
+        const feedback = stage.getWrongAnswerFeedback(item, option.key);
+        assert.equal(
+          feedback.includes(item.focusWord),
+          false,
+          `${phase}/${item.focusWord} feedback reveals the answer: ${feedback}`,
+        );
+        assert.ok(feedback.length > 20, `${phase}/${item.focusWord} feedback is too thin`);
+      }
+    }
+  }
 });

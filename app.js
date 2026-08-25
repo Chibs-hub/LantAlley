@@ -832,7 +832,42 @@
       timer: null,
       tick: null
     };
-    renderRepairCard();
+    renderRepairIntro();
+  }
+
+  // The correction round is stricter than the hour that preceded it, so say so
+  // before the first card rather than letting a clock appear unannounced.
+  function renderRepairIntro(){
+    var count = previewState.repair.queue.length;
+    var line = "コン：「お疲れさまでした。最後に、間違えた仕事だけをもう一度確認します。今度は時間が短いので、すぐに答えてください。」";
+    clearRepairTimer();
+    $("stage-phase-row").style.display = "flex";
+    $("stage-phase-badge").textContent = "間違い直し";
+    $("encounter-status").style.display = "none";
+    $("scene-label").textContent = "月見宿 - 間違い直し";
+    $("narration").textContent = previewState.list[0].question.sourceNote;
+    $("jp-line").textContent = line;
+    $("romaji-line").textContent = "";
+    $("meaning-line").textContent = "";
+    $("meaning-line").classList.remove("show");
+    $("feedback-row").classList.remove("show");
+    $("next-row").style.display = "none";
+    speak(line);
+
+    $("scene").innerHTML = '<div class="episode-open"><div class="episode-open-card episode-brief">'
+      + '<p class="episode-open-kicker">間違い直し</p>'
+      + '<ul class="episode-brief-list">'
+      + '<li>' + count + ' 問だけ、もう一度出ます。</li>'
+      + '<li>一問ごとに制限時間があります。短い問題は五秒です。</li>'
+      + '<li>時間が切れても間違いにはなりません。もう一度出ます。</li>'
+      + '<li>全部正解すると終わりです。</li>'
+      + '</ul>'
+      + '<button class="btn btn-primary" id="btn-repair-begin">始めます</button>'
+      + '</div></div>';
+    $("btn-repair-begin").addEventListener("click", function(event){
+      event.stopImmediatePropagation();
+      renderRepairCard();
+    });
   }
 
   function clearRepairTimer(){
@@ -871,7 +906,7 @@
     // No illustrated room here: correction is a focused quiz card.
     $("scene").innerHTML = '<div class="inn-workspace repair-card">'
       + '<p class="inn-instruction"><strong>How to interact</strong> <span>Answer before the lantern goes out.</span></p>'
-      + '<div class="repair-timer" id="repair-timer"><span class="repair-timer-fill" id="repair-timer-fill"></span><b id="repair-timer-text"></b></div>'
+      + '<div class="repair-timer is-countdown" id="repair-timer"><span class="repair-timer-fill" id="repair-timer-fill"></span><b id="repair-timer-text"></b></div>'
       + '<div class="question-controls" id="repair-controls"></div>'
       + '<div class="inn-status" id="inn-status"></div></div>';
 
@@ -906,9 +941,12 @@
     var timer = previewState.repair.timer;
     var left = Math.max(0, timer.remaining) / 1000;
     var fill = $("repair-timer-fill");
-    if(fill) fill.style.width = Math.round((timer.remaining / timer.total) * 100) + "%";
+    if(fill){
+      fill.style.width = Math.round((timer.remaining / timer.total) * 100) + "%";
+      fill.classList.toggle("is-urgent", left <= 2);
+    }
     var text = $("repair-timer-text");
-    if(text) text.textContent = left.toFixed(1) + " 秒";
+    if(text) text.textContent = "のこり " + left.toFixed(1) + " 秒 / " + card.seconds + " 秒";
   }
 
   function settleRepair(outcome, card, token){

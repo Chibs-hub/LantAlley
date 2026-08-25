@@ -170,6 +170,22 @@ An artifact cannot load sibling `.js` files or local images, which is why the bu
 
 ## 9. Change log and reasons
 
+### 2026-08-25 - Feedback stops handing over the answer; the correction round announces its clock
+
+**A wrong answer was giving away the right one.** The Inn said "That action does not fit this situation. Compare it with 「取り替える」 and try again." - which ends the question rather than teaching it, since a wrong answer here can be retried. Feedback now names what the learner chose and what the request wants, in English, without naming the target: "You chose to hide the luggage. The request asks you to put the used item in the bin the sentence names, then fit its fresh counterpart."
+
+The near-miss explanations were leaking the same way - 「揃う is intransitive... 揃える is transitive」 names the answer sitting in the option list. They now name only the word that was chosen: 「揃う is intransitive: it describes the cushions coming to match by themselves. Here you are the one making them match.」 A test asserts no wrong-answer feedback anywhere contains its item's target word.
+
+Two gaps this exposed: the 引き受ける near miss had no explanation at all - there were four for five words, so choosing 引き止める on Day 2 produced empty feedback - and an empty explanation was returned verbatim rather than falling back.
+
+**The correction round now announces itself.** A stricter clock should not appear unannounced. Kon says 「お疲れさまでした。最後に、間違えた仕事だけをもう一度確認します。今度は時間が短いので、すぐに答えてください。」 over a card stating how many items are coming back, that short items are five seconds, that a timeout is not counted as a mistake, and that clearing them all ends the round.
+
+The countdown now reads 「のこり 4.3 秒 / 5 秒」 rather than a bare number, so the budget is visible as well as the remainder, and the bar turns red in the last two seconds.
+
+Verified live: missed one question deliberately, reached the announced round, saw 「のこり 4.3 秒 / 5 秒」 on a five-second card and the urgent state at 0.9 seconds.
+
+Cache `lantern-alley-v77`, artifact 7.72 MB, 202 of 202 tests pass.
+
 ### 2026-08-25 - A wrong answer now says what the wrong answer meant
 
 Choosing wrongly showed 「もう一度考えてみましょう。」, which tells the learner nothing about the word they actually reached for. Every option now carries a gloss, shown when that option is picked: 「いいえ、分かりません。」 = "I don't know" - leaves the guest standing at the desk.

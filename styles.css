@@ -1115,3 +1115,9 @@
 .episode-brief-list{margin:12px 0 18px; padding-left:20px; color:#3f3125; font-size:.86rem; line-height:1.7;}
 .episode-brief-list li{margin-bottom:4px;}
 .episode-brief .btn{display:block; margin:0 auto;}
+
+/* The correction clock is the strictest thing in the game, so it reads as a
+   countdown rather than decoration, and turns urgent in the last two seconds. */
+.repair-timer.is-countdown{height:30px;}
+.repair-timer.is-countdown b{line-height:30px; font-size:.82rem; letter-spacing:.02em;}
+.repair-timer-fill.is-urgent{background:linear-gradient(90deg,#c2543a,#e8963c);}

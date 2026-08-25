@@ -66,6 +66,9 @@ const inn = context.N2InnEpisodes;
 inn.episodes.forEach((episode) => {
   if (episode.intro) add(episode.intro.jp);
   if (episode.briefing) add(episode.briefing.jp);
+  // Spoken when the correction round starts. Kept here rather than in the
+  // episode data because it is the same line for every episode.
+  add("コン：「お疲れさまでした。最後に、間違えた仕事だけをもう一度確認します。今度は時間が短いので、すぐに答えてください。」");
   episode.days.forEach((day) => {
     day.questions.forEach((question) => {
       if (question.prompt && question.prompt.audio) add(question.prompt.jp);
