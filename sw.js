@@ -7,7 +7,7 @@
  * Bump CACHE_VERSION whenever any shell file changes, or returning players
  * will keep the old build.
  */
-var CACHE_VERSION = "lantern-alley-v72";
+var CACHE_VERSION = "lantern-alley-v74";
 
 // audio-index.js assigns to `self`, so the worker and the page share one list
 // of clip paths. Importing it here means new lines are cached automatically
@@ -38,11 +38,11 @@ var SHELL = [
   "./assets/kon/kon-wave-left.webp",
   "./assets/kon/kon-wave-right.webp",
   "./assets/kon/kon-wave-both.webp",
-  "./assets/inn/room-empty-v4.png",
-  "./assets/inn/room-objects-v2.png",
+  "./assets/inn/room-empty-v4.webp",
+  "./assets/inn/room-objects-v2.webp",
   "./assets/map/lantern-alley-map-v1.jpg",
-  "./assets/entrance/wooden-gate-v1.png",
-  "./assets/entrance/player-actions-v1.png",
+  "./assets/entrance/wooden-gate-v1.webp",
+  "./assets/entrance/player-actions-v1.webp",
   "./assets/fox/fox-neutral-idle-transparent-v2.webp",
   "./assets/fox/fox-neutral-no-mouth-transparent.webp",
   "./assets/fox/fox-wave-closed-smile-transparent-v2.webp",

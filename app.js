@@ -42,7 +42,7 @@
   var KON_PHOTO_WAVE_BOTH = "assets/kon/kon-wave-both.webp";
   var KON_PHOTO_SRC = "assets/kon/kon-idle.webp";
 
-  var PLAYER_ACTION_SPRITE = "assets/entrance/player-actions-v1.png";
+  var PLAYER_ACTION_SPRITE = "assets/entrance/player-actions-v1.webp";
 
   var ENTRANCE_FOX_POSES = {
     idle:"assets/fox/fox-neutral-idle-transparent-v2.webp",
@@ -588,7 +588,7 @@
     var list = [];
     episode.days.forEach(function(day){
       day.questions.forEach(function(question){
-        list.push({day:day.day, mode:day.mode, question:question});
+        list.push({day:day.day, mode:day.mode, label:day.label, question:question});
       });
     });
     return list;
@@ -637,15 +637,79 @@
       + '</div></div>';
     $("btn-episode-begin").addEventListener("click", function(event){
       event.stopImmediatePropagation();
-      renderPreviewQuestion();
+      renderPreviewBriefing();
     });
     $("next-row").style.display = "none";
+  }
+
+  // An episode runs by different rules from the three days, so Kon states them
+  // before the first guest arrives rather than leaving the learner to infer a
+  // clock from a bar that suddenly appears.
+  function renderPreviewBriefing(){
+    var episode = N2InnEpisodes.episodes[0];
+    var brief = episode.briefing;
+    $("jp-line").textContent = brief.jp;
+    $("narration").textContent = episode.sourceNote;
+    speak(brief.jp);
+
+    var list = brief.points.map(function(point){ return '<li>' + point + '</li>'; }).join("");
+    $("scene").innerHTML = '<div class="episode-open"><div class="episode-open-card episode-brief">'
+      + '<p class="episode-open-kicker">この一時間のきまり</p>'
+      + '<ul class="episode-brief-list">' + list + '</ul>'
+      + '<button class="btn btn-primary" id="btn-brief-begin">受付を始めます</button>'
+      + '</div></div>';
+    $("btn-brief-begin").addEventListener("click", function(event){
+      event.stopImmediatePropagation();
+      renderPreviewQuestion();
+    });
+  }
+
+  function clearPreviewTimer(){
+    if(previewState && previewState.tick){
+      clearInterval(previewState.tick);
+      previewState.tick = null;
+    }
+  }
+
+  // Spoken requests start their clock only once Kon has stopped talking, so the
+  // learner is timed on understanding rather than on listening.
+  function startQuestionClock(seconds, token){
+    if(!previewState || previewState.token !== token) return;
+    previewState.timer = LanternQuestionRenderer.startTimer(
+      LanternQuestionRenderer.createTimer({seconds: seconds}), Date.now());
+    paintPreviewTimer();
+    clearPreviewTimer();
+    previewState.tick = setInterval(function(){
+      if(!previewState || previewState.token !== token){ clearPreviewTimer(); return; }
+      if(previewState.answered){ clearPreviewTimer(); return; }
+      previewState.timer = LanternQuestionRenderer.tickTimer(previewState.timer, Date.now());
+      paintPreviewTimer();
+      if(previewState.timer.expired){
+        clearPreviewTimer();
+        previewState.answered = true;
+        var entry = previewState.list[previewState.index];
+        if(previewState.missed.indexOf(entry.question.id) < 0) previewState.missed.push(entry.question.id);
+        showFeedback(false, "時間切れです。お客様を待たせました。");
+        advancePreviewLater();
+      }
+    }, 100);
+  }
+
+  function paintPreviewTimer(){
+    var timer = previewState.timer;
+    if(!timer) return;
+    var fill = $("preview-timer-fill");
+    if(fill) fill.style.width = Math.round((timer.remaining / timer.total) * 100) + "%";
+    var text = $("preview-timer-text");
+    if(text) text.textContent = (Math.max(0, timer.remaining) / 1000).toFixed(1) + " 秒";
   }
 
   function renderPreviewQuestion(){
     var entry = previewState.list[previewState.index];
     var question = entry.question;
-    var dayLabel = {1:"一日目・基礎 ★☆☆", 2:"二日目・実践 ★★☆", 3:"三日目・挑戦 ★★★"}[entry.day];
+    // An episode is one evening, not three days, so the badge names the part of
+    // the shift the learner is in.
+    var dayLabel = (entry.label || "宵の一時間") + "・" + (entry.question.seconds || 8) + "秒";
 
     $("stage-phase-row").style.display = "flex";
     $("btn-skip-day").style.display = "none";
@@ -663,18 +727,31 @@
     $("feedback-row").classList.remove("show");
     $("next-row").style.display = "none";
 
-    var challenge = entry.day === 3;
-    $("jp-line").textContent = challenge ? "音声を聞いてください。" : question.prompt.jp;
-    if(question.prompt.audio) speak(question.prompt.jp, "ask", false, $("jp-line").textContent);
+    previewState.token = (previewState.token || 0) + 1;
+    var token = previewState.token;
+    clearPreviewTimer();
+    previewState.timer = null;
+
+    // Episodes show the request in writing as well: the clock, not concealment,
+    // is what makes them harder than the days.
+    $("jp-line").textContent = question.prompt.jp;
+    if(question.prompt.audio){
+      speak(question.prompt.jp);
+      // Start counting when the voice finishes, or after a fallback if it never
+      // reports back - the same guard the rest of the game uses.
+      afterSpeech(function(){ startQuestionClock(question.seconds || 8, token); }, 1200);
+    }
 
     var scene = $("scene");
     scene.innerHTML = '<div class="inn-workspace">'
       + '<p class="inn-instruction" id="inn-instruction"></p>'
+      + '<div class="repair-timer" id="preview-timer"><span class="repair-timer-fill" id="preview-timer-fill"></span><b id="preview-timer-text">…</b></div>'
       + '<div class="question-controls" id="preview-controls"></div>'
       + '<div class="inn-status" id="inn-status"></div></div>';
 
-    var spec = LanternQuestionRenderer.describe(question, {phase: challenge ? "challenge" : entry.mode});
+    var spec = LanternQuestionRenderer.describe(question, {phase: entry.mode});
     $("inn-instruction").innerHTML = '<strong>How to interact</strong> <span>' + spec.howToInteract + '</span>';
+    if(!question.prompt.audio) startQuestionClock(question.seconds || 8, token);
 
     var options = (question.answer && question.answer.options) || [];
     if(!options.length){
@@ -685,6 +762,7 @@
     previewState.answered = false;
     LanternQuestionRenderer.renderInto($("preview-controls"), question, function(value){
       if(previewState.answered) return;
+      clearPreviewTimer();
       if(!options.length){
         previewState.answered = true;
         showFeedback(true, "Action question - skipped in preview.");

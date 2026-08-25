@@ -230,8 +230,8 @@ test("the illustrated Entrance scene and learner poses are available offline", (
   const sw = read("sw.js");
 
   for (const asset of [
-    "assets/entrance/wooden-gate-v1.png",
-    "assets/entrance/player-actions-v1.png",
+    "assets/entrance/wooden-gate-v1.webp",
+    "assets/entrance/player-actions-v1.webp",
   ]) {
     assert.ok(sw.includes('"./' + asset + '"'), "sw.js does not pre-cache " + asset);
   }
@@ -255,7 +255,7 @@ test("the offline delivery contains the cinematic opening, Entrance, and room li
   const sw = read("sw.js");
   const artifact = read("lantern-alley-artifact.html");
 
-  assert.match(sw, /lantern-alley-v72/);
+  assert.match(sw, /lantern-alley-v74/);
   for (const pose of [
     "fox-neutral-idle-transparent-v2.webp",
     "fox-wave-closed-smile-transparent-v2.webp",
@@ -301,7 +301,7 @@ test("the self-contained artifact includes the illustrated room", () => {
   vm.runInContext(read("n2-home-inn-stage.js"), context);
   const visual = context.N2HomeInnStage.encounters[0].interaction.room.visual;
   assert.match(artifact, /inn-room-illustrated/);
-  assert.match(artifact, /data:image\/png;base64,/);
+  assert.match(artifact, /data:image\/webp;base64,/);
   assert.match(artifact, /window\.addEventListener\("pointermove", move\)/);
   assert.match(artifact, /\.answer-workspace \.inn-room-illustrated \.inn-hotspot:has\(\.inn-caption\)/);
   for (const asset of [visual.background, visual.spriteSheet]) {

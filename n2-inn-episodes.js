@@ -1,107 +1,121 @@
-/* Moonview Inn, Episode 1 "First guests", in the shared episode contract.
+/* Moonview Inn, Episode 1 「宵の一時間」, in the shared episode contract.
  *
- * The legacy `n2-home-inn-stage.js` still drives the playable game. This file
- * is the same story expressed in the new 3-3-4 format, validated by
- * learning-content.js, so the contract is proven against real content before
- * the controller is switched over.
+ * An episode is not a fourth run at the three days. The days teach five words
+ * slowly, with the room in front of you and time to think. An episode is one
+ * continuous hour of service: guests arrive, each one is waiting, and every
+ * request is answered against a clock. Same inn, different pressure.
  *
- * Every prompt is distinct: reusing one across phases lets a learner answer
- * from memory of the screen rather than from the Japanese.
+ * That is why the questions are timed. The clock is not a quiz gimmick - it is
+ * the guest waiting, which is the actual job. For spoken requests the clock
+ * starts only when Kon stops talking, so the learner is timed on understanding
+ * rather than on listening.
+ *
+ * The contract's three days become the three parts of the evening, so the shape
+ * validates unchanged while reading as one shift.
  */
 (function(root){
   "use strict";
 
-  var NOTE = "月見宿・第一話「最初のお客様」";
+  var NOTE = "月見宿・第一話「宵の一時間」";
 
-  function q(id, skill, target, prompt, answer, feedback, repair, extra){
-    var question = {
+  function q(id, skill, target, seconds, prompt, answer, feedback, repair){
+    return {
       id:id, skill:skill, target:target, slots:[], sourceNote:NOTE,
-      prompt:prompt, answer:answer, feedback:feedback, repair:repair
+      seconds:seconds, prompt:prompt, answer:answer, feedback:feedback, repair:repair
     };
-    Object.keys(extra || {}).forEach(function(key){ question[key] = extra[key]; });
-    return question;
   }
 
   var episode1 = {
     id:"inn-e01",
-    title:"First guests",
+    title:"宵の一時間",
     sourceNote:NOTE,
-    intro:{jp:"コン：「もうすぐ最初のお客様が来ます。お祭りの間、よろしくお願いします。」", audio:true},
+    intro:{jp:"コン：「今夜はお祭りの前の晩です。お客様が次々にいらっしゃいます。」", audio:true},
+    // Spoken before the first question: the rules of an episode, in Japanese.
+    briefing:{
+      jp:"コン：「これから一時間、受付を任せます。お客様を待たせないでください。私の話を聞いてから、時間内に答えてください。聞き取れなかったら、スピーカーを押せばもう一度言います。間違えた仕事は、最後にもう一度だけ確認します。」",
+      audio:true,
+      points:[
+        "お客様は待っています。時間内に答えてください。",
+        "音声は最後まで聞いてから、時間が始まります。",
+        "もう一度聞きたいときは、スピーカーを押してください。",
+        "間違えた仕事は、一時間の最後にもう一度出ます。"
+      ]
+    },
     days:[
-      {day:1, mode:"learn", questions:[
-        q("inn-e01-d1-q01", "kanji", "v-soroeru",
-          {jp:"「座布団を揃えてください。」の「揃えて」は、どう読みますか。", audio:true},
-          {type:"single-choice", options:["そろえて","ととのえて","あつめて"], correctIndex:0},
-          {correct:"はい、「揃える」は「そろえる」と読みます。",
-           incorrect:"「整えて（ととのえて）」とは別の言葉です。「揃える」は「そろえる」と読みます。"},
-          {prompt:"「揃える」の読み方はどれですか。", options:["そろえる","ととのえる"], correctIndex:0, seconds:5}),
+      {day:1, mode:"learn", label:"宵の口", questions:[
+        q("inn-e01-q01", "quick-response", "w-annai", 8,
+          {jp:"お客様：「二人ですが、部屋はありますか。」", audio:true},
+          {type:"quick-response", options:["はい、お部屋へご案内します。","いいえ、分かりません。","もう閉まりました。"], correctIndex:0},
+          {correct:"お客様は部屋へ向かいました。「案内する」は、人を連れて行くことです。",
+           incorrect:"お客様を待たせてしまいました。まず部屋へご案内します。"},
+          {prompt:"「案内する」の意味はどれですか。", options:["連れて行く","片づける"], correctIndex:0, seconds:5}),
 
-        q("inn-e01-d1-q02", "vocabulary", "v-atatameru-food",
-          {jp:"冷めたお茶を、もう一度（　）ください。", audio:true},
-          {type:"single-choice", options:["温めて","暖めて","冷やして"], correctIndex:0},
-          {correct:"そうです。飲み物や食べ物には「温める」を使います。",
-           incorrect:"「暖める」は空気や部屋に使う言葉です。飲み物には「温める」を使います。"},
-          {prompt:"飲み物に使うのはどちらですか。", options:["温める","暖める"], correctIndex:0, seconds:5}),
+        q("inn-e01-q02", "quick-response", "w-chuumon", 8,
+          {jp:"お客様：「夕食は何がありますか。」", audio:true},
+          {type:"quick-response", options:["ご注文をうかがいます。","注文は終わりました。","私も知りません。"], correctIndex:0},
+          {correct:"注文を受けました。「注文」は、料理や品物を頼むことです。",
+           incorrect:"お客様は何も頼めませんでした。まず注文をうかがいます。"},
+          {prompt:"料理を頼むことはどれですか。", options:["注文","案内"], correctIndex:0, seconds:5}),
 
-        q("inn-e01-d1-q03", "vocabulary-action", "v-torikaeru",
-          {jp:"古いタオルを洗濯かごに入れて、新しいタオルに取り替えてください。", audio:true},
-          {type:"ordered-action", steps:["towel-old:laundry","towel-new:rack"]},
-          {correct:"ありがとうございます。新しいタオルになりました。",
-           incorrect:"先に古いタオルを洗濯かごに入れてから、新しいタオルを掛けてください。"},
-          {prompt:"「取り替える」に一番近い意味はどれですか。", options:["別の物と交換する","人の代わりをする"], correctIndex:0, seconds:8})
+        q("inn-e01-q03", "listening-task", "v-atatameru-food", 5,
+          {jp:"お客様：「このお茶、冷めてしまいました。」", audio:true},
+          {type:"single-choice", options:["温めます。","暖めます。","冷やします。"], correctIndex:0},
+          {correct:"温かいお茶をお出しできました。飲み物には「温める」を使います。",
+           incorrect:"「暖める」は部屋や空気に使います。飲み物には「温める」です。"},
+          {prompt:"冷めた飲み物はどうしますか。", options:["温める","冷やす"], correctIndex:0, seconds:5})
       ]},
 
-      {day:2, mode:"practice", questions:[
-        q("inn-e01-d2-q04", "vocabulary-action", "v-soroeru",
-          {jp:"二つのマットに、同じ大きさの座布団を二枚ずつ揃えてください。", audio:true},
-          {type:"direct-action", mechanic:"arrange"},
-          {correct:"はい、大きさが揃いました。",
-           incorrect:"文の中で、何を同じにするのか確認してください。今日は色ではありません。"},
-          {prompt:"「大きさを揃える」の意味はどれですか。", options:["同じ大きさにする","大きさを測る"], correctIndex:0, seconds:8}),
+      {day:2, mode:"practice", label:"食事どき", questions:[
+        q("inn-e01-q04", "listening-task", "v-torikaeru", 5,
+          {jp:"お客様：「タオルが濡れています。」", audio:true},
+          {type:"single-choice", options:["新しいタオルに取り替えます。","タオルを温めます。","そのままにします。"], correctIndex:0},
+          {correct:"新しいタオルをお渡ししました。物を別の物にするのは「取り替える」です。",
+           incorrect:"濡れたままでした。同じ種類の新しい物にするのが「取り替える」です。"},
+          {prompt:"「取り替える」に近い意味はどれですか。", options:["別の物と交換する","人の代わりをする"], correctIndex:0, seconds:8}),
 
-        q("inn-e01-d2-q05", "vocabulary", "w-junbi",
-          {jp:"お客様が来る前に、部屋の（　）をしておきます。", audio:true},
-          {type:"single-choice", options:["準備","案内","確認"], correctIndex:0},
-          {correct:"そうです。前もってしておくことを「準備」と言います。",
-           incorrect:"「案内」はお客様を連れて行くことです。前もってしておくのは「準備」です。"},
-          {prompt:"前もってしておくことはどれですか。", options:["準備","案内"], correctIndex:0, seconds:5}),
+        q("inn-e01-q05", "listening-task", "v-soroeru", 5,
+          {jp:"お客様：「座布団の大きさがばらばらです。」", audio:true},
+          {type:"single-choice", options:["同じ大きさに揃えます。","座布団を片づけます。","座布団を洗います。"], correctIndex:0},
+          {correct:"座布団が同じ大きさになりました。自分の手で同じにするのが「揃える」です。",
+           incorrect:"ばらばらのままでした。同じ状態にするのは「揃える」です。"},
+          {prompt:"ばらばらの物を同じにすることはどれですか。", options:["揃える","揃う"], correctIndex:0, seconds:5}),
 
-        q("inn-e01-d2-q06", "reading", "w-chousei",
-          {jp:"予定表：電車は14時。駅まで1時間。掃除は2時間必要。次のお客様は15時。いちばん遅いチェックアウトは何時ですか。", audio:false},
-          {type:"evidence-choice", options:["13時","14時","12時"], correctIndex:0},
-          {correct:"はい、13時なら電車にも掃除にも間に合います。",
-           incorrect:"電車の時間だけでは決められません。掃除の時間も一緒に考えてください。"},
-          {prompt:"「調整する」に近い意味はどれですか。", options:["条件に合わせて決める","温度を上げる"], correctIndex:0, seconds:12})
+        q("inn-e01-q06", "reading", "w-souji", 12,
+          {jp:"貼り紙：「二階の三番と五番はお客様がお帰りになりました。四番はまだご滞在中です。」空いた部屋はどこですか。", audio:false},
+          {type:"evidence-choice", options:["三番と五番","四番だけ","二階の全部"], correctIndex:0},
+          {correct:"三番と五番の掃除を始められます。書いてあることだけで判断できました。",
+           incorrect:"四番はまだお客様がいらっしゃいます。貼り紙をもう一度読んでください。"},
+          {prompt:"部屋をきれいにすることはどれですか。", options:["掃除","案内"], correctIndex:0, seconds:5})
       ]},
 
-      {day:3, mode:"challenge", questions:[
-        q("inn-e01-d3-q07", "listening-task", "v-atatameru-food",
-          {jp:"お茶をコンロでもう一度温めてください。", audio:true},
-          {type:"direct-action", mechanic:"warm"},
-          {correct:"ありがとうございます。お茶が温まりました。",
-           incorrect:"頼まれた物と、温める場所をもう一度聞いてください。"},
-          {prompt:"お茶はどこで温めますか。", options:["コンロ","洗濯かご"], correctIndex:0, seconds:5}),
+      {day:3, mode:"challenge", label:"仕上げ", questions:[
+        q("inn-e01-q07", "reading", "w-chousei", 12,
+          {jp:"予定表：花火は八時。夕食は一時間かかります。お客様は花火を見たいそうです。夕食は何時に始めますか。", audio:false},
+          {type:"evidence-choice", options:["七時","八時","九時"], correctIndex:0},
+          {correct:"七時に始めれば花火に間に合います。条件を合わせるのが「調整」です。",
+           incorrect:"八時に始めると花火に間に合いません。かかる時間から逆に考えてください。"},
+          {prompt:"いくつかの条件を合わせることはどれですか。", options:["調整","調節"], correctIndex:0, seconds:5}),
 
-        q("inn-e01-d3-q08", "listening-point", "w-souji",
-          {jp:"音声を聞いて、コンが今いちばん急いでいる仕事を選んでください。", audio:true},
-          {type:"single-choice", options:["掃除","案内","確認"], correctIndex:0},
-          {correct:"はい、次のお客様が来る前に掃除を終える必要があります。",
-           incorrect:"もう一度聞いてください。コンは「次のお客様が来る前に」と言っています。"},
-          {prompt:"部屋をきれいにすることはどれですか。", options:["掃除","案内"], correctIndex:0, seconds:5}),
+        q("inn-e01-q08", "listening-point", "w-kakunin", 8,
+          {jp:"コン：「三番のお客様は、明日の朝食は要らないとおっしゃっていました。念のため、もう一度……」", audio:true},
+          {type:"single-choice", options:["確認します。","注文します。","案内します。"], correctIndex:0},
+          {correct:"間違いを防げました。もう一度確かめるのが「確認」です。",
+           incorrect:"確かめないままでした。念のため確かめるのは「確認」です。"},
+          {prompt:"もう一度確かめることはどれですか。", options:["確認","準備"], correctIndex:0, seconds:5}),
 
-        q("inn-e01-d3-q09", "quick-response", "v-hikiukeru",
-          {jp:"「その仕事を引き受けました。」と同じ意味の文はどれですか。", audio:true},
-          {type:"quick-response", options:["その仕事をやると約束しました。","その仕事を断りました。","その仕事を手伝ってもらいました。"], correctIndex:0},
-          {correct:"そうです。「引き受ける」は責任を持ってやると決めることです。",
-           incorrect:"「引き受ける」は断ることではありません。自分がやると決めることです。"},
-          {prompt:"「引き受ける」の意味はどれですか。", options:["自分がやると決める","人にやってもらう"], correctIndex:0, seconds:8}),
+        q("inn-e01-q09", "quick-response", "v-hikiukeru", 8,
+          {jp:"コン：「明日の朝、駅までお客様を送る仕事があります。お願いできますか。」", audio:true},
+          {type:"quick-response", options:["はい、引き受けます。","はい、引き止めます。","はい、引き返します。"], correctIndex:0},
+          {correct:"任せました。責任を持ってやると決めるのが「引き受ける」です。",
+           incorrect:"返事になっていません。仕事を自分がやると決めるのが「引き受ける」です。"},
+          {prompt:"仕事を自分がやると決めることはどれですか。", options:["引き受ける","引き止める"], correctIndex:0, seconds:5}),
 
-        q("inn-e01-d3-q10", "integrated", "w-annai",
-          {jp:"お客様が玄関に着きました。次にすることはどれですか。", audio:true},
-          {type:"single-choice", options:["部屋へ案内します。","洗濯を始めます。","電球を代えます。"], correctIndex:0},
-          {correct:"はい、まずお客様を部屋へ案内します。",
-           incorrect:"お客様を待たせないでください。まず部屋へ案内します。"},
-          {prompt:"「案内する」の意味はどれですか。", options:["連れて行く","取り替える"], correctIndex:0, seconds:8})
+        q("inn-e01-q10", "integrated", "v-kotowaru", 8,
+          {jp:"お客様：「今から十人、泊まれますか。」部屋は二つしか空いていません。何と言いますか。", audio:true},
+          {type:"quick-response", options:["申し訳ありませんが、お断りします。","はい、大丈夫です。","何も言いません。"], correctIndex:0},
+          {correct:"正直に伝えられました。できないことを丁寧に伝えるのが「断る」です。",
+           incorrect:"できない約束をしてしまいました。丁寧に「断る」のも仕事です。"},
+          {prompt:"できないと丁寧に伝えることはどれですか。", options:["断る","引き受ける"], correctIndex:0, seconds:5})
       ]}
     ]
   };

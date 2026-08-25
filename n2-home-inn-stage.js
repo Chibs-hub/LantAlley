@@ -156,8 +156,8 @@
     // The room art contains fixtures only. Every answer object is a separate
     // sprite, so moving one never leaves a duplicate baked into the background.
     visual:{
-      background:"assets/inn/room-empty-v4.png",
-      spriteSheet:"assets/inn/room-objects-v2.png",
+      background:"assets/inn/room-empty-v4.webp",
+      spriteSheet:"assets/inn/room-objects-v2.webp",
       sprites:{
         c1:{col:0,row:0}, c2:{col:1,row:0}, c3:{col:2,row:0}, c4:{col:3,row:0},
         towelUsed:{col:0,row:1}, towelClean:{col:1,row:1},

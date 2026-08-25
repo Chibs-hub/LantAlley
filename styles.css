@@ -408,7 +408,7 @@
     color:#fff5df;
     background:
       linear-gradient(180deg,rgba(5,11,24,.08) 25%,rgba(5,11,24,.7) 100%),
-      url("assets/entrance/wooden-gate-v1.png") center/cover no-repeat;
+      url("assets/entrance/wooden-gate-v1.webp") center/cover no-repeat;
     box-shadow:0 28px 70px rgba(3,7,20,.62),0 0 0 1px rgba(247,200,119,.18);
   }
   #screen-game.entrance-stage::before{border-color:rgba(247,207,137,.34);z-index:7}
@@ -1108,3 +1108,10 @@
   color:#2d2926; font-size:.78rem; font-weight:800;
 }
 @media(prefers-reduced-motion:reduce){ .repair-timer-fill{transition:none;} }
+
+/* Episode briefing: the rules of the hour, stated before the first guest. */
+.episode-brief{max-width:480px; text-align:left;}
+.episode-brief .episode-open-kicker{text-align:center;}
+.episode-brief-list{margin:12px 0 18px; padding-left:20px; color:#3f3125; font-size:.86rem; line-height:1.7;}
+.episode-brief-list li{margin-bottom:4px;}
+.episode-brief .btn{display:block; margin:0 auto;}

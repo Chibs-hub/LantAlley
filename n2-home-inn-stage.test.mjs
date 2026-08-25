@@ -681,7 +681,7 @@ test("the illustrated room maps every movable object and destination exactly onc
   const visual = room.visual;
 
   assert.ok(visual, "the shared room needs illustrated visual metadata");
-  assert.equal(visual.background, "assets/inn/room-empty-v4.png");
+  assert.equal(visual.background, "assets/inn/room-empty-v4.webp");
   assert.equal(existsSync(new URL("./" + visual.background, import.meta.url)), true);
   assert.equal(existsSync(new URL("./" + visual.spriteSheet, import.meta.url)), true);
 
@@ -744,12 +744,16 @@ test("the illustrated room keeps appliance targets safely away from mats and the
   assert.equal(overlapsWithGap(hotspots.stove, hotspots.microwave), false, "stove and microwave targets must not overlap");
 });
 
+// Reads the PNG master rather than the WebP the app loads: this test decodes
+// pixels by hand and the WebP is generated from this exact file.
 test("every occupied sprite cell has a transparent gutter", () => {
   const context = {};
   vm.createContext(context);
   vm.runInContext(readFileSync(stageUrl, "utf8"), context);
   const visual = context.N2HomeInnStage.encounters[0].interaction.room.visual;
-  const png = readFileSync(new URL("./" + visual.spriteSheet, import.meta.url));
+  // The app loads the WebP; this test decodes PNG by hand, so read the master
+  // the WebP is generated from.
+  const png = readFileSync(new URL("./" + visual.spriteSheet.replace(/\.webp$/, ".png"), import.meta.url));
   const width = png.readUInt32BE(16);
   const height = png.readUInt32BE(20);
   const bitDepth = png[24];

@@ -163,9 +163,9 @@ test("entrance uses one illustrated scene and reveals picture actions only for t
 });
 
 test("entrance uses a wooden gate scene and consistent human action artwork", () => {
-  assert.equal(existsSync(new URL("./assets/entrance/wooden-gate-v1.png", import.meta.url)), true);
-  assert.equal(existsSync(new URL("./assets/entrance/player-actions-v1.png", import.meta.url)), true);
-  assert.match(html, /assets\/entrance\/wooden-gate-v1\.png/);
+  assert.equal(existsSync(new URL("./assets/entrance/wooden-gate-v1.webp", import.meta.url)), true);
+  assert.equal(existsSync(new URL("./assets/entrance/player-actions-v1.webp", import.meta.url)), true);
+  assert.match(html, /assets\/entrance\/wooden-gate-v1\.webp/);
   assert.match(html, /PLAYER_ACTION_SPRITE/);
   assert.match(html, /entrance-player-art/);
   assert.match(html, /entrance-action-art-/);

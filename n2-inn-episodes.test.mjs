@@ -62,12 +62,12 @@ test("every question carries a repair form inside the time budget", () => {
 
 test("the 温める item teaches the food sense against 暖める", () => {
   const { N2InnEpisodes: stage } = load();
-  const q = stage.episodes[0].days[0].questions[1];
+  const q = stage.episodes[0].days[0].questions.find((item) => item.target === "v-atatameru-food");
   // The catalog source ships 暖める (air, rooms) but not 温める (food, drink).
   // The distinction is the lesson, so 暖める must be the near miss, not absent.
-  assert.ok(q.answer.options.includes("温めて"));
-  assert.ok(q.answer.options.includes("暖めて"));
-  assert.equal(q.answer.options[q.answer.correctIndex], "温めて");
+  assert.ok(q.answer.options.some((o) => o.includes("温め")));
+  assert.ok(q.answer.options.some((o) => o.includes("暖め")));
+  assert.match(q.answer.options[q.answer.correctIndex], /温め/);
 });
 
 test("answer content carries no English", () => {
@@ -101,8 +101,10 @@ test("the preview harness can walk the whole episode", () => {
   assert.match(app, /function renderPreviewQuestion/);
   assert.match(app, /LanternQuestionRenderer\.describe\(question/);
   assert.match(app, /LanternQuestionRenderer\.renderInto/);
-  // Day 3 must stay audio-first in the preview too.
-  assert.match(app, /challenge \? "音声を聞いてください。" : question\.prompt\.jp/);
+  // Episodes show the request in writing. The clock, not concealment, is what
+  // makes them harder than the three days.
+  assert.match(app, /function startQuestionClock/);
+  assert.match(app, /afterSpeech\(function\(\)\{ startQuestionClock/);
   // Action questions need the room, which the harness does not build.
   assert.match(app, /この問題は部屋の操作で答えます/);
 });

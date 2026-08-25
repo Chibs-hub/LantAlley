@@ -65,6 +65,7 @@ vm.runInContext(fs.readFileSync("n2-inn-episodes.js", "utf8"), context);
 const inn = context.N2InnEpisodes;
 inn.episodes.forEach((episode) => {
   if (episode.intro) add(episode.intro.jp);
+  if (episode.briefing) add(episode.briefing.jp);
   episode.days.forEach((day) => {
     day.questions.forEach((question) => {
       if (question.prompt && question.prompt.audio) add(question.prompt.jp);

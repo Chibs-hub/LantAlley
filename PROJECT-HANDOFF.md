@@ -170,6 +170,37 @@ An artifact cannot load sibling `.js` files or local images, which is why the bu
 
 ## 9. Change log and reasons
 
+### 2026-08-25 - An episode is a timed service hour, not a fourth run at the days
+
+The owner's objection was right: the episode repeated the same three situations - cushions, towel, tea - so it read as a replay rather than a new thing.
+
+**What an episode is now.** The three days teach five words slowly, with the room in front of you and time to think. An episode is one continuous hour of service: 「宵の一時間」, the hour before the festival when guests arrive one after another. Every request is answered against a clock, and **the clock is the guest waiting** rather than a quiz gimmick. Same inn, different pressure.
+
+Ten new situations, ten distinct targets, none reused from the days: 案内 / 注文 / 温める / 取り替える / 揃える / 掃除 / 調整 / 確認 / 引き受ける / 断る. The last is new to the game and worth having - politely refusing an impossible request is part of service, and it pairs against 引き受ける.
+
+**The clock starts when Kon stops talking.** For spoken requests the countdown is armed through `afterSpeech`, so the learner is timed on understanding rather than on listening. Written requests start immediately. Budgets come from the question: 5 seconds for a one-word service decision, 8 for a reply, 12 for reading a notice or a schedule.
+
+**Kon explains the rules first.** An episode runs differently from the days, so a briefing card states them in Japanese before the first guest: guests are waiting, the clock starts after the audio, the speaker button repeats a line, and mistakes come back at the end.
+
+The contract's three days become the three parts of the evening - 宵の口, 食事どき, 仕上げ - so the 3-3-4 shape validates unchanged while reading as one shift.
+
+A timeout now records the item as missed and moves on with 「時間切れです。お客様を待たせました。」, feeding the correction loop already built.
+
+**Delivery: the 15 MB ceiling fired, and the fix was overdue.** Adding the episode's audio pushed the artifact to 15.05 MB and the build failed, naming its largest contributors. The real weight was never the code: `room-empty-v4.png` and `wooden-gate-v1.png` were lossless PNGs at 2.17 MB and 2.35 MB, which base64 badly. Converting the four scene images to WebP, the same treatment the fox poses had:
+
+| Asset | Before | After |
+| --- | --- | --- |
+| room-empty-v4 | 2.17 MB | 0.14 MB |
+| wooden-gate-v1 | 2.35 MB | 0.24 MB |
+| player-actions-v1 | 0.93 MB | 0.16 MB |
+| room-objects-v2 | 0.76 MB | 0.10 MB |
+
+**Artifact 14.63 MB to 7.62 MB**, leaving over 7 MB of headroom rather than 0.4. The PNG masters stay in the repo; the sprite-gutter test still decodes the master by hand, since the WebP is generated from it.
+
+Verified live: Entrance art, the illustrated room at 1400x933 from the WebP, ten shelf objects, nine zones, and no broken images anywhere in the flow.
+
+Cache `lantern-alley-v74`, 199 of 199 tests pass.
+
 ### 2026-08-25 - Episode transition, and the timed correction loop finally runs
 
 **A transition into the episode.** Clicking the preview button dropped straight into question 1: the Inn's room vanished and an unrelated question appeared. Kon now introduces the episode first, on a card showing 第一話 and 「最初のお客様」 - the story name parsed from the source note, not the internal English title - with a 始めましょう button.
