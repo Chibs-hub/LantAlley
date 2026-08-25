@@ -1,0 +1,35 @@
+{
+  "note": "Words the game teaches that no local OpenJLPT file contains. Authored by the project, marked source:project so they are never mistaken for sourced data. reviewed is false until a native reviewer is named.",
+  "items": [
+    {
+      "id": "v-hikiukeru",
+      "canonical": "引き受ける",
+      "reading": "ひきうける",
+      "type": "verb",
+      "aliases": ["引受ける"],
+      "meanings": ["to undertake", "to take on", "to accept responsibility for"],
+      "examples": [{ "ja": "今夜の夕食の配膳を引き受けていただけませんか。", "en": "Would you be willing to undertake serving tonight's dinner?" }],
+      "note": "Absent from every local OpenJLPT file. Core Inn target."
+    },
+    {
+      "id": "v-atatameru-food",
+      "canonical": "温める",
+      "reading": "あたためる",
+      "type": "verb",
+      "aliases": [],
+      "meanings": ["to warm (food or drink)", "to heat up"],
+      "examples": [{ "ja": "お茶をコンロでもう一度温めてください。", "en": "Please warm the tea on the stove once more." }],
+      "note": "The source has 暖める (air, rooms) but not 温める (food, drink). Keeping only 暖める would reintroduce a Japanese error this project already fixed."
+    },
+    {
+      "id": "v-torikaeru",
+      "canonical": "取り替える",
+      "reading": "とりかえる",
+      "type": "verb",
+      "aliases": ["取りかえる"],
+      "meanings": ["to replace", "to exchange", "to swap out"],
+      "examples": [{ "ja": "古いタオルを新しいタオルに取り替えてください。", "en": "Please replace the old towel with a new one." }],
+      "note": "Present in the local files only as N4. Held here as the idiomatic alternative to 代える for swapping an object, pending native review."
+    }
+  ]
+}

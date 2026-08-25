@@ -10,3 +10,6 @@ Thumbs.db
 
 # Superpowers tooling scratch state
 .superpowers/
+
+# Local Edge TTS environment used by generate-audio.py. Not a game dependency.
+.audio-python/

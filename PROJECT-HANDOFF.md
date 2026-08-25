@@ -1,6 +1,22 @@
 # Lantern Alley Project Handoff
 
-Last updated: 2026-08-24
+Last updated: 2026-08-25
+
+## 0. Current status and approved plan
+
+Current build work: Alley Entrance and Moonview Inn are the only implemented locations. The Inn source now uses one three-day agreement, announces Day 1 Learn, Day 2 Practice and Day 3 Challenge, treats declining a requested duty as an incorrect answer, and gives a matching Japanese reply after each answer. These source edits are not fully delivered: two new spoken lines still need neural-voice clips, and `lantern-alley-artifact.html` has not been rebuilt after the latest Inn dialogue changes.
+
+Current verification: the targeted Inn and PWA run has 76 of 78 tests passing. The only failures are missing audio for the new three-day invitation and the new end-of-Day-1 reply. The last completed baseline before those dialogue edits had 122 tests passing, syntax checks clean and a 12.92 MB artifact. Do not describe the current working tree as fully green until audio is regenerated, the cache is updated if needed, the artifact is rebuilt and the complete suite passes.
+
+Approved full-course design: five locations, four authored story episodes per location and ten questions per episode, for 20 Tier 1 episodes and 200 authored questions. Each episode contains 3 Learn, 3 Practice and 4 Challenge questions. Tier 2 generates reading, meaning and cloze practice from the curated vocabulary catalog to cover items that do not fit the story layer. Correction practice repeats only missed items until the queue is empty; its timer is 5 seconds for single-word recognition, 8 seconds by default and 12 seconds for full-sentence repair. Delayed review returns at about 1, 3, 7 and 14 days. The all-stage Mistake Review randomizes mistakes, removes correct items and shows a small source-location note without splitting the queue by stage.
+
+The authoritative course documents are `docs/superpowers/specs/2026-08-25-five-stage-n2-curriculum-design.md` and `docs/superpowers/plans/2026-08-25-five-stage-n2-curriculum.md`. The implementation plan contains Tasks 1 through 12 plus delivery gate Task 6A and catalog-practice Task 6B. This is planning only; the generic course engine and the four future stage builds have not been implemented.
+
+Curriculum source: local vocabulary comes from `research/openjlpt/n2.json` and `research/openjlpt/n3.json`, supplemented by `research/n2-supplement.json`. The upstream project is [evanclan/OpenJLPT](https://github.com/evanclan/OpenJLPT), which describes community JLPT level assignments and Tatoeba examples under CC BY-SA 4.0. The exact commit or release used for the copied local files is not recorded, so provenance is incomplete. The official JLPT does not publish a fixed post-2010 vocabulary, grammar or kanji list. No grammar or kanji catalog has been approved, so the project may claim coverage only of its named vocabulary catalog, not complete JLPT N2 coverage.
+
+Execution blockers and decisions still required: name a native Japanese reviewer or define an honest review-confidence policy; resolve the current single three-day Inn story against the planned four Inn episodes; approve grammar and kanji sources; and confirm that the standalone artifact remains an Entrance plus Inn Episode 1 demo under 15 MB. Audio generation/export and publication remain separate approval-gated actions. No commit, push or publication has been made.
+
+Working-tree note: `n2-home-inn-stage.js`, `n2-home-inn-stage.test.mjs` and this handoff are modified; both 2026-08-25 curriculum documents are new and untracked. `.audio-python/` is an untracked temporary local Edge TTS environment created while preparing audio generation; it is not a game dependency, and no new clips were exported from it.
 
 ## 1. Project summary
 
@@ -114,7 +130,7 @@ Important: browser progress is not part of the project folder. Copying or zippin
 | `assets/fox-poses/` | Full-size PNG masters. Not loaded by the app. |
 | `research/` | N5-N2 vocabulary source files and the extraction script. |
 | `*.test.mjs` | Automated behavior and regression tests. |
-| `docs/superpowers/` | Design and implementation planning documents. The 2026-08-24 specs are current; earlier ones predate the redesign in section 9 and describe the superseded tag-matching mechanics. |
+| `docs/superpowers/` | Design and implementation planning documents. The 2026-08-25 curriculum documents are authoritative for course expansion. The 2026-08-24 documents remain the implementation record for the current Entrance, map and Inn visual work; older tag-matching designs are superseded. |
 
 ## 7. Testing and verification
 
@@ -124,7 +140,9 @@ Run all automated tests from PowerShell in the project folder:
 node --test entrance-stage.test.mjs lantern-map.test.mjs moonview-inn-interactions.test.mjs n2-home-inn-stage.test.mjs pwa.test.mjs
 ```
 
-Current verified result: 122 tests passed, 0 failed. `app.js`, `n2-home-inn-stage.js` and `sw.js` pass `node --check`. The rebuilt standalone artifact is 12.92 MB, below the 16 MB limit.
+Last completed baseline: 122 tests passed, 0 failed. `app.js`, `n2-home-inn-stage.js` and `sw.js` passed `node --check`, and the rebuilt standalone artifact was 12.92 MB.
+
+Current working tree: `node --test n2-home-inn-stage.test.mjs pwa.test.mjs` passes 76 of 78 tests. The two failures are expected until audio is generated for `日本語の練習をしながら、三日間、宿の仕事を手伝ってくれませんか？` and `ありがとうございます。一日目の仕事はこれで終わりです。今夜は宿で休んでください。`. The standalone artifact has not been rebuilt after these dialogue edits. `sw.js` currently uses cache `lantern-alley-v40`.
 
 Beyond the mechanics, the tests now guard the design rule itself:
 
@@ -151,6 +169,303 @@ Current artifact: `https://claude.ai/code/artifact/951c7147-1dcf-4b9d-aced-2928c
 An artifact cannot load sibling `.js` files or local images, which is why the build step inlines everything.
 
 ## 9. Change log and reasons
+
+### 2026-08-25 - Schedule scene render fix and a real difficulty ladder
+
+Two problems reported from a screenshot of the 調整 encounter.
+
+**A decorative shoji was painted over the arrivals board.** Measured at 1280x720: the `.shoji` element sat at 1051,245 (84 x 92) and overlapped the timeline, the arrival controls and the second time card. It is the backdrop for scenes that have no illustrated room, which is right for the dialogue scene but wrong here - the schedule board *is* the content, so furniture drawn over it hides the thing being answered. The shoji is now suppressed for the `coordinate` mechanic. Re-measured after the fix: no overlap, all seven hour labels from 9:00 to 15:00 visible, confirm button present.
+
+**Verification note worth remembering.** This fix appeared not to work through four rounds of checking. The cause was layered caching: the service worker is cache-first, so `fetch(..., {cache:"reload"})` was served from its cache, and when the worker was bumped it re-cached a stale `app.js` straight out of the browser's HTTP cache. The order that actually works is unregister the worker, delete the caches, refetch each shell file from the network while nothing is intercepting, and only then reload so the new worker caches fresh files.
+
+**The three days did not differ in difficulty.** Day 1 and Day 2 showed the same romaji, the same English meaning and the same hint; only the situation changed. Day 3 hid romaji and hints but still showed the English meaning, which contradicts the design rule that Challenge is audio-first.
+
+Support is now withdrawn one layer per day:
+
+| Day | Mode | Shown |
+| --- | --- | --- |
+| 一日目 | 基礎 | Japanese, romaji, English meaning, hint |
+| 二日目 | 実践 | Japanese and romaji only |
+| 三日目 | 挑戦 | audio only; the written prompt is 「音声を聞いてください。」 |
+
+A test pins all three rows plus the audio-first Challenge prompt, so the ladder cannot quietly flatten again.
+
+Cache `lantern-alley-v50`, artifact 14.64 MB, 183 of 183 tests pass.
+
+### 2026-08-25 - Object swaps now teach 取り替える; 代える kept for its real sense
+
+Checked the game's Japanese against JMdict through jisho.org, since the local OpenJLPT files carry no usage notes.
+
+Confirmed correct: 温める / あたためる is genuinely **N2**, so the local file's omission is a real gap rather than a level judgement; 引き受ける / ひきうける is **N2**; 取り替える / とりかえる is **N4**, matching the local label; and the readings claimed for 揃える, 調整 and the rest match.
+
+**Found a real error.** JMdict gives explicit usage notes for かえる: 替える is "replace", 換える is "exchange", and 代える is "to substitute (person, staff member, player)". The Inn asked the learner to 「新しいタオルに代えてください」 and the same for 電球 and シーツ - swapping one object for another of the same kind, which is not what 代える means. This is the same class of mistake as 暖める versus 温める, which this project already corrected once.
+
+The owner's reasoning settled the fix: because the task is not inferable from the scene, the sentence has to be unambiguous. 取り替える means exactly one thing - swap this object for that one - while 代える forces the learner to pick a sense before they can act, and the sense the kanji carries is the wrong one.
+
+Changes: the towel, bulb and sheet requests now use 取り替える, with romaji updated. The near miss for that item is no longer the transitivity partner 代わる but 代える itself, explained as substituting a person or role, 「コンに代えて私が案内します」. That converts the bug into the contrast an N2 learner actually needs. Episode 1 in the new contract moved to the `v-torikaeru` target with a matching repair form.
+
+Three tests pinned the old wording and were updated, including the verified near-miss list. Three clips regenerated, three pruned.
+
+**A correction to an earlier entry.** This document previously recorded that the catalog alias `引受る` was non-standard okurigana and had been corrected to `引受ける`. JMdict lists 引き受ける, 引受ける, 引きうける and **引受る** as written forms, so the original alias was valid. The claim was tagged unverified at the time and was wrong.
+
+**Also withdrawn:** an earlier suggestion that 配膳, 帳場 and 回収箱 read as dated or specialised. They were chosen for the setting, and the owner is right that they fit it - 帳場 is the traditional term for an inn's front desk, 配膳 is standard inn vocabulary, and 回収箱 suits back-of-house better than a katakana alternative. That flag was judging register out of context.
+
+Verified: 182 of 182 tests pass, cache `lantern-alley-v49`, artifact 14.64 MB, 87 spoken lines with clips.
+
+### 2026-08-25 - Task 6 Episode 1 authored, and Task 6A caught the wall it was built for
+
+**Episode 1 in the new contract.** `n2-inn-episodes.js` expresses "First guests" as 3 Learn, 3 Practice and 4 Challenge questions, validated by `learning-content.js`. Nine tests cover it. Targets: 揃える, 温める, 代える, 準備, 調整, 掃除, 引き受ける and 案内, all resolving in the catalog.
+
+Two authoring mistakes were caught by the validator written in Task 2, which is the return on having written it first:
+
+- Question 1 listed its own primary target as slot credit. The contract forbids that outright, because a slot must never be the thing correctness is judged on.
+- An early draft offered 「すみません、引き受けられません。」 as a gradeable wrong option, quietly reintroducing the decline bug. Episode 1 now teaches 引き受ける by paraphrase instead, and a test asserts no refusal is ever offered as a gradeable option.
+
+The 温める item deliberately keeps 暖める as its near miss rather than omitting it. The distinction between the two is the lesson, and the catalog source ships only 暖める.
+
+**The delivery gate fired.** Adding one episode of content took the artifact from 14.25 MB to **15.54 MB**, past the 15 MB ceiling, with 27 new clips. One episode of twenty. Had this been discovered at Task 12 as originally planned, it would have arrived after roughly 200 authored questions instead of ten.
+
+`build-artifact.mjs` now does two things it did not before:
+
+- **Ships a demo catalog.** The artifact is the Entrance plus Inn Episode 1, so it inlines only the Inn's partition plus whatever Episode 1 teaches: 723 items instead of 3,579. Verified that all eight taught words survive the subset.
+- **Fails loudly above 15 MB**, naming the largest inlined contributors, rather than emitting a file that cannot be published.
+
+Artifact is now **14.63 MB**, cache `lantern-alley-v48`, 87 spoken lines with clips at 3,810 KB.
+
+Verified: 182 of 182 tests pass across eleven suites.
+
+**Still to do before the Inn is playable in the new format:** the controller swap deferred from Task 4. `app.js` still runs the legacy encounter flow from `n2-home-inn-stage.js`, and the renderer is loaded but not yet called. Episode 1 exists, validates and has audio; nothing routes a player through it yet.
+
+### 2026-08-25 - Inn invitation made open-ended, resolving the story conflict
+
+The Inn promised exactly 「三日間」 while the approved design gives each episode its own three-day arc. Four episodes make twelve days, so from Episode 2 onward Kon's opening promise would have been false - the kind of contradiction a learner notices before a developer does.
+
+Fixed by making the invitation open-ended and tying it to the Lantern Festival, which is already the frame connecting all five locations:
+
+- 「月見宿へようこそ。お祭りの間はお客様が続けて来るので、私一人では仕事が間に合いません。」
+- 「日本語の練習をしながら、お祭りの間、宿の仕事を手伝ってくれませんか？」
+- 「はい、喜んで手伝います。」
+
+Episode 1 still covers the first three days, so 一日目, 二日目 and 三日目 remain true inside an episode. A test now asserts the invitation never promises a fixed number of days, so the contradiction cannot return by editing one line.
+
+Three clips regenerated and three pruned. Cache `lantern-alley-v47`, artifact 14.25 MB, 173 of 173 tests pass.
+
+The spec's open decision list is down to three: no named native reviewer, no approved grammar or kanji source, and whether the artifact demo is worth maintaining.
+
+### 2026-08-25 - Task 5 complete: adaptive question renderer
+
+Split into a pure description and a thin DOM adapter. `describe()` decides what a question is as data - which controls exist, which one is primary, what Challenge hides - so the accessibility and language-leak rules are tested in Node rather than eyeballed. `renderInto()` is the only part that touches the DOM and takes the document, so it can be pointed at any container.
+
+Ten tests, written first. Rules pinned: every answer type produces controls; exactly one control is the primary action; every control has an accessible name and is keyboard reachable; choices stay visible rather than hidden in a select; no English reaches answer content while How to interact stays English; Challenge hides romaji, meaning and hints; and no timer exists outside correction.
+
+**A real bug surfaced while writing the timer tests.** `tickTimer` recomputed the remaining time from `startedAt` while also overwriting `remaining`, so every tick re-subtracted time already deducted. A five-second repair would have expired in roughly two. The anchor now advances with the clock. Pausing while the document is hidden and a timeout firing exactly once are both pinned by tests.
+
+Browser verification at 360x640, with a probe rendered by the real module rather than a mock:
+
+- Pointer and keyboard reach the same callback through the same path, and both answers arrived in order.
+- Every control is focusable and carries its Japanese label as its accessible name.
+- Exactly one primary control.
+
+The first rendered check found a genuine gap: with no styles, controls used fixed-pixel browser defaults and did not grow at 200% text zoom, which is how labels get clipped. Controls are now sized in em. Re-measured: button height grows from 49px to 138px at 200%, no label is clipped, there is no horizontal overflow, and on a phone each choice takes its own row rather than two long Japanese replies wrapping into unreadable columns.
+
+Registered in `index.html`, `sw.js` and `build-artifact.mjs`. Cache `lantern-alley-v46`. Artifact 14.25 MB.
+
+Verified: 173 of 173 tests pass across ten suites.
+
+**Not yet wired into the game.** The renderer is loaded but nothing calls it, because the Inn content is still in the old encounter format. Wiring happens in Task 6 along with the controller swap deferred from Task 4.
+
+### 2026-08-25 - Task 4 (partial): version 3 progress model and migration
+
+`learning-progress.js` defines what a progress record contains and how an older one becomes a newer one. Pure and immutable; `app.js` still owns storage and rendering. Nine tests, written first, all passing.
+
+Version 2 stored one hard-coded Inn record under a camelCase `homeInn` key and a phase name. Version 3 is generic across stages, keyed by the same stage keys the map uses, and stores a story day rather than a phase. Focused review maps to day 3, not a fourth day.
+
+Migration decisions:
+
+- **Never invent a medal.** An absent medal migrates to `none` rather than being guessed from how far the learner happened to reach.
+- **The declined flag survives.** Losing it would drop the welcome-back reply and greet a returning learner as though nothing had happened.
+- **A version 3 record passes through unchanged**, so migrating twice is safe.
+- **One mistake record per question, not per attempt**, so missing the same item three times shows it once in review.
+
+**Deliberately not done yet:** the plan's Task 4 also calls for replacing the Inn-specific progression branches in `app.js` with stage-contract calls. That is held until Task 6, when the Inn content actually moves to the new episode format. Rewriting the controller now would mean maintaining two shapes at once against content that has not changed yet, with a second session editing the same file. The module and its migration are complete and tested; only the controller swap is deferred.
+
+Registered in `index.html`, `sw.js` and `build-artifact.mjs`. Cache `lantern-alley-v45`. Artifact unchanged at 14.24 MB.
+
+Verified: 163 of 163 tests pass across nine suites.
+
+### 2026-08-25 - Task 3 complete: correction queue and delayed review
+
+`review-engine.js` is pure and immutable, with no DOM, no timers and no `Date.now()`. Every function takes `now` explicitly, so the fourteen-day schedule is tested with fixed timestamps rather than by waiting. Nine tests, written first, all passing.
+
+Two mechanisms live here and are deliberately not merged:
+
+- **The repair queue** clears today's mistakes before the learner leaves. Correct answers leave immediately; wrong answers and timeouts go to the back.
+- **Delayed review** brings correct material back at about 1, 3, 7 and 14 days. Only this can produce mastery.
+
+Decisions worth recording:
+
+- **A timeout is not a misconception.** It returns the item to the queue with `unresolvedFluency` set and no error tag, so being slow is never recorded as misunderstanding a word.
+- **Only the head of the queue can be answered.** A stale click from a re-render is ignored rather than silently reordering the queue.
+- **Same-day repetition does not count.** Answering an item correctly minutes after the first success is recognition, not retrieval, so it neither advances the schedule nor counts toward mastery. A test pins this, because it is the difference between real spacing and a progress bar that can be farmed in one sitting.
+- **A wrong answer resets to the first interval** and records its error tag.
+- **Mastery requires two delayed successes with at least seven days between the first success and the last**, so it cannot be reached in a single session by design.
+- **Due items are returned oldest first**, so a learner returning after a long gap meets what they have held longest.
+
+Registered in `index.html`, `sw.js` and `build-artifact.mjs`. Cache `lantern-alley-v44`. Artifact unchanged at 14.24 MB, since the engine is a few kilobytes.
+
+Verified: 154 of 154 tests pass across eight suites.
+
+### 2026-08-25 - Task 2 complete: shared episode and question contract
+
+`learning-content.js` is now the single decider of whether stage content is valid. Content bugs are cheap to introduce and expensive to notice by playing, so they are caught here rather than in a browser.
+
+Written test-first: 11 contract tests failed against a missing module, then passed. Rules enforced: four episodes per stage; 3, 3, 4 questions per episode; exactly one primary target that must exist in the catalog; exactly one correct answer; at most three slot credits, and a primary target may never also be slot credit; no English in answer content; no prompt reused across phases; and repair timers restricted to the 5, 8 or 12 second budget.
+
+`free-text` is deliberately absent from the answer types, so no answer can require a Japanese IME. That is a mechanical obstacle rather than a comprehension one.
+
+One finding from writing the tests: the first fixture reused a single prompt for all forty questions, and the validator rejected it. The rule was right and the fixture was wrong, which is the outcome worth having from a test-first pass.
+
+Both new scripts are registered in `index.html`, `sw.js` and `build-artifact.mjs`, loaded before the stage files. Cache moved to `lantern-alley-v43`.
+
+Verified: 145 of 145 tests pass across seven suites.
+
+**Delivery headroom is now thin.** The artifact grew from 13.10 MB to 14.24 MB when the 1.13 MB catalog was inlined. That leaves 0.76 MB before the 15 MB build ceiling this project set itself and 1.76 MB before the hard 16 MB limit. The artifact is meant to be an Entrance plus Inn Episode 1 demo, so it does not need all 3,579 catalog items; shipping only the Inn partition would return roughly 0.9 MB. This is the decision Task 6A exists to force, and it has arrived earlier than expected.
+
+### 2026-08-25 - Task 1 complete: curated curriculum catalog
+
+Built the reviewed catalog and its coverage audit. Written test-first: eight contract tests failed against a missing module, then passed against the generated one.
+
+Result: **3,579 items** from OpenJLPT n2 plus n3 plus the project supplement, with exactly **one exclusion** - the malformed `あげる (=やる)`, whose headword carries an annotation. 589 verbs. 3,307 items carry an example sentence, so cloze cards are available for 92% of the catalog. The generated file is 1.13 MB, a shell cost rather than a per-stage one.
+
+Files: `research/build-n2-catalog.mjs` (generator), `research/catalog-api.js` (the API embedded into the output), `research/n2-supplement.json` (project-authored words), `curriculum-catalog.js` (generated, do not hand-edit) and `curriculum-catalog.test.mjs`.
+
+Decisions worth recording:
+
+- **A build step, not runtime JSON.** The game must work from `file://`, where fetching a sibling JSON is blocked. The output assigns to `self`, matching `audio-index.js`.
+- **Kana headwords keep their own reading.** 294 of n2's 295 blank `reading` fields are kana words. Excluding them for a blank field would have dropped a sixth of the vocabulary; a test now pins this.
+- **The supplement is marked `source: "project"`** so authored words can never be mistaken for sourced data. It holds `引き受ける` (absent from every local file), `温める` (the source has only `暖める`, for air and rooms, which would reintroduce a fixed error) and `取り替える` (present only as N4).
+- **Nothing claims reviewed status.** No native reviewer is named, so every item is `reviewed: false` and `validateCatalog` returns a warning rather than an error, which reports the gap honestly without blocking the build.
+- **Ids are stable ASCII** minted from a kana-to-romaji table and a sorted item order, so regenerating does not churn ids.
+- **Partitions are round-robin**, giving 716/716/716/716/715 across the five locations. Thematic partitioning is better for the story and can replace this without changing the interface; alphabetical grouping would have handed one location every word starting with the same kana.
+
+Verified: 134 of 134 tests pass across six suites. `curriculum-catalog.js` is not yet loaded by `index.html`, the worker or the artifact; registration is Task 2.
+
+### 2026-08-25 - Declining Kon's request is a branch again, not a wrong answer
+
+The Inn had been changed to score 「すみません、引き受けられません。」 as an incorrect answer, with a retry reply asking again. That contradicted the owner's instruction and the design rule in section 7 of the spec: declining a genuine social offer is not linguistically wrong. It also taught the opposite of the lesson, because a learner who understood 引き受ける perfectly and chose to refuse was told they had made a comprehension error.
+
+Restored behaviour: declining plays Kon's disappointed reply, 「そうですか……。残念ですが、仕方がありません。気が変わったら、いつでも戻ってきてください。」, costs no heart, and returns the learner to the map. The refusal is saved, so coming back leads with 「コン：「戻ってきてくれたんですね！とても嬉しいです。」」 before the request is made again. Accepting is unchanged.
+
+Implementation: `declineStageWork` in `app.js`, `state.stageDeclined` and `state.resumedAfterDecline`, `declined` persisted in stage progress, and `getStorySetup(item, resumed, afterDecline)` in the stage file. The decline reply is now collected by `collect-spoken-lines.js` and has its own clip; the return greeting is displayed rather than spoken, so it needs none.
+
+The test `declining a daily duty asks again instead of ending the three-day story` asserted the removed behaviour directly, including `assert.doesNotMatch(html, /function declineStageWork/)`. It was replaced with one asserting the branch exists, that returning leads with the welcome, and that an ordinary entry does not.
+
+Verified: 126 of 126 tests pass, 60 spoken lines with 60 clips at 2,832 KB, cache `lantern-alley-v42`, artifact 13.10 MB. Nothing committed or published.
+
+### 2026-08-25 - Inn delivery completed after the chronology fixes
+
+Generated the ten missing clips with `ja-JP-NanamiNeural`, the same voice as the Entrance, so no line falls back to a device voice. Ten stale clips from replaced dialogue were pruned in the same run. `audio-index.js` was regenerated, so the page and the worker share one clip list.
+
+Cache moved from `lantern-alley-v40` to `lantern-alley-v41`. Version 40 was set before the audio and stage edits landed, so returning installed players would have kept the old shell and the old dialogue.
+
+Verified: 126 of 126 tests pass across the five suites, `node --check` passes on `app.js` and `sw.js`, `git diff --check` reports only the repository's existing LF-to-CRLF notices, and the rebuilt standalone artifact is 13.02 MB, below the 16 MB limit.
+
+Nothing has been committed or published.
+
+### 2026-08-25 - Fixed two story-chronology breaks in the Inn
+
+Checked the Inn's game logic and story coherence against the new three-day frame. The mechanics are sound - one shared room, the verb selects the action, the 調整 time puzzle is internally consistent at 14:00 train, 1 hour travel, 2 hours cleaning, next guest 15:00, answer 13:00. Two chronology breaks were found and fixed.
+
+**Day 1 ran backwards.** Encounter 4 opened with 「朝になりました」 and set a checkout time, then encounter 5 returned to 「一日目の最後に」 and the evening meal. The narration is now day-1 planning - the guests are resting and Kon settles tomorrow's schedule in advance - so the same puzzle, the same Japanese request and the existing test expectations for 14時, 2時間 and target 13 all still hold.
+
+**Day 3 jumped around in time.** Challenge ran its questions in the order 2, 0, 4, 1, 3, so the day went from after dark, to the next morning, to the last guests, to a corridor at dusk, to before closing the front desk. Each narration is tied to its own task, so the order cannot be shuffled independently of the story. Challenge now runs in story order and stays harder by hiding romaji and hints and by using the variant-B situations, which is where its difficulty actually came from.
+
+The existing test `the story runs in order across the learn phase` had encoded the day-1 bug as correct; its own comment read "arrival -> next morning -> dinner service". It has been corrected, and two regression tests added: no learn beat may announce a new morning, and the challenge day must run in story order.
+
+Targeted suites: 65 of 65 pass. Full five-suite run: 124 of 126, with the only failures being missing audio.
+
+**Correction to the previous entry: 10 spoken lines lacked clips, not 2.** Nine were already missing from the three-day dialogue edits, and this change added one more, the rewritten day-1 planning narration. All ten have since been rendered with the same Nanami neural voice, and ten stale clips from replaced dialogue were pruned. `assets/audio` now holds 59 clips at 2,774 KB.
+
+Still open: declining a requested duty is currently scored as an incorrect answer, which contradicts the owner's earlier instruction that refusing should be a real branch, and the design rule at section 7 of the spec that declining a genuine social offer is not linguistically wrong.
+
+### 2026-08-25 - Handoff synchronized with the current build and course plan
+
+Replaced the stale 500-question, ten-episode summary with the approved two-tier plan: 20 story episodes and 200 Tier 1 questions plus generated Tier 2 catalog practice. Recorded the current three-day Inn edits, two missing audio clips, targeted 76/78 test result, unreconstructed artifact, source provenance, untracked planning documents and the remaining curriculum decisions. No game code, audio, artifact, commit or publication was changed as part of this documentation update.
+
+### 2026-08-25 - Curated the local OpenJLPT N2 list and measured it
+
+Ran a curation pass over `research/openjlpt/*.json` rather than continuing to plan against assumptions. Two results, in opposite directions.
+
+**The data is cleaner than the spec claimed.** Curating `n2.json` yields 1,792 testable items from 1,793; the sole failure is the malformed `あげる (=やる)`. There are 0 duplicate words, 0 headwords with annotation or whitespace noise, and 0 kanji inside a reading field. The earlier claim that 295 records lack a reading was misleading and has been corrected: 294 of those are kana-only headwords that are their own reading. All 1,537 example sentences contain their headword exactly, with no conjugated-stem mismatches, so Tier 2 cloze generation needs no fuzzy matching. Curation is not the bottleneck.
+
+**The source is not the N2 vocabulary set.** A 29-item probe of common N2 vocabulary found 11 absent from all four local files, including `引き受ける`, `取り組む`, `落ち着く`, `促す`, `把握` and `温める`. Three of the game's own five Inn targets are absent: `温める`, `引き受ける`, and `取り替える`, which appears only as N4. The level labels also do not match the exam - `影響`, `状況`, `対象`, `傾向`, `需要`, `供給` and `検討` are labelled n3 while an N2 learner needs them - so a large part of what N2 tests sits in `n3.json`.
+
+**One gap would reintroduce a fixed bug.** The source contains `暖める` but not `温める`. This project already corrected exactly that distinction once: `暖める` is for air and rooms, `温める` for food and drink, and the Inn teaches reheating tea. Covering the source faithfully would put the wrong verb back into the game.
+
+Revisions made:
+
+- The base catalog is now OpenJLPT **n2 plus n3**, 3,577 unique words with no overlap between the files, 3,304 carrying example sentences - not `n2.json` alone.
+- A project supplement, `research/n2-supplement.json`, holds items the source omits, authored with the same fields and marked `source: "project"` so they are never mistaken for sourced data. The five Inn targets seed it.
+- The coverage claim is now coverage **of the named project catalog**, with provenance reported. The game does not claim to cover the JLPT N2 vocabulary list, because no reference list exists locally to verify that against.
+- Task 1 now curates n2 and n3 together, must not exclude kana-only headwords for a blank reading field, and carries tests asserting that `引き受ける` resolves to the supplement and that `温める` exists despite the source holding only `暖める`.
+- Per-location partitions grow from roughly 300 items to roughly 700.
+- New open decision: no reference N2 list exists locally, so the catalog's gaps can be sampled but not measured.
+
+Catalog size is a shell cost rather than a per-stage one: the cleaned `n2.json` is 0.69 MB, so an n2+n3 catalog is roughly 3.8 MB raw before trimming to one example per item.
+
+### 2026-08-25 - Curriculum re-anchored on actual N2 coverage
+
+The owner restated the goal: cover N2 across the game. The previous revision had cut the course to 200 tested targets to fit the delivery format, which inverted the priority - 200 targets is 11% of the 1,793-record vocabulary file, so the course would have been comfortably deliverable and would not have met its own purpose. Delivery bends; coverage does not.
+
+Measured against the local source before revising:
+
+| Area | Scope | Source present |
+| --- | --- | --- |
+| Vocabulary | 1,793 records | `research/openjlpt/n2.json` |
+| Grammar | roughly 150-200 patterns | none |
+| Kanji | roughly 350-400 new | none |
+
+Vocabulary data quality, measured: 295 records (16%) lack a reading, 300 are kana-only, 3 carry slash variants, 1,537 include an example sentence.
+
+**Why the old model could not reach coverage.** It had exactly one way to teach an item: an authored, illustrated, natively reviewed, voiced question at roughly three audio clips each. That method cannot scale to 1,793 items and should not try. The fix is two tiers with costs an order of magnitude apart:
+
+- Tier 1, 200 authored story questions across 20 episodes, with artwork, native review and pre-rendered Nanami audio. High-value language taught deeply; the story lives here.
+- Tier 2, catalog practice generated from the curated data - reading from written form, meaning from word, and cloze built from each record's own example sentence. No bespoke artwork, no pre-rendered audio. Generated, not authored.
+
+Tier 2 is what makes the coverage claim honest, because the work moves from authoring roughly 1,500 questions to curating one dataset once.
+
+Coverage is distributed rather than bolted on: the catalog is partitioned across the five locations by theme, roughly 300 items each, and practice is reached from inside a location as Kon's 稽古 rather than as a separate flashcard mode.
+
+Delivery is unchanged by the growth in coverage, because only Tier 1 dialogue and listening questions get pre-rendered audio: still about 150 clips and 6.9 MB per stage, about 33 MB for the course. The artifact remains an Entrance plus Inn Episode 1 demo that must build under 15 MB, and the worker still caches per stage rather than precaching everything.
+
+New Task 6B builds the practice layer. Task 1 now curates the whole file rather than only the verbs, keeps rejected records visible with reasons, and separates testable from excluded items so coverage is never inflated. Task 10's final gate asserts every testable item is tested in one tier or the other.
+
+**Grammar and kanji are now a blocker on the stated goal, not just on authoring.** Neither has any source in the repository. Until one is approved, the game claims N2 vocabulary coverage, names its source, and reports grammar and kanji as unmet rather than implying them.
+
+### 2026-08-25 - Five-stage curriculum plan revised to a deliverable size
+
+Reviewed the approved curriculum spec and 12-task plan against the repository. The direction held up; the sizing did not. Three faults would have surfaced only after large amounts of content had been authored and natively reviewed.
+
+**The course did not fit the delivery format.** Neither document mentioned a size budget. Measured: 59 clips, 2.63 MB, averaging 45.7 KB, with the artifact already at 12.92 MB of a hard 16 MB ceiling for one stage. The 500-question draft projected roughly 1,800 clips, about 80 MB of audio, or about 107 MB once base64-inlined. `sw.js` also precached everything through `cache.addAll`, which is all-or-nothing.
+
+**The per-stage counts were arithmetically impossible.** The spec required one primary target per question, while the tasks asserted 25 verbs, 55 other vocabulary, 20 grammar and 60 kanji items per stage - 160 tested items across 100 questions. The 80 vocabulary and 20 grammar targets alone consumed every question, leaving none for 60 kanji slots. Written as tests, Task 6 could never have gone green.
+
+**The Inn story conflicts with a concurrent edit.** `n2-home-inn-stage.js` is being reframed as a single three-day arc, 「三日間、宿の仕事を手伝ってくれませんか」, while the plan gives each episode its own three-day arc. Recorded as an open decision that blocks Task 6.
+
+Revisions made:
+
+- Four episodes per stage instead of ten: 20 episodes and 200 questions, sized against measured audio cost of roughly 150 clips and 6.9 MB per stage, about 33 MB for the course. The 3-3-4 ten-question episode shell is unchanged. The six deferred episodes per stage are listed rather than discarded.
+- Primary targets and slot credit are now distinct. Each stage's 12 verb, 16 vocabulary, 6 grammar and 6 kanji primary targets sum to exactly its 40 questions; slot credit is capped at three per question and can never decide correctness.
+- Delivery is a design constraint: the shell precaches only the Entrance and skeleton, stages cache their own assets on entry, audio generates per stage, and the artifact is an Entrance plus Inn Episode 1 demo whose build fails above 15 MB rather than emitting an unpublishable file.
+- New Task 6A runs the delivery and scale gate immediately after the first finished stage. Discovering the ceiling there costs one stage of rework; at Task 12 it would have cost 200 authored and reviewed questions.
+- The repair timer is a per-type budget in the question data, defaulting to 8 seconds, rather than a flat 5. Five seconds is enough to recognize one word but not to read three N2 options after audio.
+- No answer type requires typing Japanese; `information-entry` selects from values visible in the record.
+- The catalog alias `引受る` was corrected to `引受ける`. It was baked into a contract test, and the non-standard okurigana is the same class of error as the earlier 暖める and 揃う fixes. Still worth a native check.
+- Declining a location offer is now a listed reachable state and is persisted in v3 progress, with a test. This behaviour existed in v2 and was lost during a concurrent edit.
+- Acceptance criteria are now individually checkable, and state plainly what is not claimed.
+- Open decisions recorded: no named native reviewer for 200 questions, the Inn story conflict, no approved grammar or kanji catalog source, and whether the artifact demo is worth maintaining.
+
+The migration test shape in Task 4 was checked against real storage and is correct: v2 does write `stageProgress.homeInn` with `phase` and `medal`.
 
 ### 2026-08-24 - The finished Entrance was clipped away, not just below the fold
 
@@ -768,13 +1083,13 @@ The old single-file `lantern-alley.html` had no `<meta charset>`, so browsers de
 
 ## 11. Recommended next work
 
-1. Native-speaker review of all Japanese, prioritising the doubts listed in section 10.
-2. Replace the placeholder SVG icons with real illustrations.
-3. Extend the shared-room principle to 調整 and 引き受ける, so all five verbs compete over one scene.
-4. Initialize Git before multiple people edit the project.
-5. Add a player progress export and import feature.
-7. Select the next small group of manually reviewed N2 words from the research CSV.
-8. Add end-to-end browser tests covering every mechanic and mobile screen sizes.
+1. Finish the current Inn delivery: approve and generate the two missing audio clips, update the audio index/cache, rebuild the artifact, then run the complete test and browser checks.
+2. Resolve the Inn story conflict before Task 6: either make Episode 1 the first three days of an open-ended stay, or redesign the four planned episodes around one three-day visit.
+3. Name a native Japanese reviewer or approve an explicit confidence and review-status policy, including the `代える` versus `取り替える` issue.
+4. Approve traceable grammar and kanji sources; until then, keep those coverage areas marked unmet.
+5. Execute the curriculum plan in order: catalog audit, shared contracts, review scheduler, generic progress, adaptive renderer, Inn migration, delivery gate, Tier 2 catalog practice, four future stages, all-stage Mistake Review, then final audio/offline delivery.
+6. Preserve the artifact as an Entrance plus Inn Episode 1 demo unless the owner explicitly changes that delivery decision.
+7. Add end-to-end browser tests for every interaction type and representative desktop/mobile sizes.
 
 ## 12. Handoff rules for the next developer or AI session
 

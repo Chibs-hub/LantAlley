@@ -20,7 +20,7 @@ test("Moonview Inn provides five ordered N2 encounters", () => {
   assert.equal(stage.encounters.length, 5);
   assert.deepEqual(
     Array.from(stage.encounters, (item) => item.focusWord),
-    ["揃える", "代える", "温める", "調整", "引き受ける"],
+    ["揃える", "取り替える", "温める", "調整", "引き受ける"],
   );
   assert.ok(stage.encounters.every((item) => item.level === "N2"));
 });
@@ -31,11 +31,20 @@ test("Moonview Inn establishes the learner as Kon's helper before the first task
   vm.runInContext(readFileSync(stageUrl, "utf8"), context);
   const intro = context.N2HomeInnStage.intro;
 
-  assert.match(intro.context, /従業員が一人休んで/);
-  assert.match(intro.jp, /仕事を手伝ってくれませんか/);
-  assert.equal(intro.accept, "はい、手伝います。");
+  assert.match(intro.context, /お祭りの間.*私一人では仕事が間に合いません/);
+  assert.match(intro.jp, /お祭りの間.*宿の仕事を手伝ってくれませんか/);
+  assert.equal(intro.accept, "はい、喜んで手伝います。");
   assert.match(html, /function renderStageIntro\(loc\)/);
   assert.match(html, /renderStageIntro\(loc\)/);
+});
+
+test("Moonview Inn uses the same cinematic shell as the Alley Entrance", () => {
+  assert.match(html, /screenGame\.classList\.toggle\("inn-stage", loc\.key === "home-inn"\)/);
+  assert.match(html, /#screen-game\.inn-stage\{[^}]*background:[^}]*#0[6-9][0-9a-f]{4}/i);
+  assert.match(html, /\.inn-stage \.stage-bar\{[^}]*border:2px solid[^}]*background:linear-gradient/);
+  assert.match(html, /\.inn-stage \.learning-context\{[^}]*background:linear-gradient/);
+  assert.match(html, /\.inn-stage \.answer-workspace\{[^}]*min-width:0/);
+  assert.match(html, /@media\(max-width:760px\)[^{]*\{[\s\S]*?\.inn-stage \.game-layout\{[^}]*grid-template-columns:1fr/);
 });
 
 test("Moonview Inn mixes visible, object, and social actions", () => {
@@ -79,14 +88,19 @@ test("Moonview Inn has evidence-based practice and challenge phases", () => {
   vm.createContext(context);
   vm.runInContext(readFileSync(stageUrl, "utf8"), context);
   const stage = context.N2HomeInnStage;
-  assert.equal(stage.practice.length, 10);
-  assert.equal(stage.challenge.length, 10);
+  assert.equal(stage.practice.length, 5);
+  assert.equal(stage.challenge.length, 5);
 
   for (const word of stage.encounters.map((item) => item.focusWord)) {
-    assert.equal(stage.practice.filter((item) => item.focusWord === word).length, 2);
-    assert.equal(stage.challenge.filter((item) => item.focusWord === word).length, 2);
+    assert.equal(stage.practice.filter((item) => item.focusWord === word).length, 1);
+    assert.equal(stage.challenge.filter((item) => item.focusWord === word).length, 1);
   }
   assert.ok(stage.challenge.every((item) => item.romaji === "" && item.hint === ""));
+  assert.equal(
+    stage.challenge.every((item) => !stage.practice.some((practice) => practice.jp === item.jp)),
+    true,
+    "challenge situations must be new rather than repeated practice requests",
+  );
 });
 
 test("practice never repeats a Learn request", () => {
@@ -96,9 +110,9 @@ test("practice never repeats a Learn request", () => {
   const stage = context.N2HomeInnStage;
   const learnRequests = new Set(stage.encounters.map((item) => item.jp));
 
-  assert.equal(stage.practice.length, 10);
+  assert.equal(stage.practice.length, 5);
   assert.equal(stage.practice.every((item) => !learnRequests.has(item.jp)), true);
-  assert.equal(new Set(stage.practice.map((item) => item.jp)).size, 10);
+  assert.equal(new Set(stage.practice.map((item) => item.jp)).size, 5);
 });
 
 test("stage UI separates phase status from the story title and offers a Learn restart", () => {
@@ -108,22 +122,33 @@ test("stage UI separates phase status from the story title and offers a Learn re
   assert.match(html, /\$\("stage-phase-row"\)\.style\.display = loc\.encounters \? "flex" : "none"/);
 });
 
-test("challenge mastery requires eight correct and coverage of every word", () => {
+test("challenge mastery requires all five one-time challenge words", () => {
   const context = {};
   vm.createContext(context);
   vm.runInContext(readFileSync(stageUrl, "utf8"), context);
   const stage = context.N2HomeInnStage;
   const allWords = stage.encounters.map((item) => item.focusWord);
-  assert.equal(stage.isChallengeMastered(8, allWords), true);
-  assert.equal(stage.isChallengeMastered(7, allWords), false);
-  assert.equal(stage.isChallengeMastered(10, allWords.slice(0, 4)), false);
+  assert.equal(stage.isChallengeMastered(5, allWords), true);
+  assert.equal(stage.isChallengeMastered(4, allWords), false);
+  assert.equal(stage.isChallengeMastered(5, allWords.slice(0, 4)), false);
+});
+
+test("focused review completes after only the missed verbs are recalled", () => {
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(readFileSync(stageUrl, "utf8"), context);
+  const stage = context.N2HomeInnStage;
+  const missed = [stage.challenge[1], stage.challenge[3]];
+
+  assert.equal(stage.isFocusedReviewComplete(missed, [missed[0].focusWord]), false);
+  assert.equal(stage.isFocusedReviewComplete(missed, missed.map((item) => item.focusWord)), true);
 });
 
 test("the game exposes learn, practice, challenge, and focused retry flow", () => {
   assert.match(html, /stagePhase:"learn"/);
   assert.match(html, /advanceStagePhase/);
   assert.match(html, /challengeMisses/);
-  assert.match(html, /Review missed words/);
+  assert.match(html, /間違えた言葉を復習する/);
   assert.doesNotMatch(html, /state\.stagePhase === "challenge" \? "音声を聞いて、正しい行動を選んでください。" : prompt\.narration/);
   assert.match(html, /getStorySetup\(prompt, state\.resumedStageEntry, state\.resumedAfterDecline\)/);
 });
@@ -163,8 +188,9 @@ test("Kon gives Japanese story context in every phase and a Japanese return reca
     assert.match(item.narration, /^コン：「/, item.variant);
     assert.doesNotMatch(item.narration, /\b(Kon|guest|inn|tomorrow|group|breakfast|room)\b/i, item.variant);
   }
-  assert.match(stage.getStorySetup(stage.practice[7], true), /^コン：「お帰りなさい。/);
-  assert.match(stage.getStorySetup(stage.practice[7], true), /スープ/);
+  const resumedWarm = stage.practice.find((item) => item.focusWord === "温める");
+  assert.match(stage.getStorySetup(resumedWarm, true), /^コン：「お帰りなさい。/);
+  assert.match(stage.getStorySetup(resumedWarm, true), /ごはん/);
 });
 
 test("practice narration describes evidence without naming the required action", () => {
@@ -217,7 +243,10 @@ test("non-dialogue harder items have exactly one explained N2 near-miss", () => 
   vm.createContext(context);
   vm.runInContext(readFileSync(stageUrl, "utf8"), context);
   const stage = context.N2HomeInnStage;
-  const verifiedNearMisses = ["揃う", "代わる", "温まる", "調節する"];
+  // 代わる was the near miss while the swap taught 代える. The swap now teaches
+  // 取り替える, so the mistake worth drilling is 代える itself: the learner who
+  // reaches for the person-substitution verb to swap an object.
+  const verifiedNearMisses = ["揃う", "代える", "温まる", "調節する"];
 
   for (const item of [...stage.practice, ...stage.challenge].filter((entry) => entry.mechanic !== "undertake")) {
     const nearMisses = item.options.filter((option) => option.nearMiss);
@@ -237,7 +266,7 @@ test("dialogue replies are neutral, plausible, and do not reveal acceptance", ()
     assert.equal(item.options.some((option) => option.nearMiss), false, item.variant);
     assert.deepEqual(
       Array.from(item.interaction.replies, (reply) => reply.label),
-      ["手伝います。", "手伝えません。"],
+      ["はい、引き受けます。", "すみません、引き受けられません。"],
     );
     assert.equal(item.interaction.replies.every((reply) => !reply.icon), true);
   }
@@ -245,46 +274,63 @@ test("dialogue replies are neutral, plausible, and do not reveal acceptance", ()
   assert.doesNotMatch(html, /reply\.key === "accept" \? "" : " danger"/);
 });
 
-test("the Learn offer includes a free overnight stay and leads into the next morning", () => {
+test("Kon makes one three-day agreement before Day 1", () => {
   const context = {};
   vm.createContext(context);
   vm.runInContext(readFileSync(stageUrl, "utf8"), context);
   const stage = context.N2HomeInnStage;
-  const offer = stage.encounters.at(-1);
+  const duty = stage.encounters.at(-1);
 
-  assert.match(offer.narration, /今夜.*無料で泊まれます/);
-  assert.match(offer.jp, /明日のお客様の案内を引き受けて/);
-  assert.match(offer.completionFeedback, /ありがとうございます.*今夜.*休んで/);
-  assert.equal(offer.completionNextLabel, "次の朝へ");
-  assert.match(stage.practice[0].narration, /おはようございます.*昨夜はよく眠れましたか/);
+  // The invitation must stay open-ended. Each episode is its own three-day
+  // arc, so promising exactly 三日間 would be false from Episode 2 onward.
+  assert.doesNotMatch(stage.intro.jp, /三日間/);
+  assert.match(stage.intro.jp, /お祭りの間.*手伝って/);
+  assert.match(stage.intro.accept, /手伝います/);
+  assert.doesNotMatch(duty.jp, /明日/);
+  assert.match(duty.jp, /夕食の配膳を引き受けて/);
+  assert.equal(duty.completionNextLabel, "二日目へ");
 });
 
-test("declining the next-day job ends the stage and is welcomed back", () => {
+test("declining a duty ends the stage and is welcomed back, not marked wrong", () => {
   const context = {};
   vm.createContext(context);
   vm.runInContext(readFileSync(stageUrl, "utf8"), context);
   const stage = context.N2HomeInnStage;
-  const offer = stage.encounters.at(-1);
+  const offer = stage.encounters.find((item) => item.focusWord === "引き受ける");
 
-  // Two answers only: take the work or not. Declining is a real choice, so it
-  // gets a disappointed reply and sends the player out rather than scoring
-  // them wrong and asking again.
-  assert.deepEqual(
-    Array.from(offer.interaction.replies, (reply) => reply.key),
-    ["accept", "decline"],
-  );
+  // Refusing a favour is a legitimate, correctly-understood Japanese reply.
+  // Scoring it wrong taught that 引き受けられません is a comprehension error.
   assert.ok(offer.declineReply, "declining needs its own reply");
-  assert.match(offer.declineReply, /残念/);
-  assert.match(offer.declineReply, /戻ってきて/, "and an open invitation to return");
-
-  // Coming back is a reunion, not a silent resume.
-  const welcome = stage.getStorySetup(offer, true, true);
-  assert.match(welcome, /^コン：「戻ってきてくれたんですね/);
-  assert.notEqual(welcome, stage.getStorySetup(offer, true, false));
-
+  assert.ok(offer.returnReply, "returning needs a welcome");
   assert.match(html, /function declineStageWork/);
   assert.match(html, /state\.stageDeclined = true/);
   assert.match(html, /declined:state\.stageDeclined/);
+
+  // Returning replaces the ordinary resume greeting with the welcome back.
+  const back = stage.getStorySetup(offer, false, true);
+  assert.ok(back.startsWith(offer.returnReply), "return must lead with the welcome");
+  assert.ok(back.includes(offer.narration));
+  const ordinary = stage.getStorySetup(offer, false, false);
+  assert.equal(ordinary, offer.narration);
+});
+
+test("each phase announces its story day and difficulty", () => {
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(readFileSync(stageUrl, "utf8"), context);
+  const stage = context.N2HomeInnStage;
+
+  assert.deepEqual(JSON.parse(JSON.stringify(stage.getDayMeta("learn"))), {
+    day: 1, label: "一日目", mode: "基礎", difficulty: "やさしい", stars: "★☆☆",
+  });
+  assert.deepEqual(JSON.parse(JSON.stringify(stage.getDayMeta("practice"))), {
+    day: 2, label: "二日目", mode: "実践", difficulty: "ふつう", stars: "★★☆",
+  });
+  assert.deepEqual(JSON.parse(JSON.stringify(stage.getDayMeta("challenge"))), {
+    day: 3, label: "三日目", mode: "挑戦", difficulty: "むずかしい", stars: "★★★",
+  });
+  assert.equal(stage.getDayMeta("review").day, 3);
+  assert.match(html, /loc\.getDayMeta\(state\.stagePhase\)/);
 });
 
 test("heating requests use the appliance appropriate for each item", () => {
@@ -402,7 +448,7 @@ test("every question provides matching scene context and non-answer control help
   assert.match(checkout.jp, /14時/);
   assert.match(checkout.jp, /2時間/);
   assert.equal(checkout.interaction.targetA, 13);
-  const arrivals = stage.practice.find((item) => item.focusWord === "調整" && item.variant === "practice-b");
+  const arrivals = stage.challenge.find((item) => item.focusWord === "調整" && item.variant === "challenge-b");
   assert.match(arrivals.jp, /15時/);
   assert.match(arrivals.jp, /17時/);
   assert.equal(arrivals.interaction.targetB, 17);
@@ -470,7 +516,11 @@ test("each near-miss is the true intransitive partner of its target", () => {
   // 揃える pairs with 揃う, not 整う (which pairs with 整える). Presenting the
   // wrong partner teaches a false relationship in the exact spot meant to
   // drill that distinction.
-  const pairs = { "揃える": "揃う", "代える": "代わる", "温める": "温まる" };
+  //
+  // 取り替える is the exception: its near miss is a sense confusion rather than
+  // a transitivity pair. 代える means substituting a person or role, so it is
+  // the mistake a learner actually makes when swapping an object.
+  const pairs = { "揃える": "揃う", "取り替える": "代える", "温める": "温まる" };
 
   for (const item of [...stage.practice, ...stage.challenge]) {
     const partner = pairs[item.focusWord];
@@ -502,8 +552,10 @@ test("the story runs in order across the learn phase", () => {
   vm.runInContext(readFileSync(stageUrl, "utf8"), context);
   const learn = context.N2HomeInnStage.getPhaseItems("learn");
   const story = learn.map((item) => item.narration).join(" ");
-  // arrival preparation -> arrival -> next morning -> after the guest has gone
-  const beats = ["もうすぐ", "到着しました", "朝になりました", "満足して帰りました"];
+  // Day 1 must stay inside day 1: arrival preparation -> arrival -> planning
+  // tomorrow -> dinner service. It previously announced 朝になりました before
+  // returning to the evening of the same day, so the day ran backwards.
+  const beats = ["もうすぐ", "到着しました", "明日の予定", "夕食を配る人"];
   let cursor = -1;
   for (const beat of beats) {
     const at = story.indexOf(beat, cursor + 1);
@@ -543,7 +595,7 @@ test("the arrange attribute is carried only by the Japanese sentence", () => {
   vm.runInContext(readFileSync(stageUrl, "utf8"), context);
   const stage = context.N2HomeInnStage;
   const byColour = stage.encounters.find((item) => item.focusWord === "揃える");
-  const bySize = stage.practice.find((item) => item.focusWord === "揃える" && item.variant === "practice-b");
+  const bySize = stage.challenge.find((item) => item.focusWord === "揃える" && item.variant === "challenge-b");
 
   assert.equal(byColour.interaction.attribute, "color");
   assert.match(byColour.jp, /色/);
@@ -738,4 +790,63 @@ test("Moonview Inn displays medals and saves after stage movement", () => {
   assert.match(html, /bronze:"🥉",silver:"🥈",gold:"🥇"/);
   assert.match(html, /function saveStageProgress/);
   assert.match(html, /saveStageProgress\(\);/);
+});
+
+test("no learn-phase beat jumps to the next morning", () => {
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(readFileSync(stageUrl, "utf8"), context);
+  const learn = context.N2HomeInnStage.getPhaseItems("learn");
+  for (const item of learn) {
+    assert.doesNotMatch(
+      item.narration,
+      /朝になりました|次の朝/,
+      `day 1 beat announces a new morning: ${item.focusWord}`,
+    );
+  }
+});
+
+test("the challenge day runs in story order", () => {
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(readFileSync(stageUrl, "utf8"), context);
+  const stage = context.N2HomeInnStage;
+  // Each narration is tied to its own task, so the question order cannot be
+  // shuffled independently of the story. A previous order of 2, 0, 4, 1, 3 made
+  // day 3 jump from after dark, to the next morning, to before closing.
+  const order = stage.getPhaseItems("challenge").map((item) => item.focusWord);
+  const learnOrder = stage.getPhaseItems("learn").map((item) => item.focusWord);
+  assert.deepEqual(order, learnOrder);
+
+  const story = stage.getPhaseItems("challenge").map((item) => item.narration).join(" ");
+  const beats = ["次の朝です", "廊下が暗く", "日暮れ後", "帳場を閉める前", "最後のお客様"];
+  let cursor = -1;
+  for (const beat of beats) {
+    const at = story.indexOf(beat, cursor + 1);
+    assert.ok(at > cursor, `challenge beat "${beat}" is out of order`);
+    cursor = at;
+  }
+});
+
+test("each day withdraws one layer of support", () => {
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(readFileSync(new URL("./moonview-inn-interactions.js", import.meta.url), "utf8"), context);
+  vm.runInContext(readFileSync(stageUrl, "utf8"), context);
+  const stage = context.N2HomeInnStage;
+
+  // The three days must differ in difficulty, not only in situation. Day 1 and
+  // Day 2 previously showed the same romaji, English meaning and hint, so the
+  // only change was which cushion attribute was named.
+  const layer = (phase) => {
+    const item = stage.getPhaseItems(phase)[0];
+    return { romaji: !!item.romaji, meaning: !!item.meaning, hint: !!item.hint };
+  };
+
+  assert.equal(JSON.stringify(layer("learn")), JSON.stringify({ romaji: true, meaning: true, hint: true }));
+  assert.equal(JSON.stringify(layer("practice")), JSON.stringify({ romaji: true, meaning: false, hint: false }));
+  assert.equal(JSON.stringify(layer("challenge")), JSON.stringify({ romaji: false, meaning: false, hint: false }));
+
+  // Challenge is audio-first: the written prompt must not give the sentence away.
+  assert.equal(stage.getWrittenPrompt(stage.getPhaseItems("challenge")[0], "challenge"), "音声を聞いてください。");
 });

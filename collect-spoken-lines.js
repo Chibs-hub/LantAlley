@@ -38,6 +38,9 @@ if (stage.intro) {
 }
 [...stage.encounters, ...stage.practice, ...stage.challenge].forEach((item) => {
   (item.interaction && item.interaction.replies || []).forEach((reply) => add(reply.label));
+  // Kon speaks this when the learner turns the work down, so it needs a clip
+  // like any other reply. The return greeting is displayed, not spoken.
+  add(item.declineReply);
 });
 
 // Kon speaks after every answer too. These were falling back to the device
@@ -51,6 +54,23 @@ if (stage.intro) {
   });
   (item.options || []).forEach((option) => {
     add(stage.getKonResponse(item, false, option.key));
+  });
+});
+
+// Episode 1 in the new contract. Its prompts and Kon's replies are spoken, so
+// they need clips exactly like the legacy stage's lines.
+vm.runInContext(fs.readFileSync("curriculum-catalog.js", "utf8"), context);
+vm.runInContext(fs.readFileSync("learning-content.js", "utf8"), context);
+vm.runInContext(fs.readFileSync("n2-inn-episodes.js", "utf8"), context);
+const inn = context.N2InnEpisodes;
+inn.episodes.forEach((episode) => {
+  if (episode.intro) add(episode.intro.jp);
+  episode.days.forEach((day) => {
+    day.questions.forEach((question) => {
+      if (question.prompt && question.prompt.audio) add(question.prompt.jp);
+      add(question.feedback.correct);
+      add(question.feedback.incorrect);
+    });
   });
 });
 

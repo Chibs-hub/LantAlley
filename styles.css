@@ -948,3 +948,25 @@
     .inn-room-illustrated .inn-object:has(.inn-caption),.inn-room-illustrated .inn-drop-zone:has(.inn-caption){min-height:0;padding:3px}
   }
   @media(prefers-reduced-motion:reduce){.inn-object,.inn-action,.inn-drop-zone{transition:none}.tea-steam:before,.tea-steam:after{animation:none}.schedule-handle{transition:none}.inn-room-viewport::before{transition:none}.room-light-bright::after{animation:none;opacity:.22}}
+
+/* Question controls.
+   Sized in em so they grow with the page text: at 200% zoom a px-sized button
+   keeps its box while its label grows, which is how labels get clipped. */
+.question-controls{display:flex; flex-wrap:wrap; gap:0.6em; align-items:stretch;}
+.question-control{
+  flex:1 1 auto; min-width:0;
+  padding:0.7em 1.1em;
+  border:2px solid #8c562d; border-radius:0.6em;
+  background:linear-gradient(180deg,#fffaf0,#efe0be);
+  color:#2d2926;
+  font-family:inherit; font-size:1rem; line-height:1.4;
+  text-align:left; white-space:normal; overflow-wrap:anywhere;
+  cursor:pointer;
+}
+.question-control.is-primary{box-shadow:0 3px 0 rgba(55,30,18,.55);}
+.question-control:focus-visible{outline:3px solid var(--lantern); outline-offset:2px;}
+@media(max-width:760px){
+  /* One per row on a phone: two long Japanese replies side by side wrap into
+     unreadable columns. */
+  .question-control{flex:1 1 100%;}
+}

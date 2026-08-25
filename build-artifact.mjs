@@ -4,6 +4,7 @@
 // load sibling scripts, styles, images, or audio, so this build inlines them.
 
 import { readFileSync, writeFileSync, statSync } from "node:fs";
+import vm from "node:vm";
 import { extname } from "node:path";
 
 const output = "lantern-alley-artifact.html";
@@ -11,7 +12,13 @@ const scripts = [
   "entrance-stage-logic.js",
   "moonview-inn-interactions.js",
   "n2-home-inn-stage.js",
+  "n2-inn-episodes.js",
   "audio-index.js",
+  "curriculum-catalog.js",
+  "learning-content.js",
+  "review-engine.js",
+  "learning-progress.js",
+  "question-renderer.js",
   "lantern-map.js",
   "app.js",
 ];
@@ -28,6 +35,8 @@ const dataUri = (file) => {
   const type = mime[extname(file).toLowerCase()] || "application/octet-stream";
   return "data:" + type + ";base64," + readFileSync(file).toString("base64");
 };
+
+const inlineSizes = new Map();
 
 let html = read("index.html");
 
@@ -49,10 +58,42 @@ html = html.replace(
   "<style>\n" + read("styles.css") + "</style>",
 );
 
+// The artifact is a demo - the Entrance plus Inn Episode 1 - not the course.
+// It cannot hold the full course anyway, and the whole 3,579-item catalog is
+// roughly 1.1 MB of words the demo never asks about. Ship only the Inn's
+// partition and keep the rest for the PWA build.
+function demoCatalog() {
+  const context = { self: {} };
+  context.self = context;
+  vm.createContext(context);
+  vm.runInContext(read("curriculum-catalog.js"), context);
+  const full = context.LanternCurriculumCatalog;
+  const taught = new Set();
+  vm.runInContext(read("learning-content.js"), context);
+  vm.runInContext(read("n2-inn-episodes.js"), context);
+  for (const episode of context.N2InnEpisodes.episodes) {
+    for (const day of episode.days) for (const question of day.questions) taught.add(question.target);
+  }
+  const items = full.items.filter((item) => item.partition === "home-inn" || taught.has(item.id));
+  const payload = JSON.stringify({ items, excluded: full.excluded });
+  return `/* GENERATED demo subset: Inn partition only. */
+(function(root){
+  "use strict";
+  var DATA = ${payload};
+`
+    + read("research/catalog-api.js")
+    + `
+  root.LanternCurriculumCatalog = API;
+})(typeof self !== "undefined" ? self : this);
+`;
+}
+
 for (const name of scripts) {
   const tag = '<script src="' + name + '"></script>';
   if (!html.includes(tag)) throw new Error("missing script tag for " + name);
-  html = html.replace(tag, "<script>\n" + read(name) + "</script>");
+  const source = name === "curriculum-catalog.js" ? demoCatalog() : read(name);
+  inlineSizes.set(name, source.length);
+  html = html.replace(tag, "<script>" + String.fromCharCode(10) + source + "</script>");
 }
 
 const images = [...html.matchAll(/["']((?:assets\/[^"']+|[\w.-]+\.ico))["']/g)]
@@ -70,4 +111,11 @@ writeFileSync(output, html, "utf8");
 const bytes = statSync(output).size;
 console.log("inlined " + scripts.length + " scripts, 1 stylesheet, " + images.length + " images");
 console.log(output + "  " + (bytes / 1024 / 1024).toFixed(2) + " MB");
-if (bytes > 16 * 1024 * 1024) throw new Error("artifact exceeds the 16 MB limit");
+// Fail loudly rather than emitting a file that cannot be published. The 15 MB
+// ceiling leaves headroom under the host's hard 16 MB limit.
+if (bytes > 15 * 1024 * 1024) {
+  const biggest = [...inlineSizes.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+  console.error("largest inlined contributors:");
+  for (const [name, size] of biggest) console.error("  " + (size / 1024 / 1024).toFixed(2) + " MB  " + name);
+  throw new Error("artifact is " + (bytes / 1024 / 1024).toFixed(2) + " MB, above the 15 MB ceiling");
+}

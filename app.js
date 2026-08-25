@@ -145,6 +145,8 @@
     challengeMisses:[],
     stageMastered:false,
     resumedStageEntry:false,
+    stageDeclined:false,
+    resumedAfterDecline:false,
     stageProgress:{homeInn:null},
     visited:{},
     starred:{}
@@ -296,6 +298,7 @@
           correctWords:Object.keys(state.challengeCorrectWords),
           misses:state.challengeMisses.map(function(item){ return item.focusWord; }),
           mastered:state.stageMastered,
+          declined:state.stageDeclined,
           medal:state.stageMastered ? "gold" : (state.stagePhase === "challenge" || state.stagePhase === "review" ? "silver" : (state.stagePhase === "practice" ? "bronze" : "none"))
         };
       }
@@ -506,11 +509,12 @@
   // flags are cleared when the encounter advances rather than on render.
   function stageNarrationFor(loc, prompt){
     if(!(loc.encounters && loc.getStorySetup)) return prompt.narration;
-    return loc.getStorySetup(prompt, state.resumedStageEntry);
+    return loc.getStorySetup(prompt, state.resumedStageEntry, state.resumedAfterDecline);
   }
 
   function continueStageEncounter(loc){
     state.resumedStageEntry = false;
+    state.resumedAfterDecline = false;
     var items = state.phaseItems || loc.getPhaseItems(state.stagePhase);
     if(state.encounterIndex >= items.length - 1){
       advanceStagePhase(loc);
@@ -649,6 +653,8 @@
       var resumeItems = state.phaseItems || loc.getPhaseItems(state.stagePhase);
       state.encounterIndex = Math.max(0, Math.min(resumeItems.length - 1, Number(resumed.index) || 0));
       state.challengeScore = Number(resumed.challengeScore) || 0;
+      state.resumedAfterDecline = !!resumed.declined;
+      state.stageDeclined = false;
       (resumed.correctWords || []).forEach(function(word){ state.challengeCorrectWords[word] = true; });
       state.challengeMisses = loc.challenge.filter(function(item){ return (resumed.misses || []).indexOf(item.focusWord) >= 0; });
       state.stageMastered = !!resumed.mastered;
@@ -948,7 +954,10 @@
       ? '<div class="inn-room-composite"><div class="inn-room-viewport"><img class="inn-room-art" src="' + roomVisual.background + '" alt="">'
         + '<div class="inn-scene-zones" id="inn-scene-zones"></div></div>'
         + '<div class="inn-supply-shelf"><div class="inn-tray" id="inn-tray"></div></div></div>'
-      : '<div class="shoji" aria-hidden="true"></div>'
+      // The shoji is backdrop for a dialogue scene. The schedule board is the
+        // content of its own scene, so drawing furniture over the timeline and
+        // the arrival cards obscures the thing being answered.
+      : (prompt.mechanic === "coordinate" ? '' : '<div class="shoji" aria-hidden="true"></div>')
         + '<div class="inn-scene-zones" id="inn-scene-zones"></div>'
         + '<div class="inn-tray" id="inn-tray"></div>';
     var clueSurface = roomVisual
@@ -1245,6 +1254,27 @@
     if(label) label.textContent = isHeated ? "湯気が立っています。" : "";
   }
 
+  // Turning work down is a choice, not a mistake: Kon is disappointed, the
+  // learner leaves the inn, and returning is welcomed. No heart is lost.
+  function declineStageWork(prompt){
+    if(state.answered) return;
+    state.answered = true;
+    var reply = prompt.declineReply;
+    $("jp-line").textContent = reply;
+    $("romaji-line").textContent = "";
+    $("meaning-line").textContent = "";
+    speak(reply, "wrong");
+    state.stageDeclined = true;
+    saveProgress();
+    showFeedback(false, "You turned the work down. Kon will welcome you back whenever you return.");
+    $("next-row").style.display = "block";
+    $("btn-next").textContent = "宿を出る →";
+    setTimeout(function(){
+      if(state.currentKey !== "home-inn" || !state.answered) return;
+      showMap();
+    }, 3200);
+  }
+
   function performInnAction(action){
     if(state.answered) return;
     var stage = getLocation(state.currentKey);
@@ -1266,6 +1296,10 @@
         showFeedback(false, "That is a different action from the one the request asked for.");
         setTimeout(function(){ if(!state.answered) renderInnInteraction(prompt, true); }, 900);
       }
+      return;
+    }
+    if(action.type === "respond" && action.key === "decline" && prompt.declineReply){
+      declineStageWork(prompt);
       return;
     }
     var result = MoonviewInnInteractions.apply(innInteractionState, action);

@@ -2,10 +2,24 @@
   "use strict";
 
   var intro = {
-    context:"コン：「月見宿へようこそ。今日は従業員が一人休んでいて、とても忙しいんです。」",
-    jp:"日本語の練習をしながら、私の仕事を手伝ってくれませんか？",
-    romaji:"Nihongo no renshuu o shinagara, watashi no shigoto o tetsudatte kuremasen ka?",
-    accept:"はい、手伝います。"
+    context:"コン：「月見宿へようこそ。お祭りの間はお客様が続けて来るので、私一人では仕事が間に合いません。」",
+    jp:"日本語の練習をしながら、お祭りの間、宿の仕事を手伝ってくれませんか？",
+    romaji:"Nihongo no renshuu o shinagara, omatsuri no aida, yado no shigoto o tetsudatte kuremasen ka?",
+    accept:"はい、喜んで手伝います。"
+  };
+
+  var DAY_META = {
+    learn:{day:1,label:"一日目",mode:"基礎",difficulty:"やさしい",stars:"★☆☆"},
+    practice:{day:2,label:"二日目",mode:"実践",difficulty:"ふつう",stars:"★★☆"},
+    challenge:{day:3,label:"三日目",mode:"挑戦",difficulty:"むずかしい",stars:"★★★"},
+    review:{day:3,label:"三日目",mode:"復習",difficulty:"もう一度",stars:"★★★"}
+  };
+
+  var DAY_ANNOUNCEMENTS = {
+    learn:"コン：「一日目です。今日は基礎から始めましょう。」",
+    practice:"コン：「二日目です。今日は実際の仕事の中で練習しましょう。」",
+    challenge:"コン：「三日目です。今日は音声を聞いて仕事に挑戦しましょう。」",
+    review:"コン：「三日目の最後に、間違えた仕事だけもう一度確認しましょう。」"
   };
 
   var encounters = [
@@ -31,17 +45,17 @@
     },
     {
       level:"N2",
-      focusWord:"代える",
-      reading:"かえる",
+      focusWord:"取り替える",
+      reading:"とりかえる",
       actionType:"object interaction",
       label:"At the washstand",
       narration:"コン：「座る場所はきれいになりました。お客様は旅のあとで顔を洗いますが、前のお客様のタオルがまだ残っています。」",
-      jp:"古いタオルを洗濯かごに入れて、新しいタオルに代えてください。",
-      romaji:"Furui taoru o sentakukago ni irete, atarashii taoru ni kaete kudasai.",
+      jp:"古いタオルを洗濯かごに入れて、新しいタオルに取り替えてください。",
+      romaji:"Furui taoru o sentakukago ni irete, atarashii taoru ni torikaete kudasai.",
       meaning:"Put the old towel in the laundry basket, then replace it with a new one.",
       successReply:"ありがとうございます。新しいタオルになりました。これでお客様が使えます。",
       retryReply:"頼まれた物と、古い物を置く場所を確認してください。",
-      hint:"代える means to substitute or replace one thing with another.",
+      hint:"取り替える means to swap one object for another of the same kind.",
       options:[
         {key:"replace", emoji:"🧻", label:"Replace the towel"},
         {key:"fold", emoji:"👘", label:"Fold the robe"},
@@ -74,8 +88,8 @@
       focusWord:"調整",
       reading:"ちょうせい",
       actionType:"object interaction",
-      label:"The next morning",
-      narration:"コン：「朝になりました。お客様はできるだけ遅くまで滞在したいそうです。ただし、駅への移動と掃除、次のお客様の準備時間も必要です。」",
+      label:"Planning tomorrow",
+      narration:"コン：「お客様が部屋で休んでいる間に、明日の予定を決めておきましょう。お客様はできるだけ遅くまで滞在したいそうですが、駅への移動と掃除、次のお客様の準備時間も必要です。」",
       jp:"電車は14時で、駅まで1時間かかります。掃除には2時間必要で、次のお客様は15時に来ます。できるだけ遅いチェックアウト時間に調整してください。",
       romaji:"Densha wa juuyoji de, eki made ichijikan kakarimasu. Souji ni wa nijikan hitsuyou de, tsugi no okyakusama wa juugoji ni kimasu. Dekiru dake osoi chekku auto jikan ni chousei shite kudasai.",
       meaning:"The train is at 14:00 and the station is one hour away. Cleaning needs two hours before the next guest arrives at 15:00. Coordinate the latest possible checkout.",
@@ -94,25 +108,25 @@
       focusWord:"引き受ける",
       reading:"ひきうける",
       actionType:"social dialogue",
-      label:"One more favour",
-      narration:"コン：「お客様は満足して帰りました。明日も人手が必要です。手伝ってくれるなら、今夜はこの宿に無料で泊まれます。」",
-      jp:"明日のお客様の案内を引き受けていただけませんか。",
-      romaji:"Ashita no okyakusama no annai o hikiukete itadakemasen ka.",
-      meaning:"Would you be willing to undertake guiding tomorrow's guests?",
-      successReply:"ありがとうございます。今夜はここでゆっくり休んでください。",
-      retryReply:"まだ仕事を引き受けた返事になっていません。",
-      // Declining is a real choice, not a mistake: Kon is disappointed and the
-      // player leaves the inn. Coming back later is welcomed warmly.
-      declineReply:"そうですか……。残念ですが、仕方がありません。気が変わったら、いつでも戻ってきてください。",
-      returnReply:"コン：「戻ってきてくれたんですね！とても嬉しいです。さあ、一緒に働きましょう。」",
+      label:"The evening meal",
+      narration:"コン：「一日目の最後に、夕食を配る人がまだ決まっていません。私一人では間に合わないので、もう一つお願いします。」",
+      jp:"今夜の夕食の配膳を引き受けていただけませんか。",
+      romaji:"Kon'ya no yuushoku no haizen o hikiukete itadakemasen ka.",
+      meaning:"Would you be willing to undertake serving tonight's dinner?",
+      successReply:"ありがとうございます。一日目の仕事はこれで終わりです。今夜は宿で休んでください。",
+      retryReply:"まだ夕食の配膳を引き受けた返事になっていません。もう少し手伝ってください。",
       hint:"引き受ける means to undertake, take over, or accept responsibility for something.",
+      // Refusing a favour is a legitimate, correctly-understood Japanese reply.
+      // Scoring it wrong taught that 引き受けられません is a comprehension error.
+      declineReply:"そうですか……。残念ですが、仕方がありません。気が変わったら、いつでも戻ってきてください。",
+      returnReply:"コン：「戻ってきてくれたんですね！とても嬉しいです。」",
       options:[
-        {key:"accept", emoji:"", label:"手伝います。"},
-        {key:"decline", emoji:"", label:"手伝えません。"}
+        {key:"accept", emoji:"", label:"はい、引き受けます。"},
+        {key:"decline", emoji:"", label:"すみません、引き受けられません。"}
       ],
       correct:"accept",
-      completionFeedback:"コン：「ありがとうございます。今夜はここでゆっくり休んでください。」",
-      completionNextLabel:"次の朝へ"
+      completionFeedback:"コン：「一日目の仕事が終わりました。宿で休んで、明日もよろしくお願いします。」",
+      completionNextLabel:"二日目へ"
     }
   ];
   // One shared room. Every object-moving encounter shows all of it, so the scene
@@ -189,8 +203,8 @@
       controlHelp:"Choose your reply.",
       clue:"The innkeeper has asked you something and is waiting for an answer.",
       replies:[
-        {key:"accept", label:"手伝います。"},
-        {key:"decline", label:"手伝えません。"}
+        {key:"accept", label:"はい、引き受けます。"},
+        {key:"decline", label:"すみません、引き受けられません。"}
       ]
     }
   ];
@@ -210,8 +224,8 @@
       controlHelp:"Choose your reply.",
       clue:"The innkeeper has asked you something and is waiting for an answer.",
       replies:[
-        {key:"accept", label:"手伝います。"},
-        {key:"decline", label:"手伝えません。"}
+        {key:"accept", label:"はい、引き受けます。"},
+        {key:"decline", label:"すみません、引き受けられません。"}
       ]
     }
   ];
@@ -238,7 +252,7 @@
 
   var practiceVariantsA = [
     {jp:"二つのマットに、同じ向きの座布団を二枚ずつ揃えてください。", romaji:"Futatsu no matto ni, onaji muki no zabuton o nimai zutsu soroete kudasai.", narration:"The cushions have been used again and now face different directions.", meaning:"Please place two cushions facing the same direction on each mat.", successReply:"座布団の向きが揃いました。これで朝食の準備を続けられます。"},
-    {jp:"汚れたシーツを洗濯かごに入れて、新しいシーツに代えてください。", romaji:"Yogoreta shiitsu o sentakukago ni irete, atarashii shiitsu ni kaete kudasai.", narration:"A marked sheet remains beside the fresh linen.", meaning:"Put the stained sheet in the laundry basket, then replace it with a new one.", successReply:"新しいシーツになりました。これで今夜のお客様を迎えられます。"},
+    {jp:"汚れたシーツを洗濯かごに入れて、新しいシーツに取り替えてください。", romaji:"Yogoreta shiitsu o sentakukago ni irete, atarashii shiitsu ni torikaete kudasai.", narration:"A marked sheet remains beside the fresh linen.", meaning:"Put the stained sheet in the laundry basket, then replace it with a new one.", successReply:"新しいシーツになりました。これで今夜のお客様を迎えられます。"},
     {jp:"ごはんを電子レンジで温めてください。", romaji:"Gohan o denshi renji de atatamete kudasai.", narration:"The evening meal has gone cold.", meaning:"Please warm the rice in the microwave.", successReply:"ごはんが温まりました。みんなで食事にしましょう。"},
     {jp:"Cグループは12時以降、Dグループは14時までに到着します。準備に2時間必要なので、到着時間を調整してください。", romaji:"C guruupu wa juuniji ikou, D guruupu wa juuyoji made ni touchaku shimasu. Junbi ni nijikan hitsuyou na node, touchaku jikan o chousei shite kudasai.", narration:"Two afternoon groups need separate arrival times, with two hours needed between them.", meaning:"Coordinate the two arrival times using the stated limits.", successReply:"Cグループは12時、Dグループは14時になりました。これで準備時間を取れます。"},
     {jp:"朝食の配膳を引き受けてください。", romaji:"Choushoku no haizen o hikiukete kudasai.", narration:"The breakfast shift still needs someone responsible for serving it.", meaning:"Please undertake serving breakfast.", successReply:"ありがとうございます。明日の朝食の配膳をお願いします。"}
@@ -246,7 +260,7 @@
 
   var practiceVariantsB = [
     {jp:"二つのマットに、同じ大きさの座布団を二枚ずつ揃えてください。", romaji:"Futatsu no matto ni, onaji ookisa no zabuton o nimai zutsu soroete kudasai.", narration:"The cushions are still mixed across the tatami.", meaning:"Please place two cushions of the same size on each mat.", successReply:"座布団の大きさが揃いました。これで部屋が整いました。"},
-    {jp:"切れた電球を回収箱に入れて、新しい電球に代えてください。", romaji:"Kireta denkyuu o kaishuubako ni irete, atarashii denkyuu ni kaete kudasai.", narration:"A lamp in the hallway has gone dark.", meaning:"Put the burned-out bulb in the recycling box, then replace it with a new one.", successReply:"新しい電球がつきました。これで廊下が明るくなります。"},
+    {jp:"切れた電球を回収箱に入れて、新しい電球に取り替えてください。", romaji:"Kireta denkyuu o kaishuubako ni irete, atarashii denkyuu ni torikaete kudasai.", narration:"A lamp in the hallway has gone dark.", meaning:"Put the burned-out bulb in the recycling box, then replace it with a new one.", successReply:"新しい電球がつきました。これで廊下が明るくなります。"},
     {jp:"スープをコンロで温めてください。", romaji:"Suupu o konro de atatamete kudasai.", narration:"A guest returns late to a counter of cold dishes.", meaning:"Please warm the soup on the stove.", successReply:"スープが温まりました。お客様に出しましょう。"},
     {jp:"Aグループは15時以降、Bグループは17時までに到着します。ロビーの準備に2時間必要なので、到着時間を調整してください。", romaji:"A guruupu wa juugoji ikou, B guruupu wa juushichiji made ni touchaku shimasu. Robii no junbi ni nijikan hitsuyou na node, touchaku jikan o chousei shite kudasai.", narration:"Both groups are currently set for 15:00. Group A cannot arrive before 15:00, Group B must arrive by 17:00, and the lobby needs two hours between groups.", meaning:"Coordinate the arrival times using the groups' limits and the two-hour lobby preparation time.", successReply:"Aグループは15時、Bグループは17時になりました。これでロビーを準備できます。"},
     {jp:"荷物を運ぶ仕事を引き受けてください。", romaji:"Nimotsu o hakobu shigoto o hikiukete kudasai.", narration:"The innkeeper needs someone to take responsibility for moving the luggage.", meaning:"Please undertake the job of carrying the luggage.", successReply:"ありがとうございます。明日の朝、荷物をお願いします。"}
@@ -270,7 +284,7 @@
 
   var japaneseOptions = [
     ["揃える", "揃う", "散らかす"],
-    ["代える", "代わる", "改める"],
+    ["取り替える", "代える", "取り替わる"],
     ["温める", "温まる", "冷やす"],
     ["調整する", "調節する", "放置する"],
     ["はい、引き受けます。", "何時からですか。", "すみません、引き受けられません。"]
@@ -278,7 +292,7 @@
 
   var nearMissExplanations = [
     "揃う is intransitive: the items come to match by themselves. 揃える is transitive: you make them match.",
-    "代わる is intransitive: something takes another's place. 代える is transitive: you replace it.",
+    "代える means substituting a person or role, as in 「コンに代えて私が案内します」. Swapping one object for another of the same kind is 取り替える.",
     "温まる is intransitive: something becomes warm. 温める means you warm something.",
     "調節 controls degree or quantity, such as temperature. 調整 coordinates conditions such as schedules."
   ];
@@ -318,10 +332,15 @@
       variant:phase + "-" + (variant ? "b" : "a"),
       narration:(variant ? evidenceNarrationsB[index] : evidenceNarrationsA[index]),
       jp:text.jp,
-      meaning:text.meaning,
+      // Support is withdrawn one layer per day, so the three days differ in
+      // difficulty rather than only in situation:
+      //   Day 1 基礎   Japanese + romaji + English meaning + hint
+      //   Day 2 実践   Japanese + romaji only
+      //   Day 3 挑戦   audio only
+      meaning:phase === "learn" ? text.meaning : "",
       successReply:text.successReply,
       romaji:phase === "challenge" ? "" : (text.romaji || base.romaji),
-      hint:phase === "challenge" ? "" : "Use the subject, object, and scene result to decide whether the request describes a deliberate action or a change of state.",
+      hint:phase === "learn" ? "Use the subject, object, and scene result to decide whether the request describes a deliberate action or a change of state." : "",
       replyResponses:null,
       options:options
     });
@@ -330,22 +349,31 @@
   var practice = [
     phaseItem(0, false, "practice"), phaseItem(1, false, "practice"),
     phaseItem(2, false, "practice"), phaseItem(3, false, "practice"),
-    phaseItem(4, false, "practice"), phaseItem(0, true, "practice"),
-    phaseItem(1, true, "practice"), phaseItem(2, true, "practice"),
-    phaseItem(3, true, "practice"), phaseItem(4, true, "practice")
+    phaseItem(4, false, "practice")
   ];
 
+  // Day 3 runs in story order. An earlier shuffle (2, 0, 4, 1, 3) made the day
+  // jump from after dark, to the next morning, to before closing the front
+  // desk. Each narration is tied to its own task, so the order cannot be
+  // shuffled independently of the story. Challenge stays harder by hiding
+  // romaji and hints and by using the variant-B situations, not by reordering.
   var challenge = [
-    phaseItem(2, true, "challenge"), phaseItem(0, false, "challenge"),
-    phaseItem(4, true, "challenge"), phaseItem(1, false, "challenge"),
-    phaseItem(3, true, "challenge"), phaseItem(4, false, "challenge"),
-    phaseItem(2, false, "challenge"), phaseItem(1, true, "challenge"),
-    phaseItem(3, false, "challenge"), phaseItem(0, true, "challenge")
+    phaseItem(0, true, "challenge"), phaseItem(1, true, "challenge"),
+    phaseItem(2, true, "challenge"), phaseItem(3, true, "challenge"),
+    phaseItem(4, true, "challenge")
   ];
 
   function getEncounter(index){
     var safeIndex = Math.max(0, Math.min(encounters.length - 1, Number(index) || 0));
     return encounters[safeIndex];
+  }
+
+  function getDayMeta(phase){
+    return DAY_META[phase] || DAY_META.learn;
+  }
+
+  function getDayAnnouncement(phase){
+    return DAY_ANNOUNCEMENTS[phase] || DAY_ANNOUNCEMENTS.learn;
   }
 
   function getPhaseItems(phase){
@@ -357,7 +385,15 @@
   function isChallengeMastered(score, correctWords){
     var unique = {};
     (correctWords || []).forEach(function(word){ unique[word] = true; });
-    return score >= 8 && encounters.every(function(item){ return !!unique[item.focusWord]; });
+    return score >= challenge.length && encounters.every(function(item){ return !!unique[item.focusWord]; });
+  }
+
+  function isFocusedReviewComplete(reviewItems, correctWords){
+    var unique = {};
+    (correctWords || []).forEach(function(word){ unique[word] = true; });
+    return (reviewItems || []).length > 0 && reviewItems.every(function(item){
+      return !!unique[item.focusWord];
+    });
   }
 
   function getWrittenPrompt(item, phase){
@@ -366,11 +402,7 @@
   }
 
   function getStorySetup(item, resumed, afterDecline){
-    if(afterDecline){
-      // The player left rather than taking the work on, so this is a reunion,
-      // not a resume.
-      return "コン：「戻ってきてくれたんですね！とても嬉しいです。」 " + item.narration;
-    }
+    if(afterDecline) return (item.returnReply || "コン：「戻ってきてくれたんですね！」") + " " + item.narration;
     if(!resumed) return item.narration;
     return "コン：「お帰りなさい。続きから始めましょう。」 " + item.narration;
   }
@@ -402,8 +434,11 @@
     practice:practice,
     challenge:challenge,
     getEncounter:getEncounter,
+    getDayMeta:getDayMeta,
+    getDayAnnouncement:getDayAnnouncement,
     getPhaseItems:getPhaseItems,
     isChallengeMastered:isChallengeMastered,
+    isFocusedReviewComplete:isFocusedReviewComplete,
     getWrittenPrompt:getWrittenPrompt,
     getStorySetup:getStorySetup,
     getAutoAdvanceDelay:getAutoAdvanceDelay,
