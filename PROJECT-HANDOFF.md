@@ -170,6 +170,29 @@ An artifact cannot load sibling `.js` files or local images, which is why the bu
 
 ## 9. Change log and reasons
 
+### 2026-08-25 - Episode transition, and the timed correction loop finally runs
+
+**A transition into the episode.** Clicking the preview button dropped straight into question 1: the Inn's room vanished and an unrelated question appeared. Kon now introduces the episode first, on a card showing 第一話 and 「最初のお客様」 - the story name parsed from the source note, not the internal English title - with a 始めましょう button.
+
+Two mistakes while building it, both worth recording:
+
+- The card faded in by toggling a class one frame after insertion. The toggle raced the render and often never applied. Replaced with a CSS animation on mount.
+- That animation then left the card **invisible**: it animated `opacity` from 0, and a global `prefers-reduced-motion` rule in this stylesheet kills animations with `!important`. An element whose visibility depends on an animation therefore stays at the from-state. The card is now plainly visible and only its transform is animated. Never let a decorative animation decide whether content can be seen.
+
+**間違い直し now exists.** The five-second correction loop has been specified since the curriculum design, and `review-engine.js` and `question-renderer.js` have had the queue and the timer built and tested for a while, but nothing ran them. The preview now ends in the loop:
+
+- Only missed items appear.
+- The clock is per question type from the question data - 5 seconds for single-word recognition, 8 by default, 12 for a full sentence - not a flat five.
+- A correct answer leaves the queue; a wrong answer explains and returns the item to the back.
+- **A timeout is not a misconception**: 「時間切れです。もう一度出ます。」 and the item simply comes back.
+- The loop ends with 「間違えた仕事は全部できました。お疲れさまでした。」
+
+One real bug found by playing it: a timer left over from the previous card was settling the next one, disabling its buttons and freezing its clock the instant it appeared. Each card now carries a token, and both the interval and `settleRepair` ignore anything from an older card.
+
+Verified live: missed question 1 deliberately, answered the rest, reached 間違い直し with 1/1 and a 5-second clock, let it time out once and watched the item return, then answered at 4.3 seconds remaining and reached the cleared state.
+
+Cache `lantern-alley-v72`, artifact 14.63 MB, 199 of 199 tests pass.
+
 ### 2026-08-25 - Tapping advances the preview after a correct answer
 
 The main game arms advancement through `afterSpeech`, so a tap finishes Kon's line and the next tap moves on. The preview harness only wired the Next button, so a correct answer sat there until the button was clicked.

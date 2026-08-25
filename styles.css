@@ -1070,3 +1070,41 @@
    that space is empty scene; in the Inn the narration sits directly above, so
    the tab landed on the last line of it. Reserve the tab's height there. */
 #screen-game:not(.entrance-stage) .dialogue{margin-top:38px;}
+
+/* Episode opening. The card is plainly visible; only the transform is
+   animated. An earlier version faded opacity from 0 and the element stayed at
+   0 - the entrance was invisible rather than animated. Never let a decorative
+   animation decide whether content can be seen. */
+.episode-open{
+  display:flex; align-items:center; justify-content:center;
+  min-height:260px; padding:24px;
+}
+.episode-open-card{
+  max-width:420px; padding:26px 28px; text-align:center;
+  border:2px solid var(--wood-edge); border-radius:var(--wood-radius);
+  background:var(--paper); box-shadow:0 6px 0 var(--wood-shadow);
+  animation:episode-card-rise .3s cubic-bezier(.22,1,.36,1);
+}
+@keyframes episode-card-rise{ from{transform:translateY(10px);} to{transform:translateY(0);} }
+.episode-open-kicker{margin:0; color:#9a5f30; font-size:.7rem; font-weight:900; letter-spacing:.16em;}
+.episode-open-title{margin:6px 0 4px; font-family:'Shippori Mincho',serif; font-size:1.3rem; color:#2d2926;}
+.episode-open-note{margin:0 0 16px; color:#6b5844; font-size:.82rem;}
+
+/* Correction card: no room, one prominent clock. The bar is the primary signal
+   and the number is the fallback for anyone who cannot judge a shrinking bar. */
+.repair-card{gap:14px;}
+.repair-timer{
+  position:relative; height:26px; overflow:hidden;
+  border:2px solid var(--wood-edge); border-radius:var(--wood-radius);
+  background:rgba(46,28,16,.14);
+}
+.repair-timer-fill{
+  position:absolute; inset:0 auto 0 0; width:100%;
+  background:linear-gradient(90deg,#e8963c,#f7c877);
+  transition:width .1s linear;
+}
+.repair-timer b{
+  position:relative; display:block; line-height:26px; text-align:center;
+  color:#2d2926; font-size:.78rem; font-weight:800;
+}
+@media(prefers-reduced-motion:reduce){ .repair-timer-fill{transition:none;} }

@@ -597,12 +597,49 @@
   function startEpisodePreview(){
     var list = previewQuestions();
     if(!list.length) return;
-    previewState = {index:0, list:list, answered:false};
+    previewState = {index:0, list:list, answered:false, missed:[], repair:null};
     screenTitle.style.display = "none";
     screenMap.style.display = "none";
     screenGame.style.display = "block";
     screenGame.classList.remove("entrance-stage");
-    renderPreviewQuestion();
+    renderPreviewIntro();
+  }
+
+  // Dropping straight into question 1 was jarring: the Inn's room vanished and
+  // an unrelated question appeared. Kon introduces the episode first, over a
+  // brief fade, so the change of place is something that happens in the story.
+  function renderPreviewIntro(){
+    var episode = N2InnEpisodes.episodes[0];
+    $("stage-phase-row").style.display = "none";
+    $("encounter-status").style.display = "none";
+    $("hint-btn").style.display = "none";
+    $("hint-box").classList.remove("show");
+    $("feedback-row").classList.remove("show");
+    $("romaji-line").textContent = "";
+    $("meaning-line").textContent = "";
+    $("meaning-line").classList.remove("show");
+    $("scene-label").textContent = "月見宿 - " + episode.title;
+    $("narration").textContent = episode.sourceNote;
+    $("jp-line").textContent = episode.intro.jp;
+    speak(episode.intro.jp);
+
+    // The story name, not the internal English title: 月見宿・第一話「最初のお客様」
+    var parts = /^(.*?)・(.*?)「(.*)」$/.exec(episode.sourceNote) || [];
+    var chapter = parts[2] || "第一話";
+    var storyTitle = parts[3] || episode.title;
+
+    var scene = $("scene");
+    scene.innerHTML = '<div class="episode-open"><div class="episode-open-card">'
+      + '<p class="episode-open-kicker">' + chapter + '</p>'
+      + '<h2 class="episode-open-title">' + storyTitle + '</h2>'
+      + '<p class="episode-open-note">' + (parts[1] || "月見宿") + '</p>'
+      + '<button class="btn btn-primary" id="btn-episode-begin">始めましょう</button>'
+      + '</div></div>';
+    $("btn-episode-begin").addEventListener("click", function(event){
+      event.stopImmediatePropagation();
+      renderPreviewQuestion();
+    });
+    $("next-row").style.display = "none";
   }
 
   function renderPreviewQuestion(){
@@ -656,6 +693,7 @@
       }
       var correct = value === question.answer.correctIndex;
       previewState.answered = true;
+      if(!correct && previewState.missed.indexOf(question.id) < 0) previewState.missed.push(question.id);
       $("jp-line").textContent = correct ? question.feedback.correct : question.feedback.incorrect;
       speak($("jp-line").textContent, correct ? "correct" : "wrong");
       showFeedback(correct, correct ? "正解です。" : "もう一度考えてみましょう。");
@@ -682,13 +720,148 @@
 
   function advanceEpisodePreview(){
     if(previewState.index >= previewState.list.length - 1){
-      previewState = null;
-      $("btn-skip-day").style.display = "inline-flex";
-      showMap();
+      if(previewState.missed.length){ startRepairLoop(); return; }
+      endEpisodePreview();
       return;
     }
     previewState.index += 1;
     renderPreviewQuestion();
+  }
+
+  function endEpisodePreview(){
+    previewState = null;
+    $("btn-skip-day").style.display = "inline-flex";
+    showMap();
+  }
+
+  // ---- 間違い直し: the timed correction loop ----
+  //
+  // Specified since the curriculum design and built in review-engine.js and
+  // question-renderer.js, but nothing ran it. Only missed items appear, the
+  // clock is per question type rather than a flat five seconds, and a timeout
+  // returns the item without recording a misconception.
+  function startRepairLoop(){
+    var byId = {};
+    previewState.list.forEach(function(entry){ byId[entry.question.id] = entry.question; });
+    previewState.repair = {
+      queue: LanternReviewEngine.createRepairQueue(previewState.missed),
+      byId: byId,
+      timer: null,
+      tick: null
+    };
+    renderRepairCard();
+  }
+
+  function clearRepairTimer(){
+    if(previewState && previewState.repair && previewState.repair.tick){
+      clearInterval(previewState.repair.tick);
+      previewState.repair.tick = null;
+    }
+  }
+
+  function renderRepairCard(){
+    var repair = previewState.repair;
+    if(!repair.queue.length){ renderRepairDone(); return; }
+    // Each card gets a token. A timer left over from the previous card was
+    // settling the new one - disabling its buttons and freezing its clock the
+    // moment it appeared.
+    repair.token = (repair.token || 0) + 1;
+    var token = repair.token;
+
+    var question = repair.byId[repair.queue[0]];
+    var card = LanternLearningContent.makeRepairQuestion(question);
+
+    $("stage-phase-row").style.display = "flex";
+    $("stage-phase-badge").textContent = "間違い直し";
+    $("encounter-status").style.display = "block";
+    $("encounter-progress").textContent = String(previewState.missed.length - repair.queue.length + 1);
+    $("encounter-total").textContent = String(previewState.missed.length);
+    $("scene-label").textContent = "月見宿 - 間違い直し";
+    $("narration").textContent = card.sourceNote;
+    $("jp-line").textContent = card.prompt;
+    $("romaji-line").textContent = "";
+    $("meaning-line").textContent = "";
+    $("meaning-line").classList.remove("show");
+    $("feedback-row").classList.remove("show");
+    $("next-row").style.display = "none";
+
+    // No illustrated room here: correction is a focused quiz card.
+    $("scene").innerHTML = '<div class="inn-workspace repair-card">'
+      + '<p class="inn-instruction"><strong>How to interact</strong> <span>Answer before the lantern goes out.</span></p>'
+      + '<div class="repair-timer" id="repair-timer"><span class="repair-timer-fill" id="repair-timer-fill"></span><b id="repair-timer-text"></b></div>'
+      + '<div class="question-controls" id="repair-controls"></div>'
+      + '<div class="inn-status" id="inn-status"></div></div>';
+
+    var host = $("repair-controls");
+    card.options.forEach(function(label, index){
+      var button = document.createElement("button");
+      button.type = "button";
+      button.className = "question-control" + (index === 0 ? " is-primary" : "");
+      button.textContent = label;
+      button.setAttribute("aria-label", label);
+      button.addEventListener("click", function(event){
+        event.stopImmediatePropagation();
+        settleRepair(index === card.correctIndex ? "correct" : "incorrect", card, token);
+      });
+      host.appendChild(button);
+    });
+
+    repair.timer = LanternQuestionRenderer.startTimer(
+      LanternQuestionRenderer.createTimer({seconds: card.seconds}), Date.now());
+    paintRepairTimer(card);
+    clearRepairTimer();
+    repair.tick = setInterval(function(){
+      if(!previewState || !previewState.repair) return;
+      if(previewState.repair.token !== token){ clearRepairTimer(); return; }
+      repair.timer = LanternQuestionRenderer.tickTimer(repair.timer, Date.now());
+      paintRepairTimer(card);
+      if(repair.timer.expired) settleRepair("timeout", card, token);
+    }, 100);
+  }
+
+  function paintRepairTimer(card){
+    var timer = previewState.repair.timer;
+    var left = Math.max(0, timer.remaining) / 1000;
+    var fill = $("repair-timer-fill");
+    if(fill) fill.style.width = Math.round((timer.remaining / timer.total) * 100) + "%";
+    var text = $("repair-timer-text");
+    if(text) text.textContent = left.toFixed(1) + " 秒";
+  }
+
+  function settleRepair(outcome, card, token){
+    var repair = previewState.repair;
+    if(!repair || (token !== undefined && repair.token !== token)) return;
+    if(repair.settled === token) return;
+    repair.settled = token;
+    clearRepairTimer();
+    [...$("repair-controls").querySelectorAll("button")].forEach(function(b){ b.disabled = true; });
+
+    var result = LanternReviewEngine.answerRepair(repair.queue, repair.queue[0], outcome);
+    repair.queue = result.queue;
+
+    if(outcome === "correct"){
+      showFeedback(true, "正解です。");
+    }else if(outcome === "timeout"){
+      // Slowness, not a misconception: the item simply comes back.
+      showFeedback(false, "時間切れです。もう一度出ます。");
+    }else{
+      showFeedback(false, "正しい答えは「" + card.options[card.correctIndex] + "」です。");
+    }
+    setTimeout(function(){ if(previewState && previewState.repair) renderRepairCard(); }, 1400);
+  }
+
+  function renderRepairDone(){
+    clearRepairTimer();
+    $("stage-phase-badge").textContent = "間違い直し";
+    $("jp-line").textContent = "コン：「間違えた仕事は全部できました。お疲れさまでした。」";
+    speak("間違えた仕事は全部できました。お疲れさまでした。", "correct");
+    $("scene").innerHTML = "";
+    showFeedback(true, "All corrections cleared.");
+    $("btn-next").textContent = "路地へ戻る →";
+    $("next-row").style.display = "block";
+    previewState.repair = null;
+    previewState.index = previewState.list.length - 1;
+    previewState.missed = [];
   }
 
   function skipToNextDay(){

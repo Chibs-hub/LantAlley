@@ -115,3 +115,27 @@ test("a correct preview answer advances on a tap, not only the button", () => {
   // Guarded so a stale continuation cannot skip a question.
   assert.match(app, /if\(!previewState \|\| previewState\.index !== at\) return;/);
 });
+
+test("the episode opens with a transition and ends with a timed correction loop", () => {
+  const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  const css = readFileSync(new URL("./styles.css", import.meta.url), "utf8");
+
+  // Transition: Kon introduces the episode before question 1.
+  assert.match(app, /function renderPreviewIntro/);
+  assert.match(app, /btn-episode-begin/);
+  // The story name, not the internal English title.
+  assert.match(app, /\^\(\.\*\?\)・\(\.\*\?\)「\(\.\*\)」\$/);
+  // Visibility must never depend on an animation: a global reduced-motion rule
+  // kills animations with !important, which left the card stuck invisible.
+  assert.match(css, /\.episode-open\{[^}]*display:flex/);
+  assert.doesNotMatch(css, /\.episode-open\{[^}]*opacity:0/);
+
+  // 間違い直し: only missed items, a per-type clock, timeout is not a mistake.
+  assert.match(app, /function startRepairLoop/);
+  assert.match(app, /LanternReviewEngine\.createRepairQueue/);
+  assert.match(app, /LanternQuestionRenderer\.startTimer/);
+  assert.match(app, /時間切れです。もう一度出ます。/);
+  // A stale timer must not settle a freshly rendered card.
+  assert.match(app, /repair\.token = \(repair\.token \|\| 0\) \+ 1;/);
+  assert.match(app, /if\(!repair \|\| \(token !== undefined && repair\.token !== token\)\) return;/);
+});
