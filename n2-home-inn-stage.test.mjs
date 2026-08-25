@@ -271,7 +271,11 @@ test("dialogue replies are neutral, plausible, and do not reveal acceptance", ()
   vm.runInContext(readFileSync(stageUrl, "utf8"), context);
   const stage = context.N2HomeInnStage;
 
-  for (const item of [...stage.encounters, ...stage.practice, ...stage.challenge].filter((entry) => entry.mechanic === "undertake")) {
+  // Day 2 asks this item as a vocabulary cloze, where 引き止めて is a fair near
+  // miss. Only the days that actually make the offer must stay neutral, since
+  // marking a reply as a near miss would prejudge a social choice.
+  const offerItems = [...stage.encounters, ...stage.challenge].filter((entry) => entry.mechanic === "undertake");
+  for (const item of offerItems) {
     assert.equal(item.options.some((option) => option.nearMiss), false, item.variant);
     assert.deepEqual(
       Array.from(item.interaction.replies, (reply) => reply.label),
@@ -859,7 +863,9 @@ test("each day withdraws one layer of support", () => {
   };
 
   assert.equal(JSON.stringify(layer("learn")), JSON.stringify({ romaji: true, meaning: true, hint: true }));
-  assert.equal(JSON.stringify(layer("practice")), JSON.stringify({ romaji: true, meaning: false, hint: false }));
+  // Day 2 trades romaji for the English translation: by the second day the
+  // learner should be reading the script, but still needs the meaning.
+  assert.equal(JSON.stringify(layer("practice")), JSON.stringify({ romaji: false, meaning: true, hint: false }));
   assert.equal(JSON.stringify(layer("challenge")), JSON.stringify({ romaji: false, meaning: false, hint: false }));
 
   // Challenge is audio-first: the written prompt must not give the sentence away.
@@ -986,4 +992,40 @@ test("the Inn frames match the Entrance rather than a second wood", () => {
   assert.match(html, /--wood-radius:12px;/);
   // The room must remain visible through its own drop zones.
   assert.match(html, /\.inn-room-viewport \.inn-drop-zone\{[\s\S]*?background:rgba\(255,250,240,\.2\)/);
+});
+
+test("day 2 offers four Japanese choices and an English translation", () => {
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(readFileSync(new URL("./moonview-inn-interactions.js", import.meta.url), "utf8"), context);
+  vm.runInContext(readFileSync(stageUrl, "utf8"), context);
+  const stage = context.N2HomeInnStage;
+
+  for (const item of stage.getPhaseItems("practice")) {
+    assert.equal(item.options.length, 4, `${item.focusWord} needs four choices`);
+    assert.equal(new Set(item.options.map((o) => o.key)).size, 4, `${item.focusWord} has duplicate keys`);
+    assert.equal(item.options.filter((o) => o.key === item.correct).length, 1);
+    assert.equal(item.options.filter((o) => o.nearMiss).length, 1);
+    // The choices stay Japanese; only the question carries English.
+    for (const option of item.options) {
+      assert.doesNotMatch(option.label, /[A-Za-z]/, `${item.focusWord}: ${option.label}`);
+    }
+    assert.match(item.meaning, /[A-Za-z]/, `${item.focusWord} needs an English translation`);
+    // A full sentence, not one carrying the blank: English collapses the
+    // distinction being tested, so the verb does not give the answer away.
+    assert.doesNotMatch(item.meaning, /\(\s*\)/, `${item.focusWord} translation still has a blank`);
+    assert.equal(item.romaji, "", `${item.focusWord} must not show romaji on day 2`);
+  }
+
+  // The translation must be visible with the question, not only after answering.
+  assert.match(html, /classList\.toggle\("show", state\.stagePhase === "practice"\)/);
+});
+
+test("the day 2 translation belongs to the question, not to Kon's reply", () => {
+  // Leaving the question's English under Kon's answer read as a mistranslation
+  // of what she had just said.
+  assert.match(html, /function showPracticeTranslation\(visible\)/);
+  assert.match(html, /function answerStage\(isCorrect, prompt, selectedKey\)\{\s*showPracticeTranslation\(false\);/);
+  // and it comes back when the question does
+  assert.match(html, /renderInnInteraction\(prompt, true\);\s*showPracticeTranslation\(true\);/);
 });

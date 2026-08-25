@@ -288,35 +288,75 @@
   // sentences with the verb removed, and the options take the form the blank
   // requires, so the sentence remains the only thing telling the learner what
   // is being asked.
+  // Day 2 asks a different question, so it needs its own sentence. Reusing the
+  // Day 1 request was incoherent: it commanded an action and then asked for a
+  // word, and 「揃えてください」 already contained the answer. These are cloze
+  // sentences with the verb removed, and the options take the form the blank
+  // requires, so the sentence remains the only thing telling the learner what
+  // is being asked.
+  //
+  // Day 2 shows the English translation rather than romaji: by the second day
+  // the learner should be reading kana and kanji, but still needs to know what
+  // the sentence means. Four choices, all Japanese.
+  //
+  // The translation is a full sentence rather than one carrying the blank.
+  // English collapses the distinction each item tests - 揃える and 揃う both
+  // read as "arrange" - so the verb in the translation does not give the
+  // answer away.
   var practiceWordChoice = [
     {
       jp:"二つのマットに、同じ向きの座布団を二枚ずつ（　　）ください。",
-      romaji:"Futatsu no matto ni, onaji muki no zabuton o nimai zutsu (    ) kudasai.",
-      options:["揃えて", "揃って", "散らかして"],
+      english:"Please arrange two cushions facing the same way on each of the two mats.",
+      options:[
+        {key:"arrange", label:"揃えて"},
+        {key:"sorou", label:"揃って", nearMiss:true},
+        {key:"scatter", label:"散らかして"},
+        {key:"tidy", label:"片付けて"}
+      ],
       successReply:"はい、座布団の向きを自分の手で同じにするので「揃える」です。"
     },
     {
       jp:"汚れたシーツを洗濯かごに入れて、新しいシーツに（　　）ください。",
-      romaji:"Yogoreta shiitsu o sentakukago ni irete, atarashii shiitsu ni (    ) kudasai.",
-      options:["取り替えて", "代えて", "そのままにして"],
+      english:"Put the stained sheet in the laundry basket, then replace it with a new one.",
+      options:[
+        {key:"replace", label:"取り替えて"},
+        {key:"kaeru", label:"代えて", nearMiss:true},
+        {key:"leave", label:"そのままにして"},
+        {key:"wash", label:"洗って"}
+      ],
       successReply:"はい、汚れたシーツを別の物と交換するので「取り替える」です。"
     },
     {
       jp:"冷めたごはんを、電子レンジで（　　）ください。",
-      romaji:"Sameta gohan o, denshi renji de (    ) kudasai.",
-      options:["温めて", "温まって", "冷やして"],
+      english:"Please warm the cold rice in the microwave.",
+      options:[
+        {key:"warm", label:"温めて"},
+        {key:"atatamaru", label:"温まって", nearMiss:true},
+        {key:"cool", label:"冷やして"},
+        {key:"grill", label:"焼いて"}
+      ],
       successReply:"はい、冷めたごはんを自分で温かくするので「温める」です。"
     },
     {
       jp:"二つのグループの到着時間を（　　）ください。",
-      romaji:"Futatsu no guruupu no touchaku jikan o (    ) kudasai.",
-      options:["調整して", "調節して", "放置して"],
+      english:"Please coordinate the arrival times of the two groups.",
+      options:[
+        {key:"adjust", label:"調整して"},
+        {key:"chousetsu", label:"調節して", nearMiss:true},
+        {key:"leave", label:"放置して"},
+        {key:"cancel", label:"中止して"}
+      ],
       successReply:"はい、Cグループは12時、Dグループは14時にしました。条件を合わせるのが「調整」です。"
     },
     {
       jp:"明日の朝食の配膳を（　　）くれませんか。",
-      romaji:"Asu no choushoku no haizen o (    ) kuremasen ka.",
-      options:["引き受けて", "引き止めて", "引き出して"],
+      english:"Would you take on serving tomorrow's breakfast?",
+      options:[
+        {key:"accept", label:"引き受けて"},
+        {key:"hikitomeru", label:"引き止めて", nearMiss:true},
+        {key:"hikidasu", label:"引き出して"},
+        {key:"hikikaesu", label:"引き返して"}
+      ],
       successReply:"はい、明日の朝食の配膳をお願いします。責任を持って受けるのが「引き受ける」です。"
     }
   ];
@@ -358,15 +398,25 @@
   function phaseItem(index, variant, phase){
     var base = encounters[index];
     var text = variant ? practiceVariantsB[index] : practiceVariantsA[index];
-    var options = base.options.map(function(option, optionIndex){
-      return {
-        key:option.key,
-        emoji:option.emoji,
-        label:phase === "practice" ? practiceWordChoice[index].options[optionIndex] : japaneseOptions[index][optionIndex],
-        nearMiss:index !== 4 && optionIndex === 1,
-        explanation:index !== 4 && optionIndex === 1 ? nearMissExplanations[index] : ""
-      };
-    });
+    var options = phase === "practice"
+      ? practiceWordChoice[index].options.map(function(option){
+          return {
+            key:option.key,
+            emoji:"",
+            label:option.label,
+            nearMiss:!!option.nearMiss,
+            explanation:option.nearMiss ? nearMissExplanations[index] || "" : ""
+          };
+        })
+      : base.options.map(function(option, optionIndex){
+          return {
+            key:option.key,
+            emoji:option.emoji,
+            label:japaneseOptions[index][optionIndex],
+            nearMiss:index !== 4 && optionIndex === 1,
+            explanation:index !== 4 && optionIndex === 1 ? nearMissExplanations[index] : ""
+          };
+        });
     return copyItem(base, {
       phase:phase,
       mechanic:mechanicNames[index],
@@ -377,11 +427,11 @@
       // Support is withdrawn one layer per day, so the three days differ in
       // difficulty rather than only in situation:
       //   Day 1 基礎   Japanese + romaji + English meaning + hint
-      //   Day 2 実践   Japanese + romaji only
+      //   Day 2 実践   Japanese + English translation, no romaji
       //   Day 3 挑戦   audio only
-      meaning:phase === "learn" ? text.meaning : "",
+      meaning:phase === "learn" ? text.meaning : (phase === "practice" ? practiceWordChoice[index].english : ""),
       successReply:phase === "practice" ? practiceWordChoice[index].successReply : text.successReply,
-      romaji:phase === "challenge" ? "" : (phase === "practice" ? practiceWordChoice[index].romaji : (text.romaji || base.romaji)),
+      romaji:phase === "learn" ? (text.romaji || base.romaji) : "",
       hint:phase === "learn" ? "Use the subject, object, and scene result to decide whether the request describes a deliberate action or a change of state." : "",
       replyResponses:null,
       options:options

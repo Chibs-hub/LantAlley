@@ -667,7 +667,10 @@
     $("romaji-line").textContent = prompt.romaji;
     $("romaji-line").style.display = state.romajiOn && state.stagePhase !== "challenge" ? "block" : "none";
     $("meaning-line").textContent = prompt.meaning;
-    $("meaning-line").classList.remove("show");
+    // Day 2 shows the English translation as part of the question, in place of
+    // the romaji it no longer gets. Every other day reveals meaning only after
+    // an answer, so it cannot be read instead of the Japanese.
+    $("meaning-line").classList.toggle("show", state.stagePhase === "practice");
     $("hint-box").textContent = prompt.hint;
     $("hint-box").classList.remove("show");
     $("hint-btn").style.display = state.stagePhase === "challenge" ? "none" : "block";
@@ -767,7 +770,10 @@
     $("romaji-line").textContent = prompt.romaji;
     $("romaji-line").style.display = state.romajiOn ? "block" : "none";
     $("meaning-line").textContent = prompt.meaning;
-    $("meaning-line").classList.remove("show");
+    // Day 2 shows the English translation as part of the question, in place of
+    // the romaji it no longer gets. Every other day reveals meaning only after
+    // an answer, so it cannot be read instead of the Japanese.
+    $("meaning-line").classList.toggle("show", state.stagePhase === "practice");
     $("hint-box").textContent = prompt.hint;
     $("hint-box").classList.remove("show");
     $("hint-btn").style.display = loc.type === "finale" || loc.key === "entrance" ? "none" : "block";
@@ -1048,6 +1054,7 @@
         var stage = getLocation(state.currentKey);
         state.mistakesThisVisit = Math.min(3, state.mistakesThisVisit + 1);
         renderHud();
+        showPracticeTranslation(false);
         showKonStageResponse(stage, prompt, false, option.key);
         showFeedback(false, option.explanation || stage.getWrongAnswerFeedback(prompt, option.key));
         offerRetry(prompt);
@@ -1736,7 +1743,26 @@
     }
   }
 
+  // The Day 2 translation belongs to the question. Once Kon replies, the
+  // Japanese on screen is her answer, and leaving the question's English under
+  // it read as a mistranslation of what she just said.
+  function showPracticeTranslation(visible){
+    if(state.stagePhase !== "practice") return;
+    var line = $("meaning-line");
+    // Clear the text, not just the class: the correct-answer branch re-adds
+    // "show" further down, which brought the question's English back under
+    // Kon's reply.
+    if(visible){
+      var prompt = getActivePrompt(getLocation(state.currentKey));
+      line.textContent = prompt ? prompt.meaning : "";
+    }else{
+      line.textContent = "";
+    }
+    line.classList.toggle("show", !!visible);
+  }
+
   function answerStage(isCorrect, prompt, selectedKey){
+    showPracticeTranslation(false);
     var stage = getLocation(prompt.stageKey);
     var items = state.phaseItems || stage.getPhaseItems(state.stagePhase);
     showKonStageResponse(stage, prompt, isCorrect, selectedKey);
@@ -1822,6 +1848,7 @@
       if(state.answered) return;
       if(state.currentKey !== "home-inn") return;
       renderInnInteraction(prompt, true);
+      showPracticeTranslation(true);
       $("inn-status").textContent = "もう一度どうぞ。";
     }, 900);
   }

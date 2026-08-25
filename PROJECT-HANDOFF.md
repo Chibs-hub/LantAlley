@@ -170,6 +170,48 @@ An artifact cannot load sibling `.js` files or local images, which is why the bu
 
 ## 9. Change log and reasons
 
+### 2026-08-25 - Day 2 translation is a full sentence, and it leaves with the question
+
+**The blank is gone from the English.** It read 「Please (    ) two cushions…」, which is awkward, and it was unnecessary: English collapses the very distinction each item tests. 揃える and 揃う both come out as "arrange", 温める and 温まる both as "warm", so naming the verb in the translation does not reveal which Japanese word fits the blank. The translations are now plain sentences.
+
+**The translation no longer sits under Kon's reply.** Once an answer is given, the Japanese on screen is Kon's response, and leaving the question's English beneath it read as a mistranslation of what she had just said. The translation is now tied to the question: shown while the question waits, cleared when Kon answers, and restored when the question comes back after a wrong answer.
+
+Clearing the class alone was not enough - the correct-answer branch re-adds `show` further down, which brought the English back. The helper clears the text as well.
+
+Verified live across a full item: translation visible with the question, still present when the question returns after choosing 揃って, and empty once 揃えて is accepted and Kon replies 「はい、座布団の向きを自分の手で同じにするので「揃える」です。」.
+
+Cache `lantern-alley-v67`, artifact 14.61 MB, 195 of 195 tests pass.
+
+### 2026-08-25 - Day 2: English instead of romaji, four choices instead of three
+
+Two changes requested by the owner, both scoped to Day 2.
+
+**The question shows the English translation where the romaji was.** By the second day the learner should be reading kana and kanji rather than leaning on romaji, but still needs to know what the sentence means. The translation keeps the blank, so it describes the sentence without answering it - "Please (    ) two cushions facing the same way on each of the two mats." It is visible with the question rather than after the answer, which is the opposite of every other day, where meaning is revealed only once an answer is given so it cannot be read instead of the Japanese.
+
+The support ladder is now:
+
+| Day | Mode | Question shows | Answer |
+| --- | --- | --- | --- |
+| 一日目 | 基礎 | Japanese, romaji, English, hint | move the objects |
+| 二日目 | 実践 | Japanese and English translation | four Japanese words |
+| 三日目 | 挑戦 | audio only | move the objects |
+
+**Four Japanese choices instead of three.** Practice now builds its own options rather than borrowing the three keys the acting days use, so each item has a correct answer, its near miss, and two further plausible wrong words:
+
+- 揃えて / 揃って / 散らかして / 片付けて
+- 取り替えて / 代えて / そのままにして / 洗って
+- 温めて / 温まって / 冷やして / 焼いて
+- 調整して / 調節して / 放置して / 中止して
+- 引き受けて / 引き止めて / 引き出して / 引き返して
+
+The last set is four 引き compounds, which is a harder discrimination than a single obviously wrong option.
+
+One existing test asserted that undertake items never carry a near miss, which is right for the days that actually make the offer - marking a reply as a near miss would prejudge a social choice - but wrong for Day 2, where the same item is a vocabulary cloze and 引き止めて is a fair distractor. That assertion is now scoped to the offer days.
+
+Verified live: 二日目・実践 ★★☆, the cloze question, the English translation visible, empty romaji, and four all-Japanese choices.
+
+Cache `lantern-alley-v65`, artifact 14.61 MB, 194 of 194 tests pass.
+
 ### 2026-08-25 - Remaining graphics bugs fixed and a full playthrough verified
 
 **The supply shelf could not show what the sentence asks about.** Each zabuton was a 26px icon inside a 60px button, so colour, size and direction were indistinguishable - and those are exactly the three attributes the request names. The shelf art is now 48px. Measured afterwards, all three attributes are distinct: red rgb(194,84,58) against blue rgb(63,110,168); scale 1 against 0.62; and 21x39 portrait against 39x21 landscape for 縦向き versus 横向き. The tray does not overflow.
