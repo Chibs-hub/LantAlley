@@ -170,6 +170,16 @@ An artifact cannot load sibling `.js` files or local images, which is why the bu
 
 ## 9. Change log and reasons
 
+### 2026-08-25 - Tapping advances the preview after a correct answer
+
+The main game arms advancement through `afterSpeech`, so a tap finishes Kon's line and the next tap moves on. The preview harness only wired the Next button, so a correct answer sat there until the button was clicked.
+
+`advancePreviewLater` now arms the same continuation, guarded on the question index so a stale continuation cannot skip ahead if the learner has already moved. The button stays as the visible fallback for when the voice never reports finishing.
+
+Verified live: answer question 1 correctly, first tap finishes the reply 「はい、「揃える」は「そろえる」と読みます。」, second tap moves to question 2 「冷めたお茶を、もう一度（　）ください。」.
+
+Cache `lantern-alley-v70`, artifact 14.62 MB, 198 of 198 tests pass.
+
 ### 2026-08-25 - Episode 1 preview route (testing only)
 
 Episode 1 has existed in the new contract with audio since Task 6, but nothing routed a player to it: the Inn still runs the legacy encounter flow, and `question-renderer.js` was loaded and never called. A second test control, **Preview Episode 1 (test)**, now walks the episode so the new question types can be judged before the controller is rewritten around them.

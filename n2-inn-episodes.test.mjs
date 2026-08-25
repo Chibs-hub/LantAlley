@@ -106,3 +106,12 @@ test("the preview harness can walk the whole episode", () => {
   // Action questions need the room, which the harness does not build.
   assert.match(app, /この問題は部屋の操作で答えます/);
 });
+
+test("a correct preview answer advances on a tap, not only the button", () => {
+  const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  // The main game arms advancement through afterSpeech, so tapping finishes
+  // Kon's line and the next tap moves on. The preview had only the button.
+  assert.match(app, /function advancePreviewLater\(\)\{[\s\S]*?afterSpeech\(/);
+  // Guarded so a stale continuation cannot skip a question.
+  assert.match(app, /if\(!previewState \|\| previewState\.index !== at\) return;/);
+});

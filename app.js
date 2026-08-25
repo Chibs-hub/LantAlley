@@ -670,6 +670,14 @@
   function advancePreviewLater(){
     $("btn-next").textContent = previewState.index >= previewState.list.length - 1 ? "路地へ戻る →" : "次へ →";
     $("next-row").style.display = "block";
+    // Tapping the screen advances, exactly as the main game does: the first tap
+    // finishes Kon's line, the next one moves on. The button stays as a visible
+    // fallback for when the voice never reports finishing.
+    var at = previewState.index;
+    afterSpeech(function(){
+      if(!previewState || previewState.index !== at) return;
+      advanceEpisodePreview();
+    }, 2600);
   }
 
   function advanceEpisodePreview(){
