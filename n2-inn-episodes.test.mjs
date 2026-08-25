@@ -179,3 +179,39 @@ test("the correction round is announced and shows its countdown", () => {
   assert.match(app, /classList\.toggle\("is-urgent", left <= 2\)/);
   assert.match(css, /\.repair-timer-fill\.is-urgent/);
 });
+
+test("every episode question can be answered from what it shows", () => {
+  const context = {};
+  context.self = context;
+  vm.createContext(context);
+  for (const file of ["curriculum-catalog.js", "learning-content.js", "n2-inn-episodes.js"]) {
+    vm.runInContext(readFileSync(new URL("./" + file, import.meta.url), "utf8"), context);
+  }
+  const questions = context.N2InnEpisodes.episodes[0].days.flatMap((d) => d.questions);
+
+  // A guest asking 「部屋はありますか」 cannot be answered unless the learner is
+  // told whether a room is free. Questions whose answer depends on the state of
+  // the inn must state that state, the way the 断る item already does.
+  const stateDependent = questions.filter((q) => /ありますか|泊まれますか/.test(q.prompt.jp));
+  assert.ok(stateDependent.length >= 2);
+  for (const q of stateDependent) {
+    assert.match(
+      q.prompt.jp,
+      /空いています|空いていません|しか/,
+      `${q.id} asks about availability without saying what is available`,
+    );
+  }
+
+  // And a reply must answer the question that was actually asked.
+  const order = questions.find((q) => q.target === "w-chuumon");
+  assert.match(order.prompt.jp, /お願いしたい|注文/, "the guest must be asking to order");
+});
+
+test("the how-to-interact label is printed once, not twice", () => {
+  const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  const css = readFileSync(new URL("./styles.css", import.meta.url), "utf8");
+  // .inn-stage .inn-instruction::before already prints it.
+  assert.match(css, /\.inn-stage \.inn-instruction::before\{content:"HOW TO INTERACT"/);
+  assert.doesNotMatch(app, /inn-instruction[^;]*<strong>How to interact<\/strong>/);
+  assert.doesNotMatch(app, /\$\("inn-instruction"\)\.innerHTML = '<strong>/);
+});

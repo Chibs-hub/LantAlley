@@ -170,6 +170,21 @@ An artifact cannot load sibling `.js` files or local images, which is why the bu
 
 ## 9. Change log and reasons
 
+### 2026-08-25 - Two episode questions could not be answered from what they showed
+
+The owner spotted that question 1 asks 「二人ですが、部屋はありますか。」 while the learner has no way to know whether a room is free. The correct reply was therefore unreachable by reasoning - only by guessing, or by noticing that the other two options sound unhelpful.
+
+Checked all ten against the same standard: can this be answered from what is on screen? Eight passed. The 断る item already did it properly by stating 「部屋は二つしか空いていません」 before asking. Two failed:
+
+- **Question 1** now opens with 「二人部屋がひとつ空いています。」 so the state of the inn is known before the guest speaks.
+- **Question 2** asked 「夕食は何がありますか。」 and expected 「ご注文をうかがいます。」, which does not answer what was asked. The guest now says 「そろそろ夕食をお願いしたいのですが。」, so taking the order is the reply that fits.
+
+A test now asserts that any question turning on availability states what is available, and that the ordering item has the guest actually asking to order.
+
+**Also fixed: the instruction label printed twice.** The markup carried its own `<strong>How to interact</strong>` while `.inn-stage .inn-instruction::before` prints the same words, so the panel read "How to interact How to interact Choose the reply Kon is asking for." Removed from the two panels inside `.inn-stage`; the Entrance keeps its own, since `.inn-control-help` styles the `<strong>` as its label rather than using a pseudo-element.
+
+Cache `lantern-alley-v78`, artifact 7.77 MB, 204 of 204 tests pass.
+
 ### 2026-08-25 - Feedback stops handing over the answer; the correction round announces its clock
 
 **A wrong answer was giving away the right one.** The Inn said "That action does not fit this situation. Compare it with 「取り替える」 and try again." - which ends the question rather than teaching it, since a wrong answer here can be retried. Feedback now names what the learner chose and what the request wants, in English, without naming the target: "You chose to hide the luggage. The request asks you to put the used item in the bin the sentence names, then fit its fresh counterpart."

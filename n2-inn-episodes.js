@@ -48,7 +48,7 @@
     days:[
       {day:1, mode:"learn", label:"宵の口", questions:[
         q("inn-e01-q01", "quick-response", "w-annai", 8,
-          {jp:"お客様：「二人ですが、部屋はありますか。」", audio:true},
+          {jp:"二人部屋がひとつ空いています。お客様：「二人ですが、部屋はありますか。」何と言いますか。", audio:true},
           {type:"quick-response", options:["はい、お部屋へご案内します。","いいえ、分かりません。","もう閉まりました。"], correctIndex:0},
           {correct:"お客様は部屋へ向かいました。「案内する」は、人を連れて行くことです。",
            incorrect:"お客様を待たせてしまいました。まず部屋へご案内します。"},
@@ -60,7 +60,7 @@
           ]),
 
         q("inn-e01-q02", "quick-response", "w-chuumon", 8,
-          {jp:"お客様：「夕食は何がありますか。」", audio:true},
+          {jp:"お客様：「そろそろ夕食をお願いしたいのですが。」何と言いますか。", audio:true},
           {type:"quick-response", options:["ご注文をうかがいます。","注文は終わりました。","私も知りません。"], correctIndex:0},
           {correct:"注文を受けました。「注文」は、料理や品物を頼むことです。",
            incorrect:"お客様は何も頼めませんでした。まず注文をうかがいます。"},

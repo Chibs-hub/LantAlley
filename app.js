@@ -750,7 +750,7 @@
       + '<div class="inn-status" id="inn-status"></div></div>';
 
     var spec = LanternQuestionRenderer.describe(question, {phase: entry.mode});
-    $("inn-instruction").innerHTML = '<strong>How to interact</strong> <span>' + spec.howToInteract + '</span>';
+    $("inn-instruction").innerHTML = '<span>' + spec.howToInteract + '</span>';
     if(!question.prompt.audio) startQuestionClock(question.seconds || 8, token);
 
     var options = (question.answer && question.answer.options) || [];
@@ -905,7 +905,7 @@
 
     // No illustrated room here: correction is a focused quiz card.
     $("scene").innerHTML = '<div class="inn-workspace repair-card">'
-      + '<p class="inn-instruction"><strong>How to interact</strong> <span>Answer before the lantern goes out.</span></p>'
+      + '<p class="inn-instruction"><span>Answer before the lantern goes out.</span></p>'
       + '<div class="repair-timer is-countdown" id="repair-timer"><span class="repair-timer-fill" id="repair-timer-fill"></span><b id="repair-timer-text"></b></div>'
       + '<div class="question-controls" id="repair-controls"></div>'
       + '<div class="inn-status" id="inn-status"></div></div>';
@@ -1458,7 +1458,7 @@
       + '<div class="inn-clue" id="inn-clue"></div>'
       + '<div class="inn-actions inn-replies" id="inn-word-choice"></div>'
       + '<div class="inn-status" id="inn-status"></div></div>';
-    $("inn-instruction").innerHTML = '<strong>How to interact</strong> <span>Choose the word that matches the request.</span>';
+    $("inn-instruction").innerHTML = '<span>Choose the word that matches the request.</span>';
     $("inn-clue").textContent = prompt.interaction && prompt.interaction.clue ? prompt.interaction.clue : "";
     var host = $("inn-word-choice");
 
