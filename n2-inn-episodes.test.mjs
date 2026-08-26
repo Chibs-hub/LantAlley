@@ -245,7 +245,10 @@ test("a silent question hands its line to the dialogue controller", () => {
   // Writing straight to #jp-line left the previous reply mid-reveal, and the
   // controller painted it back over the new prompt - so a reading question
   // displayed the answer to the question before it.
-  assert.match(app, /dialogueFlow\.start\(question\.prompt\.jp, false\)/);
+  assert.match(app, /dialogueFlow\.start\(previewSpokenLine\(question\), false\)/);
+  // A notice goes to the wide panel; Kon only says what to look at.
+  assert.match(app, /function previewDocument/);
+  assert.match(app, /class="reading-document"/);
 });
 
 test("reading items are long enough to be N2 retrieval, not a single line", () => {
@@ -264,7 +267,9 @@ test("reading items are long enough to be N2 retrieval, not a single line", () =
   for (const q of reading) {
     assert.ok(q.prompt.jp.length >= 150, `${q.id} is only ${q.prompt.jp.length} characters`);
     assert.ok(q.prompt.jp.includes("\n"), `${q.id} should be laid out as a notice`);
-    assert.ok(q.seconds >= 35, `${q.id} gives only ${q.seconds}s to read ${q.prompt.jp.length} characters`);
+    // Two minutes: the exam averages roughly 80 seconds an item across all of
+    // reading, and a learner should be reading rather than racing.
+    assert.ok(q.seconds >= 120, `${q.id} gives only ${q.seconds}s to read ${q.prompt.jp.length} characters`);
   }
 
   // The distractors must each be wrong for a different reason, so the item

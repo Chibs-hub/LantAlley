@@ -168,6 +168,20 @@ An artifact cannot load sibling `.js` files or local images, which is why the bu
 
 ## 9. Change log and reasons
 
+### 2026-08-26 - Reading gets its own document panel and two minutes
+
+Two changes for readability, both requested by the owner.
+
+**A notice is a document, not dialogue.** It was being rendered inside Kon's speech card, which is 326px wide in the split desktop layout - 190 characters of notice in a bubble sized for one spoken line. Multi-line prompts now render as a document in the answer panel instead, at **665px**, with the heading on its own rule, one fact per line at 32px leading, the ※ conditions set apart with a hanging indent, and the question separated below. `font-variant-numeric: tabular-nums` keeps the times aligned. Kon's card now carries only 「【二階のお知らせ】を読んでください。」
+
+This is what the earlier clarity fix could not achieve on its own: the writing was already plain, but the column was too narrow for any of it to scan.
+
+**Two minutes to answer**, up from 40 and 35 seconds. The exam averages roughly 80 seconds per item across all of reading, and a learner meeting a notice for the first time should be reading rather than racing. The briefing states it plainly: 「読む問題は二分あります。短い返事は五秒です。」 The test floor moved from 35 to 120 seconds.
+
+Verified in the artifact: the notice renders in a 665px panel against a 326px speech card, ten body lines, two rule lines, the question separated, and 118.8 seconds on the clock.
+
+Cache `lantern-alley-v84`, artifact 7.81 MB, 209 of 209 tests pass.
+
 ### 2026-08-26 - The rewritten reading item was confusing, not hard
 
 The owner, a native speaker, found the new notice confusing. That is a fault in the item, not a sign it reached N2.

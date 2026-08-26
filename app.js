@@ -704,6 +704,24 @@
     if(text) text.textContent = (Math.max(0, timer.remaining) / 1000).toFixed(1) + " 秒";
   }
 
+  // A multi-line prompt is a document: a notice, a schedule, a board. Kon's card
+  // says what to look at; the document itself gets the wide panel, because 190
+  // characters in a 325px speech bubble is unreadable however clear the writing.
+  function previewDocument(question){
+    var jp = question.prompt.jp || "";
+    if(jp.indexOf("\n") < 0) return null;
+    var lines = jp.split("\n");
+    var heading = lines[0];
+    var ask = lines[lines.length - 1];
+    return {heading:heading, body:lines.slice(1, -1), ask:ask};
+  }
+
+  function previewSpokenLine(question){
+    var doc = previewDocument(question);
+    if(!doc) return question.prompt.jp;
+    return doc.heading + "を読んでください。";
+  }
+
   function renderPreviewQuestion(){
     var entry = previewState.list[previewState.index];
     var question = entry.question;
@@ -744,15 +762,28 @@
       // Writing straight to #jp-line left the previous question's reply mid
       // reveal, and the controller then painted it back over the new prompt -
       // so a reading question showed the answer to the one before it.
-      dialogueFlow.start(question.prompt.jp, false);
+      dialogueFlow.start(previewSpokenLine(question), false);
     }else{
-      $("jp-line").textContent = question.prompt.jp;
+      $("jp-line").textContent = previewSpokenLine(question);
     }
+
+    var doc = previewDocument(question);
+    var docMarkup = doc
+      ? '<div class="reading-document"><p class="reading-document-heading">' + doc.heading + '</p>'
+        + '<ul class="reading-document-body">'
+        + doc.body.map(function(line){
+            var rule = line.indexOf("※") === 0;
+            return '<li' + (rule ? ' class="is-rule"' : '') + '>' + line + '</li>';
+          }).join("")
+        + '</ul>'
+        + '<p class="reading-document-ask">' + doc.ask + '</p></div>'
+      : "";
 
     var scene = $("scene");
     scene.innerHTML = '<div class="inn-workspace">'
       + '<p class="inn-instruction" id="inn-instruction"></p>'
       + '<div class="repair-timer" id="preview-timer"><span class="repair-timer-fill" id="preview-timer-fill"></span><b id="preview-timer-text">…</b></div>'
+      + docMarkup
       + '<div class="question-controls" id="preview-controls"></div>'
       + '<div class="inn-status" id="inn-status"></div></div>';
 

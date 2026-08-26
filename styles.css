@@ -1125,3 +1125,43 @@
    room by room is the task. Without pre-line the whole board collapses into one
    paragraph and the retrieval becomes a wall of text. */
 .jp-line{white-space:pre-line;}
+
+/* A notice or schedule is a document, not dialogue. It gets the wide answer
+   panel, one fact per line, generous leading, and a tabular figure so the
+   times line up. 190 characters inside a 325px speech bubble is unreadable
+   however clearly it is written. */
+.reading-document{
+  margin:0 0 14px;
+  padding:16px 18px 14px;
+  border:2px solid var(--wood-edge);
+  border-radius:var(--wood-radius);
+  background:var(--paper);
+  color:#2d2926;
+  box-shadow:0 4px 0 var(--wood-shadow);
+  font-family:'Shippori Mincho',serif;
+  font-variant-numeric:tabular-nums;
+}
+.reading-document-heading{
+  margin:0 0 10px;
+  padding-bottom:8px;
+  border-bottom:1px dashed rgba(140,86,45,.55);
+  font-size:1.02rem; font-weight:800; letter-spacing:.02em;
+}
+.reading-document-body{
+  margin:0; padding:0; list-style:none;
+  font-size:1rem; line-height:2;
+}
+.reading-document-body li{padding:1px 0;}
+.reading-document-body li.is-rule{
+  margin-top:6px; padding-left:1em; text-indent:-1em;
+  color:#6b4a2c; font-size:.94rem; line-height:1.8;
+}
+.reading-document-ask{
+  margin:12px 0 0; padding-top:10px;
+  border-top:1px solid rgba(140,86,45,.35);
+  font-weight:800; font-size:1.02rem;
+}
+@media(max-width:760px){
+  .reading-document{padding:13px 14px;}
+  .reading-document-body{font-size:.95rem; line-height:1.9;}
+}
