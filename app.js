@@ -429,7 +429,7 @@
 
   $("btn-preview-episode").addEventListener("click", function(event){
     event.stopImmediatePropagation();
-    startEpisodePreview();
+    startEpisode();
   });
 
   $("btn-skip-day").addEventListener("click", function(event){
@@ -594,7 +594,7 @@
     return list;
   }
 
-  function startEpisodePreview(){
+  function startEpisode(){
     var list = previewQuestions();
     if(!list.length) return;
     previewState = {index:0, list:list, answered:false, missed:[], repair:null};
@@ -1035,6 +1035,12 @@
     var at = DAY_ORDER.indexOf(state.stagePhase);
     var next = DAY_ORDER[at + 1];
     if(!next){
+      // Past the last day the shift begins, the same as finishing them
+      // properly. Skipping used to land on the map and hide the handover.
+      if(typeof N2InnEpisodes !== "undefined" && loc.key === "home-inn"){
+        startEpisode();
+        return;
+      }
       showMap();
       return;
     }
@@ -1056,6 +1062,13 @@
 
   function advanceStagePhase(loc){
     if(state.stageMastered){
+      // The three days teach the words; the episode is the shift they were
+      // training for. Finishing the days used to drop the learner back on the
+      // map, so the episode existed but nothing led to it.
+      if(typeof N2InnEpisodes !== "undefined" && loc.key === "home-inn"){
+        startEpisode();
+        return;
+      }
       showMap();
     }else if(state.stagePhase === "learn"){
       startStagePhase(loc, "practice");

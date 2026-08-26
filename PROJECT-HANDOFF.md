@@ -168,6 +168,22 @@ An artifact cannot load sibling `.js` files or local images, which is why the bu
 
 ## 9. Change log and reasons
 
+### 2026-08-26 - The three days now lead into the episode
+
+They did not. Finishing the days - challenge, then focused review, then mastery - called `showMap()`, so the learner was returned to the alley and the episode existed with nothing leading to it except a test button. The days taught five words and then stopped; the shift they were training for was unreachable in normal play.
+
+Mastery now starts the episode. The test control does the same when skipped past the last day, so both routes behave alike rather than the aid hiding the handover.
+
+`startEpisodePreview` is renamed `startEpisode`. It stopped being a preview the moment the game routed players through it - the name would have been the only thing still calling it optional.
+
+Kon connects the halves: 「三日間の練習、お疲れさまでした。今夜はお祭りの前の晩です。お客様が次々にいらっしゃいますから、いよいよ本番です。」
+
+The shape of a location is now legible: three days of training, one hour of service, then the correction round for whatever was missed, then back to the map.
+
+Verified in the artifact: past the last day the episode card opens on 第一話「宵の一時間」 with that line, and the map is not shown.
+
+Cache `lantern-alley-v86`, artifact 7.90 MB, 210 of 210 tests pass.
+
 ### 2026-08-26 - Reading gets its own document panel and two minutes
 
 Two changes for readability, both requested by the owner.

@@ -33,7 +33,7 @@
     id:"inn-e01",
     title:"宵の一時間",
     sourceNote:NOTE,
-    intro:{jp:"コン：「今夜はお祭りの前の晩です。お客様が次々にいらっしゃいます。」", audio:true},
+    intro:{jp:"コン：「三日間の練習、お疲れさまでした。今夜はお祭りの前の晩です。お客様が次々にいらっしゃいますから、いよいよ本番です。」", audio:true},
     // Spoken before the first question: the rules of an episode, in Japanese.
     briefing:{
       jp:"コン：「これから一時間、受付を任せます。お客様を待たせないでください。私の話を聞いてから、時間内に答えてください。聞き取れなかったら、スピーカーを押せばもう一度言います。間違えた仕事は、最後にもう一度だけ確認します。」",

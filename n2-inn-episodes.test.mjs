@@ -93,11 +93,11 @@ test("declining is never scored, because refusing is not a comprehension error",
   }
 });
 
-test("the preview harness can walk the whole episode", () => {
+test("the episode can be walked end to end", () => {
   const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
   // Testing-only route so the new question types can be judged before the
   // controller is rewritten around them.
-  assert.match(app, /function startEpisodePreview/);
+  assert.match(app, /function startEpisode/);
   assert.match(app, /function renderPreviewQuestion/);
   assert.match(app, /LanternQuestionRenderer\.describe\(question/);
   assert.match(app, /LanternQuestionRenderer\.renderInto/);
@@ -299,4 +299,13 @@ test("a reading item has exactly one defensible answer", () => {
     const rules = q.prompt.jp.split("\n").filter((line) => line.startsWith("※"));
     assert.ok(rules.length >= 2, `${q.id} has only ${rules.length} stated rule(s)`);
   }
+});
+
+test("finishing the three days leads into the episode", () => {
+  const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  // The days teach the words; the episode is the shift they were training for.
+  // Mastery used to drop the learner on the map, so nothing led to the episode
+  // except a test button.
+  assert.match(app, /if\(state\.stageMastered\)\{[\s\S]*?startEpisode\(\);/);
+  assert.match(app, /typeof N2InnEpisodes !== "undefined" && loc\.key === "home-inn"/);
 });
