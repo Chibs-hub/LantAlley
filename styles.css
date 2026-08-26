@@ -1120,3 +1120,8 @@
 .repair-timer.is-countdown{height:30px;}
 .repair-timer.is-countdown b{line-height:30px; font-size:.82rem; letter-spacing:.02em;}
 .repair-timer-fill.is-urgent{background:linear-gradient(90deg,#c2543a,#e8963c);}
+
+/* A notice is laid out as a notice: its line breaks carry meaning, and reading
+   room by room is the task. Without pre-line the whole board collapses into one
+   paragraph and the retrieval becomes a wall of text. */
+.jp-line{white-space:pre-line;}

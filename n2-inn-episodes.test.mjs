@@ -247,3 +247,28 @@ test("a silent question hands its line to the dialogue controller", () => {
   // displayed the answer to the question before it.
   assert.match(app, /dialogueFlow\.start\(question\.prompt\.jp, false\)/);
 });
+
+test("reading items are long enough to be N2 retrieval, not a single line", () => {
+  const context = {};
+  context.self = context;
+  vm.createContext(context);
+  for (const file of ["curriculum-catalog.js", "learning-content.js", "n2-inn-episodes.js"]) {
+    vm.runInContext(readFileSync(new URL("./" + file, import.meta.url), "utf8"), context);
+  }
+  const reading = context.N2InnEpisodes.episodes[0].days
+    .flatMap((d) => d.questions)
+    .filter((q) => q.skill === "reading");
+
+  // N2 情報検索 runs to roughly 700 characters and 内容理解（短文） to about 200.
+  // These were 53 and 49, which is one line - the learner held no facts at all.
+  for (const q of reading) {
+    assert.ok(q.prompt.jp.length >= 150, `${q.id} is only ${q.prompt.jp.length} characters`);
+    assert.ok(q.prompt.jp.includes("\n"), `${q.id} should be laid out as a notice`);
+    assert.ok(q.seconds >= 35, `${q.id} gives only ${q.seconds}s to read ${q.prompt.jp.length} characters`);
+  }
+
+  // The distractors must each be wrong for a different reason, so the item
+  // rewards reading rather than elimination.
+  const notice = reading.find((q) => q.target === "w-souji");
+  assert.equal(new Set(notice.optionNotes).size, 4);
+});

@@ -168,6 +168,33 @@ An artifact cannot load sibling `.js` files or local images, which is why the bu
 
 ## 9. Change log and reasons
 
+### 2026-08-26 - Reading items recalibrated against the real N2 exam
+
+Looked up the official structure rather than guessing at difficulty. N2 is 105 minutes for about 78 items across Language Knowledge and Reading, plus 50 minutes of listening. Vocabulary alone is six item types and 32 items: 漢字読み 5, 表記 5, 語形成 5, 文脈規定 7, 言い換え類義 5, 用法 5. Reading runs 内容理解（短文）about 200 characters, 内容理解（中文）about 500, 情報検索 about 700, 主張理解（長文）about 900, plus 統合理解 comparing two texts.
+
+Measured ours against that. The formats were right - the cloze items are 文脈規定, the paraphrase is 言い換え類義, the replies are 即時応答, the notice and schedule are 情報検索 in miniature. The **length** was not: our two reading items were 53 and 49 characters. One line each, so there was nothing to hold in mind and nothing to retrieve.
+
+Rewritten:
+
+| Item | Was | Now |
+| --- | --- | --- |
+| 情報検索 notice | 53 chars, 18s | **216 chars, 40s** |
+| Schedule | 49 chars, 25s | **151 chars, 35s** |
+
+The notice is now a real board: eight rooms, each in a different state - departing tomorrow, just left, staying until the day after, closed for building work, arriving this evening, already cleaned - plus two rules about which may be entered. Only two rooms satisfy everything. Each distractor is wrong for its own reason, so the item rewards reading rather than elimination.
+
+The schedule adds a second dependent duration and an ordering constraint, so the answer has to be counted backwards from the fireworks through the bath and then the dinner.
+
+`.jp-line` now uses `white-space: pre-line`. Without it a notice collapses into one paragraph and the retrieval becomes a wall of text.
+
+Tests pin it: reading items must be at least 150 characters, laid out with line breaks, given at least 35 seconds, and carry four distinct distractor notes.
+
+**Deliberately not done.** Four official item types are still missing - 表記, 語形成, 文の組み立て and 文章の文法 - and `sentence-order` sits declared in the renderer with nothing calling it. Those belong in Episode 2 rather than crammed into an episode that already tells one coherent hour. Our clock is also far tighter than the exam's roughly 80 seconds per item; that is a game device, not a calibration error.
+
+Verified in the artifact: 216 characters over 19 rendered lines, no overflow, a 40 second budget, four choices.
+
+Cache `lantern-alley-v82`, artifact 7.81 MB, 208 of 208 tests pass.
+
 ### 2026-08-26 - New object image wired in, cut out, and shipped
 
 A concurrent session added a per-object photo path - `visual.assets` alongside the sprite sheet, so one object can use a dedicated image while the rest stay sprite cells - plus sprite rotation and zoom. It arrived with `assets/inn/sheet-stained-messy-v1.png` for the stained sheet, and 207 tests passing.

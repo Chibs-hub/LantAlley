@@ -115,32 +115,32 @@
             "揃う - the cushions matching by themselves, which is not something you do"
           ]),
 
-        q("inn-e01-q06", "reading", "w-souji", 18,
-          {jp:"貼り紙：「二階の三番と五番はお客様がお帰りになりました。四番はまだご滞在中です。」空いた部屋はどこですか。", audio:false},
-          {type:"evidence-choice", options:["三番と五番","四番だけ","二階の全部", "三番だけ"], correctIndex:0},
-          {correct:"三番と五番の掃除を始められます。書いてあることだけで判断できました。",
-           incorrect:"四番はまだお客様がいらっしゃいます。貼り紙をもう一度読んでください。"},
+        q("inn-e01-q06", "reading", "w-souji", 40,
+          {jp:"【二階のお知らせ】\n一番と二番のお客様は、明日の朝十時にご出発の予定です。\n三番と五番のお客様は、先ほどお帰りになりました。\n四番のお客様は、明後日までご滞在です。\n六番は今日から工事のため、しばらく使えません。\n七番のお客様は、夕方にご到着の予定です。\n八番は昨日のうちに掃除が終わっています。\n※掃除は、お客様がお帰りになった部屋から始めてください。工事中の部屋には入らないでください。\n今すぐ掃除を始められる部屋はどれですか。", audio:false},
+          {type:"evidence-choice", options:["三番と五番","一番と二番","三番と五番と六番", "四番と七番"], correctIndex:0},
+          {correct:"三番と五番の掃除を始められます。お帰りになった部屋だけを選べました。",
+           incorrect:"お帰りになったのは三番と五番だけです。出発前の部屋と工事中の部屋は入れません。"},
           {prompt:"部屋をきれいにすることはどれですか。", options:["掃除","案内"], correctIndex:0, seconds:5},
           [
-            "the two rooms the notice says the guests have left",
-            "四番 is the one still occupied",
-            "the notice does not say the whole floor is free",
-            "only one of the two rooms the notice says are free"
+            "the two rooms whose guests have already left",
+            "these guests do not leave until tomorrow morning",
+            "六番 is closed for building work, so it cannot be entered",
+            "四番 is still occupied and 七番 has a guest arriving this evening"
           ])
       ]},
 
       {day:3, mode:"challenge", label:"仕上げ", questions:[
-        q("inn-e01-q07", "reading", "w-chousei", 25,
-          {jp:"予定表：花火は八時。夕食は一時間かかります。お客様は花火を見たいそうです。夕食は何時に始めますか。", audio:false},
-          {type:"evidence-choice", options:["七時","八時","九時", "六時"], correctIndex:0},
-          {correct:"七時に始めれば花火に間に合います。条件を合わせるのが「調整」です。",
-           incorrect:"八時に始めると花火に間に合いません。かかる時間から逆に考えてください。"},
+        q("inn-e01-q07", "reading", "w-chousei", 35,
+          {jp:"【今夜のご案内】\n花火は八時に始まります。\n夕食は、お出しするのに一時間かかります。\nお風呂は、夕食のあとに一時間かかります。\nお客様のご希望：「花火を見たいので、その前に夕食もお風呂も済ませておきたい。」\n※お風呂は夕食のあとと決まっています。順番は変えられません。\n夕食は何時に始めればいいですか。", audio:false},
+          {type:"evidence-choice", options:["六時","七時","八時", "五時"], correctIndex:0},
+          {correct:"六時に始めれば、夕食もお風呂も済ませて花火に間に合います。条件を合わせるのが「調整」です。",
+           incorrect:"夕食のあとにお風呂が一時間かかります。花火の時間から逆に数えてください。"},
           {prompt:"いくつかの条件を合わせることはどれですか。", options:["調整","調節"], correctIndex:0, seconds:5},
           [
-            "one hour before the fireworks, so dinner finishes in time",
-            "dinner would still be running when the fireworks start",
-            "after the fireworks have already begun",
-            "an hour earlier than needed - dinner would end long before the fireworks"
+            "two hours before the fireworks: one for dinner, one for the bath",
+            "leaves only one hour, so the bath would run into the fireworks",
+            "the fireworks would already have started",
+            "an hour earlier than needed - everything would finish with time to spare"
           ]),
 
         q("inn-e01-q08", "listening-point", "w-kakunin", 8,
