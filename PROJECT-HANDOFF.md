@@ -188,7 +188,11 @@ An answered question keeps its choices on screen while the explanation is read, 
 
 **Verified** in the built artifact and in the harness: both episodes validate against the shared contract, Episode 2 opens as 第二話「予約帳」, all ten questions render with four choices, the passage items land in the wide document panel with their conditions written down, a wrong answer explains the choice that was taken, and the correction round runs. The walkthrough test plays from the entrance through the three days, Episode 1, its corrections and into Episode 2, and asserts the new item types were actually asked. 240 tests, 0 failures. Cache `lantern-alley-v93`, artifact 7.93 MB.
 
-**Not done, and needs a decision.** Episode 2's spoken lines - Kon's intro, the briefing and the one listening question - have no pre-rendered clips, so they fall back to `speechSynthesis`, which on iOS often has no Japanese voice. Generating them sends the text to Microsoft Edge TTS, which is an external service, so it is left for the owner to approve.
+**Audio, since done.** The owner approved the Edge TTS run, so Episode 2's spoken lines now have real clips: 23 rendered, 91 unchanged, nothing pruned - the generator hashes the text, so only new lines cost anything. `collect-spoken-lines.js` already walked every episode, so no collector change was needed. Episode 2 speaks Kon's intro, the briefing, the one listening prompt, and both feedback lines for all ten questions.
+
+Two of those lines read a star aloud - 「★は三番目です」 - because the feedback names the slot the learner was looking at. Worth an ear during review.
+
+The artifact went from 7.93 MB to 9.36 MB: 23 clips inlined as data URIs, still well under the 15 MB ceiling. Verified in the built artifact that all 114 clips are present and that an Episode 2 clip decodes and reports its 7.01s duration. Cache `lantern-alley-v94`.
 
 ### 2026-08-26 - Step C: a test that actually renders the game
 
