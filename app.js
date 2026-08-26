@@ -734,12 +734,19 @@
 
     // Episodes show the request in writing as well: the clock, not concealment,
     // is what makes them harder than the days.
-    $("jp-line").textContent = question.prompt.jp;
     if(question.prompt.audio){
       speak(question.prompt.jp);
       // Start counting when the voice finishes, or after a fallback if it never
       // reports back - the same guard the rest of the game uses.
       afterSpeech(function(){ startQuestionClock(question.seconds || 8, token); }, 1200);
+    }else if(dialogueFlow){
+      // Silent questions must still hand the line to the dialogue controller.
+      // Writing straight to #jp-line left the previous question's reply mid
+      // reveal, and the controller then painted it back over the new prompt -
+      // so a reading question showed the answer to the one before it.
+      dialogueFlow.start(question.prompt.jp, false);
+    }else{
+      $("jp-line").textContent = question.prompt.jp;
     }
 
     var scene = $("scene");

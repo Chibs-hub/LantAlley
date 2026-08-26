@@ -170,6 +170,28 @@ An artifact cannot load sibling `.js` files or local images, which is why the bu
 
 ## 9. Change log and reasons
 
+### 2026-08-26 - Stale reply over a silent question, four choices, and a clock that fits the work
+
+**A reading question displayed the previous question's answer.** The screenshot showed the schedule item while Kon's speech card still read 「座布団が同じ大きさになりました…「揃える」です。」 - the reply to the item before it.
+
+The cause was not the text but who owned it. Spoken questions go through `speak()`, which hands the line to the dialogue controller. Silent ones wrote straight to `#jp-line`, so the controller was still revealing the previous reply and painted it back over the new prompt a frame later. Silent questions now call `dialogueFlow.start(text, false)`, so the controller owns the line either way.
+
+**Four choices, not three.** Every episode question now has four options and four glosses. The added distractors are near misses rather than filler: 座布団が揃います。 for the intransitive pair, 引き出します。 alongside 引き受ける and 引き止める, 取り替えます。 offered for tea that only needs warming.
+
+**The clock now fits the work.** A schedule has to be understood before it can even be attempted, so it cannot share a budget with a one-word service reply:
+
+| Question | Was | Now |
+| --- | --- | --- |
+| Reading the notice | 12s | 18s |
+| Reconciling the schedule | 12s | 25s |
+| Final integrated reply | 8s | 12s |
+
+The briefing states this: 「読む問題は時間が長く、短い返事は五秒です。」 A test asserts reading questions get at least 18 seconds and that nothing but a one-word service decision runs on five.
+
+Verified live: questions 1 to 7 each show four choices, and the reading pair open with their own prompts at 17.2 and 24.2 seconds.
+
+Cache `lantern-alley-v79`, artifact 7.78 MB, 206 of 206 tests pass.
+
 ### 2026-08-25 - Two episode questions could not be answered from what they showed
 
 The owner spotted that question 1 asks 「二人ですが、部屋はありますか。」 while the learner has no way to know whether a room is free. The correct reply was therefore unreachable by reasoning - only by guessing, or by noticing that the other two options sound unhelpful.

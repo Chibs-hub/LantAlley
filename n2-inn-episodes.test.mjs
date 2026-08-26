@@ -215,3 +215,33 @@ test("the how-to-interact label is printed once, not twice", () => {
   assert.doesNotMatch(app, /inn-instruction[^;]*<strong>How to interact<\/strong>/);
   assert.doesNotMatch(app, /\$\("inn-instruction"\)\.innerHTML = '<strong>/);
 });
+
+test("episode questions offer four choices and scale their clock to the work", () => {
+  const context = {};
+  context.self = context;
+  vm.createContext(context);
+  for (const file of ["curriculum-catalog.js", "learning-content.js", "n2-inn-episodes.js"]) {
+    vm.runInContext(readFileSync(new URL("./" + file, import.meta.url), "utf8"), context);
+  }
+  const questions = context.N2InnEpisodes.episodes[0].days.flatMap((d) => d.questions);
+
+  for (const q of questions) {
+    assert.equal(q.answer.options.length, 4, `${q.id} needs four choices`);
+    assert.equal(q.optionNotes.length, 4, `${q.id} needs a note per choice`);
+  }
+
+  // A schedule has to be understood before it can be answered, so it cannot
+  // share a budget with a one-word service reply.
+  const reading = questions.filter((q) => q.skill === "reading");
+  for (const q of reading) assert.ok(q.seconds >= 18, `${q.id} gives only ${q.seconds}s to read`);
+  const quick = questions.filter((q) => q.seconds <= 5);
+  for (const q of quick) assert.equal(q.skill, "listening-task", `${q.id} is too short for its work`);
+});
+
+test("a silent question hands its line to the dialogue controller", () => {
+  const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  // Writing straight to #jp-line left the previous reply mid-reveal, and the
+  // controller painted it back over the new prompt - so a reading question
+  // displayed the answer to the question before it.
+  assert.match(app, /dialogueFlow\.start\(question\.prompt\.jp, false\)/);
+});
