@@ -106,7 +106,7 @@ test("the app stores v3 and reads v2 only to migrate it", () => {
   // The shift and its correction queue are saved and resumable.
   assert.match(app, /function rememberEpisode/);
   assert.match(app, /function resumeEpisode/);
-  assert.match(app, /savedEpisode && resumeEpisode\(\)/);
+  assert.match(app, /savedEpisode\.locationKey === loc\.key && resumeEpisode\(\)/);
   assert.match(app, /inRepair: !!previewState\.repair/);
 });
 

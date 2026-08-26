@@ -150,8 +150,14 @@ test("the map exposes a practice entry that survives leaving the Inn", () => {
   assert.ok(progressRow.slice(0, 600).includes("map-detail-practice"),
     "practice button sits in the map progress row");
   assert.ok(app.includes('practiceBtn.hidden = !canPractise'), "visibility is driven by state");
-  assert.ok(/canPractise[\s\S]{0,200}state\.stageProgress\.homeInn/.test(app),
+  // Starting a place is enough to unlock practice - waiting for mastery hid it
+  // from exactly the learners who need it - and practice covers every place
+  // that has been opened, not only the last door walked through.
+  assert.ok(app.includes("function practicePartitions"), "practice is not tied to one place");
+  assert.ok(/practicePartitions[\s\S]{0,400}state\.stageProgress\.homeInn/.test(app),
     "starting the Inn is enough to unlock practice");
+  assert.ok(/practicePartitions[\s\S]{0,400}state\.stageStarted/.test(app),
+    "entering a later place adds its words to practice");
 });
 
 test("a finished session reports its score before returning to the map", () => {

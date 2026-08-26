@@ -12,7 +12,7 @@ function loadMap() {
   return context.LanternAlleyMap;
 }
 
-test("the alley exposes six stable destinations without making future lessons playable", () => {
+test("the alley exposes six destinations and every one of them is playable", () => {
   const map = loadMap();
 
   assert.deepEqual(
@@ -20,10 +20,19 @@ test("the alley exposes six stable destinations without making future lessons pl
     ["entrance", "home-inn", "market", "tea-house", "station", "shrine"],
   );
 
+  // The four later places were held at "preparing" while they had no content.
+  // They have episodes now, so holding them shut would only hide the game.
   for (const key of ["market", "tea-house", "station", "shrine"]) {
-    assert.equal(map.resolveState(key, {}), "preparing");
-    assert.equal(map.getAction(key, {}), null);
+    assert.equal(map.resolveState(key, {}), "available", key + " is still shut");
+    const action = map.getAction(key, {});
+    assert.ok(action, key + " has no way in");
+    assert.equal(action.locationKey, key);
   }
+
+  // Entering one, before any of its shifts are finished, reads as in progress:
+  // these places have no three-day stage to leave a trace in.
+  assert.equal(map.resolveState("market", { stageStarted: { market: true } }), "in-progress");
+  assert.equal(map.resolveState("market", { visited: { market: true } }), "completed");
 });
 
 test("implemented destinations resolve completed, in-progress, and available progress", () => {

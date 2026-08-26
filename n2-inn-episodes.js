@@ -372,4 +372,9 @@
     key:"home-inn",
     episodes:[episode1, episode2]
   };
+
+  // Every episode stage registers itself here, so adding a location is one
+  // file and one script tag rather than a list in app.js to keep in sync.
+  root.LanternEpisodeStages = root.LanternEpisodeStages || {};
+  root.LanternEpisodeStages["home-inn"] = root.N2InnEpisodes;
 })(typeof self !== "undefined" ? self : this);

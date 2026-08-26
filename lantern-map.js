@@ -26,7 +26,8 @@
       story:"夕市の店主が、品物を選び、客へ渡す手伝いを探しています。",
       focus:"品物を比べ、数や特徴を聞き分けて扱います。",
       position:{x:35,y:37},
-      availability:"preparing"
+      availability:"implemented",
+      playableLocationKey:"market"
     },
     {
       key:"tea-house",
@@ -34,7 +35,8 @@
       story:"注文が重なった茶屋で、女将が配膳を手伝ってほしいそうです。",
       focus:"料理と順番を聞き分け、頼まれた席へ運びます。",
       position:{x:75,y:59},
-      availability:"preparing"
+      availability:"implemented",
+      playableLocationKey:"tea-house"
     },
     {
       key:"station",
@@ -42,7 +44,8 @@
       story:"最終列車の前に、駅員が旅人の案内を手伝う人を必要としています。",
       focus:"時刻、行き先、乗り換えを聞いて正しい場所へ導きます。",
       position:{x:73,y:22},
-      availability:"preparing"
+      availability:"implemented",
+      playableLocationKey:"station"
     },
     {
       key:"shrine",
@@ -50,7 +53,8 @@
       story:"今夜の祭りを前に、宮司が境内の準備を手伝ってほしいそうです。",
       focus:"場所と順番を聞き分け、飾りや人の流れを整えます。",
       position:{x:50,y:13},
-      availability:"preparing"
+      availability:"implemented",
+      playableLocationKey:"shrine"
     }
   ];
 
@@ -75,6 +79,9 @@
     if(!place || place.availability === "preparing") return "preparing";
     if(visited[key]) return "completed";
     if(key === "home-inn" && stageProgress.homeInn) return "in-progress";
+    // The later places have no three-day stage to leave progress in; entering
+    // one and starting its first shift is what makes it in progress.
+    if((data.stageStarted || {})[key]) return "in-progress";
     return "available";
   }
 

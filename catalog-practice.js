@@ -116,10 +116,17 @@
 
   // Unseen words come first: practice exists to reach what the story cannot,
   // so repeating a tested item before an untouched one wastes the session.
+  // One key or several: once more than one place is open, practice should
+  // cover everywhere the learner has been rather than only the last door.
   function getPracticeSession(partitionKey, progress, catalog, size, random){
     random = random || Math.random;
     size = size || 8;
-    var items = catalog.getPartition(partitionKey);
+    var keys = Object.prototype.toString.call(partitionKey) === "[object Array]"
+      ? partitionKey : [partitionKey];
+    var items = [];
+    keys.forEach(function(key){
+      catalog.getPartition(key).forEach(function(item){ items.push(item); });
+    });
     var states = (progress && progress.items) || {};
 
     var unseen = items.filter(function(item){ return !states[item.id]; });

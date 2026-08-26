@@ -41,6 +41,15 @@
   ];
   locations.push(N2HomeInnStage);
 
+  // The four later places have no room to walk into - their whole stage is the
+  // episode - so their location entry is only an identity for the map to enter
+  // and for progress to be filed under. The name comes from the map so there
+  // is one place where a location is named.
+  ["market", "tea-house", "station", "shrine"].forEach(function(key){
+    var place = LanternAlleyMap.getDestination(key);
+    locations.push({key:key, name:(place && place.name) || key, episodesOnly:true});
+  });
+
   var KON_PHOTO_WAVE_L = "assets/kon/kon-wave-left.webp";
   var KON_PHOTO_WAVE_R = "assets/kon/kon-wave-right.webp";
   var KON_PHOTO_WAVE_BOTH = "assets/kon/kon-wave-both.webp";
@@ -309,6 +318,8 @@
         savedEpisode = v3.episode || null;
         pendingEpisodesDone = {};
         (v3.episodesDone || []).forEach(function(id){ pendingEpisodesDone[id] = true; });
+        pendingStageStarted = {};
+        (v3.stageStarted || []).forEach(function(key){ pendingStageStarted[key] = true; });
         pendingItemStates = v3.items || {};
         return legacyViewOf(v3);
       }
@@ -378,6 +389,7 @@
         // reload during an episode threw away the whole hour.
         episode: savedEpisode,
         episodesDone: Object.keys(state.episodesDone || {}),
+        stageStarted: Object.keys(state.stageStarted || {}),
         items: state.itemStates || {},
         mistakes: [],
         repairQueue: savedEpisode ? (savedEpisode.repairQueue || []) : []
@@ -439,6 +451,7 @@
   // and the correction queue if the round had started.
   var savedEpisode = null;
   var pendingEpisodesDone = {};
+  var pendingStageStarted = {};
   var migratedFromV2 = false;
   var pendingItemStates = {};
   var mapDetailAction = $("map-detail-action");
@@ -454,6 +467,7 @@
   applyProgress(saved);
   state.itemStates = pendingItemStates;
   state.episodesDone = pendingEpisodesDone;
+  state.stageStarted = pendingStageStarted;
   // Write the migrated record once, so the v2 shape is converted rather than
   // re-read on every load. The v2 key is left alone: if this build is rolled
   // back, that record is still the learner's progress.
@@ -561,14 +575,17 @@
     var practiceBtn = $("map-detail-practice");
     // `visited` is only set on mastery, so gate on having started the Inn -
     // practice is for words already met, and the first day meets them.
-    var canPractise = typeof LanternCatalogPractice !== "undefined"
-      && (!!state.visited["home-inn"] || !!state.stageProgress.homeInn);
+    var openKeys = practicePartitions();
+    var canPractise = typeof LanternCatalogPractice !== "undefined" && openKeys.length > 0;
     practiceBtn.hidden = !canPractise;
     if(canPractise){
-      var partition = LanternCurriculumCatalog.getPartition("home-inn");
+      var pool = [];
+      openKeys.forEach(function(key){
+        LanternCurriculumCatalog.getPartition(key).forEach(function(item){ pool.push(item); });
+      });
       var known = 0;
-      partition.forEach(function(item){ if((state.itemStates || {})[item.id]) known += 1; });
-      practiceBtn.textContent = "コンの稽古　" + known + " / " + partition.length;
+      pool.forEach(function(item){ if((state.itemStates || {})[item.id]) known += 1; });
+      practiceBtn.textContent = "コンの稽古　" + known + " / " + pool.length;
     }
     renderMapDetail();
   }
@@ -678,12 +695,21 @@
   // confirm rather than a working scene.
   var previewState = null;
 
-  // Which episode the Inn is on. Episode 2 is the morning after Episode 1, so
+  function episodeStages(){
+    return (typeof LanternEpisodeStages !== "undefined" && LanternEpisodeStages) || {};
+  }
+
+  function stageFor(key){
+    return episodeStages()[key || state.currentKey] || null;
+  }
+
+  // Which episode a place is on. Episode 2 is the morning after Episode 1, so
   // the first unfinished one is the right one; when they are all finished the
   // last stays open, because replaying a shift should always be possible.
-  function currentEpisode(){
-    if(typeof N2InnEpisodes === "undefined") return null;
-    var list = N2InnEpisodes.episodes;
+  function currentEpisode(key){
+    var stage = stageFor(key);
+    if(!stage || !stage.episodes.length) return null;
+    var list = stage.episodes;
     var done = state.episodesDone || {};
     for(var i = 0; i < list.length; i++){
       if(!done[list[i].id]) return list[i];
@@ -691,8 +717,17 @@
     return list[list.length - 1];
   }
 
-  function previewQuestions(){
-    var episode = currentEpisode();
+  // A place is finished when every one of its episodes is, which is what turns
+  // its lantern on. Half a location is not a finished location.
+  function stageComplete(key){
+    var stage = stageFor(key);
+    if(!stage || !stage.episodes.length) return false;
+    var done = state.episodesDone || {};
+    return stage.episodes.every(function(episode){ return !!done[episode.id]; });
+  }
+
+  function previewQuestions(key){
+    var episode = currentEpisode(key);
     if(!episode) return [];
     var list = [];
     episode.days.forEach(function(day){
@@ -710,13 +745,29 @@
   // rather than authored, so it costs data and no artwork.
   var practiceState = null;
 
+  // Every place the learner has opened. Practising only the last door visited
+  // would drop the words from everywhere else the moment they moved on.
+  function practicePartitions(){
+    var keys = [];
+    if(state.visited["home-inn"] || state.stageProgress.homeInn) keys.push("home-inn");
+    Object.keys(state.stageStarted || {}).forEach(function(key){
+      if(keys.indexOf(key) < 0) keys.push(key);
+    });
+    Object.keys(state.visited || {}).forEach(function(key){
+      if(keys.indexOf(key) < 0 && stageFor(key)) keys.push(key);
+    });
+    return keys;
+  }
+
   function practiceProgress(){
     return {items: (state.itemStates || {})};
   }
 
   function startCatalogPractice(){
     if(typeof LanternCatalogPractice === "undefined") return;
-    var cards = LanternCatalogPractice.getPracticeSession("home-inn", practiceProgress(), LanternCurriculumCatalog, 8);
+    var keys = practicePartitions();
+    if(!keys.length) return;
+    var cards = LanternCatalogPractice.getPracticeSession(keys, practiceProgress(), LanternCurriculumCatalog, 8);
     if(!cards.length) return;
     practiceState = {cards: cards, index: 0, correct: 0, answered: false};
     screenTitle.style.display = "none";
@@ -831,6 +882,7 @@
     if(!previewState){ savedEpisode = null; saveProgress(); return; }
     var playing = currentEpisode();
     savedEpisode = {
+      locationKey: state.currentKey,
       episodeId: playing ? playing.id : null,
       index: previewState.index,
       missed: previewState.missed.slice(),
@@ -878,8 +930,9 @@
     return true;
   }
 
-  function startEpisode(){
-    var list = previewQuestions();
+  function startEpisode(key){
+    if(key) state.currentKey = key;
+    var list = previewQuestions(state.currentKey);
     if(!list.length) return;
     previewState = {index:0, list:list, answered:false, missed:[], repair:null};
     screenTitle.style.display = "none";
@@ -894,6 +947,7 @@
   // brief fade, so the change of place is something that happens in the story.
   function renderPreviewIntro(){
     var episode = currentEpisode();
+    if(!episode) return;
     $("stage-phase-row").style.display = "none";
     $("encounter-status").style.display = "none";
     $("hint-btn").style.display = "none";
@@ -1166,6 +1220,8 @@
     if(finished){
       if(!state.episodesDone) state.episodesDone = {};
       state.episodesDone[finished.id] = true;
+      // The lantern lights when the whole place is done, not one shift of it.
+      if(stageComplete(state.currentKey)) state.visited[state.currentKey] = true;
     }
     previewState = null;
     forgetEpisode();
@@ -1496,7 +1552,15 @@
     state.challengeMisses = [];
     state.stageMastered = false;
     state.resumedStageEntry = false;
-    if(loc.key === "home-inn" && savedEpisode && resumeEpisode()) return;
+    if(savedEpisode && savedEpisode.locationKey === loc.key && resumeEpisode()) return;
+    // An episode-only place has no room to walk into: the shift is the stage.
+    if(!loc.encounters && stageFor(loc.key)){
+      if(!state.stageStarted) state.stageStarted = {};
+      state.stageStarted[loc.key] = true;
+      saveProgress();
+      startEpisode(loc.key);
+      return;
+    }
     if(loc.encounters && state.stageProgress.homeInn){
       var resumed = state.stageProgress.homeInn;
       state.stagePhase = resumed.phase || "learn";
