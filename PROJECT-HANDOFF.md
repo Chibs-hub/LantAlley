@@ -168,6 +168,27 @@ An artifact cannot load sibling `.js` files or local images, which is why the bu
 
 ## 9. Change log and reasons
 
+### 2026-08-26 - The rewritten reading item was confusing, not hard
+
+The owner, a native speaker, found the new notice confusing. That is a fault in the item, not a sign it reached N2.
+
+Checked the official aim: N2 reading is materials **written clearly**, and 情報検索 asks whether the learner can find needed information among a lot of it. The difficulty is volume and matching stated conditions - not inference.
+
+Mine required an inference from silence. It asked which rooms could be cleaned now while 八番 was already clean, and never stated that an already-cleaned room is excluded. A reader could reasonably argue 八番 qualifies: it is empty, so cleaning could be started there. **Two defensible answers is a broken item.** The schedule had the same fault in miniature - 「お出しするのに一時間かかります」 does not say whether that is the serving or the meal.
+
+Rewritten so nothing turns on an unstated rule:
+
+- The notice is now one room per line with its status, the way a real staff board reads, and both exclusions are written down: 「※お帰りになった部屋だけ、今から掃除します。」 and 「※工事中の部屋と、掃除が終わっている部屋はしません。」 Only 三番と五番 survive.
+- The schedule states durations plainly and both conditions explicitly, so 六時 is the only answer that satisfies them.
+
+The schedule lost length when the vagueness went, dropping to 115 characters. Rather than pad it, it now carries realistic detail that is irrelevant to the question - breakfast, the shop's closing time, where the fireworks are seen. Skipping past what you do not need **is** 情報検索, so the length now comes from the format rather than from filler: 165 characters.
+
+A test asserts each reading item states at least two explicit conditions with ※, so an answer can never again depend on something the page does not say.
+
+Final: notice 190 characters at 40 seconds, schedule 165 at 35.
+
+Cache `lantern-alley-v83`, artifact 7.81 MB, 209 of 209 tests pass.
+
 ### 2026-08-26 - Reading items recalibrated against the real N2 exam
 
 Looked up the official structure rather than guessing at difficulty. N2 is 105 minutes for about 78 items across Language Knowledge and Reading, plus 50 minutes of listening. Vocabulary alone is six item types and 32 items: 漢字読み 5, 表記 5, 語形成 5, 文脈規定 7, 言い換え類義 5, 用法 5. Reading runs 内容理解（短文）about 200 characters, 内容理解（中文）about 500, 情報検索 about 700, 主張理解（長文）about 900, plus 統合理解 comparing two texts.

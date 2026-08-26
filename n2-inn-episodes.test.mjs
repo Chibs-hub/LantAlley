@@ -272,3 +272,26 @@ test("reading items are long enough to be N2 retrieval, not a single line", () =
   const notice = reading.find((q) => q.target === "w-souji");
   assert.equal(new Set(notice.optionNotes).size, 4);
 });
+
+test("a reading item has exactly one defensible answer", () => {
+  const context = {};
+  context.self = context;
+  vm.createContext(context);
+  for (const file of ["curriculum-catalog.js", "learning-content.js", "n2-inn-episodes.js"]) {
+    vm.runInContext(readFileSync(new URL("./" + file, import.meta.url), "utf8"), context);
+  }
+  const reading = context.N2InnEpisodes.episodes[0].days
+    .flatMap((d) => d.questions)
+    .filter((q) => q.skill === "reading");
+
+  // The first version asked which rooms could be cleaned "now" while one room
+  // was already done - and never said that an already-cleaned room is excluded.
+  // A native reader could defend two answers, which is a broken item rather
+  // than a hard one. N2 reading is long but clearly written: every condition
+  // the answer turns on has to be on the page.
+  for (const q of reading) {
+    assert.match(q.prompt.jp, /※/, `${q.id} states no explicit conditions`);
+    const rules = q.prompt.jp.split("\n").filter((line) => line.startsWith("※"));
+    assert.ok(rules.length >= 2, `${q.id} has only ${rules.length} stated rule(s)`);
+  }
+});
