@@ -113,7 +113,9 @@ test("a correct preview answer advances on a tap, not only the button", () => {
   const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
   // The main game arms advancement through afterSpeech, so tapping finishes
   // Kon's line and the next tap moves on. The preview had only the button.
-  assert.match(app, /function advancePreviewLater\(\)\{[\s\S]*?afterSpeech\(/);
+  assert.match(app, /function advancePreviewLater\(isCorrect\)\{[\s\S]*?afterSpeech\(/);
+  // A wrong answer must not auto-advance: the explanation is the lesson.
+  assert.match(app, /if\(isCorrect === false\)\{[\s\S]*?return;/);
   // Guarded so a stale continuation cannot skip a question.
   assert.match(app, /if\(!previewState \|\| previewState\.index !== at\) return;/);
 });

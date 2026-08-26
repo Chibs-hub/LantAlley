@@ -170,6 +170,21 @@ An artifact cannot load sibling `.js` files or local images, which is why the bu
 
 ## 9. Change log and reasons
 
+### 2026-08-26 - The explanation of a wrong answer no longer disappears
+
+Choosing wrongly showed the gloss and then wiped it, so the one thing worth reading was the thing the learner could not read.
+
+Two causes, both leftovers from when this content allowed retries:
+
+- A wrong answer called `setTimeout(renderPreviewQuestion, 1800)`, re-rendering the same question after 1.8 seconds and clearing the feedback with it. Retrying also makes no sense inside a timed hour - the guest has already been kept waiting - and the item is due back in the correction round regardless.
+- It then armed the same auto-advance a correct answer uses, so even without the re-render it would have moved on when Kon stopped speaking.
+
+A correct answer still advances by itself: first tap finishes Kon's line, the next moves on. **A wrong answer now waits for the learner**, with the button reading 「読みました。次へ →」 so it is clear that continuing is their call. The timeout message also says the question will return: 「時間切れです。お客様を待たせました。この問題は最後にもう一度出ます。」
+
+Verified live: chose wrongly, tapped repeatedly, waited nine seconds past the old auto-advance window - the explanation 「「いいえ、分かりません。」 = "I don't know" - leaves the guest standing at the desk」 was still on screen and the question had not moved.
+
+Cache `lantern-alley-v80`, artifact 7.78 MB, 206 of 206 tests pass.
+
 ### 2026-08-26 - Stale reply over a silent question, four choices, and a clock that fits the work
 
 **A reading question displayed the previous question's answer.** The screenshot showed the schedule item while Kon's speech card still read 「座布団が同じ大きさになりました…「揃える」です。」 - the reply to the item before it.

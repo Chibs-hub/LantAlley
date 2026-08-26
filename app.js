@@ -689,8 +689,8 @@
         previewState.answered = true;
         var entry = previewState.list[previewState.index];
         if(previewState.missed.indexOf(entry.question.id) < 0) previewState.missed.push(entry.question.id);
-        showFeedback(false, "時間切れです。お客様を待たせました。");
-        advancePreviewLater();
+        showFeedback(false, "時間切れです。お客様を待たせました。この問題は最後にもう一度出ます。");
+        advancePreviewLater(false);
       }
     }, 100);
   }
@@ -773,7 +773,7 @@
       if(!options.length){
         previewState.answered = true;
         showFeedback(true, "Action question - skipped in preview.");
-        advancePreviewLater();
+        advancePreviewLater(true);
         return;
       }
       var correct = value === question.answer.correctIndex;
@@ -787,20 +787,26 @@
       var chosen = (question.answer.options || [])[value];
       showFeedback(correct, correct ? "正解です。"
         : (note ? "「" + chosen + "」 = " + note : "もう一度考えてみましょう。"));
-      if(!correct){
-        setTimeout(function(){ if(previewState) renderPreviewQuestion(); }, 1800);
-        return;
-      }
-      advancePreviewLater();
+      // A wrong answer used to re-render the same question after 1.8 seconds,
+      // which wiped the explanation before it could be read - and retrying
+      // makes no sense in a timed hour, where the guest has already been kept
+      // waiting. The item returns in the correction round instead.
+      advancePreviewLater(correct);
     }, {phase: entry.mode});
   }
 
-  function advancePreviewLater(){
+  function advancePreviewLater(isCorrect){
     $("btn-next").textContent = previewState.index >= previewState.list.length - 1 ? "路地へ戻る →" : "次へ →";
     $("next-row").style.display = "block";
-    // Tapping the screen advances, exactly as the main game does: the first tap
-    // finishes Kon's line, the next one moves on. The button stays as a visible
-    // fallback for when the voice never reports finishing.
+
+    // A correct answer moves on by itself: the first tap finishes Kon's line,
+    // the next one advances. A wrong one waits for the learner, because the
+    // explanation of what they chose is the only reason the question was worth
+    // getting wrong, and an auto-advance takes it away while they are reading.
+    if(isCorrect === false){
+      $("btn-next").textContent = "読みました。次へ →";
+      return;
+    }
     var at = previewState.index;
     afterSpeech(function(){
       if(!previewState || previewState.index !== at) return;
