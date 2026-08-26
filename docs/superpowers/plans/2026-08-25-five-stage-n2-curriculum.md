@@ -734,6 +734,76 @@ Write test totals, artifact bytes, cache version, audio line count and any block
 
 Commit only if approved. Publish or update the external artifact URL only under a separate explicit approval.
 
+## Near-term plan (2026-08-26)
+
+Written after reviewing what is actually wired. The Inn plays end to end, but of
+the five engines built in Tasks 1-5, two have **zero references in `app.js`**,
+and the game teaches **10 words against a 3,579-item catalog** - 0.3% of the
+coverage the spec is built around. The order below is chosen so each step makes
+the next one possible, rather than by what is most visible.
+
+### Step A - Adopt v3 progress (small, unblocks everything)
+
+`learning-progress.js` is tested and unused; the game still stores the v2 shape.
+Adopting it is the keystone: it is where episode position, the repair queue and
+per-item state have to live.
+
+Do it first because of a live bug: `previewState` is memory-only and
+`repairQueue` has no references in `app.js`, so **reloading during an episode
+loses the shift and the correction queue**. The spec requires that queue to
+survive a reload, and a learner will hit this before they hit anything else.
+
+- Load through `migrateProgress` on boot; keep the v2 loader until migration is
+  covered for no progress, partial Inn progress and a completed Inn.
+- Persist `stages[key].episode`, the question index, `repairQueue`, `mistakes`
+  and `items`.
+- Resume mid-episode and mid-correction, since both are now interruptible.
+
+Done when: start an episode, answer three questions, reload, and land back on
+question four with the same misses recorded.
+
+### Step B - Tier 2 catalog practice (large, the actual goal)
+
+Task 6B in the plan above. This is the difference between a demo and a course:
+without it the catalog is a data file nobody reads.
+
+Depends on Step A for item states - "seen", "tested", "mastered" have nowhere to
+live until v3 is adopted.
+
+Build the generator first and one location's partition second. Three card types
+from data the catalog already has: reading from written form, meaning from word,
+cloze from the record's own example sentence. No new artwork, no new audio.
+
+Done when: the Inn's partition is reachable as Kon's 稽古, and `getCoverage`
+reports a number that moves as the learner works.
+
+### Step C - One rendering test that actually renders (small, overdue)
+
+Around 262 assertions across the suites match source text rather than run code.
+That is how `challenge is not defined` shipped: question 2 had a running clock
+and no answer buttons while every test stayed green.
+
+Add a minimal DOM harness - a fake `document` is enough for `renderInto` - and
+assert a question is **answerable**: controls exist, a click reaches the answer
+callback, and a wrong answer leaves the explanation on screen. One honest test
+here is worth twenty string matches.
+
+### Step D - Episode 2 (medium, content)
+
+The four official N2 item types still missing: 表記, 語形成, 文の組み立て and
+文章の文法. `sentence-order` is already declared in the renderer with nothing
+calling it, so 文の組み立て is mostly wiring.
+
+Deliberately after C: authoring more content on an untested renderer repeats the
+mistake that let the crash through.
+
+### Step E - Remove the test controls (trivial, last)
+
+**Skip to next day** and **Preview Episode 1** ship in the build today. They stay
+until the end because every step above is verified through them; removing them
+first would make the work slower without making the game better. Remove or flag
+them before anyone learns from this.
+
 ## Plan self-review
 
 - Spec coverage: Tasks 1-12 plus 6A and 6B cover catalog, content contract, question types, review, progress, five stages, global review, audio and delivery.
