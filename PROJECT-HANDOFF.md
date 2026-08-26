@@ -168,6 +168,28 @@ An artifact cannot load sibling `.js` files or local images, which is why the bu
 
 ## 9. Change log and reasons
 
+### 2026-08-26 - Step D: Episode 2 「予約帳」 and the four missing item types
+
+**What was missing.** The official N2 paper has six vocabulary and grammar item types. Episode 1 carried two of them. 表記, 語形成, 文の組み立て and 文章の文法 had no home, and `sentence-order` sat declared in the renderer with nothing calling it.
+
+**Why they are a second episode rather than more of the first.** All four are written Japanese. You cannot hear a spelling, and a sentence you assemble is a sentence you are looking at. Episode 1 is an hour of listening at the counter; Episode 2 is the paperwork that hour left behind - the book, the notices, the seal. The item types arrive with the work instead of being bolted onto a shift that was already about speaking. Most of Episode 2 is therefore silent, and its clocks are longer: 20 seconds for a spelling, 90 for a passage, against the exam's rough 80 seconds an item.
+
+**Ten questions, ten Inn words**: 書類, 報告, 通知, 判子, 郵送, 削除, 延期, 指定, 満員, 清書 - all in the Inn's own catalog partition, because coverage is counted per location.
+
+**A mistake caught while authoring.** The sentence-assembly pieces were first listed in their correct order, which meant the answer was "count to the star" and the Japanese never had to be read. They are shown scrambled now, and a test asserts that the pieces as displayed do not spell the finished sentence.
+
+**Two rendering problems found by playing it.**
+
+The four written types all answer through a plain list of choices, so the answer type alone could not say what the job was: a spelling question was telling the learner to "choose the reply Kon is asking for". The renderer now picks its how-to line by skill when one applies.
+
+An answered question keeps its choices on screen while the explanation is read, and they were still live-looking but inert - a learner who answered wrong and then tapped the one they now believed was right got nothing at all. Choices are disabled on answer, the picked one stays lit and the rest dim.
+
+**The Inn now moves on.** `currentEpisode()` returns the first unfinished episode; finishing one records it in `episodesDone`, which persists. A saved shift carries its `episodeId`, so a half-finished Episode 1 can never be resumed into Episode 2's questions.
+
+**Verified** in the built artifact and in the harness: both episodes validate against the shared contract, Episode 2 opens as 第二話「予約帳」, all ten questions render with four choices, the passage items land in the wide document panel with their conditions written down, a wrong answer explains the choice that was taken, and the correction round runs. The walkthrough test plays from the entrance through the three days, Episode 1, its corrections and into Episode 2, and asserts the new item types were actually asked. 240 tests, 0 failures. Cache `lantern-alley-v93`, artifact 7.93 MB.
+
+**Not done, and needs a decision.** Episode 2's spoken lines - Kon's intro, the briefing and the one listening question - have no pre-rendered clips, so they fall back to `speechSynthesis`, which on iOS often has no Japanese voice. Generating them sends the text to Microsoft Edge TTS, which is an external service, so it is left for the owner to approve.
+
 ### 2026-08-26 - Step C: a test that actually renders the game
 
 **The gap this closes.** Around 260 of this suite's assertions match the *source text* of `app.js`. That is how `challenge is not defined` shipped green: the string the test looked for was still in the file while question 2 rendered a running clock and no buttons. Reading source cannot see an empty screen.

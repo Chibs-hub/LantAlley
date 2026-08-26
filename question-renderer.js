@@ -29,6 +29,16 @@
     "information-entry": "Pick the value from the schedule."
   };
 
+  // Episode 2's written item types all answer through a plain list of choices,
+  // so the type alone cannot say what the learner is being asked to do. A
+  // spelling question told to "choose the reply" is telling them the wrong job.
+  var HOW_TO_SKILL = {
+    "orthography": "Choose the kanji this word is written with.",
+    "word-formation": "Choose the piece that attaches to the word.",
+    "sentence-building": "Choose the piece that belongs at the star.",
+    "text-grammar": "Choose the word that fits the gap."
+  };
+
   function optionsOf(question){
     return (question.answer && question.answer.options) || [];
   }
@@ -75,7 +85,7 @@
       romaji: hideSupport ? "" : (question.romaji || ""),
       meaning: hideSupport ? "" : (question.meaning || ""),
       hint: hideSupport ? "" : (question.hint || ""),
-      howToInteract: HOW_TO[answer.type] || HOW_TO["single-choice"],
+      howToInteract: HOW_TO_SKILL[question.skill] || HOW_TO[answer.type] || HOW_TO["single-choice"],
       controls: controls,
       // A timer exists only during correction. Anywhere else it would turn
       // comprehension into a reaction test.

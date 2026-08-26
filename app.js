@@ -307,6 +307,8 @@
       if(rawV3){
         var v3 = JSON.parse(rawV3);
         savedEpisode = v3.episode || null;
+        pendingEpisodesDone = {};
+        (v3.episodesDone || []).forEach(function(id){ pendingEpisodesDone[id] = true; });
         pendingItemStates = v3.items || {};
         return legacyViewOf(v3);
       }
@@ -375,6 +377,7 @@
         // The shift and its correction queue: memory-only until now, so a
         // reload during an episode threw away the whole hour.
         episode: savedEpisode,
+        episodesDone: Object.keys(state.episodesDone || {}),
         items: state.itemStates || {},
         mistakes: [],
         repairQueue: savedEpisode ? (savedEpisode.repairQueue || []) : []
@@ -435,6 +438,7 @@
   // The episode as it stood at the last save: which question, what was missed,
   // and the correction queue if the round had started.
   var savedEpisode = null;
+  var pendingEpisodesDone = {};
   var migratedFromV2 = false;
   var pendingItemStates = {};
   var mapDetailAction = $("map-detail-action");
@@ -449,6 +453,7 @@
   var saved = loadProgress();
   applyProgress(saved);
   state.itemStates = pendingItemStates;
+  state.episodesDone = pendingEpisodesDone;
   // Write the migrated record once, so the v2 shape is converted rather than
   // re-read on every load. The v2 key is left alone: if this build is rolled
   // back, that record is still the learner's progress.
@@ -673,9 +678,22 @@
   // confirm rather than a working scene.
   var previewState = null;
 
+  // Which episode the Inn is on. Episode 2 is the morning after Episode 1, so
+  // the first unfinished one is the right one; when they are all finished the
+  // last stays open, because replaying a shift should always be possible.
+  function currentEpisode(){
+    if(typeof N2InnEpisodes === "undefined") return null;
+    var list = N2InnEpisodes.episodes;
+    var done = state.episodesDone || {};
+    for(var i = 0; i < list.length; i++){
+      if(!done[list[i].id]) return list[i];
+    }
+    return list[list.length - 1];
+  }
+
   function previewQuestions(){
-    if(typeof N2InnEpisodes === "undefined") return [];
-    var episode = N2InnEpisodes.episodes[0];
+    var episode = currentEpisode();
+    if(!episode) return [];
     var list = [];
     episode.days.forEach(function(day){
       day.questions.forEach(function(question){
@@ -811,7 +829,9 @@
 
   function rememberEpisode(){
     if(!previewState){ savedEpisode = null; saveProgress(); return; }
+    var playing = currentEpisode();
     savedEpisode = {
+      episodeId: playing ? playing.id : null,
       index: previewState.index,
       missed: previewState.missed.slice(),
       inRepair: !!previewState.repair,
@@ -829,6 +849,11 @@
   // correction round resumes too, since it is the part most worth not losing.
   function resumeEpisode(){
     if(!savedEpisode) return false;
+    var playing = currentEpisode();
+    if(savedEpisode.episodeId && playing && savedEpisode.episodeId !== playing.id){
+      forgetEpisode();
+      return false;
+    }
     var list = previewQuestions();
     if(!list.length) return false;
     previewState = {
@@ -868,7 +893,7 @@
   // an unrelated question appeared. Kon introduces the episode first, over a
   // brief fade, so the change of place is something that happens in the story.
   function renderPreviewIntro(){
-    var episode = N2InnEpisodes.episodes[0];
+    var episode = currentEpisode();
     $("stage-phase-row").style.display = "none";
     $("encounter-status").style.display = "none";
     $("hint-btn").style.display = "none";
@@ -905,7 +930,7 @@
   // before the first guest arrives rather than leaving the learner to infer a
   // clock from a bar that suddenly appears.
   function renderPreviewBriefing(){
-    var episode = N2InnEpisodes.episodes[0];
+    var episode = currentEpisode();
     var brief = episode.briefing;
     $("jp-line").textContent = brief.jp;
     $("narration").textContent = episode.sourceNote;
@@ -979,6 +1004,20 @@
     var doc = previewDocument(question);
     if(!doc) return question.prompt.jp;
     return doc.heading + "を読んでください。";
+  }
+
+  // Marks the answered question as answered: every choice goes inert, and the
+  // one that was picked stays visible so the explanation has something to
+  // point at.
+  function settlePreviewChoices(picked){
+    var host = $("preview-controls");
+    if(!host) return;
+    var buttons = host.querySelectorAll("button");
+    Array.prototype.forEach.call(buttons, function(button, index){
+      button.disabled = true;
+      button.classList.add("is-settled");
+      if(index === picked) button.classList.add("is-picked");
+    });
   }
 
   function renderPreviewQuestion(){
@@ -1068,6 +1107,10 @@
       }
       var correct = value === question.answer.correctIndex;
       previewState.answered = true;
+      // The choices stay on screen while the explanation is read, so they have
+      // to stop looking like choices. Left live, a learner who answered wrong
+      // taps the one they now believe is right and nothing at all happens.
+      settlePreviewChoices(value);
       if(!correct && previewState.missed.indexOf(question.id) < 0){
         previewState.missed.push(question.id);
         rememberEpisode();
@@ -1119,6 +1162,11 @@
   }
 
   function endEpisodePreview(){
+    var finished = currentEpisode();
+    if(finished){
+      if(!state.episodesDone) state.episodesDone = {};
+      state.episodesDone[finished.id] = true;
+    }
     previewState = null;
     forgetEpisode();
     $("btn-skip-day").style.display = "inline-flex";

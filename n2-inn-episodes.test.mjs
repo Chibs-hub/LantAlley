@@ -309,3 +309,167 @@ test("finishing the three days leads into the episode", () => {
   assert.match(app, /if\(state\.stageMastered\)\{[\s\S]*?startEpisode\(\);/);
   assert.match(app, /typeof N2InnEpisodes !== "undefined" && loc\.key === "home-inn"/);
 });
+
+
+/* Episode 2 「予約帳」 and the four official item types.
+ *
+ * These are the types the exam has and Episode 1 could not carry: 表記,
+ * 語形成, 文の組み立て and 文章の文法. All four are written Japanese, which is
+ * why they are in the morning paperwork rather than in an hour of listening.
+ */
+function episode2() {
+  const context = {};
+  context.self = context;
+  vm.createContext(context);
+  for (const file of ["curriculum-catalog.js", "learning-content.js", "n2-inn-episodes.js"]) {
+    vm.runInContext(readFileSync(new URL("./" + file, import.meta.url), "utf8"), context);
+  }
+  return { context, episode: context.N2InnEpisodes.episodes[1] };
+}
+
+const questionsOf = (episode) => episode.days.flatMap((d) => d.questions);
+
+test("Episode 2 exists, is 3-3-4, and every target resolves in the catalog", () => {
+  const { context, episode } = episode2();
+  assert.equal(context.N2InnEpisodes.episodes.length, 2);
+  assert.equal(episode.days.map((d) => d.questions.length).join(","), "3,3,4");
+
+  const questions = questionsOf(episode);
+  const targets = questions.map((q) => q.target);
+  assert.equal(new Set(targets).size, targets.length, "each question teaches its own word");
+  for (const q of questions) {
+    const item = context.LanternCurriculumCatalog.getItem(q.target);
+    assert.ok(item, `${q.id} names an unknown target ${q.target}`);
+    // Coverage is counted per location, so an Inn episode teaches Inn words.
+    assert.equal(item.partition, "home-inn", `${q.id} teaches a word from ${item.partition}`);
+  }
+});
+
+test("Episode 2 carries the four item types Episode 1 could not", () => {
+  const { episode } = episode2();
+  const skills = new Set(questionsOf(episode).map((q) => q.skill));
+  for (const skill of ["orthography", "word-formation", "sentence-building", "text-grammar"]) {
+    assert.ok(skills.has(skill), `Episode 2 is missing ${skill}`);
+  }
+  // sentence-order sat declared in the renderer with nothing calling it.
+  const assembly = questionsOf(episode).filter((q) => q.answer.type === "sentence-order");
+  assert.ok(assembly.length >= 2, "the declared sentence-order type is finally used");
+});
+
+test("a sentence-assembly item never shows its pieces already in order", () => {
+  const { episode } = episode2();
+  const assembly = questionsOf(episode).filter((q) => q.answer.type === "sentence-order");
+  for (const q of assembly) {
+    const shown = q.answer.options.join("");
+    const sentence = q.feedback.correct;
+    // Every piece belongs to the finished sentence...
+    for (const piece of q.answer.options) {
+      assert.ok(sentence.includes(piece), `${q.id}: ${piece} is not in the assembled sentence`);
+    }
+    // ...but the order they are shown in is not that sentence, or the star
+    // position alone would answer the question without reading it.
+    assert.ok(!sentence.includes(shown), `${q.id} shows its pieces in the answer order`);
+    assert.ok(q.prompt.jp.includes("★"), `${q.id} has no star to fill`);
+    // The slots live on the sentence line; the instruction above it names the
+    // star as well, and counting that one made four pieces look like five.
+    const sentenceLine = q.prompt.jp.split("\n").pop();
+    const slots = (sentenceLine.match(/[＿★]/g) || []).length;
+    assert.equal(slots, q.answer.options.length, `${q.id} has ${slots} slots for ${q.answer.options.length} pieces`);
+  }
+});
+
+test("an orthography item writes the word in kana and answers only in kanji", () => {
+  const { episode } = episode2();
+  const spelling = questionsOf(episode).filter((q) => q.skill === "orthography");
+  assert.ok(spelling.length >= 2, "there are orthography items to check");
+  for (const q of spelling) {
+    assert.match(q.prompt.jp, /（[ぁ-ん]+）/u, `${q.id} does not give the word in kana`);
+    for (const option of q.answer.options) {
+      // A kana in an option would give the spelling away.
+      assert.doesNotMatch(option, /[ぁ-んァ-ン]/u, `${q.id}: ${option} is not written in kanji`);
+    }
+    assert.equal(new Set(q.answer.options).size, 4, `${q.id} repeats a spelling`);
+  }
+});
+
+test("a word-formation item offers affixes, not whole words", () => {
+  const { episode } = episode2();
+  const formation = questionsOf(episode).filter((q) => q.skill === "word-formation");
+  assert.ok(formation.length >= 2, "there are word-formation items to check");
+  for (const q of formation) {
+    for (const option of q.answer.options) {
+      assert.ok(option.length <= 2, `${q.id}: ${option} is a word, not an affix`);
+    }
+  }
+});
+
+test("a text-grammar item shows a passage and writes down every condition", () => {
+  const { episode } = episode2();
+  const passages = questionsOf(episode).filter((q) => q.skill === "text-grammar");
+  assert.ok(passages.length >= 2, "there are text-grammar items to check");
+  for (const q of passages) {
+    // A multi-line prompt is what puts it in the wide document panel.
+    assert.ok(q.prompt.jp.includes("\n"), `${q.id} would render inside the speech bubble`);
+    const rules = q.prompt.jp.split("\n").filter((line) => line.startsWith("※"));
+    assert.ok(rules.length >= 2, `${q.id} states only ${rules.length} condition(s)`);
+    assert.ok(q.prompt.jp.includes("（　　）"), `${q.id} has no gap to fill`);
+  }
+});
+
+test("Episode 2 gives written work time to be read", () => {
+  const { episode } = episode2();
+  for (const q of questionsOf(episode)) {
+    assert.equal(q.answer.options.length, 4, `${q.id} needs four choices`);
+    assert.equal(q.optionNotes.length, 4, `${q.id} needs a note per choice`);
+    if (q.skill === "listening-task") continue;
+    // The exam gives roughly 80 seconds an item. Reading is not a reaction test.
+    assert.ok(q.seconds >= 20, `${q.id} gives only ${q.seconds}s to read`);
+  }
+});
+
+test("the written items are silent, because a spelling cannot be heard", () => {
+  const { episode } = episode2();
+  const written = questionsOf(episode)
+    .filter((q) => ["orthography", "word-formation", "sentence-building", "text-grammar", "reading"].includes(q.skill));
+  for (const q of written) {
+    assert.ok(!q.prompt.audio, `${q.id} would read its own answer aloud`);
+  }
+});
+
+test("the Inn moves on to the next episode instead of replaying the first", () => {
+  const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  assert.match(app, /function currentEpisode/);
+  assert.doesNotMatch(app, /N2InnEpisodes\.episodes\[0\]/, "an episode is still hard-coded");
+  // Finishing one records it, so the next is the one offered.
+  assert.match(app, /state\.episodesDone\[finished\.id\] = true/);
+  assert.match(app, /episodesDone: Object\.keys\(state\.episodesDone \|\| \{\}\)/);
+  // A saved shift belongs to one episode; resuming into another would restore
+  // an index into questions it was never saved from.
+  assert.match(app, /savedEpisode\.episodeId !== playing\.id/);
+});
+
+test("each written item type says what job it is asking for", () => {
+  const context = {};
+  context.self = context;
+  vm.createContext(context);
+  for (const file of ["curriculum-catalog.js", "n2-inn-episodes.js", "question-renderer.js"]) {
+    vm.runInContext(readFileSync(new URL("./" + file, import.meta.url), "utf8"), context);
+  }
+  const questions = context.N2InnEpisodes.episodes[1].days.flatMap((d) => d.questions);
+  const renderer = context.LanternQuestionRenderer;
+
+  // All four written types answer through a plain list, so the answer type
+  // alone cannot say what the job is: a spelling question told to "choose the
+  // reply" is being told the wrong one.
+  const seen = new Set();
+  for (const q of questions) {
+    const how = renderer.describe(q, {}).howToInteract;
+    assert.ok(how, `${q.id} has no how-to line`);
+    if (q.skill === "orthography") assert.match(how, /kanji/);
+    if (q.skill === "word-formation") assert.match(how, /attaches/);
+    if (q.skill === "sentence-building") assert.match(how, /star/);
+    if (q.skill === "text-grammar") assert.match(how, /gap/);
+    seen.add(how);
+  }
+  assert.ok(seen.size >= 4, "the written types share one how-to line");
+});

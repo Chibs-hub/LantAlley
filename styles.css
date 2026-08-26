@@ -1176,3 +1176,15 @@
   text-align:center;
   color:var(--paper);
 }
+
+/* An answered question keeps its choices on screen while the explanation is
+   read, so they have to stop reading as choices. */
+.question-control.is-settled{
+  opacity:.55;
+  cursor:default;
+}
+.question-control.is-settled.is-picked{
+  opacity:1;
+  border-color:var(--wood-edge);
+  box-shadow:0 0 0 2px var(--wood-edge) inset;
+}

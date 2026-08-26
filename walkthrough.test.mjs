@@ -265,8 +265,13 @@ test("the entrance runs to its end and always leaves something to click", () => 
 // is already queued - an artifact of the harness, not of the game.
 const tick = () => new Promise((resolve) => setImmediate(resolve));
 
-test("a full run through the Inn and into the episode never shows a dead screen", async () => {
-  const game = boot();
+/* Getting to the Inn, and then playing whatever is put in front of us.
+ *
+ * Shared by both walkthroughs: one checks that nothing is ever dead, the other
+ * that the second episode is actually reachable by playing. Neither solves
+ * anything cleverly - wrong answers are fine.
+ */
+async function enterTheInn(game) {
   game.$("btn-start").click();
   game.clock.advance(500);
 
@@ -282,68 +287,83 @@ test("a full run through the Inn and into the episode never shows a dead screen"
 
   const inn = game.doc
     .querySelectorAll(".map-destination")
-    .find((b) => b.textContent.includes("月見宿"));
+    .find((b) => b.textContent.includes("\u6708\u898b\u5bbf"));
   assert.ok(inn, "the Inn is on the map");
   inn.click();
   game.clock.advance(4000);
 
-  const accept = game.doc.querySelectorAll("button").find((b) => /手伝います/.test(b.textContent));
+  const accept = game.doc.querySelectorAll("button").find((b) => /\u624b\u4f1d\u3044\u307e\u3059/.test(b.textContent));
   if (accept) { accept.click(); game.clock.advance(4000); }
+  await tick();
+}
 
-  // Play whatever is put in front of us. Day 1 is objects and drop zones, days
-  // 2 and 3 are choices; the driver handles both and never solves anything
-  // cleverly. Wrong answers are fine - the point is that the screen is never
-  // dead and nothing throws while rendering.
+async function drive(game, steps, onQuestion) {
+  const badges = new Set();
+  const prompts = new Set();
   let questionsSeen = 0;
   let stalled = 0;
-  const badges = new Set();
-  const trace = process.env.WALKTHROUGH_DEBUG ? (...a) => console.log(...a) : () => {};
   let task = "";
-  for (let step = 0; step < 400; step += 1) {
+  const trace = process.env.WALKTHROUGH_DEBUG ? (...a) => console.log(...a) : () => {};
+
+  for (let step = 0; step < steps; step += 1) {
     await tick();
     game.clock.advance(1200);
     await tick();
+
     badges.add(game.$("stage-phase-badge").textContent);
     const spoken = game.$("jp-line").textContent;
-    // Requests end in ください; corrections and replies do not. The Challenge
-    // phase writes only "listen", so there the spoken line is the request.
-    if (spoken === "音声を聞いてください。") {
-      const said = game.lastHeard();
-      if (said) task = said;
-    } else if (spoken.indexOf("ください") >= 0) {
-      task = spoken;
-    }
+    if (spoken) prompts.add(spoken);
+    // A document question is not in the speech line: Kon only says what to
+    // look at, and the question itself is in the wide panel.
+    const panel = game.doc.querySelectorAll(".reading-document")[0];
+    if (panel) prompts.add(panel.textContent);
+
     trace(step, "badge:", game.$("stage-phase-badge").textContent,
-      "| jp:", game.$("jp-line").textContent.slice(0, 18),
+      "| jp:", spoken.slice(0, 18),
       "| controls:", game.doc.querySelectorAll(".question-control, .reply-option").filter(game.visible).length,
       "| objects:", game.doc.querySelectorAll(".inn-object").filter(game.visible).length,
-      "| next:", game.$("next-row").style.display,
-      "| status:", game.$("inn-status") ? game.$("inn-status").textContent.slice(0, 16) : "-");
+      "| next:", game.$("next-row").style.display);
     if (process.env.WALKTHROUGH_DUMP && step === Number(process.env.WALKTHROUGH_DUMP)) {
       console.log("SCENE:", game.$("scene").innerHTML.slice(0, 500));
-      console.log("BUTTONS:", game.doc.querySelectorAll("button").map((b) => b.className + "|" + b.textContent.slice(0, 10) + "|vis=" + game.visible(b)).join("  "));
-      console.log("NEXTROW:", game.$("next-row").style.display, "REPLAY:", !!game.$("btn-replay"));
+      console.log("NEXTROW:", game.$("next-row").style.display);
     }
-    // Two classes answer questions in this game: the renderer's controls and
-    // the inn's reply buttons, which Day 2's word choice also uses.
-    const controls = game.doc.querySelectorAll(".question-control, .reply-option").filter(game.visible);
-    if (controls.length) {
-      questionsSeen += 1;
-      assert.ok(controls.length >= 2, "question " + questionsSeen + " offers a real choice");
-      const pick = controls.filter((c) => !c.textContent.startsWith("すみません"))[0] || controls[0];
-      pick.click();
-      game.clock.advance(2500);
-      stalled = 0;
-      continue;
+
+    // Requests end in \u304f\u3060\u3055\u3044; corrections and replies do not. The Challenge
+    // phase writes only "listen", so there the spoken line is the request.
+    if (spoken === "\u97f3\u58f0\u3092\u805e\u3044\u3066\u304f\u3060\u3055\u3044\u3002") {
+      const said = game.lastHeard();
+      if (said) task = said;
+    } else if (spoken.indexOf("\u304f\u3060\u3055\u3044") >= 0) {
+      task = spoken;
     }
+
+    // Next comes first. An answered question keeps its choices on screen while
+    // the explanation is read, and clicking them again does nothing - the
+    // driver sat on one of those forever before this order was fixed.
     if (game.$("next-row").style.display !== "none") {
       game.$("btn-next").click();
       game.clock.advance(2500);
       stalled = 0;
       continue;
     }
+
+    // Two classes answer questions here: the renderer's controls and the inn's
+    // reply buttons, which Day 2's word choice also uses.
+    const controls = game.doc.querySelectorAll(".question-control, .reply-option")
+      .filter(game.visible).filter((c) => !c.disabled);
+    if (controls.length) {
+      questionsSeen += 1;
+      if (onQuestion) onQuestion(controls, questionsSeen);
+      const pick = controls.filter((c) => !c.textContent.startsWith("\u3059\u307f\u307e\u305b\u3093"))[0] || controls[0];
+      pick.click();
+      game.clock.advance(2500);
+      stalled = 0;
+      continue;
+    }
+
     if (playRoom(game, task)) { stalled = 0; continue; }
     if (playSchedule(game, task)) { stalled = 0; continue; }
+
     // A scene that offers its own button - the helper's yes, the episode's
     // "let us begin" - is the way forward, and tapping the backdrop is not.
     const sceneAction = game.$("scene").querySelectorAll("button").filter(game.visible)
@@ -354,24 +374,54 @@ test("a full run through the Inn and into the episode never shows a dead screen"
       stalled = 0;
       continue;
     }
-    const accepted = game.doc.querySelectorAll("button").filter(game.visible)
+
+    const alive = game.doc.querySelectorAll("button").filter(game.visible)
       .filter((b) => b !== game.$("btn-back-map") && !b.classList.contains("map-destination"));
-    assert.ok(accepted.length > 0 || stalled < 4, "step " + step + ": the screen went dead");
+    assert.ok(alive.length > 0 || stalled < 4, "step " + step + ": the screen went dead");
     stalled += 1;
     game.tapScreen();
   }
 
-  assert.ok(questionsSeen >= 15, "the run answered a real number of questions, saw " + questionsSeen);
+  return { badges, prompts, questionsSeen };
+}
+
+test("a full run through the Inn and into the episode never shows a dead screen", async () => {
+  const game = boot();
+  await enterTheInn(game);
+
+  const run = await drive(game, Number(process.env.WALKTHROUGH_STEPS || 400), (controls, n) => {
+    assert.ok(controls.length >= 2, "question " + n + " offers a real choice");
+  });
+
+  assert.ok(run.questionsSeen >= 15, "the run answered a real number of questions, saw " + run.questionsSeen);
 
   // All three days, then the episode. The episode's badges carry their clock,
   // which is how a timed question is told apart from a practice one.
-  const seen = [...badges].join(" ");
-  assert.ok(seen.includes("一日目"), "day 1 was played");
-  assert.ok(seen.includes("二日目"), "day 2 was played");
-  assert.ok(seen.includes("三日目"), "day 3 was played");
-  assert.ok(/\d+秒/.test(seen), "the episode started and ran on the clock: " + seen);
+  const seen = [...run.badges].join(" ");
+  assert.ok(seen.includes("\u4e00\u65e5\u76ee"), "day 1 was played");
+  assert.ok(seen.includes("\u4e8c\u65e5\u76ee"), "day 2 was played");
+  assert.ok(seen.includes("\u4e09\u65e5\u76ee"), "day 3 was played");
+  assert.ok(/\d+\u79d2/.test(seen), "the episode started and ran on the clock: " + seen);
 
   assert.deepEqual(game.errors, [], "nothing threw across the whole run");
+});
+
+test("the second episode follows the first, with its own item types", async () => {
+  const game = boot();
+  await enterTheInn(game);
+
+  // Long enough to finish the three days, Episode 1 and its correction round,
+  // and to reach Episode 2. The clock is fake, so the length costs milliseconds.
+  const run = await drive(game, 2600);
+
+  const seen = [...run.badges].join(" ");
+  // Episode 2's own part names, which Episode 1 does not have.
+  assert.ok(seen.includes("帳場をあける"), "Episode 2 was reached: " + seen);
+  const asked = [...run.prompts].join(" ");
+  assert.ok(asked.includes("漢字で書くと"), "an orthography item was asked");
+  assert.ok(asked.includes("★に入るのは"), "a sentence-assembly item was asked");
+  assert.ok(asked.includes("（　　）に入る言葉"), "a text-grammar item was asked");
+  assert.deepEqual(game.errors, [], "Episode 2 threw nothing");
 });
 
 test("a generated practice card renders four options and records the answer", () => {

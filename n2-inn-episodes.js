@@ -185,8 +185,191 @@
     ]
   };
 
+
+  var NOTE2 = "月見宿・第二話「予約帳」";
+
+  function q2(id, skill, target, seconds, prompt, answer, feedback, repair, notes){
+    return {
+      id:id, skill:skill, target:target, slots:[], sourceNote:NOTE2,
+      seconds:seconds, prompt:prompt, answer:answer, feedback:feedback,
+      repair:repair, optionNotes:notes || []
+    };
+  }
+
+  /* Episode 2 「予約帳」: the morning after, and the four official N2 item types
+   * Episode 1 could not carry - 表記, 語形成, 文の組み立て and 文章の文法.
+   *
+   * They are here rather than in Episode 1 because all four are written
+   * Japanese. You cannot hear a spelling, and a sentence you assemble is a
+   * sentence you are looking at. Episode 1 is an hour of listening at the
+   * counter; this is the paperwork that hour left behind - the book, the
+   * notices, the seal - so the item types arrive with the work rather than
+   * being bolted onto a shift that was already about speaking.
+   *
+   * Consequently most prompts here are silent, and the clocks are longer. The
+   * exam gives roughly 80 seconds an item, and reading a passage is not a
+   * reaction test.
+   */
+  var episode2 = {
+    id:"inn-e02",
+    title:"予約帳",
+    sourceNote:NOTE2,
+    intro:{jp:"コン：「お祭りの夜は終わりました。お客様はまだお休みですが、帳場の仕事は残っています。昨夜は耳の仕事でしたね。今朝は目と手の仕事です。」", audio:true},
+    briefing:{
+      jp:"コン：「昼までに、この予約帳を正しくしてください。今朝はほとんど声が出ません。漢字の書き方、言葉の形、文の組み立て、そして文章の中の言葉を選びます。読む問題は長いので、時間も長く取ってあります。間違えた仕事は、最後にもう一度だけ確認します。」",
+      audio:true,
+      points:[
+        "今朝は書く仕事です。声はほとんど出ません。",
+        "かなで書いてある言葉を、正しい漢字で選びます。",
+        "言葉の前や後ろにつく形を選びます。",
+        "文を組み立てて、★の場所に入る言葉を選びます。",
+        "間違えた仕事は、最後にもう一度出ます。"
+      ]
+    },
+    days:[
+      {day:1, mode:"learn", label:"帳場をあける", questions:[
+
+        q2("inn-e02-q01", "orthography", "w-shorui", 20,
+          {jp:"帳場の机に、ゆうべの（しょるい）がたまっています。（しょるい）を漢字で書くと、どれになりますか。"},
+          {type:"single-choice", options:["署類","書類","諸類","暑類"], correctIndex:1},
+          {correct:"「書類」です。書いた紙をまとめて言うときに使います。",
+           incorrect:"紙に書いたもののことなので、「書」の字を使います。"},
+          {prompt:"「書類」はどれのことですか。", options:["紙に書いたもの","台所の道具"], correctIndex:0, seconds:5},
+          [
+            "署 is the 署 of 警察署 - an office, not paper",
+            "書類 - written papers, the documents on the desk",
+            "諸 means various or several, as in 諸国",
+            "暑 is the 暑 of hot weather"
+          ]),
+
+        q2("inn-e02-q02", "word-formation", "w-houkoku", 20,
+          {jp:"ゆうべの部屋のうち、まだ報告を出していないものがあります。「（　　）報告の部屋」の（　　）に入るのはどれですか。"},
+          {type:"single-choice", options:["無","未","不","非"], correctIndex:1},
+          {correct:"「未報告」です。「未」は、まだそうなっていないことを表します。",
+           incorrect:"まだ終わっていない、という意味の形を選びます。"},
+          {prompt:"「未」がついた言葉が表すのはどれですか。", options:["まだしていない","二度としない"], correctIndex:0, seconds:8},
+          [
+            "無 means there is none at all, as in 無料",
+            "未 - not yet done, which is what an outstanding report is",
+            "不 marks something as lacking or inconvenient, as in 不便",
+            "非 marks something as not that kind of thing, as in 非常"
+          ]),
+
+        q2("inn-e02-q03", "sentence-building", "w-tsuuchi", 30,
+          {jp:"【朝食の時間のお知らせ】\n明日お発ちのお客様に、朝食の時間が変わったことを知らせます。次の文を正しく並べたとき、★に入るのはどれですか。\n明日ご出発のお客様に　＿　＿　★　＿　通知します。"},
+          {type:"sentence-order", options:["時間が","ことを","変わった","朝食の"], correctIndex:2},
+          {correct:"「朝食の時間が変わったことを通知します」となります。★は「変わった」です。",
+           incorrect:"「朝食の」「時間が」「変わった」「ことを」の順に並びます。★は三番目です。"},
+          {prompt:"「通知する」はどれのことですか。", options:["知らせる","片づける"], correctIndex:0, seconds:5},
+          [
+            "時間が is the subject of 変わった, so it belongs second, not at the star",
+            "ことを comes last, turning the whole clause into the object",
+            "変わった sits third, at the star, saying what happened",
+            "朝食の comes first, attaching to 時間"
+          ])
+      ]},
+
+      {day:2, mode:"practice", label:"書き直し", questions:[
+
+        q2("inn-e02-q04", "orthography", "w-hanko", 20,
+          {jp:"帳場の引き出しに、宿の（はんこ）が入っています。（はんこ）を漢字で書くと、どれになりますか。"},
+          {type:"single-choice", options:["版子","判子","半子","判紙"], correctIndex:1},
+          {correct:"「判子」です。紙に押して、確かにそうだと示すものです。",
+           incorrect:"押して確かだと示す道具なので、「判」の字を使います。"},
+          {prompt:"「判子」を使うのはどんなときですか。", options:["確かだと示すとき","部屋を掃除するとき"], correctIndex:0, seconds:5},
+          [
+            "版 is the 版 of a printing plate",
+            "判子 - the seal kept in the desk drawer",
+            "半 means half",
+            "判紙 is not a word; the second character is 子, not 紙"
+          ]),
+
+        q2("inn-e02-q05", "word-formation", "w-yuusou", 20,
+          {jp:"通知は昨日のうちに出しました。今この通知は、どう書きますか。「郵送（　　）」の（　　）に入るのはどれですか。"},
+          {type:"single-choice", options:["中","前","待ち","済み"], correctIndex:3},
+          {correct:"「郵送済み」です。「済み」は、もう終わったことを表します。",
+           incorrect:"昨日のうちに出したので、もう終わっています。終わったことを表す形を選びます。"},
+          {prompt:"「済み」がついた言葉が表すのはどれですか。", options:["もう終わった","これからする"], correctIndex:0, seconds:8},
+          [
+            "中 would mean it is still on its way, but it went yesterday",
+            "前 would mean it has not been sent yet",
+            "待ち would mean it is waiting to be sent",
+            "済み - already done, which is what sending it yesterday means"
+          ]),
+
+        q2("inn-e02-q06", "text-grammar", "w-sakujo", 90,
+          {jp:"【帳場の申し送り】\nゆうべのご予約のうち、お取り消しのご連絡があったものは、帳面から（　　）してください。\n※ 線を引くだけでは、次の人にどちらが生きているのか分かりません。\n※ （　　）したご予約は、下の欄に日付とともに残してください。\n（　　）に入る言葉はどれですか。"},
+          {type:"single-choice", options:["記録","郵送","削除","清書"], correctIndex:2},
+          {correct:"「削除」です。取り消しの連絡があった予約を、帳面から消します。",
+           incorrect:"取り消しの連絡があったのですから、帳面から消す言葉を選びます。"},
+          {prompt:"「削除する」はどれのことですか。", options:["消す","送る"], correctIndex:0, seconds:5},
+          [
+            "記録 would mean writing it down, the opposite of what is asked",
+            "郵送 is posting something, which this note is not about",
+            "削除 - striking the cancelled booking out of the book",
+            "清書 is making a clean copy, which removes nothing"
+          ])
+      ]},
+
+      {day:3, mode:"challenge", label:"昼までに", questions:[
+
+        q2("inn-e02-q07", "sentence-building", "w-enki", 30,
+          {jp:"【催しの日の変更】\n雨のため、明日の催しの日を変えることになりました。次の文を正しく並べたとき、★に入るのはどれですか。\n雨のため、＿　＿　＿　★　ことになりました。"},
+          {type:"sentence-order", options:["来週に","延期する","明日の","催しは"], correctIndex:1},
+          {correct:"「明日の催しは来週に延期することになりました」となります。★は「延期する」です。",
+           incorrect:"「明日の」「催しは」「来週に」「延期する」の順に並びます。★は四番目です。"},
+          {prompt:"「延期する」はどれのことですか。", options:["後の日にする","やめてしまう"], correctIndex:0, seconds:8},
+          [
+            "来週に says when, and belongs third, just before the verb",
+            "延期する sits fourth, at the star, before ことになりました",
+            "明日の comes first, attaching to 催し",
+            "催しは is the topic, so it comes second"
+          ]),
+
+        q2("inn-e02-q08", "text-grammar", "w-shitei", 90,
+          {jp:"【今日のお客様について】\n本日お着きのお客様の中に、着く時間を（　　）していらっしゃる方が三組あります。\n※ 時間を決めていらっしゃる方の欄には、赤い印をつけてください。\n※ 時間を決めていらっしゃらない方には、こちらから伺います。\n（　　）に入る言葉はどれですか。"},
+          {type:"single-choice", options:["指定","予想","削除","案内"], correctIndex:0},
+          {correct:"「指定」です。お客様のほうで時間を決めていらっしゃる、ということです。",
+           incorrect:"お客様がご自分で時間を決めていらっしゃるのですから、それを表す言葉を選びます。"},
+          {prompt:"「指定する」はどれのことですか。", options:["これと決める","たぶんそうだと思う"], correctIndex:0, seconds:8},
+          [
+            "指定 - the guest has named the time themselves",
+            "予想 is guessing at something not yet decided",
+            "削除 is removing something, not deciding it",
+            "案内 is showing someone the way"
+          ]),
+
+        q2("inn-e02-q09", "reading", "w-manin", 120,
+          {jp:"【本日の帳面】\n一番　二名様　ゆうべからご滞在中\n二番　四名様　本日お発ちになりました\n三番　二名様　本日お発ちになりました\n四番　三名様　今夜ご到着の予定\n五番　二名様　今夜ご到着の予定\n六番　四名様　本日お発ちになりました\n※ お発ちになった部屋は、掃除が済み次第、今夜のお客様をお入れできます。\n※ ご滞在中の部屋と、今夜ご到着の予定の部屋は、お入れできません。\n※ 今、四名様のお申し込みが一組あります。\n今夜、この四名様をお入れできる部屋はどれですか。"},
+          {type:"evidence-choice", options:["二番と六番","六番だけ","どこにもありません","一番と四番"], correctIndex:0},
+          {correct:"二番と六番です。どちらも本日お発ちになった四名様のお部屋です。",
+           incorrect:"本日お発ちになった部屋のうち、四名様が入れる大きさのものを選びます。"},
+          {prompt:"「満員」はどんなときに使いますか。", options:["もう入れないとき","まだ空いているとき"], correctIndex:0, seconds:8},
+          [
+            "二番と六番 - both are four-guest rooms whose guests left today",
+            "六番だけ misses 二番, which is the same size and also free",
+            "どこにもありません would mean the inn is 満員, but two rooms are free",
+            "一番 is still occupied and 四番 is expected tonight"
+          ]),
+
+        q2("inn-e02-q10", "listening-task", "w-seisho", 8,
+          {jp:"コン：「この下書きを、もう一度きれいに書き直してください。」何をしますか。", audio:true},
+          {type:"quick-response", options:["削除します。","郵送します。","清書します。","記録します。"], correctIndex:2},
+          {correct:"下書きを清書しました。「清書」は、きれいに書き直したもののことです。",
+           incorrect:"きれいに書き直すよう頼まれました。それを表す言葉を選びます。"},
+          {prompt:"「清書」はどれのことですか。", options:["きれいに書き直したもの","下書きのままのもの"], correctIndex:0, seconds:5},
+          [
+            "削除 would throw the draft away instead of copying it",
+            "郵送 would post the draft as it is",
+            "清書 - writing the draft out cleanly, which is what was asked",
+            "記録 is writing something down for the first time"
+          ])
+      ]}
+    ]
+  };
+
   root.N2InnEpisodes = {
     key:"home-inn",
-    episodes:[episode1]
+    episodes:[episode1, episode2]
   };
 })(typeof self !== "undefined" ? self : this);
