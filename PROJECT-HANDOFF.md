@@ -168,6 +168,24 @@ An artifact cannot load sibling `.js` files or local images, which is why the bu
 
 ## 9. Change log and reasons
 
+### 2026-08-26 - Step B: the catalog is now playable, not just counted
+
+**Why this exists.** The stated goal is covering N2. The story episode teaches ten words deeply, with artwork, audio and authored feedback - a method that cannot reach 3,579 items and should not try. Until today the catalog was data the game shipped and never showed. This layer turns it into practice generated from fields the catalog already holds, so the work is curating one dataset instead of authoring thousands of questions.
+
+**What was added.** `catalog-practice.js` builds three card kinds per item: reading (kanji headwords only - a kana headword is its own answer), meaning, and cloze from the item's own example. Measured yield over the full catalog is 3,036 reading, 3,579 meaning and 2,482 cloze cards - 9,097 in all, with no item unreachable. Distractors are drawn from the item's own partition, so they are words met in the same place rather than noise, and they are deduplicated by value so a card can never carry two correct answers.
+
+Cloze requires a kanji headword. Without that rule 「あっ」 was blanked out of 「何かあった？」, leaving 「何か（　　）た？」, which asks nothing. Three of the catalog's 3,307 examples do not contain their own headword; the same rule already excludes them.
+
+**Where it lives, and why it moved.** The entry was first placed in the map's detail shelf and verified unreachable: an earlier change made clicking a destination enter it, so the shelf never stays on screen. It now sits in the map's progress row as 「コンの稽古　n / 716」.
+
+It unlocks on having *started* the Inn, not on mastering it. `visited` is only set on mastery, so the first gate hid the button from every learner who had not already finished the stage - which is exactly the learner practice is for.
+
+**Two gaps found while verifying.** A finished session dropped straight back to the map with the score computed and discarded, so a session ended with no sense of how it went; there is now a completion card with Kon's line and the score. And `renderPracticeCard` hid the feedback row without clearing its text, so the previous verdict flashed back for a frame on the next answer.
+
+**Also.** `visual-smoke-test.mjs` is renamed `visual-smoke.mjs`. It is a manual script needing a browser on port 9223, and its `.test.mjs` name made bare `node --test` fail for anyone who did not know to exclude it - a footgun this document had to warn about twice. Bare `node --test` is now the correct command: 224 tests, 0 failures.
+
+**Verified** in the built artifact rather than the dev server, which has repeatedly served stale files. From cleared storage: the entry appears after starting the Inn, opens an eight-card session, cards render with four choices, answering advances the counter, the completion card shows 2 / 8, returning to the map shows 「コンの稽古　8 / 716」, and after a reload the count is restored and the next session serves words not yet seen. Item states persist under `items` in `lanternAlley.v3` as 2 tested and 6 seen. Cache is `lantern-alley-v91`; the artifact is 7.92 MB and has not been republished.
+
 ### 2026-08-26 - Step A: progress moved to v3, and an episode now survives a reload
 
 **The bug this fixes.** `previewState` was memory-only and `repairQueue` had no references in `app.js`, so reloading during an episode threw away the whole shift and the correction queue with it. The spec requires that queue to survive a reload, and it is the part a learner would least want to lose.

@@ -7,7 +7,7 @@
  * Bump CACHE_VERSION whenever any shell file changes, or returning players
  * will keep the old build.
  */
-var CACHE_VERSION = "lantern-alley-v88";
+var CACHE_VERSION = "lantern-alley-v91";
 
 // audio-index.js assigns to `self`, so the worker and the page share one list
 // of clip paths. Importing it here means new lines are cached automatically
@@ -30,6 +30,7 @@ var SHELL = [
   "./review-engine.js",
   "./learning-progress.js",
   "./question-renderer.js",
+  "./catalog-practice.js",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png",

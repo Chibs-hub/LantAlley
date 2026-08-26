@@ -307,6 +307,7 @@
       if(rawV3){
         var v3 = JSON.parse(rawV3);
         savedEpisode = v3.episode || null;
+        pendingItemStates = v3.items || {};
         return legacyViewOf(v3);
       }
       var raw = localStorage.getItem(STORAGE_KEY);
@@ -374,7 +375,7 @@
         // The shift and its correction queue: memory-only until now, so a
         // reload during an episode threw away the whole hour.
         episode: savedEpisode,
-        items: {},
+        items: state.itemStates || {},
         mistakes: [],
         repairQueue: savedEpisode ? (savedEpisode.repairQueue || []) : []
       }));
@@ -435,6 +436,7 @@
   // and the correction queue if the round had started.
   var savedEpisode = null;
   var migratedFromV2 = false;
+  var pendingItemStates = {};
   var mapDetailAction = $("map-detail-action");
 
   screenGame.addEventListener("click", function(event){
@@ -446,6 +448,7 @@
 
   var saved = loadProgress();
   applyProgress(saved);
+  state.itemStates = pendingItemStates;
   // Write the migrated record once, so the v2 shape is converted rather than
   // re-read on every load. The v2 key is left alone: if this build is rolled
   // back, that record is still the learner's progress.
@@ -476,6 +479,11 @@
     $("btn-start").textContent = "路地へ入る";
     enterLocation("entrance");
   });
+  $("map-detail-practice").addEventListener("click", function(event){
+    event.stopImmediatePropagation();
+    startCatalogPractice();
+  });
+
   mapDetailAction.addEventListener("click", function(){
     var action = selectedMapAction;
     if(action) enterLocation(action.locationKey);
@@ -483,6 +491,7 @@
   $("btn-back-map").addEventListener("click", function(){ showMap(); });
   $("btn-restart-learn").addEventListener("click", restartStageLearning);
   $("btn-next").addEventListener("click", function(){
+    if(practiceState){ advancePractice(); return; }
     if(previewState){ advanceEpisodePreview(); return; }
     var loc = getLocation(state.currentKey);
     if(loc && loc.encounters){
@@ -541,6 +550,21 @@
       destinationsEl.appendChild(btn);
     });
     $("map-progress-text").textContent = "灯り " + completedCount + " / " + LanternAlleyMap.destinations.length;
+
+    // Practice lives on the map rather than inside a place, because clicking a
+    // place now enters it and the detail shelf never stays on screen.
+    var practiceBtn = $("map-detail-practice");
+    // `visited` is only set on mastery, so gate on having started the Inn -
+    // practice is for words already met, and the first day meets them.
+    var canPractise = typeof LanternCatalogPractice !== "undefined"
+      && (!!state.visited["home-inn"] || !!state.stageProgress.homeInn);
+    practiceBtn.hidden = !canPractise;
+    if(canPractise){
+      var partition = LanternCurriculumCatalog.getPartition("home-inn");
+      var known = 0;
+      partition.forEach(function(item){ if((state.itemStates || {})[item.id]) known += 1; });
+      practiceBtn.textContent = "コンの稽古　" + known + " / " + partition.length;
+    }
     renderMapDetail();
   }
 
@@ -571,6 +595,8 @@
     $("map-detail-focus").textContent = place.focus;
     mapDetailAction.style.display = action ? "inline-flex" : "none";
     mapDetailAction.textContent = action ? action.label : "";
+
+
   }
 
   $("romaji-switch").addEventListener("click", function(){
@@ -657,6 +683,130 @@
       });
     });
     return list;
+  }
+
+  // ---- Kon's 稽古: the catalog practice layer ----
+  //
+  // The episode teaches ten words. This reaches the rest of the location's
+  // partition, which is what the coverage claim rests on. Cards are generated
+  // rather than authored, so it costs data and no artwork.
+  var practiceState = null;
+
+  function practiceProgress(){
+    return {items: (state.itemStates || {})};
+  }
+
+  function startCatalogPractice(){
+    if(typeof LanternCatalogPractice === "undefined") return;
+    var cards = LanternCatalogPractice.getPracticeSession("home-inn", practiceProgress(), LanternCurriculumCatalog, 8);
+    if(!cards.length) return;
+    practiceState = {cards: cards, index: 0, correct: 0, answered: false};
+    screenTitle.style.display = "none";
+    screenMap.style.display = "none";
+    screenGame.style.display = "block";
+    screenGame.classList.remove("entrance-stage");
+    renderPracticeCard();
+  }
+
+  function renderPracticeCard(){
+    var card = practiceState.cards[practiceState.index];
+    var item = LanternCurriculumCatalog.getItem(card.target);
+
+    $("stage-phase-row").style.display = "flex";
+    $("btn-skip-day").style.display = "none";
+    $("btn-preview-episode").style.display = "none";
+    $("stage-phase-badge").textContent = "コンの稽古";
+    $("encounter-status").style.display = "block";
+    $("encounter-progress").textContent = String(practiceState.index + 1);
+    $("encounter-total").textContent = String(practiceState.cards.length);
+    $("scene-label").textContent = "月見宿 - 言葉の稽古";
+    $("narration").textContent = card.sourceNote;
+    $("romaji-line").textContent = "";
+    $("meaning-line").textContent = "";
+    $("meaning-line").classList.remove("show");
+    $("feedback-row").classList.remove("show");
+    // Clear the text too - the row is only hidden, and the old verdict would
+    // flash back into view for a frame on the next answer.
+    $("feedback-text").textContent = "";
+    $("next-row").style.display = "none";
+    if(dialogueFlow) dialogueFlow.start(card.prompt, false);
+
+    var help = {reading:"Choose the reading.", meaning:"Choose the meaning.", cloze:"Choose the word that fits the blank."}[card.kind];
+    $("scene").innerHTML = '<div class="inn-workspace">'
+      + '<p class="inn-instruction"><span>' + help + '</span></p>'
+      + '<div class="question-controls" id="practice-controls"></div>'
+      + '<div class="inn-status" id="inn-status"></div></div>';
+
+    practiceState.answered = false;
+    var host = $("practice-controls");
+    card.options.forEach(function(label, index){
+      var button = document.createElement("button");
+      button.type = "button";
+      button.className = "question-control" + (index === 0 ? " is-primary" : "");
+      button.textContent = label;
+      button.setAttribute("aria-label", label);
+      button.addEventListener("click", function(event){
+        event.stopImmediatePropagation();
+        if(practiceState.answered) return;
+        practiceState.answered = true;
+        var right = index === card.correctIndex;
+        if(right) practiceState.correct += 1;
+        // Mark the item either way: the learner has now met it, and the
+        // coverage report distinguishes seen from tested.
+        markItemState(card.target, right ? "tested" : "seen");
+        $("jp-line").textContent = "「" + item.canonical + "」（" + item.reading + "）" + (item.meanings[0] || "");
+        showFeedback(right, right ? "正解です。"
+          : "正しい答えは「" + card.options[card.correctIndex] + "」です。");
+        $("btn-next").textContent = practiceState.index >= practiceState.cards.length - 1 ? "稽古を終える →" : "次へ →";
+        $("next-row").style.display = "block";
+      });
+      host.appendChild(button);
+    });
+  }
+
+  function markItemState(id, value){
+    if(!state.itemStates) state.itemStates = {};
+    // Never downgrade: meeting a word again does not un-test it.
+    if(state.itemStates[id] === "tested" && value === "seen") return;
+    state.itemStates[id] = value;
+    saveProgress();
+  }
+
+  function advancePractice(){
+    if(practiceState.index >= practiceState.cards.length - 1){
+      if(!practiceState.finished){
+        // Show the score before leaving. Dropping straight back to the map
+        // made the session end with no sense of how it went.
+        renderPracticeDone();
+        return;
+      }
+      practiceState = null;
+      $("btn-skip-day").style.display = "inline-flex";
+      $("btn-preview-episode").style.display = "inline-flex";
+      showMap();
+      return;
+    }
+    practiceState.index += 1;
+    renderPracticeCard();
+  }
+
+  function renderPracticeDone(){
+    practiceState.finished = true;
+    var total = practiceState.cards.length;
+    var right = practiceState.correct;
+    var line = right === total ? "全部できたね。よく覚えている。"
+      : right >= Math.ceil(total / 2) ? "いいね。あと少しだ。"
+      : "まだ体が覚えていないな。もう一度やろう。";
+    $("encounter-progress").textContent = String(total);
+    $("narration").textContent = "稽古の結果";
+    $("feedback-row").classList.remove("show");
+    $("feedback-text").textContent = "";
+    if(dialogueFlow) dialogueFlow.start(line, false);
+    $("scene").innerHTML = '<div class="inn-workspace">'
+      + '<p class="inn-instruction"><span>Practice complete.</span></p>'
+      + '<p class="practice-score">' + right + ' / ' + total + '</p></div>';
+    $("btn-next").textContent = "地図へもどる →";
+    $("next-row").style.display = "block";
   }
 
   function rememberEpisode(){

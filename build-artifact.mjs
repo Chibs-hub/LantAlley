@@ -19,6 +19,7 @@ const scripts = [
   "review-engine.js",
   "learning-progress.js",
   "question-renderer.js",
+  "catalog-practice.js",
   "lantern-map.js",
   "app.js",
 ];
