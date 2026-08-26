@@ -168,6 +168,28 @@ An artifact cannot load sibling `.js` files or local images, which is why the bu
 
 ## 9. Change log and reasons
 
+### 2026-08-26 - Step A: progress moved to v3, and an episode now survives a reload
+
+**The bug this fixes.** `previewState` was memory-only and `repairQueue` had no references in `app.js`, so reloading during an episode threw away the whole shift and the correction queue with it. The spec requires that queue to survive a reload, and it is the part a learner would least want to lose.
+
+v2 had nowhere to put any of it. The record only knew about the three days.
+
+**What changed.** The game now writes `lanternAlley.v3` through `learning-progress.js`, which was tested and entirely unused until today. The v2 key is read once and migrated, then left in place - if this build is rolled back, that record is still the learner's progress. The migration is written out once on boot rather than re-run on every load.
+
+The day controller was not rewritten. `legacyViewOf` translates v3 back into the shape it already reads, because the two carry identical facts and a controller rewrite would have been risk without benefit.
+
+Episode state is saved at five points: advancing a question, recording a miss, opening the correction round, settling a repair card, and finishing. Entering the Inn resumes an unfinished shift instead of replaying the days.
+
+Verified in the artifact, three cases:
+
+- **Mid-episode reload.** Answered one, missed one deliberately, answered a third, reloaded: resumed at 4/10 on 食事どき with the miss still recorded.
+- **Mid-correction reload.** Resumed straight into 間違い直し at 1/2 with the queue intact and the five-second clock running.
+- **A v2 learner.** Silver medal still shown, resumed at 三日目・挑戦 3/5, and v3 written on boot with question, score, correct words, misses, medal and the declined flag all carried across.
+
+**Still dead:** `LanternCurriculumCatalog` has zero references in `app.js`. That is Step B, and it is the one that moves coverage off 0.3%.
+
+Cache `lantern-alley-v88`, artifact 7.91 MB, 212 of 212 tests pass.
+
 ### 2026-08-26 - The three days now lead into the episode
 
 They did not. Finishing the days - challenge, then focused review, then mastery - called `showMap()`, so the learner was returned to the alley and the episode existed with nothing leading to it except a test button. The days taught five words and then stopped; the shift they were training for was unreachable in normal play.

@@ -2,6 +2,10 @@
   "use strict";
 
   var STORAGE_KEY = "lanternAlley.v2";
+  // Version 3 is the record that is written from now on. The v2 key is still
+  // read once, so a learner who left mid-stage before this change keeps their
+  // medal and their place.
+  var STORAGE_KEY_V3 = "lanternAlley.v3";
 
   var locations = [
     {
@@ -294,13 +298,47 @@
     }catch(e){ /* speech unsupported, text remains visible */ }
   }
 
+  // Read v3 if it exists, otherwise migrate the v2 record once. Everything the
+  // rest of the app touches still arrives in the shape it expects; only the
+  // stored form changes, plus the episode block v2 had nowhere to put.
   function loadProgress(){
     try{
+      var rawV3 = localStorage.getItem(STORAGE_KEY_V3);
+      if(rawV3){
+        var v3 = JSON.parse(rawV3);
+        savedEpisode = v3.episode || null;
+        return legacyViewOf(v3);
+      }
       var raw = localStorage.getItem(STORAGE_KEY);
       if(!raw) return null;
-      var data = JSON.parse(raw);
-      return data;
+      var migrated = LanternProgress.migrateProgress(JSON.parse(raw));
+      savedEpisode = null;
+      migratedFromV2 = true;
+      return legacyViewOf(migrated);
     }catch(e){ return null; }
+  }
+
+  // The day flow reads state.stageProgress.homeInn. v3 stores the same facts
+  // under the stage key the map uses, so translate rather than rewrite the
+  // controller - the two shapes carry identical information.
+  var PHASE_FOR_DAY = {1:"learn", 2:"practice", 3:"challenge"};
+
+  function legacyViewOf(v3){
+    var inn = (v3.stages || {})["home-inn"];
+    return {
+      visited: v3.visited || [],
+      starred: v3.starred || [],
+      stageProgress: {homeInn: inn ? {
+        phase: inn.phase || PHASE_FOR_DAY[inn.day] || "learn",
+        index: inn.question || 0,
+        challengeScore: inn.challengeScore || 0,
+        correctWords: inn.correctWords || [],
+        misses: inn.misses || [],
+        mastered: !!inn.mastered,
+        declined: !!inn.declined,
+        medal: inn.medal || "none"
+      } : null}
+    };
   }
   function saveProgress(){
     try{
@@ -316,10 +354,29 @@
           medal:state.stageMastered ? "gold" : (state.stagePhase === "challenge" || state.stagePhase === "review" ? "silver" : (state.stagePhase === "practice" ? "bronze" : "none"))
         };
       }
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      var inn = state.stageProgress.homeInn;
+      localStorage.setItem(STORAGE_KEY_V3, JSON.stringify({
+        version: LanternProgress.VERSION,
         visited: Object.keys(state.visited),
         starred: Object.keys(state.starred),
-        stageProgress:state.stageProgress
+        stages: inn ? {"home-inn": {
+          episode: 1,
+          phase: inn.phase,
+          day: {learn:1, practice:2, challenge:3, review:3}[inn.phase] || 1,
+          question: inn.index,
+          challengeScore: inn.challengeScore,
+          correctWords: inn.correctWords,
+          misses: inn.misses,
+          mastered: inn.mastered,
+          declined: inn.declined,
+          medal: inn.medal
+        }} : {},
+        // The shift and its correction queue: memory-only until now, so a
+        // reload during an episode threw away the whole hour.
+        episode: savedEpisode,
+        items: {},
+        mistakes: [],
+        repairQueue: savedEpisode ? (savedEpisode.repairQueue || []) : []
       }));
     }catch(e){ /* storage unavailable, progress just won't persist */ }
   }
@@ -374,6 +431,10 @@
   var screenGame = $("screen-game");
   var selectedMapKey = "home-inn";
   var selectedMapAction = null;
+  // The episode as it stood at the last save: which question, what was missed,
+  // and the correction queue if the round had started.
+  var savedEpisode = null;
+  var migratedFromV2 = false;
   var mapDetailAction = $("map-detail-action");
 
   screenGame.addEventListener("click", function(event){
@@ -385,6 +446,10 @@
 
   var saved = loadProgress();
   applyProgress(saved);
+  // Write the migrated record once, so the v2 shape is converted rather than
+  // re-read on every load. The v2 key is left alone: if this build is rolled
+  // back, that record is still the learner's progress.
+  if(migratedFromV2) saveProgress();
   if(visitedCount() > 0){
     var note = $("progress-note");
     note.hidden = false;
@@ -592,6 +657,50 @@
       });
     });
     return list;
+  }
+
+  function rememberEpisode(){
+    if(!previewState){ savedEpisode = null; saveProgress(); return; }
+    savedEpisode = {
+      index: previewState.index,
+      missed: previewState.missed.slice(),
+      inRepair: !!previewState.repair,
+      repairQueue: previewState.repair ? previewState.repair.queue.slice() : []
+    };
+    saveProgress();
+  }
+
+  function forgetEpisode(){
+    savedEpisode = null;
+    saveProgress();
+  }
+
+  // Resume where the learner left off rather than restarting the hour. The
+  // correction round resumes too, since it is the part most worth not losing.
+  function resumeEpisode(){
+    if(!savedEpisode) return false;
+    var list = previewQuestions();
+    if(!list.length) return false;
+    previewState = {
+      index: Math.min(savedEpisode.index, list.length - 1),
+      list: list,
+      answered: false,
+      missed: (savedEpisode.missed || []).slice(),
+      repair: null
+    };
+    screenTitle.style.display = "none";
+    screenMap.style.display = "none";
+    screenGame.style.display = "block";
+    screenGame.classList.remove("entrance-stage");
+    if(savedEpisode.inRepair && (savedEpisode.repairQueue || []).length){
+      var byId = {};
+      list.forEach(function(entry){ byId[entry.question.id] = entry.question; });
+      previewState.repair = {queue: savedEpisode.repairQueue.slice(), byId: byId, timer:null, tick:null};
+      renderRepairCard();
+      return true;
+    }
+    renderPreviewQuestion();
+    return true;
   }
 
   function startEpisode(){
@@ -809,7 +918,10 @@
       }
       var correct = value === question.answer.correctIndex;
       previewState.answered = true;
-      if(!correct && previewState.missed.indexOf(question.id) < 0) previewState.missed.push(question.id);
+      if(!correct && previewState.missed.indexOf(question.id) < 0){
+        previewState.missed.push(question.id);
+        rememberEpisode();
+      }
       $("jp-line").textContent = correct ? question.feedback.correct : question.feedback.incorrect;
       speak($("jp-line").textContent, correct ? "correct" : "wrong");
       // Say what the chosen answer actually meant. "Not that one" teaches
@@ -852,11 +964,13 @@
       return;
     }
     previewState.index += 1;
+    rememberEpisode();
     renderPreviewQuestion();
   }
 
   function endEpisodePreview(){
     previewState = null;
+    forgetEpisode();
     $("btn-skip-day").style.display = "inline-flex";
     showMap();
   }
@@ -876,6 +990,7 @@
       timer: null,
       tick: null
     };
+    rememberEpisode();
     renderRepairIntro();
   }
 
@@ -1003,6 +1118,7 @@
 
     var result = LanternReviewEngine.answerRepair(repair.queue, repair.queue[0], outcome);
     repair.queue = result.queue;
+    rememberEpisode();
 
     if(outcome === "correct"){
       showFeedback(true, "正解です。");
@@ -1182,6 +1298,7 @@
     state.challengeMisses = [];
     state.stageMastered = false;
     state.resumedStageEntry = false;
+    if(loc.key === "home-inn" && savedEpisode && resumeEpisode()) return;
     if(loc.encounters && state.stageProgress.homeInn){
       var resumed = state.stageProgress.homeInn;
       state.stagePhase = resumed.phase || "learn";

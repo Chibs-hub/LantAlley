@@ -88,3 +88,44 @@ test("progress updates never mutate the record they were given", () => {
   assert.equal(Object.keys(base.items).length, 0);
   assert.equal(base.mistakes.length, 0);
 });
+
+test("the app stores v3 and reads v2 only to migrate it", () => {
+  const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
+
+  // v2 had nowhere to put an episode, so a reload mid-shift threw the hour
+  // away: previewState was memory-only and repairQueue was never persisted.
+  assert.match(app, /var STORAGE_KEY_V3 = "lanternAlley\.v3";/);
+  assert.match(app, /localStorage\.setItem\(STORAGE_KEY_V3/);
+  assert.match(app, /LanternProgress\.migrateProgress\(JSON\.parse\(raw\)\)/);
+
+  // Written once on boot rather than re-migrated on every load, and the v2
+  // record is left alone so a rollback still finds the learner's progress.
+  assert.match(app, /if\(migratedFromV2\) saveProgress\(\);/);
+  assert.doesNotMatch(app, /localStorage\.removeItem\(STORAGE_KEY\)/);
+
+  // The shift and its correction queue are saved and resumable.
+  assert.match(app, /function rememberEpisode/);
+  assert.match(app, /function resumeEpisode/);
+  assert.match(app, /savedEpisode && resumeEpisode\(\)/);
+  assert.match(app, /inRepair: !!previewState\.repair/);
+});
+
+test("the legacy view carries every fact the day flow needs", () => {
+  const progress = load();
+  // app.js translates v3 back into the shape the day controller reads, rather
+  // than rewriting the controller. Nothing may be dropped in the round trip.
+  const migrated = progress.migrateProgress({
+    visited: ["entrance", "home-inn"],
+    starred: ["entrance"],
+    stageProgress: { homeInn: { phase: "challenge", index: 2, medal: "silver",
+      challengeScore: 3, correctWords: ["揃える"], misses: ["温める"], declined: true } },
+  });
+  const inn = migrated.stages["home-inn"];
+  assert.equal(inn.medal, "silver");
+  assert.equal(inn.question, 2);
+  assert.equal(inn.day, 3);
+  assert.equal(inn.challengeScore, 3);
+  assert.deepEqual([...inn.correctWords], ["揃える"]);
+  assert.deepEqual([...inn.misses], ["温める"]);
+  assert.equal(inn.declined, true);
+});
