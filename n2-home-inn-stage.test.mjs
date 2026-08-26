@@ -651,11 +651,21 @@ test("arrange requests describe making two matching pairs on the mats", () => {
   }
 });
 
-test("zabuton silhouettes visibly distinguish vertical and horizontal direction", () => {
-  assert.match(html, /var rot = a\.dir === "up" \? 90 : 0;/);
-  assert.match(html, /function roomSpriteMarkup\(room, key\)\{[\s\S]*?cushionMarkup\(cushion\[1\]\)/);
-  assert.match(html, /cushion-weave/);
-  assert.match(html, /cushion-tuft/);
+test("photographic zabuton sprites visibly distinguish size and direction", () => {
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(readFileSync(stageUrl, "utf8"), context);
+  const sprites = context.N2HomeInnStage.encounters[0].interaction.room.visual.sprites;
+
+  assert.deepEqual(
+    [sprites.c1.rotate, sprites.c2.rotate, sprites.c3.rotate, sprites.c4.rotate],
+    [90, 90, 0, 0],
+  );
+  assert.deepEqual(
+    [sprites.c1.zoom, sprites.c2.zoom, sprites.c3.zoom, sprites.c4.zoom],
+    [1.08, 0.82, 0.82, 1.08],
+  );
+  assert.match(html, /--sprite-rotate:[^;]+;--sprite-zoom:/);
 });
 
 test("replacement objects start in a real location and use the correct removal destination", () => {
@@ -697,7 +707,10 @@ test("the illustrated room maps every movable object and destination exactly onc
     ...room.dishes.map((dish) => dish.icon),
   ];
   assert.equal(new Set(movable).size, movable.length, "movable visual keys must be unique");
-  assert.deepEqual(Object.keys(visual.sprites).sort(), movable.sort());
+  assert.deepEqual(
+    [...Object.keys(visual.sprites), ...Object.keys(visual.assets || {})].sort(),
+    movable.sort(),
+  );
 
   const destinations = [
     ...room.groups.map(([key]) => key),
@@ -723,6 +736,27 @@ test("the illustrated room maps every movable object and destination exactly onc
     visual.hotspots["install-bulb"].y >= 9,
     "the bulb target must sit below the clipped top edge",
   );
+});
+
+test("the used sheet sits loose and crooked over the futon", () => {
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(readFileSync(stageUrl, "utf8"), context);
+  const visual = context.N2HomeInnStage.encounters[0].interaction.room.visual;
+
+  assert.equal(visual.assets.sheetStained, "assets/inn/sheet-stained-messy-v1.webp");
+  assert.equal(existsSync(new URL("./" + visual.assets.sheetStained, import.meta.url)), true);
+  assert.match(html, /<img class="inn-photo-sprite inn-photo-sprite-/);
+  assert.match(html, /--object-image:url/);
+  assert.match(
+    html,
+    /\.inn-room-illustrated \.inn-photo-sprite-sheetStained\{[^}]*transform:translate\(-12%,2%\) rotate\(-14deg\) scale\(1\.18\)/,
+  );
+  assert.match(
+    html,
+    /\.inn-room-illustrated \[data-key="install-sheet"\] \.inn-placed-object\{[^}]*width:100%[^}]*max-width:145px[^}]*overflow:visible[^}]*background:transparent/,
+  );
+  assert.match(html, /\.inn-room-illustrated \.inn-photo-sprite-sheetStained\{[^}]*mask-image:var\(--object-image\)[^}]*mask-mode:luminance/);
 });
 
 test("the illustrated room keeps appliance targets safely away from mats and the futon", () => {
@@ -987,13 +1021,6 @@ test("challenge speaks the request but never types it out", () => {
   for (const call of calls) {
     assert.match(call, /getWrittenPrompt/, `a request is spoken without a display override: ${call}`);
   }
-});
-
-test("the supply shelf shows colour, size and direction", () => {
-  // The shelf drew each zabuton as a 26px icon in a 60px button, so the three
-  // attributes the request asks about were not distinguishable.
-  assert.match(html, /\.inn-tray \.cushion-icon\{width:48px; height:48px;\}/);
-  assert.match(html, /\.inn-tray \.inn-icon\{width:44px; height:44px;\}/);
 });
 
 test("the Inn frames match the Entrance rather than a second wood", () => {

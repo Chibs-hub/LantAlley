@@ -211,7 +211,7 @@ test("the illustrated room artwork is available offline", () => {
   const visual = context.N2HomeInnStage.encounters[0].interaction.room.visual;
   const sw = read("sw.js");
 
-  for (const asset of [visual.background, visual.spriteSheet]) {
+  for (const asset of [visual.background, visual.spriteSheet, ...Object.values(visual.assets || {})]) {
     assert.ok(sw.includes('"./' + asset + '"'), "sw.js does not pre-cache " + asset);
   }
 });
@@ -255,7 +255,7 @@ test("the offline delivery contains the cinematic opening, Entrance, and room li
   const sw = read("sw.js");
   const artifact = read("lantern-alley-artifact.html");
 
-  assert.match(sw, /lantern-alley-v80/);
+  assert.match(sw, /lantern-alley-v81/);
   for (const pose of [
     "fox-neutral-idle-transparent-v2.webp",
     "fox-wave-closed-smile-transparent-v2.webp",
@@ -378,6 +378,16 @@ test("the shared object room uses an adaptive illustrated interaction surface", 
   assert.match(css, /\.inn-room-composite > \.inn-room-viewport\{[^}]*border:0[^}]*border-radius:0/);
   assert.match(css, /\.inn-room-composite > \.inn-supply-shelf\{[^}]*border-radius:0/);
   assert.match(css, /\.inn-room-illustrated \.inn-tray\{grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
+});
+
+test("the adaptive shelf keeps large photographic objects visible without desktop scrolling", () => {
+  const css = read("styles.css");
+  const shelf = css.match(/\.inn-room-illustrated \.inn-tray\{([^}]*)\}/);
+  assert.ok(shelf, "the illustrated room needs a shelf grid");
+  assert.match(shelf[1], /grid-template-columns:repeat\(10,minmax\(44px,1fr\)\)/);
+  assert.match(shelf[1], /gap:4px/);
+  assert.match(css, /@media\(max-width:620px\)[\s\S]*?\.inn-room-illustrated \.inn-tray\{grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
+  assert.match(css, /\.inn-room-illustrated \.inn-object \.inn-sprite\{[^}]*transform:scale\(1\.2\)/);
 });
 
 test("illustrated room captions stay out of the picture until requested", () => {

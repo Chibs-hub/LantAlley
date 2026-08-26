@@ -887,18 +887,24 @@
   .inn-room-illustrated .inn-scene-zones:empty{display:block}
   .inn-hotspot{position:absolute;min-width:44px;min-height:44px;padding:2px;border:2px solid transparent;border-radius:12px;background:rgba(255,250,240,.04);box-shadow:none;overflow:visible;isolation:isolate}
   .answer-workspace .inn-room-illustrated .inn-hotspot:has(.inn-caption){min-width:0;min-height:0;padding:2px}
-  .inn-room-illustrated .mat-zone{border:2px solid rgba(69,73,42,.72);background:repeating-linear-gradient(90deg,rgba(226,193,112,.13) 0,rgba(226,193,112,.13) 2px,rgba(87,86,48,.08) 2px,rgba(87,86,48,.08) 4px);box-shadow:inset 0 0 0 2px rgba(255,239,187,.2)}
-  .inn-room-illustrated .mat-zone:after{content:"";position:absolute;inset:5px;border:1px solid rgba(74,76,43,.48);border-radius:7px;pointer-events:none}
+  .inn-room-illustrated .mat-zone{border:3px solid rgba(58,67,35,.92);background:linear-gradient(rgba(221,191,116,.12),rgba(221,191,116,.12)),repeating-linear-gradient(90deg,rgba(239,210,137,.24) 0,rgba(239,210,137,.24) 2px,rgba(79,82,43,.12) 2px,rgba(79,82,43,.12) 4px);box-shadow:inset 0 0 0 2px rgba(255,238,180,.38),0 0 0 2px rgba(42,48,26,.35)}
+  .inn-room-illustrated .mat-zone:after{content:"";position:absolute;inset:5px;border:2px solid rgba(65,73,38,.64);border-radius:7px;pointer-events:none}
   .inn-hotspot:hover,.inn-hotspot:focus-visible{transform:none;border-color:#f4bd66;background:rgba(255,246,221,.18);outline:3px solid rgba(83,49,23,.55);outline-offset:1px}
   .inn-room-illustrated .inn-scene-zones.awaiting-drop .inn-hotspot{border-color:#f0a94d;background:rgba(255,238,191,.2);box-shadow:0 0 0 3px rgba(240,169,77,.23);animation:zone-ready 1.4s ease-in-out infinite}
   .inn-supply-shelf{position:relative;padding:12px;border:2px solid #6c4529;border-radius:14px;background:linear-gradient(180deg,#9a6840,#71472d);box-shadow:inset 0 0 0 3px rgba(255,224,175,.13),0 7px 14px rgba(48,31,20,.2)}
   .inn-room-composite > .inn-supply-shelf{padding:10px 12px 12px;border:0;border-top:8px solid #4d301d;border-radius:0;background:linear-gradient(180deg,#a97649 0,#855535 24%,#684028 100%);box-shadow:inset 0 4px 0 rgba(255,224,175,.16),inset 0 -3px 0 rgba(45,27,16,.3)}
-  .inn-room-illustrated .inn-tray{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:7px;width:100%;align-items:center}
-  .inn-room-illustrated .inn-object{position:relative;width:100%;min-width:0;min-height:0;aspect-ratio:1;padding:3px;border:1px solid rgba(255,244,224,.45);border-radius:10px;background:rgba(255,250,240,.12);box-shadow:0 3px 0 rgba(55,34,20,.6)}
+  .inn-room-illustrated .inn-tray{display:grid;grid-template-columns:repeat(10,minmax(44px,1fr));justify-content:center;gap:4px;width:100%;align-items:center}
+  .inn-room-illustrated .inn-object{position:relative;width:100%;min-width:0;min-height:44px;aspect-ratio:1;padding:3px;border:1px solid rgba(255,244,224,.45);border-radius:10px;background:rgba(255,250,240,.12);box-shadow:0 3px 0 rgba(55,34,20,.6);overflow:hidden}
   .inn-room-illustrated .inn-object:hover,.inn-room-illustrated .inn-object:focus-visible{transform:translateY(-3px);background:rgba(255,246,225,.3)}
   .inn-room-illustrated .inn-object.selected{transform:translateY(-3px);border-color:#f6c66f;background:rgba(255,225,166,.44);box-shadow:0 0 0 3px rgba(246,198,111,.38),0 4px 0 rgba(55,34,20,.6)}
   .inn-room-illustrated .inn-object.dragging{position:fixed;z-index:1000;transform:none}
   .inn-sprite{display:block;width:100%;height:100%;background-image:var(--inn-sprite-sheet);background-repeat:no-repeat;background-size:400% 400%;background-position:calc(var(--sprite-col) * 33.333333%) calc(var(--sprite-row) * 33.333333%);filter:drop-shadow(0 3px 2px rgba(38,26,18,.28));pointer-events:none}
+  .inn-photo-sprite{display:block;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 3px 2px rgba(38,26,18,.28));pointer-events:none}
+  .inn-room-illustrated .inn-object .inn-sprite{transform:scale(1.2)}
+  .inn-room-illustrated .inn-sprite-c1,.inn-room-illustrated .inn-sprite-c2,.inn-room-illustrated .inn-sprite-c3,.inn-room-illustrated .inn-sprite-c4{transform:rotate(var(--sprite-rotate)) scale(var(--sprite-zoom))}
+  .inn-room-illustrated .inn-sprite-bulbBroken,.inn-room-illustrated .inn-sprite-bulbNew{transform:scale(1.38)}
+  .inn-room-illustrated .inn-sprite-towelUsed,.inn-room-illustrated .inn-sprite-towelClean{transform:scale(1.26)}
+  .inn-room-illustrated .inn-photo-sprite-sheetStained{-webkit-mask-image:var(--object-image);mask-image:var(--object-image);-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;-webkit-mask-size:contain;mask-size:contain;mask-mode:luminance;transform:translate(-12%,2%) rotate(-14deg) scale(1.18)}
   .inn-room-illustrated .inn-caption{position:absolute;left:50%;bottom:calc(100% + 5px);z-index:6;max-width:18ch;padding:4px 7px;border-radius:7px;background:rgba(39,28,20,.94);color:#fffaf0;font-size:.7rem;line-height:1.25;white-space:nowrap;opacity:0;transform:translate(-50%,4px);transition:opacity .14s ease,transform .14s ease;pointer-events:none}
   .inn-room-illustrated .inn-hotspot > .inn-caption{top:auto;bottom:calc(100% + 5px);transform:translate(-50%,4px)}
   .inn-room-illustrated [data-key="install-bulb"] > .inn-caption{top:calc(100% + 5px);bottom:auto}
@@ -909,7 +915,7 @@
   .answer-workspace .inn-room-illustrated .inn-drop-zone > .inn-placed-object{width:min(78%,74px);height:auto;min-width:0;min-height:0}
   .answer-workspace .inn-room-illustrated .inn-drop-zone:has(.inn-placed-object){min-height:44px}
   .inn-room-illustrated button.inn-placed-object{padding:2px;border:1px solid transparent;background:rgba(255,250,240,.08);box-shadow:none}
-  .inn-room-illustrated [data-key="install-sheet"] .inn-placed-object{width:80%;max-width:118px}
+  .inn-room-illustrated [data-key="install-sheet"] .inn-placed-object{width:100%;max-width:145px;overflow:visible;background:transparent}
   .inn-room-illustrated .inn-heated-object{width:72%;max-width:74px}
   .inn-heat-waves{position:absolute;left:50%;top:2%;z-index:4;color:#fff5dc;font-size:1.25rem;font-weight:800;text-shadow:0 1px 5px #7f512d;transform:translateX(-50%);animation:steam 1s ease-in-out infinite;pointer-events:none}
   .inn-room-illustrated .inn-status{min-height:20px;padding:0 8px;color:#6c4930;font-size:.8rem}
@@ -1058,13 +1064,6 @@
   background:rgba(46,28,16,.82);
   color:#fff3dc;
 }
-
-/* The supply shelf drew each zabuton as a 26px icon inside a 60px button, so
-   colour, size and direction - the three things the sentence asks about - were
-   unreadable. Give the shelf's art most of the button. */
-.inn-tray .inn-icon{width:44px; height:44px;}
-.inn-tray .inn-object,.inn-tray .inn-action{min-width:64px; min-height:68px; padding:6px;}
-.inn-tray .cushion-icon{width:48px; height:48px;}
 
 /* The 「コン (Kon)」 name tab hangs 29px above the speech card. In the Entrance
    that space is empty scene; in the Inn the narration sits directly above, so

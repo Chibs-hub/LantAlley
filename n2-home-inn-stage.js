@@ -158,11 +158,13 @@
     visual:{
       background:"assets/inn/room-empty-v4.webp",
       spriteSheet:"assets/inn/room-objects-v2.webp",
+      assets:{sheetStained:"assets/inn/sheet-stained-messy-v1.webp"},
       sprites:{
-        c1:{col:0,row:0}, c2:{col:1,row:0}, c3:{col:2,row:0}, c4:{col:3,row:0},
+        c1:{col:0,row:0,rotate:90,zoom:1.08}, c2:{col:1,row:0,rotate:90,zoom:.82},
+        c3:{col:2,row:0,rotate:0,zoom:.82}, c4:{col:3,row:0,rotate:0,zoom:1.08},
         towelUsed:{col:0,row:1}, towelClean:{col:1,row:1},
         bulbBroken:{col:2,row:1}, bulbNew:{col:3,row:1},
-        sheetStained:{col:0,row:2}, sheetFresh:{col:1,row:2},
+        sheetFresh:{col:1,row:2},
         kettle:{col:2,row:2}, pot:{col:3,row:2}, rice:{col:0,row:3}
       },
       // Percentages are measured against the 3:2 illustrated room.

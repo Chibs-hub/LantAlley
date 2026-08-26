@@ -1,12 +1,12 @@
 # Lantern Alley Project Handoff
 
-Last updated: 2026-08-25
+Last updated: 2026-08-26
 
 ## 0. Current status and approved plan
 
-Current build work: Alley Entrance and Moonview Inn are the only implemented locations. The Inn source now uses one three-day agreement, announces Day 1 Learn, Day 2 Practice and Day 3 Challenge, treats declining a requested duty as an incorrect answer, and gives a matching Japanese reply after each answer. These source edits are not fully delivered: two new spoken lines still need neural-voice clips, and `lantern-alley-artifact.html` has not been rebuilt after the latest Inn dialogue changes.
+Current build work: Alley Entrance and Moonview Inn are the only implemented locations. The Inn uses one three-day agreement, announces Day 1 Learn, Day 2 Practice and Day 3 Challenge, and gives a matching Japanese reply after each answer. The shared room now uses larger photographic object art, a responsive one-row desktop/two-row mobile supply shelf, clearer woven mats and a dedicated loose, stained used-sheet image that visibly sits crooked over the futon.
 
-Current verification: the targeted Inn and PWA run has 76 of 78 tests passing. The only failures are missing audio for the new three-day invitation and the new end-of-Day-1 reply. The last completed baseline before those dialogue edits had 122 tests passing, syntax checks clean and a 12.92 MB artifact. Do not describe the current working tree as fully green until audio is regenerated, the cache is updated if needed, the artifact is rebuilt and the complete suite passes.
+Current verification: all 207 automated tests pass. `app.js`, `n2-home-inn-stage.js` and `sw.js` pass `node --check`; `git diff --check` reports only the repository's existing LF-to-CRLF notices. Browser verification of the rebuilt standalone artifact at 1280 by 720 confirmed that the sheet's dark source background is masked out, the loose sheet is visibly unfitted, the mats remain clear, and all ten shelf objects remain visible. Cache is `lantern-alley-v81`; the standalone artifact is 9.32 MB.
 
 Approved full-course design: five locations, four authored story episodes per location and ten questions per episode, for 20 Tier 1 episodes and 200 authored questions. Each episode contains 3 Learn, 3 Practice and 4 Challenge questions. Tier 2 generates reading, meaning and cloze practice from the curated vocabulary catalog to cover items that do not fit the story layer. Correction practice repeats only missed items until the queue is empty; its timer is 5 seconds for single-word recognition, 8 seconds by default and 12 seconds for full-sentence repair. Delayed review returns at about 1, 3, 7 and 14 days. The all-stage Mistake Review randomizes mistakes, removes correct items and shows a small source-location note without splitting the queue by stage.
 
@@ -14,9 +14,9 @@ The authoritative course documents are `docs/superpowers/specs/2026-08-25-five-s
 
 Curriculum source: local vocabulary comes from `research/openjlpt/n2.json` and `research/openjlpt/n3.json`, supplemented by `research/n2-supplement.json`. The upstream project is [evanclan/OpenJLPT](https://github.com/evanclan/OpenJLPT), which describes community JLPT level assignments and Tatoeba examples under CC BY-SA 4.0. The exact commit or release used for the copied local files is not recorded, so provenance is incomplete. The official JLPT does not publish a fixed post-2010 vocabulary, grammar or kanji list. No grammar or kanji catalog has been approved, so the project may claim coverage only of its named vocabulary catalog, not complete JLPT N2 coverage.
 
-Execution blockers and decisions still required: name a native Japanese reviewer or define an honest review-confidence policy; resolve the current single three-day Inn story against the planned four Inn episodes; approve grammar and kanji sources; and confirm that the standalone artifact remains an Entrance plus Inn Episode 1 demo under 15 MB. Audio generation/export and publication remain separate approval-gated actions. No commit, push or publication has been made.
+Execution blockers and decisions still required: name a native Japanese reviewer or define an honest review-confidence policy; resolve the current single three-day Inn story against the planned four Inn episodes; approve grammar and kanji sources; and confirm that the standalone artifact remains an Entrance plus Inn Episode 1 demo under 15 MB. Publication remains a separate approval-gated action. No commit, push or publication has been made.
 
-Working-tree note: `n2-home-inn-stage.js`, `n2-home-inn-stage.test.mjs` and this handoff are modified; both 2026-08-25 curriculum documents are new and untracked. `.audio-python/` is an untracked temporary local Edge TTS environment created while preparing audio generation; it is not a game dependency, and no new clips were exported from it.
+Working-tree note: the current object-art change modifies `app.js`, `n2-home-inn-stage.js`, `n2-home-inn-stage.test.mjs`, `pwa.test.mjs`, `styles.css`, `sw.js` and this handoff, and adds `assets/inn/sheet-stained-messy-v1.png`. The standalone artifact was regenerated but is ignored by Git. No commit was made.
 
 ## 1. Project summary
 
@@ -125,7 +125,7 @@ Important: browser progress is not part of the project folder. Copying or zippin
 | `assets/audio/` | Generated MP3 clips, named by hash of the sentence. |
 | `icons/`, `make-icons.py` | PWA icon set and the script that regenerates it. |
 | `assets/fox/`, `assets/kon/` | Web-sized character images the app actually loads. |
-| `assets/inn/` | The empty illustrated room background and transparent 4 by 4 movable-object sprite sheet. |
+| `assets/inn/` | The illustrated room background, transparent 4 by 4 movable-object sprite sheet and dedicated loose used-sheet image. |
 | `lantern-alley-artifact.html` | Generated. Do not edit by hand; it is overwritten by the build script. |
 | `assets/fox-poses/` | Full-size PNG masters. Not loaded by the app. |
 | `research/` | N5-N2 vocabulary source files and the extraction script. |
@@ -137,12 +137,10 @@ Important: browser progress is not part of the project folder. Copying or zippin
 Run all automated tests from PowerShell in the project folder:
 
 ```powershell
-node --test entrance-stage.test.mjs lantern-map.test.mjs moonview-inn-interactions.test.mjs n2-home-inn-stage.test.mjs pwa.test.mjs
+node --test curriculum-catalog.test.mjs entrance-stage.test.mjs lantern-map.test.mjs learning-content.test.mjs learning-progress.test.mjs moonview-inn-interactions.test.mjs n2-home-inn-stage.test.mjs n2-inn-episodes.test.mjs pwa.test.mjs question-renderer.test.mjs review-engine.test.mjs
 ```
 
-Last completed baseline: 122 tests passed, 0 failed. `app.js`, `n2-home-inn-stage.js` and `sw.js` passed `node --check`, and the rebuilt standalone artifact was 12.92 MB.
-
-Current working tree: `node --test n2-home-inn-stage.test.mjs pwa.test.mjs` passes 76 of 78 tests. The two failures are expected until audio is generated for `日本語の練習をしながら、三日間、宿の仕事を手伝ってくれませんか？` and `ありがとうございます。一日目の仕事はこれで終わりです。今夜は宿で休んでください。`. The standalone artifact has not been rebuilt after these dialogue edits. `sw.js` currently uses cache `lantern-alley-v40`.
+Current verified baseline: 207 tests passed, 0 failed. `app.js`, `n2-home-inn-stage.js` and `sw.js` passed `node --check`. The rebuilt standalone artifact is 9,776,861 bytes and the service-worker cache is `lantern-alley-v81`.
 
 Beyond the mechanics, the tests now guard the design rule itself:
 
@@ -169,6 +167,29 @@ Current artifact: `https://claude.ai/code/artifact/951c7147-1dcf-4b9d-aced-2928c
 An artifact cannot load sibling `.js` files or local images, which is why the build step inlines everything.
 
 ## 9. Change log and reasons
+
+### 2026-08-26 - New object image wired in, cut out, and shipped
+
+A concurrent session added a per-object photo path - `visual.assets` alongside the sprite sheet, so one object can use a dedicated image while the rest stay sprite cells - plus sprite rotation and zoom. It arrived with `assets/inn/sheet-stained-messy-v1.png` for the stained sheet, and 207 tests passing.
+
+Two delivery problems with the file itself:
+
+- **It was a 1.16 MB lossless PNG.** Converted to WebP like the rest of the scene art.
+- **It had a black background, not transparency.** Every corner sampled `(0,0,0)` and the top edge was uniformly black, so over the tatami it would have rendered as a black rectangle - the same failure the Entrance fox poses had with their pale canvases. Keyed out on luminance with a feathered rim between 26 and 64, cropped to the subject, and saved with alpha: **1.16 MB to 23.7 KB**, 55% of the image removed as background, corner alpha 0.
+
+**A verification note.** The dev server kept executing a stale copy of the stage file for several checks - it still had the sprite cell the source no longer defines - even after unregistering the worker, clearing caches and refetching. The built artifact has no service worker, so checking there settled it: `assets` present, sprite cell gone, image inlined. When the local page and the source disagree, trust the artifact.
+
+Verified in the artifact: the stained sheet renders as a photo element at 512x295 with `object-fit: contain`, and no image on the page is broken.
+
+Cache `lantern-alley-v81`, artifact 7.81 MB, 207 of 207 tests pass.
+
+### 2026-08-26 - Larger room objects and an unmistakably used sheet
+
+The supply objects now use larger photographic art: all ten fit in one desktop shelf row and switch to five columns by two rows on narrow screens. The four cushions use the photographic sprite sheet with independent size and direction transforms, replacing the old flat SVG silhouettes. The two mats have stronger green edging, inset borders and woven texture so their boundaries remain obvious.
+
+The used sheet now uses the generated asset `assets/inn/sheet-stained-messy-v1.png`. It is wrinkled, stained, rotated and hanging crooked over the futon so the learner can immediately see that it needs changing. A luminance mask removes the image's dark generation background in Chromium without changing the visible sheet. The sheet asset is included in offline precaching and the standalone build.
+
+Verified in the rebuilt artifact at 1280 by 720. All 207 tests pass, syntax checks are clean, cache is `lantern-alley-v81`, and the artifact is 9.32 MB.
 
 ### 2026-08-26 - The explanation of a wrong answer no longer disappears
 

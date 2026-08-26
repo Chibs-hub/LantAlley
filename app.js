@@ -1324,31 +1324,20 @@
   function iconMarkup(key){
     return '<span class="inn-icon" aria-hidden="true">' + (ICON_SVGS[key] || "") + '</span>';
   }
-  function cushionMarkup(a){
-    var fill = a.color === "red" ? "#c2543a" : "#3f6ea8";
-    var scale = a.size === "large" ? 1 : 0.62;
-    // The base zabuton is landscape. Rotate only 縦向き so the long edge is
-    // visibly vertical; the old sprite cells contradicted two data labels.
-    var rot = a.dir === "up" ? 90 : 0;
-    var t = 'rotate(' + rot + ' 16 16) translate(16 16) scale(' + scale + ') translate(-16 -16)';
-    return '<span class="inn-icon cushion-icon" aria-hidden="true"><svg viewBox="0 0 32 32">'
-      + '<g transform="' + t + '">'
-      + '<rect class="cushion-body" x="3" y="9" width="26" height="14" rx="4" fill="' + fill + '" stroke="#39271d" stroke-width="1.5"/>'
-      + '<path class="cushion-weave" d="M6 12h20M5 16h22M6 20h20" stroke="#f3d7ad" stroke-width=".7" opacity=".34"/>'
-      + '<path d="M4 13Q16 17 28 13M4 19Q16 15 28 19" stroke="#2d211b" stroke-width=".7" opacity=".42" fill="none"/>'
-      + '<circle class="cushion-tuft" cx="16" cy="16" r="2" fill="#513226" stroke="#f0c991" stroke-width=".6"/>'
-      + '</g></svg></span>';
-  }
   function cushionLabel(a){
     return "座布団 - " + (a.color === "red" ? "赤" : "青") + "、" + (a.size === "large" ? "大" : "小") + "、" + (a.dir === "up" ? "縦向き" : "横向き");
   }
   function roomSpriteMarkup(room, key){
-    var cushion = (room.cushions || []).filter(function(entry){ return entry[0] === key; })[0];
-    if(cushion) return cushionMarkup(cushion[1]);
+    var asset = room.visual && room.visual.assets && room.visual.assets[key];
+    if(asset){
+      return '<img class="inn-photo-sprite inn-photo-sprite-' + key + '" src="' + asset
+        + '" alt="" aria-hidden="true" draggable="false" style="--object-image:url(\'' + asset + '\')">';
+    }
     var cell = room.visual && room.visual.sprites[key];
     if(!cell) return iconMarkup(key);
     return '<span class="inn-sprite inn-sprite-' + key + '" aria-hidden="true"'
-      + ' style="--sprite-col:' + cell.col + ';--sprite-row:' + cell.row + '"></span>';
+      + ' style="--sprite-col:' + cell.col + ';--sprite-row:' + cell.row
+      + ';--sprite-rotate:' + (cell.rotate || 0) + 'deg;--sprite-zoom:' + (cell.zoom || 1.2) + '"></span>';
   }
   function positionRoomHotspot(room, zone, key){
     var spot = room.visual && room.visual.hotspots[key];
