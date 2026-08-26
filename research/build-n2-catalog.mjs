@@ -69,6 +69,23 @@ function inferType(meanings) {
 
 const PARTITIONS = ["home-inn", "market", "tea-house", "station", "shrine"];
 
+// A story episode teaches about forty words. Those words are pinned to the
+// place that teaches them, because the alternative is writing a market scene
+// around whichever words the round-robin happened to deal it - the market
+// partition held 血液, 競馬 and 国籍. Coverage is a property of the practice
+// pool, not of which forty words a story happens to use, so pinning costs
+// nothing and makes the Japanese a great deal better.
+const PINNED = new Map();
+{
+  const table = JSON.parse(readFileSync(new URL("research/authored-targets.json", ROOT), "utf8"));
+  for (const partition of PARTITIONS) {
+    for (const word of table[partition] || []) {
+      if (PINNED.has(word)) throw new Error(`${word} is pinned to two places`);
+      PINNED.set(word, partition);
+    }
+  }
+}
+
 const excluded = [];
 const byWord = new Map();
 
@@ -129,8 +146,9 @@ items.forEach((item, index) => {
   }
   used.add(item.id);
   // Round-robin so every location gets a comparable mix rather than one
-  // location absorbing every word starting with the same kana.
-  item.partition = PARTITIONS[index % PARTITIONS.length];
+  // location absorbing every word starting with the same kana - except for
+  // the words a story episode actually teaches, which belong to their place.
+  item.partition = PINNED.get(item.canonical) || PARTITIONS[index % PARTITIONS.length];
 });
 
 const payload = { items, excluded };

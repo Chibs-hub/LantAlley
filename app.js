@@ -1370,12 +1370,21 @@
     clearRepairTimer();
     [...$("repair-controls").querySelectorAll("button")].forEach(function(b){ b.disabled = true; });
 
-    var result = LanternReviewEngine.answerRepair(repair.queue, repair.queue[0], outcome);
+    var cardId = repair.queue[0];
+    if(!repair.attempts) repair.attempts = {};
+    if(outcome !== "correct") repair.attempts[cardId] = (repair.attempts[cardId] || 0) + 1;
+    var result = LanternReviewEngine.answerRepair(
+      repair.queue, cardId, outcome, null, (repair.attempts[cardId] || 1) - 1);
     repair.queue = result.queue;
     rememberEpisode();
 
     if(outcome === "correct"){
       showFeedback(true, "正解です。");
+    }else if(result.exhausted){
+      // Three goes is enough. Holding a learner on one card until they guess it
+      // is a trap, so the answer is given and the item is left for review.
+      $("jp-line").textContent = "コン：「この言葉は、また後で一緒に見ましょう。」";
+      showFeedback(false, "正しい答えは「" + card.options[card.correctIndex] + "」です。また後で出ます。");
     }else if(outcome === "timeout"){
       // Slowness, not a misconception: the item simply comes back.
       showFeedback(false, "時間切れです。もう一度出ます。");

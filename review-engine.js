@@ -24,21 +24,41 @@
 
   // Only the head can be answered. Anything else is a stale click from a
   // re-render and must not reorder the queue.
-  function answerRepair(queue, id, outcome, errorTag){
+  // After this many goes at one card, the correction round stops asking. A card
+  // sent to the back of the queue every time it is missed has no way out: a
+  // learner who cannot get that one item right is held in the round for ever,
+  // which is a trap rather than a lesson. Three tries, then the answer is given
+  // and the item is left for a later review.
+  var MAX_REPAIR_ATTEMPTS = 3;
+
+  function answerRepair(queue, id, outcome, errorTag, attempts){
     var current = (queue || []).slice();
-    if(current[0] !== id) return {queue:current, errorTag:null, unresolvedFluency:false, accepted:false};
+    if(current[0] !== id) return {queue:current, errorTag:null, unresolvedFluency:false, accepted:false, exhausted:false};
 
     var rest = current.slice(1);
     if(outcome === "correct"){
-      return {queue:rest, errorTag:null, unresolvedFluency:false, accepted:true};
+      return {queue:rest, errorTag:null, unresolvedFluency:false, accepted:true, exhausted:false};
     }
+
+    var tried = Number(attempts) || 0;
+    if(tried + 1 >= MAX_REPAIR_ATTEMPTS){
+      return {
+        queue: rest,
+        errorTag: outcome === "timeout" ? null : (errorTag || "incorrect"),
+        unresolvedFluency: outcome === "timeout",
+        accepted: true,
+        exhausted: true
+      };
+    }
+
     // Wrong and timeout both send the item to the back, but a timeout records
     // slowness rather than a misconception, so it carries no error tag.
     return {
       queue: rest.concat([id]),
       errorTag: outcome === "timeout" ? null : (errorTag || "incorrect"),
       unresolvedFluency: outcome === "timeout",
-      accepted: true
+      accepted: true,
+      exhausted: false
     };
   }
 
@@ -110,6 +130,7 @@
 
   root.LanternReviewEngine = {
     INTERVALS: INTERVALS,
+    MAX_REPAIR_ATTEMPTS: MAX_REPAIR_ATTEMPTS,
     createRepairQueue: createRepairQueue,
     answerRepair: answerRepair,
     recordOutcome: recordOutcome,

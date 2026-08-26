@@ -97,3 +97,36 @@ test("a late learner gets the oldest due item first", () => {
   progress = review.recordOutcome(progress, { id: "new", correct: true, now: T0 + 2 * DAY });
   assert.deepEqual([...review.getDueItems(progress, T0 + 30 * DAY)], ["old", "new"]);
 });
+
+test("the correction round always ends, even for a card that keeps going wrong", () => {
+  const engine = load();
+  // A missed card goes to the back of the queue. With no cap that is a trap:
+  // a learner who cannot get one item right never leaves the round.
+  let queue = ["a", "b"];
+  let attempts = 0;
+  let guard = 0;
+  let exhausted = false;
+  while (queue.length && guard < 50) {
+    guard += 1;
+    const id = queue[0];
+    if (id === "b") {
+      const ok = engine.answerRepair(queue, id, "correct");
+      queue = ok.queue;
+      continue;
+    }
+    const result = engine.answerRepair(queue, id, "incorrect", null, attempts);
+    attempts += 1;
+    queue = result.queue;
+    if (result.exhausted) exhausted = true;
+  }
+  assert.equal(queue.length, 0, "the queue emptied");
+  assert.ok(exhausted, "the stubborn card was let go rather than asked forever");
+  assert.ok(guard < 10, "it ended quickly, in " + guard + " turns");
+});
+
+test("a card answered right first time is never held back", () => {
+  const engine = load();
+  const result = engine.answerRepair(["a", "b"], "a", "correct", null, 0);
+  assert.equal(result.queue.join(","), "b");
+  assert.equal(result.exhausted, false);
+});

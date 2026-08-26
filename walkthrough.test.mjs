@@ -412,7 +412,7 @@ test("the second episode follows the first, with its own item types", async () =
 
   // Long enough to finish the three days, Episode 1 and its correction round,
   // and to reach Episode 2. The clock is fake, so the length costs milliseconds.
-  const run = await drive(game, 2600);
+  const run = await drive(game, 6000);
 
   const seen = [...run.badges].join(" ");
   // Episode 2's own part names, which Episode 1 does not have.
