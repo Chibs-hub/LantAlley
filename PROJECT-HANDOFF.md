@@ -168,6 +168,24 @@ An artifact cannot load sibling `.js` files or local images, which is why the bu
 
 ## 9. Change log and reasons
 
+### 2026-08-26 - Step C: a test that actually renders the game
+
+**The gap this closes.** Around 260 of this suite's assertions match the *source text* of `app.js`. That is how `challenge is not defined` shipped green: the string the test looked for was still in the file while question 2 rendered a running clock and no buttons. Reading source cannot see an empty screen.
+
+**What was built.** `dom-harness.mjs` is a DOM small enough to read - elements, ids, classes, text, events with bubbling, a tag-soup `innerHTML` parser (app.js writes markup as strings and then looks up ids inside it), and a clock the test advances by hand so a six-second dialogue delay costs nothing. No dependency was added; this project has none, and jsdom would have brought a `package.json` and a `node_modules` for one file.
+
+`walkthrough.test.mjs` boots the real `index.html` with all thirteen scripts and plays the game. It solves the room the way the sentence tells it to rather than knowing the answers: the cushions are grouped on the attribute the prompt names, the swap sends the worn thing out before the new one goes in, and the schedule reads its two-hour gap out of the sentence. The Challenge phase writes only 「音声を聞いてください。」, so the driver recovers the request by playing the audio index backwards - it listens, as a learner does.
+
+The invariant it checks is blunt on purpose: **at every point where the game waits for the player, there is something to click.** It now runs the entrance, all three days, and into Episode 1's timed questions.
+
+**Proof it works.** The bug's exact shape was reinjected - a stale identifier in `renderPreviewQuestion`, after the clock starts and before the buttons exist. All 42 assertions in the three suites covering that code passed. The walkthrough failed with the real `ReferenceError`. `app.js` was then restored byte for byte.
+
+**Four harness gaps the game found**, each a real thing app.js relies on: `style.setProperty` for the scene art, `data-*` mirrored into `dataset` (the drop zones are matched by `zone.dataset.key`, and without it every placement scored as the wrong verb), `insertAdjacentHTML`, and the `value` attribute mirrored onto range inputs (without it every arrival time came out `NaN`).
+
+**One thing that looked like a bug and was not.** The audio question appeared to hang forever. Audio playback is a promise, and a promise settles only when the stack yields - the walkthrough now yields between steps. The game's own fallback was fine.
+
+**Verified.** 229 tests, 0 failures, bare `node --test`. Nothing ships: test files are not in `sw.js` or the artifact, and the artifact is unchanged at 7.92 MB.
+
 ### 2026-08-26 - Step B: the catalog is now playable, not just counted
 
 **Why this exists.** The stated goal is covering N2. The story episode teaches ten words deeply, with artwork, audio and authored feedback - a method that cannot reach 3,579 items and should not try. Until today the catalog was data the game shipped and never showed. This layer turns it into practice generated from fields the catalog already holds, so the work is curating one dataset instead of authoring thousands of questions.
