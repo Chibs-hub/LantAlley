@@ -546,6 +546,30 @@
       + "The request asks you to " + wanted + ".";
   }
 
+  /* The five words this stage teaches are five of the Inn's forty catalog
+   * targets. Naming the catalog id here is what lets a correct answer in the
+   * three days count towards the Inn's understanding gauge.
+   *
+   * Without it the gauge read 0% through the whole first stage - three days of
+   * work, a gold medal, and a wallet filling up beside a bar that never moved -
+   * because mastery was only ever credited from the episode path.
+   *
+   * The pairing is authored knowledge, not something to derive: 温める here is
+   * specifically the food-and-drink sense, v-atatameru-food, rather than the
+   * room-warming verb it is usually taught against.
+   */
+  var TARGET_IDS = {
+    "揃える":"v-soroeru",
+    "取り替える":"v-torikaeru",
+    "温める":"v-atatameru-food",
+    "調整":"w-chousei",
+    "引き受ける":"v-hikiukeru"
+  };
+
+  function getTargetId(focusWord){
+    return TARGET_IDS[focusWord] || null;
+  }
+
   root.N2HomeInnStage = {
     key:"home-inn",
     name:"Moonview Inn",
@@ -566,6 +590,7 @@
     getStorySetup:getStorySetup,
     getAutoAdvanceDelay:getAutoAdvanceDelay,
     getKonResponse:getKonResponse,
-    getWrongAnswerFeedback:getWrongAnswerFeedback
+    getWrongAnswerFeedback:getWrongAnswerFeedback,
+    getTargetId:getTargetId
   };
 })(typeof window !== "undefined" ? window : globalThis);

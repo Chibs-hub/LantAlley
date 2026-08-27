@@ -194,6 +194,20 @@ An artifact cannot load sibling `.js` files or local images, which is why the bu
 
 ## 9. Change log and reasons
 
+### 2026-08-27 - The understanding gauge did not work in the Inn's first stage
+
+**The fault.** Asked to check whether the gauge was actually working, and it was not. Through the whole three-day Inn stage the 理解度 gauge read 0% while the wallet filled up. Confirmed in the built artifact rather than by reading: two correct answers, `paidAnswers` at 2, wallet at ¥20, and `masteredByStage` still `{}`.
+
+**Why.** `markMastered` was only ever called from the episode path and the correction round. The three days call `rewardCorrect`, so they paid, but nothing credited the word. A learner could finish the first stage with a gold medal and a full wallet beside a bar that had never moved - which is exactly the false progress the Golden Rule warns about, running in reverse: real learning that the game refused to acknowledge.
+
+**The fix.** The three-day stage teaches five of the Inn's forty catalog words, and now says which: `getTargetId` maps 揃える to `v-soroeru`, 取り替える to `v-torikaeru`, 温める to `v-atatameru-food`, 調整 to `w-chousei` and 引き受ける to `v-hikiukeru`. Answering one correctly marks it, exactly as answering it in an episode does. The pairing is authored knowledge rather than something to derive - 温める here is specifically the food-and-drink sense.
+
+**Verified in the artifact.** From a clean save the gauge moves 0% to 3% to 5% to 8% as three distinct words are learned, `masteredByStage` fills with the matching ids, and repeated answers on a word already credited leave it where it is. The wallet reached ¥40 over the same run: money counts questions answered, the gauge counts words understood, and they are meant to disagree.
+
+**Worth knowing.** Finishing the entire three-day stage reads 13%, not 100%. That is arithmetically right - the Inn's material is forty words across four episodes and the three days cover five of them - but it means the first stage cannot on its own unlock the next place, which requires 100%. Whether the three days should count against the Inn's full forty or against their own five is a design decision that has not been taken.
+
+275 tests pass. Cache `lantern-alley-v109`, artifact 14.89 MB.
+
 ### 2026-08-27 - Payday: the wallet now makes a sound and shows the coin
 
 The economy already paid correctly but silently, so the one moment of reward in a shift looked like a number quietly changing in the corner. A correct answer that earns money now plays a short two-note till sound and floats a `+¥10` chip above the wallet, which flashes as it takes the money.

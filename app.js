@@ -2890,6 +2890,11 @@
     var items = state.phaseItems || stage.getPhaseItems(state.stagePhase);
     showKonStageResponse(stage, prompt, isCorrect, selectedKey);
     if(isCorrect){
+      // Credit the word itself, not just the wallet. The three days teach five
+      // of the Inn's forty catalog words, and answering one correctly here is
+      // the same evidence of understanding as answering it in an episode.
+      var masteredId = stage.getTargetId && stage.getTargetId(prompt.focusWord);
+      if(masteredId) markMastered(prompt.stageKey, masteredId);
       rewardCorrect("training:" + prompt.stageKey + ":" + state.stagePhase + ":" + (prompt.id || prompt.focusWord || state.encounterIndex), state.stagePhase);
     }
 
