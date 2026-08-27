@@ -419,6 +419,44 @@
     return result;
   }
 
+  /* Where the right answer sits in the three days.
+   *
+   * Every one of these fifteen items listed its correct choice first, so a
+   * learner could clear the whole first stage by always tapping the top
+   * option without reading a word of Japanese. The episodes were balanced
+   * months ago; this file was missed because its correctness is decided by
+   * option key rather than by index, so nothing about it looked positional.
+   *
+   * The shuffle happens here rather than in the data because the learn and
+   * challenge phases take their labels from a parallel array by position, and
+   * mark the near miss as "whichever option is second". Reordering the data
+   * would tear labels off their keys. By this point each option is one object
+   * carrying its own key, label, near-miss flag and explanation, so moving it
+   * moves everything with it.
+   *
+   * Keyed on the item and phase, so it is stable: the same question always
+   * presents in the same order, and an answer never moves under a finger.
+   */
+  function shuffleSeed(text){
+    var h = 0x811c9dc5;
+    for(var i = 0; i < text.length; i++){
+      h ^= text.charCodeAt(i);
+      h = (h * 0x01000193) >>> 0;
+    }
+    return h >>> 0;
+  }
+
+  function balanceOptions(options, seedText){
+    var out = options.slice();
+    var h = shuffleSeed(seedText);
+    for(var i = out.length - 1; i > 0; i--){
+      h = ((h ^ (h >>> 13)) * 0x01000193) >>> 0;
+      var j = h % (i + 1);
+      var swap = out[i]; out[i] = out[j]; out[j] = swap;
+    }
+    return out;
+  }
+
   function phaseItem(index, variant, phase){
     var base = encounters[index];
     var text = variant ? practiceVariantsB[index] : practiceVariantsA[index];
@@ -441,6 +479,7 @@
             explanation:index !== 4 && optionIndex === 1 ? nearMissExplanations[index] : ""
           };
         });
+    options = balanceOptions(options, phase + ":" + index + ":" + (variant ? "b" : "a"));
     return copyItem(base, {
       phase:phase,
       mechanic:mechanicNames[index],
@@ -591,6 +630,7 @@
     getAutoAdvanceDelay:getAutoAdvanceDelay,
     getKonResponse:getKonResponse,
     getWrongAnswerFeedback:getWrongAnswerFeedback,
-    getTargetId:getTargetId
+    getTargetId:getTargetId,
+    balanceOptions:balanceOptions
   };
 })(typeof window !== "undefined" ? window : globalThis);

@@ -21,9 +21,12 @@
       meaning:"お辞儀をしてください。",
       hint:"「お辞儀」は、体を前に傾ける日本のあいさつです。",
       type:"choice",
+      // Not answer-first, even here. This is the learner's first question, and
+      // it should not teach that the answer lives at the top. Correctness is
+      // decided by key, so the order is free.
       options:[
-        {key:"bow", emoji:"🙇", label:"Bow"},
         {key:"wave", emoji:"👋", label:"Wave"},
+        {key:"bow", emoji:"🙇", label:"Bow"},
         {key:"clap", emoji:"👏", label:"Clap"}
       ],
       correct:"bow",
@@ -2688,7 +2691,11 @@
     }else{
       // The reply is the whole answer. No object to find, no destination to guess.
       actions.className = "inn-actions inn-replies";
-      interaction.replies.forEach(function(reply){
+      // The accept/decline replies were listed accept-first every time.
+      var orderedReplies = (typeof N2HomeInnStage !== "undefined" && N2HomeInnStage.balanceOptions)
+        ? N2HomeInnStage.balanceOptions(interaction.replies, "replies:" + (prompt.focusWord || "") + ":" + state.stagePhase)
+        : interaction.replies;
+      orderedReplies.forEach(function(reply){
         var button = document.createElement("button");
         button.className = "inn-action reply-option";
         button.textContent = reply.label;

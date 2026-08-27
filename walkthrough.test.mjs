@@ -271,7 +271,10 @@ test("the entrance runs to its end and always leaves something to click", () => 
       game.clickable().length > 0 || game.$("screen-game").style.display === "block",
       "step " + step + ": the game is still interactive",
     );
-    const choice = game.doc.querySelectorAll("[data-key]")[0];
+    // The entrance no longer lists the bow first, so a driver taking the first
+    // action gets it wrong. A scripted player bows on purpose.
+    const actions = game.doc.querySelectorAll("[data-key]");
+    const choice = actions.filter((a) => a.getAttribute("data-key") === "bow")[0] || actions[0];
     if (choice) { choice.click(); game.clock.advance(3000); break; }
     game.tapScreen();
   }
@@ -297,7 +300,10 @@ async function enterTheInn(game) {
   if (character) { character.click(); game.clock.advance(500); }
 
   for (let step = 0; step < 30; step += 1) {
-    const choice = game.doc.querySelectorAll("[data-key]")[0];
+    // The entrance no longer lists the bow first, so a driver taking the first
+    // action gets it wrong. A scripted player bows on purpose.
+    const actions = game.doc.querySelectorAll("[data-key]");
+    const choice = actions.filter((a) => a.getAttribute("data-key") === "bow")[0] || actions[0];
     if (choice) { choice.click(); game.clock.advance(4000); break; }
     game.tapScreen();
   }
@@ -318,7 +324,30 @@ async function enterTheInn(game) {
   await tick();
 }
 
+/* The labels that count as correct in the Inn's three days.
+ *
+ * The driver already solves the room by reading the sentence. With the option
+ * order balanced it needs the same knowledge for the word choices, or the
+ * walkthrough measures the shuffle instead of the game.
+ */
+function innAnswerLabels(game) {
+  const stage = game.context.N2HomeInnStage;
+  const labels = new Set();
+  if (!stage) return labels;
+  for (const phase of ["learn", "practice", "challenge"]) {
+    for (const item of stage.getPhaseItems(phase)) {
+      for (const option of item.options || []) {
+        if (option.key === item.correct) labels.add(option.label);
+      }
+      const replies = (item.interaction && item.interaction.replies) || [];
+      for (const reply of replies) if (reply.key === "accept") labels.add(reply.label);
+    }
+  }
+  return labels;
+}
+
 async function drive(game, steps, onQuestion) {
+  const innAnswers = innAnswerLabels(game);
   const badges = new Set();
   const prompts = new Set();
   let questionsSeen = 0;
@@ -376,7 +405,12 @@ async function drive(game, steps, onQuestion) {
     if (controls.length) {
       questionsSeen += 1;
       if (onQuestion) onQuestion(controls, questionsSeen);
-      let pick = controls.filter((c) => !c.textContent.startsWith("\u3059\u307f\u307e\u305b\u3093"))[0] || controls[0];
+      // The three days no longer list the right answer first, so a driver that
+      // always takes the top option cannot get through Day 2. It reads the
+      // room's answer out of the sentence; it takes these from the stage data.
+      let pick = controls.filter((c) => innAnswers.has(c.textContent))[0]
+        || controls.filter((c) => !c.textContent.startsWith("\u3059\u307f\u307e\u305b\u3093"))[0]
+        || controls[0];
       if (game.$("stage-phase-badge").textContent === "\u9593\u9055\u3044\u76f4\u3057") {
         const repairKey = spoken + (panel ? panel.textContent : "");
         const attempt = repairAttempts.get(repairKey) || 0;

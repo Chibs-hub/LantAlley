@@ -76,3 +76,49 @@ test("balancing moved indices, not strings: every option still means what it did
       `${q.id} points at an option that is not there`);
   }
 });
+
+test("the Inn's three days do not put the answer first every time", () => {
+  const context = {};
+  context.self = context;
+  vm.createContext(context);
+  for (const file of ["curriculum-catalog.js", "moonview-inn-interactions.js", "n2-home-inn-stage.js"]) {
+    vm.runInContext(readFileSync(new URL("./" + file, import.meta.url), "utf8"), context);
+  }
+  const stage = context.N2HomeInnStage;
+
+  // This file was missed when the episodes were balanced, because its
+  // correctness is decided by option key rather than by index - nothing about
+  // it looked positional. All fifteen items listed the answer first, so the
+  // whole first stage could be cleared by always tapping the top option.
+  const positions = [];
+  for (const phase of ["practice", "challenge"]) {
+    for (const item of stage.getPhaseItems(phase)) {
+      const options = item.options || [];
+      if (options.length < 2) continue;
+      const at = options.findIndex((o) => o.key === item.correct);
+      if (at >= 0) positions.push(at);
+    }
+  }
+  assert.ok(positions.length >= 8, "there are enough option sets to judge: " + positions.length);
+
+  const first = positions.filter((p) => p === 0).length;
+  assert.ok(first <= Math.ceil(positions.length * 0.5),
+    `${first} of ${positions.length} answers sit first`);
+  assert.ok(new Set(positions).size >= 2, "the answer appears in more than one position");
+});
+
+test("the same question always presents in the same order", () => {
+  const context = {};
+  context.self = context;
+  vm.createContext(context);
+  for (const file of ["curriculum-catalog.js", "moonview-inn-interactions.js", "n2-home-inn-stage.js"]) {
+    vm.runInContext(readFileSync(new URL("./" + file, import.meta.url), "utf8"), context);
+  }
+  const stage = context.N2HomeInnStage;
+
+  // A shuffle that re-ran on every render would move an answer under a
+  // learner's finger between reading it and tapping it.
+  const once = stage.getPhaseItems("practice").map((i) => i.options.map((o) => o.key).join(","));
+  const twice = stage.getPhaseItems("practice").map((i) => i.options.map((o) => o.key).join(","));
+  assert.deepEqual(twice, once, "the order is stable across renders");
+});

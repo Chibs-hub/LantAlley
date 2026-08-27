@@ -194,6 +194,24 @@ An artifact cannot load sibling `.js` files or local images, which is why the bu
 
 ## 9. Change log and reasons
 
+### 2026-08-27 - The answer was still first in the stage people actually play
+
+Reported as "the answer still seems mostly the first choice", and it was. The 25/25/25/25 figure quoted after the earlier balancing pass covered the two hundred **episode** questions. It did not cover the three-day Inn stage, which is what a learner meets first and spends their first session in - and there the answer was first **fifteen times out of fifteen**.
+
+**Why it was missed.** `research/balance-answers.mjs` rewrites `correctIndex` in the episode data files. The three days decide correctness by option *key*, never by index, so nothing about the file looked positional and the balancer had no reason to touch it. The measurement that reported success measured only the files the balancer had run on. A number that only counts what a fix touched will always look like a success.
+
+**Where it is balanced now.** Not in the data: the learn and challenge phases take their option labels from a parallel array by position, and mark the near miss as "whichever option is second", so reordering the data would tear labels off their keys. The shuffle runs in `phaseItem`, after each option has been assembled into one object carrying its own key, label, near-miss flag and explanation - so moving it moves everything with it. It is seeded from the item and phase, so a question always presents in the same order and an answer never moves under a finger.
+
+The accept/decline replies were accept-first every time; they are shuffled at the point of rendering. The Entrance tutorial listed the bow first, which is a learner's very first question and taught them where the answer lives - now second.
+
+**Measured after the change**: the three days are 0/4/2/4, and the episodes remain 50/51/49/50.
+
+**Two tests that would have caught it.** One asserts the answer's position over the three days directly. The other asserts the order is stable across renders, because a shuffle that re-ran on every render would move an answer between reading it and tapping it.
+
+**The walkthrough had to learn to play.** It always clicked the first control, which was silently correct; with the shuffle it stalls on Day 2. It now takes the Inn's answers from the stage data - the way it already reads the room's answer out of the sentence - and bows deliberately at the Entrance. That it broke at all is the clearest evidence the old ordering was doing the answering.
+
+292 tests pass. Cache `lantern-alley-v116`, artifact 14.91 MB.
+
 ### 2026-08-27 - Tap a word for its reading and meaning
 
 Being stuck on one kanji in the middle of a request loses the whole request, and the game's only answer was "you got it wrong", which teaches nothing about why. Every catalog word in a line is now tappable: tapping shows its reading in kana and its first meaning, in a small bubble above the word.
