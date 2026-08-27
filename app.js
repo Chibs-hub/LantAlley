@@ -630,6 +630,29 @@
     if(!state.visited.entrance) enterLocation("entrance");
     else showMap();
   });
+  /* The attribution screen. Required rather than decorative: the EDRDG licence
+   * covering JMdict and KANJIDIC2 asks an application to carry acknowledgement
+   * on a dedicated screen - an About menu rather than a splash. The catalogue
+   * here is derived from that data through OpenJLPT. */
+  (function(){
+    var panel = $("about-panel");
+    var open = $("btn-about");
+    var close = $("btn-about-close");
+    if(!panel || !open || !close) return;
+    function show(visible){
+      panel.hidden = !visible;
+      if(visible) close.focus(); else open.focus();
+    }
+    open.addEventListener("click", function(){ show(true); });
+    close.addEventListener("click", function(){ show(false); });
+    panel.addEventListener("click", function(event){
+      if(event.target === panel) show(false);   // tapping the backdrop closes it
+    });
+    document.addEventListener("keydown", function(event){
+      if(event.key === "Escape" && !panel.hidden) show(false);
+    });
+  })();
+
   $("btn-restart").addEventListener("click", function(){
     applyProgress(null);
     state.currentKey = null;

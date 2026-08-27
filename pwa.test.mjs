@@ -272,7 +272,7 @@ test("the offline delivery contains the cinematic opening, Entrance, and room li
   const sw = read("sw.js");
   const artifact = read("lantern-alley-artifact.html");
 
-  assert.match(sw, /lantern-alley-v118/);
+  assert.match(sw, /lantern-alley-v119/);
   for (const pose of [
     "fox-neutral-idle-transparent-v2.webp",
     "fox-wave-closed-smile-transparent-v2.webp",
@@ -471,4 +471,32 @@ test("every local asset URL carries the cache version", () => {
   const style = /<link rel="stylesheet" href="([^":]+\.css)(\?v=(\d+))?"/.exec(html);
   assert.ok(style, "the stylesheet is linked");
   assert.equal(style[3], version[1], "the stylesheet is not stamped");
+});
+
+test("the app carries the attribution its data licence requires", () => {
+  const html = readFileSync(new URL("./index.html", import.meta.url), "utf8");
+  const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  const notice = readFileSync(new URL("./NOTICE.md", import.meta.url), "utf8");
+
+  // Verified against edrdg.org on 2026-08-27: JMdict and KANJIDIC2 are
+  // CC BY-SA 4.0, and the licence is explicit that an application needs
+  // acknowledgement on a dedicated screen - an About menu, not a splash.
+  // The catalogue here is derived from that data through OpenJLPT.
+  assert.match(html, /id="about-panel"/, "there is a dedicated attribution screen");
+  assert.match(html, /id="btn-about"/, "and a way to reach it");
+  assert.match(app, /panel\.hidden = !visible/, "the panel is wired up");
+
+  for (const credit of ["OpenJLPT", "EDRDG", "KANJIDIC2", "Tatoeba", "tanos.co.uk"]) {
+    assert.ok(html.includes(credit), `the attribution screen omits ${credit}`);
+  }
+  assert.match(html, /creativecommons\.org\/licenses\/by-sa\/4\.0/, "the licence must be linked");
+
+  // The honest caveat: the JLPT publishes no official word list, so every
+  // "N2" claim in this game rests on community approximations.
+  assert.match(html, /公式の語彙リストを公開していません/);
+
+  // And the same chain is recorded for anyone reading the repo.
+  for (const credit of ["JMdict", "KANJIDIC2", "Tatoeba", "CC BY-SA 4.0"]) {
+    assert.ok(notice.includes(credit), `NOTICE.md omits ${credit}`);
+  }
 });

@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600;800&family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=118">
+<link rel="stylesheet" href="styles.css?v=119">
 </head>
 <body>
 
@@ -41,6 +41,46 @@
       <div class="title-actions">
         <button class="btn btn-primary" id="btn-start">路地へ入る</button>
         <button class="btn btn-ghost" id="btn-restart" hidden>最初から</button>
+      </div>
+      <button class="title-about-link" id="btn-about" type="button">このゲームについて</button>
+    </div>
+
+    <!-- The EDRDG licence asks an application for a dedicated attribution
+         screen, not just a line in the documentation or on a splash. -->
+    <div class="about-panel" id="about-panel" role="dialog" aria-modal="true"
+         aria-labelledby="about-title" hidden>
+      <div class="about-card">
+        <h2 id="about-title">このゲームについて</h2>
+        <p class="about-lead">言葉の路地 — a Japanese story-walk for JLPT N2.</p>
+
+        <h3>言葉のデータ</h3>
+        <p>
+          単語のデータは
+          <a href="https://github.com/evanclan/OpenJLPT" target="_blank" rel="noopener">OpenJLPT</a>
+          によります。OpenJLPT は次のものからできています。
+        </p>
+        <ul>
+          <li>読みと意味 — JMdict / EDICT
+            (<a href="https://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dictionary_Project" target="_blank" rel="noopener">EDRDG</a>)</li>
+          <li>漢字の情報 — KANJIDIC2
+            (<a href="https://www.edrdg.org/wiki/index.php/KANJIDIC_Project" target="_blank" rel="noopener">EDRDG</a>)</li>
+          <li>級の分け方 — Jonathan Waller
+            (<a href="https://www.tanos.co.uk/jlpt/" target="_blank" rel="noopener">tanos.co.uk</a>)</li>
+          <li>例文 — <a href="https://tatoeba.org/" target="_blank" rel="noopener">Tatoeba</a></li>
+        </ul>
+        <p>
+          これらは
+          <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a>
+          で公開されています。このゲームの単語データも同じ条件で使えます。
+        </p>
+
+        <h3>級について</h3>
+        <p class="about-caveat">
+          日本語能力試験は、公式の語彙リストを公開していません。ここでの「N2」は、
+          広く使われている有志のリストによる目安です。試験そのものの中身ではありません。
+        </p>
+
+        <button class="btn btn-primary" id="btn-about-close" type="button">閉じる</button>
       </div>
     </div>
   </section>
@@ -164,27 +204,27 @@
   <footer class="credits">Lantern Alley &middot; a small Japanese story-walk</footer>
 </div>
 
-<script src="curriculum-catalog.js?v=118"></script>
-<script src="learning-content.js?v=118"></script>
-<script src="review-engine.js?v=118"></script>
-<script src="learning-progress.js?v=118"></script>
-<script src="learning-economy.js?v=118"></script>
-    <script src="learning-gloss.js?v=118"></script>
-    <script src="home-room.js?v=118"></script>
-    <script src="daily-practice.js?v=118"></script>
-<script src="question-renderer.js?v=118"></script>
-<script src="catalog-practice.js?v=118"></script>
-<script src="entrance-stage-logic.js?v=118"></script>
-<script src="moonview-inn-interactions.js?v=118"></script>
-<script src="n2-home-inn-stage.js?v=118"></script>
-<script src="n2-inn-episodes.js?v=118"></script>
-    <script src="n2-market-episodes.js?v=118"></script>
-    <script src="n2-teahouse-episodes.js?v=118"></script>
-    <script src="n2-station-episodes.js?v=118"></script>
-    <script src="n2-shrine-episodes.js?v=118"></script>
-<script src="audio-index.js?v=118"></script>
-<script src="lantern-map.js?v=118"></script>
-<script src="app.js?v=118"></script>
+<script src="curriculum-catalog.js?v=119"></script>
+<script src="learning-content.js?v=119"></script>
+<script src="review-engine.js?v=119"></script>
+<script src="learning-progress.js?v=119"></script>
+<script src="learning-economy.js?v=119"></script>
+    <script src="learning-gloss.js?v=119"></script>
+    <script src="home-room.js?v=119"></script>
+    <script src="daily-practice.js?v=119"></script>
+<script src="question-renderer.js?v=119"></script>
+<script src="catalog-practice.js?v=119"></script>
+<script src="entrance-stage-logic.js?v=119"></script>
+<script src="moonview-inn-interactions.js?v=119"></script>
+<script src="n2-home-inn-stage.js?v=119"></script>
+<script src="n2-inn-episodes.js?v=119"></script>
+    <script src="n2-market-episodes.js?v=119"></script>
+    <script src="n2-teahouse-episodes.js?v=119"></script>
+    <script src="n2-station-episodes.js?v=119"></script>
+    <script src="n2-shrine-episodes.js?v=119"></script>
+<script src="audio-index.js?v=119"></script>
+<script src="lantern-map.js?v=119"></script>
+<script src="app.js?v=119"></script>
 
 <script>
   // Service workers need http(s); opening this file directly with file://

@@ -32,25 +32,29 @@ each decision was made rather than just what changed. Read section 0 first.
 
 ## Third-party data and attribution
 
-The vocabulary catalogue is **derived from third-party data** and this matters
-for anything published from it.
+The vocabulary catalogue is **derived from CC BY-SA 4.0 data**, and that follows
+the data wherever it goes. The full chain, verified against the upstream sources
+on 2026-08-27, is in **[NOTICE.md](NOTICE.md)**.
 
-| Source | Used for | Licence |
-| --- | --- | --- |
-| [OpenJLPT](https://github.com/evanclan/OpenJLPT) | The N2/N3 vocabulary in `research/openjlpt/`, from which `curriculum-catalog.js` is generated | Stated by the upstream project as CC BY-SA 4.0 |
-| Tatoeba | Example sentences carried through the OpenJLPT data | Tatoeba publishes under CC BY 2.0 FR |
+In short: `curriculum-catalog.js` is generated from
+[OpenJLPT](https://github.com/evanclan/OpenJLPT), which is itself built from
+JMdict/EDICT and KANJIDIC2 (EDRDG, CC BY-SA 4.0), Jonathan Waller's JLPT level
+lists (CC BY), and Tatoeba example sentences (CC BY 2.0 FR).
 
-**Two things are unresolved and should be settled before any public release:**
+Three consequences worth knowing before publishing anything:
 
-1. **Provenance is incomplete.** The exact upstream commit or release used for
-   the local copies in `research/openjlpt/` was never recorded, so the catalogue
-   cannot currently be traced to a specific version of its source.
-2. **Share-alike has not been assessed.** If the upstream licence is CC BY-SA,
-   the generated `curriculum-catalog.js` is a derived work and the obligation
-   likely follows it. Nothing here currently carries that notice.
+1. **The derived data is CC BY-SA 4.0.** Distributing `curriculum-catalog.js`
+   means distributing it under that licence, with attribution. This attaches to
+   the data, not automatically to the rest of the code.
+2. **The app must show attribution on screen.** The EDRDG licence is explicit
+   that documentation is not enough for an application — it asks for a dedicated
+   screen. This is the 「このゲームについて」 panel on the title screen.
+3. **No official JLPT word list exists.** Every "N2" claim here rests on
+   community approximations of an undisclosed syllabus, and the game says so.
 
-Neither is a blocker for private development. Both get harder to fix the longer
-they are left, which is why they are written down here rather than in a comment.
+One gap remains: the exact OpenJLPT commit used for the local copies in
+`research/openjlpt/` was never recorded, so the catalogue cannot be traced to a
+specific upstream version.
 
 ## Artwork
 

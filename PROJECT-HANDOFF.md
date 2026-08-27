@@ -203,6 +203,22 @@ This was not hypothetical: a freshly edited `lantern-map.js` was served from the
 
 ## 9. Change log and reasons
 
+### 2026-08-27 - The licence chain is verified, and the app now says so
+
+Section 14's list was written from memory and marked unverified. Checked against the sources instead of guessed, and the result changed what the project has to do.
+
+**What was confirmed.** JMdict and KANJIDIC2 are CC BY-SA 4.0 from the EDRDG. OpenJLPT - which is what this project actually ships - is CC BY-SA 4.0 and is itself assembled from JMdict/EDICT, KANJIDIC2, Jonathan Waller's JLPT level lists (CC BY) and Tatoeba (CC BY 2.0 FR). The full chain is recorded in the new `NOTICE.md`.
+
+**The obligation that was being missed.** The EDRDG licence is explicit that an application cannot discharge attribution through documentation alone: it asks for a dedicated screen, an About menu rather than a startup splash. This project had no such screen. It now has 「このゲームについて」 on the title screen, crediting every upstream source and linking the licence, reachable before a learner starts and dismissible by button, backdrop or Escape.
+
+Share-alike is now assessed rather than open: `curriculum-catalog.js` is a derivative of CC BY-SA 4.0 data, so the provision follows it. That attaches to the **data**, not automatically to the game's own code, which remains the owner's decision.
+
+**One thing the sources forced into the game's own copy.** The Japan Foundation publishes no official N5-N1 vocabulary list; every level assignment comes from community approximations. The attribution screen says so in Japanese. A game that tells a learner it teaches "N2" owes them that sentence.
+
+**Still open:** the exact OpenJLPT commit was never recorded, so the catalogue cannot be traced to a version. Re-pulling from a recorded commit is the fix, and it would also refresh the data as the EDRDG asks.
+
+306 tests pass. Cache `lantern-alley-v119`.
+
 ### 2026-08-27 - Phase 0: practice pays, and the spacing schedule finally runs
 
 **The problem this solves.** Costing the reward plan showed the economy could not work: finishing the entire course pays 3,750 coins, one time, which is less than a single room upgrade. The plan assumed a daily faucet; this is a finite 200-question course. Meanwhile Kon's 稽古 - 9,097 generated cards, the one part a learner can do forever - paid nothing at all.
@@ -1850,8 +1866,8 @@ The old single-file `lantern-alley.html` had no `<meta charset>`, so browsers de
 - **The Japanese has not been reviewed.** 200 questions, five story arcs and every piece of Kon's dialogue were authored in this project and have not been checked by a native speaker. The owner reviews after authoring.
 - **Two test controls still ship.** **Skip to next day** and **Preview Episode** are dashed buttons in the live build.
 - ~~The Artifact cannot carry the finished game.~~ Resolved on 2026-08-27: the Artifact is retired and the app is the product. See section 8.
-- **Catalog provenance is incomplete.** The exact OpenJLPT commit used for the local copies was not recorded. Section 14 lists the upstream sources this could be rebuilt from properly.
-- **No grammar or kanji catalog is approved**, so the project may claim coverage only of its named vocabulary catalog. Candidate sources are listed in section 14.
+- **Catalog provenance is incomplete.** The exact OpenJLPT commit used for the local copies was not recorded. The licence chain itself is now verified and recorded in `NOTICE.md`; only the version is missing.
+- **No grammar or kanji catalog is approved**, so the project may claim coverage only of its named vocabulary catalog. Candidate sources are in section 14; KANJIDIC2's licence is now verified.
 - **The Inn is entered through its old three-day stage**, while the four newer places drop straight into their first episode. The two entry paths are different by history rather than by design.
 
 ## 11. Recommended next work
