@@ -1349,3 +1349,39 @@
   .review-flag{display:flex; align-items:center; gap:5px; white-space:nowrap; cursor:pointer}
   .review-flag input{width:16px; height:16px; cursor:pointer}
   .review-bar.is-flagged{background:#3a1410; border-bottom-color:#a2503f}
+
+  /* The room at わが家, and the shop that fills it.
+     Cards are large because this is a thumb interface, and the room itself is
+     the only place in the game with no clock running. */
+  .home-goal{margin:6px 0 2px; text-align:center; font-size:.9rem; color:#e8d3ae}
+  .home-goal b{color:#ffd489}
+  .home-hint{color:#ffd489}
+  .home-tabs{display:flex; gap:8px; justify-content:center; margin:10px 0 8px}
+  .home-tab{padding:6px 18px; border-radius:999px; cursor:pointer; font-size:.9rem;
+    border:1px solid var(--wood-edge); background:#2b1f14; color:#e8d3ae}
+  .home-tab.is-on{background:#f3c568; color:#2b1f14; border-color:#f3c568}
+  .home-shelf{display:grid; gap:8px; justify-content:center;
+    grid-template-columns:repeat(auto-fill, minmax(96px, 1fr)); max-width:520px; margin:0 auto}
+  .home-card{display:flex; flex-direction:column; align-items:center; gap:2px;
+    padding:8px 4px 6px; border-radius:10px; cursor:pointer;
+    border:1px solid var(--wood-edge); background:#2b1f14; color:#f3e6d4}
+  .home-card-art{width:100%; height:52px}
+  .home-card-name{font-size:.85rem}
+  .home-card-sub{font-size:.72rem; opacity:.75}
+  .home-card.is-picked{border-color:#ffd489; box-shadow:0 0 0 2px rgba(255,212,137,.45)}
+  .home-card.is-locked{opacity:.45}
+  .home-card.is-owned{opacity:.55; cursor:default}
+  .home-empty{grid-column:1/-1; text-align:center; font-size:.85rem; opacity:.75}
+
+  /* A placed item is liftable; an empty corner only shows while something is
+     waiting to go into it, so the room is never covered in markers. */
+  .home-item{cursor:pointer}
+  .home-item:hover{filter:brightness(1.15)}
+  .home-target{cursor:pointer}
+  .home-target-ring{fill:rgba(255,212,137,.16); stroke:#ffd489; stroke-width:2;
+    stroke-dasharray:6 5}
+  .home-target-mark{fill:#ffd489; font-size:28px; font-weight:700}
+  @media (prefers-reduced-motion:no-preference){
+    .home-target-ring{animation:home-pulse 1.6s ease-in-out infinite}
+  }
+  @keyframes home-pulse{50%{fill:rgba(255,212,137,.34)}}

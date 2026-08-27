@@ -25,6 +25,7 @@ const scripts = [
   "learning-economy.js",
   "learning-gloss.js",
   "home-room.js",
+  "home-decor.js",
   "daily-practice.js",
   "review-mode.js",
   "question-renderer.js",

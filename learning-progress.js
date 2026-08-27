@@ -29,6 +29,9 @@
       money: 0,
       paidAnswers: [],
       masteredByStage: {},
+      // The room at わが家: what has been bought, and where it stands.
+      home: {owned: [], placed: {}},
+      homeVisited: false,
       // Which shifts are finished, which places have been walked into, and any
       // shift left half-done. These are written by saveProgress and were being
       // dropped here, so every one of them was lost on reload.
@@ -85,6 +88,11 @@
       next.money = Number(stored.money) || 0;
       next.paidAnswers = (stored.paidAnswers || []).slice();
       next.masteredByStage = clone(stored.masteredByStage || {});
+      next.home = {
+        owned: ((stored.home || {}).owned || []).slice(),
+        placed: clone((stored.home || {}).placed || {})
+      };
+      next.homeVisited = stored.homeVisited === true;
       next.episodesDone = (stored.episodesDone || []).slice();
       next.stageStarted = (stored.stageStarted || []).slice();
       next.episode = stored.episode ? clone(stored.episode) : null;

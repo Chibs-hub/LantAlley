@@ -179,7 +179,9 @@
     starred:{},
     money:0,
     paidAnswers:[],
-    masteredByStage:{}
+    masteredByStage:{},
+    home:{owned:[], placed:{}},
+    homeVisited:false
   };
 
   var jpVoice = null;
@@ -343,6 +345,8 @@
         pendingMoney = v3.money || 0;
         pendingPaidAnswers = v3.paidAnswers || [];
         pendingMasteredByStage = v3.masteredByStage || {};
+        pendingHome = v3.home || {owned:[], placed:{}};
+        pendingHomeVisited = v3.homeVisited === true;
         pendingReviewProgress = v3.reviewProgress || {};
         pendingDaily = {
           dailyPractice: v3.dailyPractice || null,
@@ -434,6 +438,8 @@
         ,money: state.money || 0
         ,paidAnswers: state.paidAnswers || []
         ,masteredByStage: state.masteredByStage || {}
+        ,home: state.home || {owned:[], placed:{}}
+        ,homeVisited: state.homeVisited === true
       }));
     }catch(e){ /* storage unavailable, progress just won't persist */ }
   }
@@ -447,6 +453,8 @@
       state.money = 0;
       state.paidAnswers = [];
       state.masteredByStage = {};
+      state.home = {owned:[], placed:{}};
+      state.homeVisited = false;
       state.itemStates = {};
       state.episodesDone = {};
       state.stageStarted = {};
@@ -584,6 +592,8 @@
   var pendingMoney = 0;
   var pendingPaidAnswers = [];
   var pendingMasteredByStage = {};
+  var pendingHome = {owned:[], placed:{}};
+  var pendingHomeVisited = false;
   var pendingLegacyMasteryHydration = false;
   var mapDetailAction = $("map-detail-action");
 
@@ -602,6 +612,8 @@
   state.money = pendingMoney;
   state.paidAnswers = pendingPaidAnswers;
   state.masteredByStage = pendingMasteredByStage;
+  state.home = pendingHome;
+  state.homeVisited = pendingHomeVisited;
   state.reviewProgress = pendingReviewProgress;
   state.dailyPractice = pendingDaily.dailyPractice;
   state.streak = pendingDaily.streak;
@@ -2496,12 +2508,207 @@
     if(dialogueFlow) dialogueFlow.start(line, false);
     else $("jp-line").textContent = line;
 
-    var art = (typeof LanternHomeRoom !== "undefined") ? LanternHomeRoom.baseRoomSvg() : "";
-    $("scene").innerHTML = '<div class="home-room">' + art
-      + '<p class="home-room-note">持っているお金：<b>¥' + (state.money || 0) + '</b></p>'
+    paintHome();
+    renderHud();
+  }
+
+  /* ---- The room, and the shop that fills it ----
+   *
+   * Money counted upward for the whole game and bought nothing. This is the
+   * sink: coins earned at the inn and the market turn into a room that looks
+   * like somebody lives in it.
+   *
+   * The flow is two taps, because it has to work with a thumb. Tap something
+   * you own and the corners it could stand in light up; tap a corner and it
+   * goes there. Nothing is dragged onto a target too small to hit.
+   */
+  var homeSelected = null;   // the item waiting to be placed
+  var homeTab = "storage";
+
+  function homeState(){
+    if(!state.home) state.home = {owned:[], placed:{}};
+    if(!state.home.owned) state.home.owned = [];
+    if(!state.home.placed) state.home.placed = {};
+    return state.home;
+  }
+
+  function homeSlots(){
+    return (typeof LanternHomeRoom !== "undefined") ? LanternHomeRoom.slots() : [];
+  }
+
+  function roomSvg(){
+    if(typeof LanternHomeRoom === "undefined") return "";
+    var art = LanternHomeRoom.baseRoomSvg();
+    if(typeof LanternHomeDecor === "undefined") return art;
+    var decor = LanternHomeDecor;
+    var home = homeState();
+    var picked = homeSelected ? decor.getItem(homeSelected) : null;
+    var layers = "";
+
+    homeSlots().forEach(function(slot){
+      var here = home.placed[slot.id];
+      if(!here) return;
+      var item = decor.getItem(here) || {name:""};
+      layers += '<g class="home-item" data-slot="' + slot.id + '"'
+        + ' role="button" tabindex="0" aria-label="' + item.name + ' をかたづける"'
+        + ' transform="translate(' + slot.x + ',' + slot.y + ')">'
+        + decor.svgFor(here) + '</g>';
+    });
+
+    // A corner lights up only when it could actually take what is selected.
+    if(picked){
+      homeSlots().forEach(function(slot){
+        if(slot.kind !== picked.kind) return;
+        layers += '<g class="home-target" data-slot="' + slot.id + '"'
+          + ' role="button" tabindex="0" aria-label="' + slot.label + 'に置く"'
+          + ' transform="translate(' + slot.x + ',' + slot.y + ')">'
+          + '<circle r="34" class="home-target-ring"/>'
+          + '<text y="9" text-anchor="middle" class="home-target-mark">+</text></g>';
+      });
+    }
+    return art.replace(/<\/svg>\s*$/, layers + "</svg>");
+  }
+
+  function homeCard(id, label, sub, attr, extra){
+    return '<button type="button" class="home-card' + (extra || '') + '" ' + attr + '>'
+      + '<svg viewBox="-60 -52 120 104" class="home-card-art" aria-hidden="true">'
+      + LanternHomeDecor.svgFor(id) + '</svg>'
+      + '<span class="home-card-name">' + label + '</span>'
+      + '<span class="home-card-sub">' + sub + '</span></button>';
+  }
+
+  function homeShelf(){
+    var decor = LanternHomeDecor;
+    var home = homeState();
+    var money = state.money || 0;
+    var html = "";
+
+    if(homeTab === "storage"){
+      var stored = decor.inStorage(home);
+      if(!home.owned.length){
+        return '<p class="home-empty">まだ何も持っていません。「店」で買ってみましょう。</p>';
+      }
+      if(!stored.length){
+        return '<p class="home-empty">持っているものは全部かざってあります。</p>';
+      }
+      stored.forEach(function(id){
+        var item = decor.getItem(id);
+        html += homeCard(id, item.name, item.category, 'data-pick="' + id + '"',
+          homeSelected === id ? " is-picked" : "");
+      });
+      return html;
+    }
+
+    decor.catalogue().forEach(function(item){
+      var owned = decor.owns(home, item.id);
+      var sub = owned ? "持っている" : "¥" + item.price;
+      html += homeCard(item.id, item.name, sub,
+        'data-buy="' + item.id + '"' + (owned ? " disabled" : ""),
+        owned ? " is-owned" : (money >= item.price ? "" : " is-locked"));
+    });
+    return html;
+  }
+
+  function paintHome(){
+    if(typeof LanternHomeDecor === "undefined"){
+      $("scene").innerHTML = '<div class="home-room">' + roomSvg() + '</div>';
+      return;
+    }
+    var money = state.money || 0;
+    var next = LanternHomeDecor.nearestUnaffordable(homeState(), money);
+    /* The gap between what a learner has and the next thing they want is the
+     * part that brings them back tomorrow, so it is said out loud. */
+    var goal = next
+      ? '<p class="home-goal">あと <b>¥' + next.short + '</b> で「' + next.name + '」が買えます。</p>'
+      : '<p class="home-goal">お店のものは全部そろいました。</p>';
+
+    $("scene").innerHTML = '<div class="home-room">' + roomSvg()
+      + '<p class="home-room-note">持っているお金：<b>¥' + money + '</b>'
+      + (homeSelected ? '　<span class="home-hint">置きたい場所をえらんでください</span>' : '')
+      + '</p>'
+      + goal
+      + '<div class="home-tabs" role="tablist">'
+      + '<button type="button" class="home-tab' + (homeTab === "storage" ? " is-on" : "") + '" data-tab="storage">持ち物</button>'
+      + '<button type="button" class="home-tab' + (homeTab === "shop" ? " is-on" : "") + '" data-tab="shop">店</button>'
+      + '</div>'
+      + '<div class="home-shelf" id="home-shelf">' + homeShelf() + '</div>'
       + '</div>';
     renderHud();
   }
+
+  function homeSay(text){
+    var note = $("scene").querySelector(".home-goal");
+    if(note) note.innerHTML = text;
+  }
+
+  // One delegated listener, because the room is rebuilt on every change.
+  $("scene").addEventListener("click", function(event){
+    if(state.currentKey !== "home" || typeof LanternHomeDecor === "undefined") return;
+    if(!event.target || !event.target.closest) return;
+    var decor = LanternHomeDecor;
+
+    var tab = event.target.closest("[data-tab]");
+    if(tab){
+      homeTab = tab.getAttribute("data-tab");
+      paintHome();
+      return;
+    }
+
+    var pick = event.target.closest("[data-pick]");
+    if(pick){
+      var id = pick.getAttribute("data-pick");
+      homeSelected = (homeSelected === id) ? null : id;
+      paintHome();
+      return;
+    }
+
+    var buy = event.target.closest("[data-buy]");
+    if(buy){
+      var wanted = buy.getAttribute("data-buy");
+      var result = decor.buy(homeState(), state.money || 0, wanted);
+      if(!result.ok){
+        if(result.reason === "poor") homeSay("お金が足りません。もう少し稼ぎましょう。");
+        return;
+      }
+      state.home = result.home;
+      state.money = result.money;
+      playCoinSound();
+      homeSelected = wanted;
+      homeTab = "storage";
+      saveProgress();
+      paintHome();
+      homeSay("買いました。置きたい場所をえらんでください。");
+      return;
+    }
+
+    var target = event.target.closest(".home-target");
+    if(target && homeSelected){
+      var put = decor.place(homeState(), homeSelected, target.getAttribute("data-slot"), homeSlots());
+      if(!put.ok) return;
+      var displaced = put.displaced;
+      state.home = put.home;
+      homeSelected = null;
+      saveProgress();
+      paintHome();
+      // A swap has to be visible, or the displaced item looks lost.
+      if(displaced){
+        homeSay("「" + (decor.getItem(displaced) || {name:""}).name
+          + "」は持ち物にもどしました。");
+      }
+      return;
+    }
+
+    var placedItem = event.target.closest(".home-item");
+    if(placedItem){
+      var gone = decor.remove(homeState(), placedItem.getAttribute("data-slot"));
+      if(!gone.ok) return;
+      state.home = gone.home;
+      saveProgress();
+      paintHome();
+      homeSay("「" + (decor.getItem(gone.removed) || {name:""}).name
+        + "」を持ち物にもどしました。");
+    }
+  });
 
   function renderHud(){
     $("hud-star-count").textContent = starCount();

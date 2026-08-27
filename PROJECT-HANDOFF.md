@@ -203,6 +203,35 @@ This was not hypothetical: a freshly edited `lantern-map.js` was served from the
 
 ## 9. Change log and reasons
 
+### 2026-08-27 - Money finally buys something
+
+Coins have been earned since the payout effect went in, and until now they bought nothing. A number that only counts upward is not a reward; it is a score with no verb attached. This is phase 1 of the reward plan: the sink.
+
+**What was added.** `home-decor.js` - a catalogue of 13 drawn items (50 to 400 yen) across four categories, plus the placement rules. `わが家` now has a room you furnish: a shop tab, a 持ち物 tab, and six named slots in the room itself.
+
+**Why the rules live in a pure module rather than in the click handler.** Two of them are easy to write, easy to break in a refactor, and invisible when broken until a learner loses something they paid for:
+
+- *One purchase is one object.* Moving an item empties the corner it came from. Wanting the same lamp in two corners means buying two lamps - which is what keeps the shop meaningful instead of turning one purchase into wallpaper.
+- *A slot holds one item, and a swap returns the displaced one.* Placing into an occupied corner trades the two and says out loud which one went back to storage. Silence there reads as "the game ate my brazier".
+
+Both are tested in `home-decor.test.mjs`, along with kind-matching (a scroll refuses the floor), the no-mutation contract, and the next-goal calculation.
+
+**The interaction is two taps, not a drag.** Tap something you own, and only the corners that could actually take it light up; tap a corner and it goes there. Dragging onto a target a thumb cannot hit is the usual way this feature fails on a phone.
+
+**One line of copy doing real work.** The room says 「あと ¥30 で「座卓」が買えます」 - the cheapest thing not yet affordable. The distance between what a learner has and the next thing they want is the part that brings them back tomorrow, so it is stated rather than left to be discovered in a menu.
+
+**Everything is drawn, not photographed.** The 13 items together are a few kilobytes of inline SVG. A catalogue of pictures would have cost megabytes and could not be recoloured or repositioned from data.
+
+**Persistence was the part most likely to break silently**, because it has before: `episodesDone` was carried by `saveProgress` and dropped by `migrateProgress` for weeks without anyone noticing. So `home` and `homeVisited` were added to both ends, and verified the way that failure should have been - furnish the room, reload the page, walk back in and ask the game what it has. It came back with the scroll on the wall, two items in storage and 230 yen.
+
+**A geometry fault the tests could not see.** With one of each kind placed, a wall item at the right hung down into the shelf. Found by measuring the placed items' bounding boxes in the browser against the room's own furniture, not by looking at a screenshot. The right-hand wall slot moved up 29 units.
+
+**One test was un-pinned.** `pwa.test.mjs` asserted the literal `lantern-alley-v122`, so every cache bump broke it. It now asserts that a version exists; the separate test tying sw.js to index.html still guards the rest.
+
+318 tests, 0 failures. Cache `lantern-alley-v124`.
+
+**Not yet done in the reward plan:** pets, gacha, and unlocking new material with coins. The daily-practice faucet and this sink are the two ends; what sits between them is still on paper.
+
 ### 2026-08-27 - The licence chain is verified, and the app now says so
 
 Section 14's list was written from memory and marked unverified. Checked against the sources instead of guessed, and the result changed what the project has to do.

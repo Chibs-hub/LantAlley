@@ -272,7 +272,10 @@ test("the offline delivery contains the cinematic opening, Entrance, and room li
   const sw = read("sw.js");
   const artifact = read("lantern-alley-artifact.html");
 
-  assert.match(sw, /lantern-alley-v122/);
+  // Pinned to a literal this test had to be edited on every bump. What
+  // actually matters is that the cache name carries a version at all - the
+  // separate test that ties it to index.html guards the rest.
+  assert.match(sw, /lantern-alley-v\d+/);
   for (const pose of [
     "fox-neutral-idle-transparent-v2.webp",
     "fox-wave-closed-smile-transparent-v2.webp",

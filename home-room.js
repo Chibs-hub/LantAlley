@@ -20,16 +20,16 @@
   // room rather than by what goes in them, so a lamp and a plant can compete
   // for the same corner.
   var SLOTS = [
-    {id:"floor-left",   x:120, y:300, label:"床の左"},
-    {id:"floor-right",  x:520, y:300, label:"床の右"},
-    {id:"wall-left",    x:130, y:120, label:"壁の左"},
-    {id:"wall-right",   x:520, y:120, label:"壁の右"},
-    {id:"shelf",        x:325, y:150, label:"棚の上"},
-    {id:"window-sill",  x:325, y:236, label:"窓辺"}
+    {id:"floor-left",   x:290, y:352, kind:"floor", label:"床の左"},
+    {id:"floor-right",  x:520, y:352, kind:"floor", label:"床の右"},
+    {id:"wall-left",    x:130, y:120, kind:"wall",  label:"壁の左"},
+    {id:"wall-right",   x:545, y:66,  kind:"wall",  label:"壁の右"},
+    {id:"shelf",        x:545, y:146, kind:"shelf", label:"棚の上"},
+    {id:"window-sill",  x:325, y:184, kind:"sill",  label:"窓辺"}
   ];
 
   function slots(){
-    return SLOTS.map(function(slot){ return {id:slot.id, x:slot.x, y:slot.y, label:slot.label}; });
+    return SLOTS.map(function(slot){ return {id:slot.id, x:slot.x, y:slot.y, kind:slot.kind, label:slot.label}; });
   }
 
   /* The empty room. One wall, one window on a night sky, tatami, a futon
