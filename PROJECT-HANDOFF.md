@@ -168,6 +168,28 @@ An artifact cannot load sibling `.js` files or local images, which is why the bu
 
 ## 9. Change log and reasons
 
+### 2026-08-27 - Review pass over all 200 questions
+
+Asked for after the course was finished: check the material for coherence, and check that the questions and answers follow ordinary life logic. Seven real faults came out of it.
+
+**An arithmetic error that two episodes disagreed about.** The market's takings item multiplied out to 4,690 yen while the option marked correct said 5,630 - and episode 4's accounts then opened with 5,630 as the evening's takings. The quantities are now 14 fruit, 5 boxed lunches and 3 bags, which is 5,830 less two 100-yen discounts, so the two episodes are one evening again.
+
+**A notice that contradicted its own timetable.** The station's lost-property record had the extra train arriving at 11:20, but the timetable in episode 1 makes the extra train the 11:40 up-train; 11:20 is a down-train. The record now names trains by their timetable times.
+
+**A question with two defensible answers.** The shrine's capacity item described a waiting group of three and then asked how many could enter. "Ten more may enter" and "yes, all three may" were both true. It now asks how many remain after that group is admitted, which is one number and uses all three stated rules.
+
+**Kon promising more than the game gave.** Every briefing says 読む問題は二分, and every passage item ran on ninety seconds. All twenty are now two minutes, which is also what the owner asked for when reading items were first lengthened.
+
+**An ambiguous rule.** The teahouse menu said お値段は変わりません without saying what the price does not change from. It now names the price.
+
+**Two Japanese errors.** 二十四つ and 二十三つ appeared in three places; the つ counter stops at 九つ. And 見よく is not a word. Tea is now counted in 杯 rather than つ.
+
+**One more ambiguity, in Episode 1.** A guest saying their tea has gone cold could reasonably be answered by replacing it - 取り替える was a distractor but was as defensible as 温める. The guest now asks for the same tea to be made warm again.
+
+**Guards added** so each class of fault fails a test rather than waiting for a reader: briefing promises against actual clocks, the ★ explanation against the presence of a ★ item, counters past 九つ, and a set of instruction-and-opposite pairs where the correct answer must not be the opposite of what was asked.
+
+259 tests, 0 failures.
+
 ### 2026-08-27 - Delivery decision: the Artifact cannot carry the finished game
 
 **The measurement.** With all five places authored, the course speaks 620 lines. 114 have clips; 506 do not. Inlined as data URIs that is roughly 31 MB against an Artifact hard limit of 16 MB. Even the listening prompts alone - the 110 lines where the audio *is* the question - come to 6.9 MB on top of a build that is already 9.58 MB, and the scene art inside it has been WebP-optimised once already.

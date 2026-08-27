@@ -142,7 +142,7 @@
       {day:3, mode:"challenge", label:"注文が重なる", questions:[
 
         q1("teahouse-e01-q07", "reading", "w-kondate", 120,
-          {jp:"【今夜の献立】\n茶と菓子　　　　四百円\n茶と菓子と汁物　七百円\n汁物だけ　　　　四百円\n※ 汁物は、火を落とす八時までのご注文に限ります。\n※ 八時を過ぎたお客様には、茶と菓子だけをお出しします。\n※ お値段は変わりません。\n八時十分にいらしたお客様に、お出しできるのはどれですか。"},
+          {jp:"【今夜の献立】\n茶と菓子　　　　四百円\n茶と菓子と汁物　七百円\n汁物だけ　　　　四百円\n※ 汁物は、火を落とす八時までのご注文に限ります。\n※ 八時を過ぎたお客様には、茶と菓子だけをお出しします。\n※ 八時を過ぎても、茶と菓子のお値段は四百円のままです。\n八時十分にいらしたお客様に、お出しできるのはどれですか。"},
           {type:"evidence-choice", options:["汁物だけ","茶と菓子","何もお出しできません","茶と菓子と汁物"], correctIndex:1},
           {correct:"茶と菓子です。八時を過ぎたので、汁物はお出しできません。",
            incorrect:"八時で火を落とします。汁物の入らないものを選びます。"},
@@ -168,8 +168,8 @@
           ]),
 
         q1("teahouse-e01-q09", "quick-response", "w-tsuika", 8,
-          {jp:"お客様：「お茶をもう一つ、お願いします。」すでに一つお出ししています。何と言いますか。", audio:true},
-          {type:"quick-response", options:["もうお出ししました。","お一つまでです。","お会計になさいますか。","追加ですね。かしこまりました。"], correctIndex:3},
+          {jp:"お客様：「お茶をもう一杯、お願いします。」すでに一つお出ししています。何と言いますか。", audio:true},
+          {type:"quick-response", options:["もうお出ししました。","お一杯までです。","お会計になさいますか。","追加ですね。かしこまりました。"], correctIndex:3},
           {correct:"承れました。「追加」は、あるものにさらに足すことです。",
            incorrect:"もう一つ足すご注文です。それを受けたことを伝えます。"},
           {prompt:"「追加」はどれのことですか。", options:["さらに足すこと","取り消すこと"], correctIndex:0, seconds:5},
@@ -273,7 +273,7 @@
             "湯 repeated is not a word"
           ]),
 
-        q2("teahouse-e02-q06", "text-grammar", "w-kotobazukai", 90,
+        q2("teahouse-e02-q06", "text-grammar", "w-kotobazukai", 120,
           {jp:"【お客様への（　　）について】\nお客様には、くだけた言い方ではなく、丁寧な（　　）を心がけてください。\n※ 親しいお客様にも、店では同じようにお願いします。\n※ 迷ったときは、女将さんの言い方をまねてください。\n（　　）に入る言葉はどれですか。"},
           {type:"single-choice", options:["客席","食器","献立","言葉遣い"], correctIndex:3},
           {correct:"「言葉遣い」です。どんな言葉をどう使うか、ということです。",
@@ -302,7 +302,7 @@
             "出し joins the first clause to the second"
           ]),
 
-        q2("teahouse-e02-q08", "text-grammar", "w-keigo", 90,
+        q2("teahouse-e02-q08", "text-grammar", "w-keigo", 120,
           {jp:"【店の決まり】\nお客様には、へりくだった言い方や尊敬の言い方、つまり（　　）をお使いください。\n※ 「見る」は「拝見する」、「聞く」は「伺う」と申します。\n※ 使い方に迷ったときは、そのままお客様に言わず、女将さんにお尋ねください。\n（　　）に入る言葉はどれですか。"},
           {type:"single-choice", options:["献立","敬語","湯気","順序"], correctIndex:1},
           {correct:"「敬語」です。相手を敬って使う言葉のことです。",
@@ -572,7 +572,7 @@
 
         q4("teahouse-e04-q06", "listening-point", "w-moru", 8,
           {jp:"コン：「明日の分の菓子を、器に盛っておいてください。」何をしますか。", audio:true},
-          {type:"quick-response", options:["器を洗っておきます。","器に見よく入れておきます。","菓子を数えます。","菓子を袋に入れます。"], correctIndex:1},
+          {type:"quick-response", options:["器を洗っておきます。","器にきれいに形を整えて入れます。","菓子を数えます。","菓子を袋に入れます。"], correctIndex:1},
           {correct:"盛れました。「盛る」は、器に食べ物を入れて形を整えることです。",
            incorrect:"「盛る」は、器に食べ物を入れて整えることです。"},
           {prompt:"「盛る」はどれのことですか。", options:["器に入れて整える","器を洗う"], correctIndex:0, seconds:8},
@@ -586,7 +586,7 @@
 
       {day:3, mode:"challenge", label:"明日の支度", questions:[
 
-        q4("teahouse-e04-q07", "text-grammar", "w-shitaku", 90,
+        q4("teahouse-e04-q07", "text-grammar", "w-shitaku", 120,
           {jp:"【明日の朝について】\n朝の（　　）は、店を開ける一時間前から始めます。\n※ 火をおこすところからですので、遅れると開店に間に合いません。\n※ 前の晩に器を出しておくと、（　　）が短くて済みます。\n（　　）に入る言葉はどれですか。"},
           {type:"single-choice", options:["支度","会計","休憩","応対"], correctIndex:0},
           {correct:"「支度」です。何かを始める前に整えておくことです。",
@@ -599,7 +599,7 @@
             "応対 is dealing with guests, who have not arrived yet"
           ]),
 
-        q4("teahouse-e04-q08", "text-grammar", "w-junbi", 90,
+        q4("teahouse-e04-q08", "text-grammar", "w-junbi", 120,
           {jp:"【祭りの日の（　　）】\n祭りの日は、いつもの倍のお客様がいらっしゃいます。\n※ 器も茶も、いつもの倍を前の日に出しておいてください。\n※ 人手が足りませんので、（　　）が済んでいないと店が回りません。\n（　　）に入る言葉はどれですか。"},
           {type:"single-choice", options:["変更","追加","休憩","準備"], correctIndex:3},
           {correct:"「準備」です。前もって整えておくことです。",

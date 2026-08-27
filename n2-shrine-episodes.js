@@ -274,7 +274,7 @@
             "理 - 代理, standing in for someone who cannot attend"
           ]),
 
-        q2("shrine-e02-q06", "text-grammar", "w-kimari", 90,
+        q2("shrine-e02-q06", "text-grammar", "w-kimari", 120,
           {jp:"【境内での（　　）】\n火のそばでは走らないでください。これは昔からの（　　）です。\n※ 小さなお子様も、手をつないでお通りください。\n※ 守れない方には、境内をお出ましいただくことがあります。\n（　　）に入る言葉はどれですか。"},
           {type:"single-choice", options:["決まり","感謝","飾り","願い"], correctIndex:0},
           {correct:"「決まり」です。守るように定められたことです。",
@@ -303,7 +303,7 @@
             "明日の opens the sentence, attaching to 集まり"
           ]),
 
-        q2("shrine-e02-q08", "text-grammar", "w-kyoka", 90,
+        q2("shrine-e02-q08", "text-grammar", "w-kyoka", 120,
           {jp:"【火を焚くことについて】\n境内で火を焚くには、町の（　　）が要ります。\n※ （　　）のない火は、たとえ小さくても焚けません。\n※ 今年の分は、先月のうちに受けてあります。\n（　　）に入る言葉はどれですか。"},
           {type:"single-choice", options:["提案","感謝","許可","飾り"], correctIndex:2},
           {correct:"「許可」です。してもよいと認めてもらうことです。",
@@ -424,16 +424,16 @@
           ]),
 
         q3("shrine-e03-q06", "reading", "w-seigen", 120,
-          {jp:"【境内にお入りになる方へ】\n一度にお入りいただける人数　二百名\n今、境内にいらっしゃる方　　百九十名\n※ 二百名を超えないよう、入り口で制限をいたします。\n※ お出になった方の数だけ、新たにお入りいただけます。\n※ お子様も一名として数えます。\n大人二名とお子様一名の組がお待ちです。今、何名お入りいただけますか。"},
-          {type:"evidence-choice", options:["三名とも","十名まで","二名だけ","お入りいただけません"], correctIndex:1},
-          {correct:"十名までです。百九十名ですから、二百名まであと十名の余りがあります。",
-           incorrect:"二百名から今の百九十名を引きます。三名の組は入れます。"},
+          {jp:"【境内にお入りになる方へ】\n一度にお入りいただける人数　二百名\n今、境内にいらっしゃる方　　百九十名\n※ 二百名を超えないよう、入り口で制限をいたします。\n※ お出になった方の数だけ、新たにお入りいただけます。\n※ お子様も一名として数えます。\n大人二名とお子様一名の組がお待ちです。この組をお入れした後、まだ何名お入りいただけますか。"},
+          {type:"evidence-choice", options:["三名","七名","十名","お入りいただけません"], correctIndex:1},
+          {correct:"七名です。百九十名にこの組の三名を足して百九十三名ですから、二百名まであと七名です。",
+           incorrect:"お子様も一名と数えます。百九十名にこの組の三名を足してから、二百名との差を出します。"},
           {prompt:"「制限」はどれのことですか。", options:["ここまでと決めること","いくらでも入れること"], correctIndex:0, seconds:5},
           [
-            "the group of three fits, but so would seven more people",
-            "ten more can enter: 200 less the 190 already inside",
-            "children count as one person too, so all three fit",
-            "there is room for ten"
+            "three is the size of the waiting group, not what is left after them",
+            "193 inside once the group is in, so seven more may enter",
+            "ten is the room before this group is let in, not after",
+            "there is room, so nobody is turned away"
           ])
       ]},
 
@@ -587,7 +587,7 @@
 
       {day:3, mode:"challenge", label:"夜が明ける", questions:[
 
-        q4("shrine-e04-q07", "text-grammar", "w-kaisan", 90,
+        q4("shrine-e04-q07", "text-grammar", "w-kaisan", 120,
           {jp:"【後始末の終わりについて】\n持ち場の片付けがすべて済んでから、（　　）といたします。\n※ 一つでも残っている持ち場があるうちは、（　　）いたしません。\n※ 早く済んだ方は、残っている持ち場を手伝ってください。\n（　　）に入る言葉はどれですか。"},
           {type:"single-choice", options:["集合","担当","制限","解散"], correctIndex:3},
           {correct:"「解散」です。集まっていた人が別れて帰ることです。",
@@ -600,7 +600,7 @@
             "解散 - breaking up and going home once everything is done"
           ]),
 
-        q4("shrine-e04-q08", "text-grammar", "w-yoake", 90,
+        q4("shrine-e04-q08", "text-grammar", "w-yoake", 120,
           {jp:"【明日の朝について】\n灰の片付けは、（　　）を待ってから行います。\n※ 暗いうちは、残り火が見えず危ないためです。\n※ 明るくなってから、係の者二名で行います。\n（　　）に入る言葉はどれですか。"},
           {type:"single-choice", options:["夜明け","深夜","日暮れ","昼過ぎ"], correctIndex:0},
           {correct:"「夜明け」です。夜が明けて明るくなるころのことです。",

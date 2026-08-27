@@ -75,7 +75,7 @@
           ]),
 
         q("inn-e01-q03", "listening-task", "v-atatameru-food", 5,
-          {jp:"お客様：「このお茶、冷めてしまいました。」", audio:true},
+          {jp:"お客様：「このお茶、冷めてしまいました。同じものを温かくしていただけますか。」", audio:true},
           {type:"single-choice", options:["温めます。","冷やします。","暖めます。","取り替えます。"], correctIndex:0},
           {correct:"温かいお茶をお出しできました。飲み物には「温める」を使います。",
            incorrect:"「暖める」は部屋や空気に使います。飲み物には「温める」です。"},
@@ -297,7 +297,7 @@
             "待ち would mean it is waiting to be sent"
           ]),
 
-        q2("inn-e02-q06", "text-grammar", "w-sakujo", 90,
+        q2("inn-e02-q06", "text-grammar", "w-sakujo", 120,
           {jp:"【帳場の申し送り】\nゆうべのご予約のうち、お取り消しのご連絡があったものは、帳面から（　　）してください。\n※ 線を引くだけでは、次の人にどちらが生きているのか分かりません。\n※ （　　）したご予約は、下の欄に日付とともに残してください。\n（　　）に入る言葉はどれですか。"},
           {type:"single-choice", options:["記録","郵送","削除","清書"], correctIndex:2},
           {correct:"「削除」です。取り消しの連絡があった予約を、帳面から消します。",
@@ -326,7 +326,7 @@
             "延期する sits fourth, at the star, before ことになりました"
           ]),
 
-        q2("inn-e02-q08", "text-grammar", "w-shitei", 90,
+        q2("inn-e02-q08", "text-grammar", "w-shitei", 120,
           {jp:"【今日のお客様について】\n本日お着きのお客様の中に、着く時間を（　　）していらっしゃる方が三組あります。\n※ 時間を決めていらっしゃる方の欄には、赤い印をつけてください。\n※ 時間を決めていらっしゃらない方には、こちらから伺います。\n（　　）に入る言葉はどれですか。"},
           {type:"single-choice", options:["指定","予想","削除","案内"], correctIndex:0},
           {correct:"「指定」です。お客様のほうで時間を決めていらっしゃる、ということです。",
@@ -629,7 +629,7 @@
             "back where it started, which is what you did"
           ]),
 
-        q4("inn-e04-q06", "text-grammar", "w-kyakuma", 90,
+        q4("inn-e04-q06", "text-grammar", "w-kyakuma", 120,
           {jp:"【閉める前の見回りについて】\n戸締まりの後、（　　）を一部屋ずつ見て回ってください。\n※ お客様がお使いになった部屋だけで結構です。\n※ 台所と帳場は、女将さんがご覧になります。\n（　　）に入る言葉はどれですか。"},
           {type:"single-choice", options:["客間","玄関","台所","帳場"], correctIndex:0},
           {correct:"「客間」です。お客様がお使いになる部屋のことです。",
@@ -645,7 +645,7 @@
 
       {day:3, mode:"challenge", label:"鍵を返す", questions:[
 
-        q4("inn-e04-q07", "text-grammar", "w-kanryou", 90,
+        q4("inn-e04-q07", "text-grammar", "w-kanryou", 120,
           {jp:"【鍵をお返しになる前に】\nすべての部屋の見回りが（　　）してから、鍵をお返しください。\n※ 途中でお返しになると、残りの部屋に入れなくなります。\n※ （　　）した部屋の数は、帳面に残してください。\n（　　）に入る言葉はどれですか。"},
           {type:"single-choice", options:["中止","完了","変更","開始"], correctIndex:1},
           {correct:"「完了」です。すっかり終わることです。",

@@ -141,3 +141,70 @@ test("answer content is Japanese only, so nothing is answerable from English", (
     }
   }
 });
+
+test("Kon's briefing never promises more time than the questions give", () => {
+  const { LanternEpisodeStages: stages } = load();
+  // The briefing said 読む問題は二分 while the passage items ran on ninety
+  // seconds. A rule the game states and then breaks is worse than no rule.
+  for (const key of PLACES) {
+    for (const episode of stages[key].episodes) {
+      const points = ((episode.briefing && episode.briefing.points) || []).join(" ");
+      if (!points.includes("二分")) continue;
+      for (const q of episode.days.flatMap((d) => d.questions)) {
+        if (!["reading", "text-grammar"].includes(q.skill)) continue;
+        assert.ok(q.seconds >= 120,
+          `${episode.id} promises 二分 but ${q.id} gives ${q.seconds}s`);
+      }
+    }
+  }
+});
+
+test("an episode explains the star only when it actually asks for one", () => {
+  const { LanternEpisodeStages: stages } = load();
+  for (const key of PLACES) {
+    for (const episode of stages[key].episodes) {
+      const points = ((episode.briefing && episode.briefing.points) || []).join(" ");
+      const questions = episode.days.flatMap((d) => d.questions);
+      const hasStar = questions.some((q) => q.answer.type === "sentence-order");
+      assert.equal(points.includes("★"), hasStar,
+        `${episode.id}: briefing and questions disagree about the star`);
+    }
+  }
+});
+
+test("counters are Japanese: the つ series stops at 九つ", () => {
+  const { LanternEpisodeStages: stages } = load();
+  // 二十四つ was written in two places. The native counter ends at 九つ, then
+  // goes to 十; past that it is 個, 枚, 名 and so on.
+  const bad = /[十百千][一二三四五六七八〇]?つ/;
+  for (const key of PLACES) {
+    for (const q of questionsOf(stages[key])) {
+      const text = [q.prompt.jp, q.feedback.correct, q.feedback.incorrect, ...q.answer.options].join(" ");
+      const hit = bad.exec(text);
+      assert.equal(hit, null, `${q.id} counts with ${hit && hit[0]}`);
+    }
+  }
+});
+
+test("what Kon asks for is what the correct answer does", () => {
+  const { LanternEpisodeStages: stages } = load();
+  // A spoken instruction names an action; the right answer has to be that
+  // action rather than a neighbouring one. Checked here for the pairs that
+  // are easiest to confuse, which is where the near-miss distractors live.
+  const opposites = [
+    ["点けて", "消します"],
+    ["敷いて", "しまいます"],
+    ["乾かして", "水につけます"],
+    ["支払って", "受け取ります"],
+  ];
+  for (const key of PLACES) {
+    for (const q of questionsOf(stages[key])) {
+      for (const [asked, wrong] of opposites) {
+        if (!q.prompt.jp.includes(asked)) continue;
+        const correct = q.answer.options[q.answer.correctIndex];
+        assert.ok(!correct.includes(wrong),
+          `${q.id} asks to ${asked} but the correct answer is ${correct}`);
+      }
+    }
+  }
+});

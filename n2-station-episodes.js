@@ -275,7 +275,7 @@
             "上 gives 上り, the up-train"
           ]),
 
-        q2("station-e02-q06", "text-grammar", "w-kinyuu", 90,
+        q2("station-e02-q06", "text-grammar", "w-kinyuu", 120,
           {jp:"【定期券のお申し込み】\nお名前とご住所を、この用紙に（　　）してください。\n※ 鉛筆ではなく、消えない筆記具をお使いください。\n※ 書き損じた場合は、新しい用紙に初めから（　　）してください。\n（　　）に入る言葉はどれですか。"},
           {type:"single-choice", options:["提出","相談","乗車","記入"], correctIndex:3},
           {correct:"「記入」です。決められた欄に書き入れることです。",
@@ -304,7 +304,7 @@
             "窓口の comes first, attaching to 係の者"
           ]),
 
-        q2("station-e02-q08", "text-grammar", "v-moushikomu", 90,
+        q2("station-e02-q08", "text-grammar", "v-moushikomu", 120,
           {jp:"【臨時電車について】\n祭りの日の臨時電車は、前もって（　　）必要はありません。\n※ 当日、そのままご乗車いただけます。\n※ 座席をお決めになりたい方だけ、窓口で（　　）ください。\n（　　）に入る言葉はどれですか。"},
           {type:"single-choice", options:["下車する","申し込む","記入する","出発する"], correctIndex:1},
           {correct:"「申し込む」です。前もって願い出ることです。",
@@ -572,7 +572,7 @@
             "the road outside is not near platform three"
           ]),
 
-        q4("station-e04-q06", "text-grammar", "w-kinshi", 90,
+        q4("station-e04-q06", "text-grammar", "w-kinshi", 120,
           {jp:"【ホームでのお願い】\n線路への立ち入りは（　　）されています。\n※ 落とし物を拾うために降りることも、同じく認められません。\n※ 落ちた物は、係の者が電車の止まっている間にお取りします。\n（　　）に入る言葉はどれですか。"},
           {type:"single-choice", options:["案内","禁止","相談","放送"], correctIndex:1},
           {correct:"「禁止」です。してはいけないと決められていることです。",
@@ -588,7 +588,7 @@
 
       {day:3, mode:"challenge", label:"駅を閉める", questions:[
 
-        q4("station-e04-q07", "text-grammar", "w-toujitsu", 90,
+        q4("station-e04-q07", "text-grammar", "w-toujitsu", 120,
           {jp:"【お忘れ物のお引き取りについて】\nお忘れ物は、お預かりした（　　）のうちは駅でお返しできます。\n※ 翌日からは、町の預かり所へ移します。\n※ 移した後は、駅ではお返しできません。\n（　　）に入る言葉はどれですか。"},
           {type:"single-choice", options:["当日","前日","翌日","毎日"], correctIndex:0},
           {correct:"「当日」です。その日のうち、ということです。",
@@ -615,15 +615,15 @@
           ]),
 
         q4("station-e04-q09", "reading", "w-touchaku", 120,
-          {jp:"【今夜の到着記録】\n上り最終　十一時四十分着　　忘れ物　傘一本\n下り最終　十一時五十分着　　忘れ物　なし\n臨時　　　十一時二十分着　　忘れ物　包み一つ\n※ 忘れ物は、着いた電車ごとに分けて預かります。\n※ 同じ電車に二つ以上あったときだけ、まとめて一つの札にします。\n※ 忘れ物のなかった電車の札は作りません。\n今夜、作る札はいくつですか。"},
+          {jp:"【今夜の到着記録】\n上り　十一時十分の電車　　　　　忘れ物　傘一本\n上り　十一時四十分の電車（臨時）忘れ物　包み一つ\n下り　十一時五十分の電車　　　　忘れ物　なし\n※ 忘れ物は、着いた電車ごとに分けて預かります。\n※ 同じ電車に二つ以上あったときだけ、まとめて一つの札にします。\n※ 忘れ物のなかった電車の札は作りません。\n今夜、作る札はいくつですか。"},
           {type:"evidence-choice", options:["作りません","一つ","二つ","三つ"], correctIndex:2},
-          {correct:"二つです。上りの傘と臨時の包みで、電車ごとに一つずつです。",
+          {correct:"二つです。十一時十分の傘と、臨時の包みで、電車ごとに一つずつです。",
            incorrect:"忘れ物があったのは二本の電車です。電車ごとに分けて預かります。"},
           {prompt:"「到着」はどれのことですか。", options:["出ること","着くこと"], correctIndex:1, seconds:5},
           [
             "two trains did have lost property",
             "one would mean combining two different trains",
-            "two: one for the up-train's umbrella, one for the extra train's parcel",
+            "two: one tag for the 11:10 umbrella, one for the extra train's parcel",
             "the down-train had nothing, so it gets no tag"
           ]),
 
