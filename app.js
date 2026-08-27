@@ -48,6 +48,9 @@
   // episode - so their location entry is only an identity for the map to enter
   // and for progress to be filed under. The name comes from the map so there
   // is one place where a location is named.
+  // わが家 is a place on the map but not a stage: no episodes, no gauge.
+  locations.push({key:"home", name:"わが家", isHome:true});
+
   ["market", "tea-house", "station", "shrine"].forEach(function(key){
     var place = LanternAlleyMap.getDestination(key);
     locations.push({key:key, name:(place && place.name) || key, episodesOnly:true});
@@ -888,6 +891,10 @@
   }
 
   function locationUnlocked(key){
+    // The home is never locked. Coins may unlock what goes inside it; nothing
+    // about understanding decides whether a learner can go home.
+    var place = LanternAlleyMap.getDestination(key);
+    if(place && place.kind === "home") return true;
     var mastery = {};
     STAGE_ORDER.forEach(function(stageKey){ mastery[stageKey] = stageMastery(stageKey); });
     return LanternLearningEconomy.isUnlocked(key, STAGE_ORDER, mastery);
@@ -2037,6 +2044,7 @@
     state.challengeMisses = [];
     state.stageMastered = false;
     state.resumedStageEntry = false;
+    if(loc.isHome){ renderHome(); return; }
     if(savedEpisode && savedEpisode.locationKey === loc.key && resumeEpisode()) return;
     // Every shift done, but the place is not yet held: finish it properly
     // rather than replaying an hour of questions already answered.
@@ -2192,6 +2200,44 @@
         speak(request.jp, "ask");
       });
     });
+  }
+
+  /* わが家. The one screen in the game that asks nothing of the learner.
+   *
+   * Deliberately quiet: no clock, no question, no gauge. The wallet is here
+   * because this is where the coins are going to be spent, and Kon says one
+   * line so the room is not silent on a first visit.
+   */
+  function renderHome(){
+    state.currentKey = "home";
+    if(!state.homeVisited){
+      state.homeVisited = true;
+      saveProgress();
+    }
+    screenGame.classList.remove("entrance-stage", "inn-stage");
+    screenGame.classList.add("home-stage");
+    $("stage-phase-row").style.display = "none";
+    $("encounter-status").style.display = "none";
+    $("hint-btn").style.display = "none";
+    $("hint-box").classList.remove("show");
+    $("feedback-row").classList.remove("show");
+    $("feedback-text").textContent = "";
+    $("next-row").style.display = "none";
+    $("romaji-line").textContent = "";
+    $("meaning-line").textContent = "";
+    $("meaning-line").classList.remove("show");
+    $("scene-label").textContent = "わが家";
+    $("narration").textContent = "路地の奥の部屋";
+
+    var line = "コン：「おかえりなさい。ここがあなたの部屋です。まだ何もありませんが、稼いだお金で少しずつ整えていきましょう。」";
+    if(dialogueFlow) dialogueFlow.start(line, false);
+    else $("jp-line").textContent = line;
+
+    var art = (typeof LanternHomeRoom !== "undefined") ? LanternHomeRoom.baseRoomSvg() : "";
+    $("scene").innerHTML = '<div class="home-room">' + art
+      + '<p class="home-room-note">持っているお金：<b>¥' + (state.money || 0) + '</b></p>'
+      + '</div>';
+    renderHud();
   }
 
   function renderHud(){

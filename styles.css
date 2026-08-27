@@ -1290,3 +1290,11 @@
   .gloss-reading{display:block; color:#ffe4a0; font-weight:700}
   .gloss-meaning{display:block; color:#f3e6d4}
   @media(max-width:560px){ .gloss-bubble{max-width:12em} }
+
+  /* わが家 - the room, and the one screen with nothing to answer. */
+  .home-room{display:flex; flex-direction:column; align-items:center; gap:10px}
+  .home-room-art{width:100%; max-width:650px; height:auto; border-radius:12px;
+    border:1px solid var(--wood-edge); box-shadow:0 8px 24px rgba(20,10,4,.45)}
+  .home-room-note{margin:0; color:#f3e6d4; font-size:.95rem}
+  .home-room-note b{color:#ffe4a0}
+  #screen-game.home-stage .stage-phase-row{display:none!important}

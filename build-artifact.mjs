@@ -24,6 +24,7 @@ const scripts = [
   "learning-progress.js",
   "learning-economy.js",
   "learning-gloss.js",
+  "home-room.js",
   "question-renderer.js",
   "catalog-practice.js",
   "lantern-map.js",
@@ -61,7 +62,8 @@ html = html.replace(/[ \t]*<!-- iOS ignores the manifest[^>]*-->\r?\n?/gi, "");
 html = html.replace(/\n<script>\s*\/\/ Service workers need http\(s\)[\s\S]*?<\/script>\n/, "\n");
 
 html = html.replace(
-  '<link rel="stylesheet" href="styles.css">',
+  // The page stamps a cache version onto the URL; the inlined build has no URLs.
+  /<link rel="stylesheet" href="styles\.css(\?v=\d+)?">/,
   "<style>\n" + read("styles.css") + "</style>",
 );
 
@@ -96,8 +98,12 @@ function demoCatalog() {
 }
 
 for (const name of scripts) {
-  const tag = '<script src="' + name + '"></script>';
-  if (!html.includes(tag)) throw new Error("missing script tag for " + name);
+  // The page stamps a version onto each URL so a browser cannot serve a stale
+  // script; the inlined build has no URLs at all, so the stamp is dropped here.
+  const stamped = new RegExp('<script src="' + name.replace(/[.]/g, "[.]") + '(\\?v=\\d+)?"></script>');
+  const found = stamped.exec(html);
+  if (!found) throw new Error("missing script tag for " + name);
+  const tag = found[0];
   const source = name === "curriculum-catalog.js" ? demoCatalog() : read(name);
   inlineSizes.set(name, source.length);
   html = html.replace(tag, "<script>" + String.fromCharCode(10) + source + "</script>");

@@ -61,7 +61,9 @@ function boot() {
   context.globalThis = context;
   vm.createContext(context);
 
-  const scripts = [...html.matchAll(/src="([^"]+\.js)"/g)].map((m) => m[1]);
+  // The page stamps a cache version onto each URL; the file on disk has no
+  // query, so strip it before reading.
+  const scripts = [...html.matchAll(/src="([^"?]+\.js)(\?v=\d+)?"/g)].map((m) => m[1]);
   for (const src of scripts) {
     vm.runInContext(read(src), context, { filename: src });
   }

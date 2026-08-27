@@ -12,12 +12,14 @@ function loadMap() {
   return context.LanternAlleyMap;
 }
 
-test("the alley exposes six destinations and every one of them is playable", () => {
+test("the alley exposes its destinations and every lesson is playable", () => {
   const map = loadMap();
 
+  // わが家 sits between the places rather than at the end of them: it is the
+  // one destination that is not a lesson.
   assert.deepEqual(
     Array.from(map.destinations, (place) => place.key),
-    ["entrance", "home-inn", "market", "tea-house", "station", "shrine"],
+    ["entrance", "home-inn", "home", "market", "tea-house", "station", "shrine"],
   );
 
   // The four later places were held at "preparing" while they had no content.
@@ -112,4 +114,49 @@ test("opening the map resets the page so its header is not clipped on a phone", 
   const showMap = app.slice(app.indexOf("function showMap()"), app.indexOf("function renderMap()"));
 
   assert.match(showMap, /window\.scrollTo\(\{top:0,left:0,behavior:"auto"\}\)/);
+});
+
+test("わが家 is a place on the map, never a lesson", () => {
+  const map = loadMap();
+  const home = map.getDestination("home");
+  assert.ok(home, "the home is on the map");
+  assert.equal(home.kind, "home", "it is marked as not a lesson");
+  assert.equal(home.playableLocationKey, "home");
+
+  // Roughly central, so it sits among the places rather than after them.
+  assert.ok(home.position.x > 35 && home.position.x < 65, "x is central: " + home.position.x);
+  assert.ok(home.position.y > 30 && home.position.y < 60, "y is central: " + home.position.y);
+
+  // It has its own state, so it never reads as unvisited or half-finished.
+  assert.equal(map.resolveState("home", {}), "home");
+  assert.equal(map.resolveState("home", { visited: { home: true } }), "home");
+  assert.equal(map.stateLabels.home, "わが家");
+
+  // And its own way in, whatever the learner has or has not mastered.
+  const action = map.getAction("home", {});
+  assert.ok(action, "there is always a way home");
+  assert.equal(action.locationKey, "home");
+  assert.equal(action.label, "部屋へ帰る");
+});
+
+test("going home is never gated on understanding", () => {
+  const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  // Coins may unlock what goes inside the room. Nothing about the mastery
+  // gauge decides whether a learner may go home - gating the reward on the
+  // thing it rewards would be circular.
+  assert.match(app, /if\(place && place\.kind === "home"\) return true;/);
+  // And it is not one of the ordered stages, so it cannot block the next place
+  // or be blocked by the last one.
+  const order = /var STAGE_ORDER = \[([^\]]+)\]/.exec(app);
+  assert.ok(order, "the stage order exists");
+  assert.doesNotMatch(order[1], /"home"/, "the home is not a stage in the progression");
+});
+
+test("the room is drawn, not photographed", () => {
+  const room = readFileSync(new URL("./home-room.js", import.meta.url), "utf8");
+  // This room is going to grow a furniture catalogue. A picture would cost
+  // megabytes and could not be rearranged from data; slots can.
+  assert.match(room, /<svg/);
+  assert.doesNotMatch(room, /\.(png|jpg|jpeg|webp)/, "no raster art in the room");
+  assert.match(room, /function slots/);
 });

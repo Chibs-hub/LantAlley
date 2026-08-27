@@ -196,7 +196,9 @@ test("playback prefers the clip and falls back to speech synthesis", () => {
 test("the shell list covers the scripts index.html actually loads", () => {
   const html = read("index.html");
   const sw = read("sw.js");
-  const scripts = [...html.matchAll(/<script src="([^"]+)"><\/script>/g)].map((m) => m[1]);
+  // Compare the files the shell lists against the files the page loads; the
+  // version stamp on the URL is not part of that comparison.
+  const scripts = [...html.matchAll(/<script src="([^"?]+)(\?v=\d+)?"><\/script>/g)].map((m) => m[1]);
 
   assert.ok(scripts.length >= 4);
   for (const src of scripts) {
@@ -270,7 +272,7 @@ test("the offline delivery contains the cinematic opening, Entrance, and room li
   const sw = read("sw.js");
   const artifact = read("lantern-alley-artifact.html");
 
-  assert.match(sw, /lantern-alley-v116/);
+  assert.match(sw, /lantern-alley-v117/);
   for (const pose of [
     "fox-neutral-idle-transparent-v2.webp",
     "fox-wave-closed-smile-transparent-v2.webp",
@@ -447,4 +449,26 @@ test("both illustrated mats remain recognizable before an object is selected", (
 test("compact illustrated hotspots keep their mapped bounds instead of overlapping", () => {
   const css = read("styles.css");
   assert.match(css, /\.answer-workspace \.inn-room-illustrated \.inn-hotspot:has\(\.inn-caption\)\{[^}]*min-width:0[^}]*min-height:0/);
+});
+
+test("every local asset URL carries the cache version", () => {
+  const html = readFileSync(new URL("./index.html", import.meta.url), "utf8");
+  const sw = readFileSync(new URL("./sw.js", import.meta.url), "utf8");
+  const version = /var CACHE_VERSION = "lantern-alley-v(\d+)"/.exec(sw);
+  assert.ok(version, "the worker names a cache version");
+
+  // The worker busts its own cache on a version bump, but the browser's HTTP
+  // cache does not know about it and will happily serve yesterday's script.
+  // Stamping the version onto each URL closes that gap - and it closed a real
+  // one: a freshly edited lantern-map.js was served stale while a brand-new
+  // file beside it loaded fine.
+  const localScripts = [...html.matchAll(/<script src="([^":]+\.js)(\?v=(\d+))?"><\/script>/g)];
+  assert.ok(localScripts.length >= 15, "found the script tags: " + localScripts.length);
+  for (const [, name, , stamped] of localScripts) {
+    assert.equal(stamped, version[1], `${name} is not stamped with v${version[1]}`);
+  }
+
+  const style = /<link rel="stylesheet" href="([^":]+\.css)(\?v=(\d+))?"/.exec(html);
+  assert.ok(style, "the stylesheet is linked");
+  assert.equal(style[3], version[1], "the stylesheet is not stamped");
 });

@@ -88,7 +88,7 @@ test("encounter lookup clamps to the available stage", () => {
 });
 
 test("the open-world map loads Moonview Inn and advances its encounters", () => {
-  assert.match(html, /<script src="n2-home-inn-stage\.js"><\/script>/);
+  assert.match(html, /<script src="n2-home-inn-stage\.js(\?v=\d+)?"><\/script>/);
   assert.match(html, /locations\.push\(N2HomeInnStage\)/);
   assert.match(html, /state\.encounterIndex/);
   assert.match(html, /continueStageEncounter/);
@@ -429,11 +429,11 @@ test("only the Entrance and Moonview Inn are playable while the map model can sh
   }
   assert.match(html, /key:"entrance"/);
   assert.match(html, /locations\.push\(N2HomeInnStage\)/);
-  assert.match(html, /<script src="lantern-map\.js"><\/script>/);
+  assert.match(html, /<script src="lantern-map\.js(\?v=\d+)?"><\/script>/);
 });
 
 test("the page loads the interaction engine and persists stage progress", () => {
-  assert.match(html, /<script src="moonview-inn-interactions\.js"><\/script>/);
+  assert.match(html, /<script src="moonview-inn-interactions\.js(\?v=\d+)?"><\/script>/);
   assert.match(html, /stageProgress/);
   assert.match(html, /homeInn/);
   assert.match(html, /saveStageProgress/);

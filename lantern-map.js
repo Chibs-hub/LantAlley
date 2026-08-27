@@ -21,6 +21,18 @@
       playableLocationKey:"home-inn"
     },
     {
+      key:"home",
+      name:"わが家",
+      story:"コンが路地の奥に小さな部屋を見つけてくれました。仕事が終わったら、ここへ帰ります。",
+      focus:"稼いだお金で、少しずつ整えていく場所です。",
+      position:{x:51,y:45},
+      availability:"implemented",
+      playableLocationKey:"home",
+      // Not a lesson. Nothing here is gated on understanding, and nothing here
+      // counts towards it - see the unlock boundary in the handoff.
+      kind:"home"
+    },
+    {
       key:"market",
       name:"灯り市",
       story:"夕市の店主が、品物を選び、客へ渡す手伝いを探しています。",
@@ -77,6 +89,7 @@
     var visited = data.visited || {};
     var stageProgress = data.stageProgress || {};
     if(!place || place.availability === "preparing") return "preparing";
+    if(place.kind === "home") return "home";
     if(visited[key]) return "completed";
     if(key === "home-inn" && stageProgress.homeInn) return "in-progress";
     // The later places have no three-day stage to leave progress in; entering
@@ -90,8 +103,10 @@
     if(!place || !place.playableLocationKey) return null;
     var state = resolveState(key, progress);
     var label;
-    if(state === "completed") label = "もう一度見る";
+    if(place.kind === "home") label = "部屋へ帰る";
+    else if(state === "completed") label = "もう一度見る";
     else if(state === "in-progress") label = "続きを始める";
+    else if(place.kind === "home") label = "部屋へ帰る";
     else label = key === "entrance" ? "入口へ行く" : place.name + "へ行く";
     return Object.freeze({label:label,locationKey:place.playableLocationKey});
   }
@@ -102,6 +117,7 @@
     resolveState:resolveState,
     getAction:getAction,
     stateLabels:Object.freeze({
+      home:"わが家",
       completed:"完了",
       "in-progress":"学習中",
       available:"未訪問",

@@ -179,20 +179,49 @@ That last suite exists because roughly 260 assertions match the *source text* of
 
 **Verify through the built artifact, not the dev server.** The dev server has repeatedly served stale files even after unregistering the service worker; the artifact has no service worker at all.
 
-## 8. Publishing to the Artifact
+## 8. Delivery: the app, not the Artifact
 
-The desktop shortcut points at a published Claude Artifact, not at the local file. The two are separate: editing the source files does **not** update the shortcut until the artifact is republished.
+**The Artifact was retired on 2026-08-27.** The game needs more room than it can have there: 506 spoken lines still have no audio, and the reward layer is about to add a furniture catalogue. A 16 MB hard ceiling cannot hold either.
 
-To republish:
+**What the product is now.** `index.html` and its sibling files, played from disk or served over http, installable as a PWA. There is no size ceiling.
 
-1. Run `node build-artifact.mjs` to regenerate `lantern-alley-artifact.html`.
-2. Publish that file to the existing artifact URL, passing the URL so it updates in place rather than creating a second artifact.
+`build-artifact.mjs` still works and still refuses to emit a file over 15 MB. It is now an **optional demo build**, not the delivery path. Nothing needs to be rebuilt or republished to ship a change.
 
-Current artifact: `https://claude.ai/code/artifact/951c7147-1dcf-4b9d-aced-2928ce94eb74`
+### Verifying a change
 
-An artifact cannot load sibling `.js` files or local images, which is why the build step inlines everything.
+The one on-disk build used to be the reliable way to see real behaviour, because the dev server served stale files. With the artifact retired, that trick is gone, so the caching is handled properly instead: **every local script and stylesheet URL carries `?v=<CACHE_VERSION>`**, stamped to match `sw.js`. A version bump now busts the service worker cache *and* the browser's own HTTP cache. A test ties the two together so they cannot drift.
+
+When something still looks stale, this clears it completely:
+
+```javascript
+for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
+for (const k of await caches.keys()) await caches.delete(k);
+location.reload();
+```
+
+This was not hypothetical: a freshly edited `lantern-map.js` was served from the browser cache while a brand-new file beside it loaded fine, and the map silently rendered without わが家 on it.
 
 ## 9. Change log and reasons
+
+### 2026-08-27 - The Artifact is retired, and わが家 opens on the map
+
+**Two decisions from the owner.** Drop the Artifact, because the game needs more space than it allows. And put the reward space in the middle of the map as a place the learner can enter, starting with one basic room.
+
+**Retiring the Artifact.** It was the delivery surface and the ceiling it imposed was blocking two things at once: the audio run, and the furniture catalogue the reward layer needs. The app itself - `index.html` and its siblings, installable as a PWA - is the product now, with no size limit. The builder is kept as an optional demo and still refuses to emit anything over 15 MB.
+
+That removed the project's most reliable verification trick, since the built file was the way around a dev server that served stale copies. So the caching is fixed properly instead: every local script and stylesheet URL now carries `?v=<CACHE_VERSION>`, and a test ties that stamp to `sw.js` so the two cannot drift. This was found the hard way - a freshly edited `lantern-map.js` came from the browser cache while a brand-new file beside it loaded fresh, and the map rendered without the new place on it.
+
+Stamping the URLs then broke three things that had been matching bare filenames: the artifact builder's stylesheet inline (silently - it stopped inlining the CSS and two images, and the build shrank by 2.4 MB without complaining), and the two test harnesses that read the script list out of `index.html`. All three now tolerate the stamp. The silent one is the reason the builder was fixed rather than left to rot: a broken tool that reports success is worse than a deleted one.
+
+**わが家.** A seventh destination at the centre of the map, between the inn and the market. Entering it opens one room: a wall, tatami, a shoji window on a night sky, a folded futon, a shelf, and a lantern that is already lit. No clock, no question, no gauge - the one screen that asks nothing. Kon says one line, and the wallet is shown, because this is where the coins are going to be spent.
+
+**It is a place, not a lesson**, and the code says so. It carries `kind:"home"`, it is not in `STAGE_ORDER`, and `locationUnlocked` returns true for it unconditionally. Gating the reward on the thing it rewards would be circular, and the moment a place can be bought the mastery gauge stops meaning "you know this". Tests pin all three.
+
+**The room is drawn, not photographed** - 2,302 bytes of inline SVG with six named decor slots (`floor-left`, `wall-right`, `shelf`, `window-sill` and so on). A photograph would cost megabytes and could not be rearranged from data; the decor system needs slots it can put things into. The honest caveat, unchanged from the plan review: SVG solves the byte problem, not the art-direction one. This room will not match the photographic Inn, and that mismatch is still an open decision.
+
+**Verified in the app** from a cleared save with the worker unregistered: seven pins, わが家 unlocked while 灯り市 is still locked, entering shows 「わが家」 with Kon's greeting, the room drawn, 「持っているお金：¥10」, no answer controls on screen, and a way back to the map.
+
+296 tests pass. Cache `lantern-alley-v117`.
 
 ### 2026-08-27 - The answer was still first in the stage people actually play
 
@@ -1798,7 +1827,7 @@ The old single-file `lantern-alley.html` had no `<meta charset>`, so browsers de
 - **The five-second items are tighter without audio.** At the Inn the clip plays before the clock starts, so the request has already been heard. Elsewhere the learner reads it cold.
 - **The Japanese has not been reviewed.** 200 questions, five story arcs and every piece of Kon's dialogue were authored in this project and have not been checked by a native speaker. The owner reviews after authoring.
 - **Two test controls still ship.** **Skip to next day** and **Preview Episode** are dashed buttons in the live build.
-- **The Artifact cannot carry the finished game.** With audio it is about 31 MB against a 16 MB limit.
+- ~~The Artifact cannot carry the finished game.~~ Resolved on 2026-08-27: the Artifact is retired and the app is the product. See section 8.
 - **Catalog provenance is incomplete.** The exact OpenJLPT commit used for the local copies was not recorded. Section 14 lists the upstream sources this could be rebuilt from properly.
 - **No grammar or kanji catalog is approved**, so the project may claim coverage only of its named vocabulary catalog. Candidate sources are listed in section 14.
 - **The Inn is entered through its old three-day stage**, while the four newer places drop straight into their first episode. The two entry paths are different by history rather than by design.
@@ -1808,7 +1837,7 @@ The old single-file `lantern-alley.html` had no `<meta charset>`, so browsers de
 In the order that gets the most for the least:
 
 1. **Native review of the Japanese.** Everything else is cheap to change; this is the thing only the owner can do. `generate-audio.py` hashes its input, so corrections cost only the lines that changed.
-2. **Decide the delivery surface.** The Artifact cannot hold the finished game. Until that is settled the audio run cannot be spent well.
+2. ~~Decide the delivery surface.~~ Settled on 2026-08-27: the app is the product, the Artifact is retired. The audio run is no longer blocked by size.
 3. **Generate the audio** once the surface is known. `collect-spoken-lines.js` already walks every stage, so the run needs no code change. A local open TTS model (section 14) would also remove the external-service approval gate, since nothing would leave the machine.
 4. **Remove or flag the two test controls.** Left until last on purpose: every step above is verified through them. Note that they are currently the only quick way into a later episode without replaying what comes before, so removing them should come with a proper way to resume a place.
 5. **Give the four newer places their scene art.** They render on the shared workspace today. Nothing depends on this; it is the visible half of the work.
