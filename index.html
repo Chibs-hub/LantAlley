@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600;800&family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=119">
+<link rel="stylesheet" href="styles.css?v=121">
 </head>
 <body>
 
@@ -25,6 +25,16 @@
 <div class="glow-orb c"></div>
 
 <div class="stage">
+
+  <!-- Review mode. Only reachable with ?review=1; a learner never sees it. -->
+  <div class="review-bar" id="review-bar" hidden>
+    <select id="review-jump" aria-label="問題を選ぶ"></select>
+    <button type="button" id="review-prev">&#8592;</button>
+    <button type="button" id="review-next">&#8594;</button>
+    <input type="text" id="review-note" placeholder="気づいたことを書く（自動保存）" aria-label="レビューのメモ">
+    <span class="review-count" id="review-count"></span>
+    <button type="button" id="review-export">書き出す</button>
+  </div>
 
   <section id="screen-title" class="frame title-scene">
     <div class="title-scene-shade" aria-hidden="true"></div>
@@ -204,27 +214,28 @@
   <footer class="credits">Lantern Alley &middot; a small Japanese story-walk</footer>
 </div>
 
-<script src="curriculum-catalog.js?v=119"></script>
-<script src="learning-content.js?v=119"></script>
-<script src="review-engine.js?v=119"></script>
-<script src="learning-progress.js?v=119"></script>
-<script src="learning-economy.js?v=119"></script>
-    <script src="learning-gloss.js?v=119"></script>
-    <script src="home-room.js?v=119"></script>
-    <script src="daily-practice.js?v=119"></script>
-<script src="question-renderer.js?v=119"></script>
-<script src="catalog-practice.js?v=119"></script>
-<script src="entrance-stage-logic.js?v=119"></script>
-<script src="moonview-inn-interactions.js?v=119"></script>
-<script src="n2-home-inn-stage.js?v=119"></script>
-<script src="n2-inn-episodes.js?v=119"></script>
-    <script src="n2-market-episodes.js?v=119"></script>
-    <script src="n2-teahouse-episodes.js?v=119"></script>
-    <script src="n2-station-episodes.js?v=119"></script>
-    <script src="n2-shrine-episodes.js?v=119"></script>
-<script src="audio-index.js?v=119"></script>
-<script src="lantern-map.js?v=119"></script>
-<script src="app.js?v=119"></script>
+<script src="curriculum-catalog.js?v=121"></script>
+<script src="learning-content.js?v=121"></script>
+<script src="review-engine.js?v=121"></script>
+<script src="learning-progress.js?v=121"></script>
+<script src="learning-economy.js?v=121"></script>
+    <script src="learning-gloss.js?v=121"></script>
+    <script src="home-room.js?v=121"></script>
+    <script src="daily-practice.js?v=121"></script>
+    <script src="review-mode.js?v=121"></script>
+<script src="question-renderer.js?v=121"></script>
+<script src="catalog-practice.js?v=121"></script>
+<script src="entrance-stage-logic.js?v=121"></script>
+<script src="moonview-inn-interactions.js?v=121"></script>
+<script src="n2-home-inn-stage.js?v=121"></script>
+<script src="n2-inn-episodes.js?v=121"></script>
+    <script src="n2-market-episodes.js?v=121"></script>
+    <script src="n2-teahouse-episodes.js?v=121"></script>
+    <script src="n2-station-episodes.js?v=121"></script>
+    <script src="n2-shrine-episodes.js?v=121"></script>
+<script src="audio-index.js?v=121"></script>
+<script src="lantern-map.js?v=121"></script>
+<script src="app.js?v=121"></script>
 
 <script>
   // Service workers need http(s); opening this file directly with file://

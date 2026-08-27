@@ -653,6 +653,107 @@
     });
   })();
 
+  /* ---- Review mode ----
+   *
+   * The owner reviews the Japanese in place, because whether a line fits the
+   * speaker and the moment cannot be judged from a list of sentences. This
+   * jumps straight to any question with the clock off and a note field.
+   */
+  var reviewMode = (typeof LanternReviewMode !== "undefined")
+    && LanternReviewMode.isEnabled(window.location.search);
+  var reviewRows = [];
+  var reviewNotes = {};
+  var reviewAt = 0;
+
+  function reviewShow(index){
+    if(!reviewRows.length) return;
+    reviewAt = Math.max(0, Math.min(index, reviewRows.length - 1));
+    var row = reviewRows[reviewAt];
+    $("review-jump").value = String(reviewAt);
+    $("review-note").value = reviewNotes[row.id] || "";
+    $("review-count").textContent = (reviewAt + 1) + " / " + reviewRows.length
+      + "　（メモ " + Object.keys(reviewNotes).length + "）";
+
+    if(row.kind === "episode"){
+      // Open that place's episode and land on the question itself.
+      state.currentKey = row.place;
+      var stage = stageFor(row.place);
+      var episode = stage.episodes.filter(function(e){ return e.id === row.episodeId; })[0];
+      if(!episode) return;
+      var list = [];
+      episode.days.forEach(function(day){
+        day.questions.forEach(function(question){
+          list.push({day:day.day, mode:day.mode, label:day.label, question:question});
+        });
+      });
+      var at = 0;
+      list.forEach(function(entry, i){ if(entry.question.id === row.id) at = i; });
+      previewState = {index:at, list:list, answered:false, missed:[], repair:null, reviewing:true};
+      screenTitle.style.display = "none";
+      screenMap.style.display = "none";
+      screenGame.style.display = "block";
+      screenGame.classList.remove("entrance-stage");
+      renderPreviewQuestion();
+    }else{
+      // The three-day stage: open the Inn at that phase and item.
+      var parts = row.id.split(":");
+      enterLocation("home-inn");
+      state.stagePhase = parts[1];
+      state.encounterIndex = Number(parts[2]) || 0;
+      state.phaseItems = null;
+      startStagePhase(state.stagePhase, true);
+    }
+  }
+
+  // Deferred by a tick: this block reaches into things declared with `var`
+  // further down the same closure, which are still undefined while setup is
+  // running. Rendering a question from here immediately threw on INN_SCENES.
+  if(reviewMode) setTimeout(function(){
+    reviewRows = LanternReviewMode.buildIndex(
+      (typeof LanternEpisodeStages !== "undefined") ? LanternEpisodeStages : {},
+      (typeof N2HomeInnStage !== "undefined") ? N2HomeInnStage : null);
+    reviewNotes = LanternReviewMode.loadNotes(localStorage);
+    $("review-bar").hidden = false;
+    document.body.classList.add("reviewing");
+
+    var jump = $("review-jump");
+    reviewRows.forEach(function(row, i){
+      var option = document.createElement("option");
+      option.value = String(i);
+      option.textContent = (reviewNotes[row.id] ? "● " : "") + row.place + " / " + row.group + " / " + row.id;
+      jump.appendChild(option);
+    });
+    jump.addEventListener("change", function(){ reviewShow(Number(this.value)); });
+    $("review-prev").addEventListener("click", function(){ reviewShow(reviewAt - 1); });
+    $("review-next").addEventListener("click", function(){ reviewShow(reviewAt + 1); });
+    $("review-note").addEventListener("input", function(){
+      var row = reviewRows[reviewAt];
+      reviewNotes = LanternReviewMode.saveNote(localStorage, reviewNotes, row.id, this.value);
+      $("review-count").textContent = (reviewAt + 1) + " / " + reviewRows.length
+        + "　（メモ " + Object.keys(reviewNotes).length + "）";
+      jump.options[reviewAt].textContent =
+        (reviewNotes[row.id] ? "● " : "") + row.place + " / " + row.group + " / " + row.id;
+    });
+    $("review-export").addEventListener("click", function(){
+      var text = LanternReviewMode.exportNotes(reviewRows, reviewNotes);
+      var box = document.createElement("textarea");
+      box.className = "review-export-box";
+      box.value = text;
+      box.readOnly = true;
+      var wrap = document.createElement("div");
+      wrap.className = "about-panel";
+      wrap.appendChild(box);
+      var done = document.createElement("button");
+      done.className = "btn btn-primary";
+      done.textContent = "閉じる";
+      done.addEventListener("click", function(){ wrap.remove(); });
+      wrap.appendChild(done);
+      document.body.appendChild(wrap);
+      box.select();
+    });
+    reviewShow(0);
+  }, 0);
+
   $("btn-restart").addEventListener("click", function(){
     applyProgress(null);
     state.currentKey = null;
@@ -1544,6 +1645,8 @@
   var pendingClock = null;
 
   function startQuestionClock(seconds, token){
+    // Reviewing is reading, and a countdown makes that impossible.
+    if(reviewMode) return;
     if(!previewState || previewState.token !== token) return;
     previewState.timer = LanternQuestionRenderer.startTimer(
       LanternQuestionRenderer.createTimer({seconds: seconds}), Date.now());

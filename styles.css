@@ -1326,3 +1326,22 @@
   .about-caveat{opacity:.9; border-left:3px solid var(--wood-edge); padding-left:10px}
   .about-card a{color:#ffd489}
   .about-card .btn{margin-top:16px}
+
+  /* Review mode: a working bar, deliberately plain. */
+  .review-bar{
+    position:fixed; top:0; left:0; right:0; z-index:80;
+    display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+    padding:8px 10px; background:#161009; border-bottom:1px solid var(--wood-edge);
+    font-size:.8rem; color:#f3e6d4;
+  }
+  .review-bar[hidden]{display:none}
+  .review-bar select{max-width:300px; flex:0 1 auto}
+  .review-bar input{flex:1 1 240px; min-width:180px; padding:5px 8px;
+    border-radius:6px; border:1px solid var(--wood-edge); background:#241a10; color:#f3e6d4}
+  .review-bar button{padding:5px 10px; border-radius:6px; cursor:pointer;
+    border:1px solid var(--wood-edge); background:#3a2819; color:#f3e6d4}
+  .review-count{opacity:.8; white-space:nowrap}
+  body.reviewing{padding-top:52px}
+  .review-export-box{width:min(680px,92vw); height:60vh; padding:12px;
+    border-radius:8px; border:1px solid var(--wood-edge);
+    background:#1b130c; color:#f3e6d4; font-size:.8rem; line-height:1.5}
