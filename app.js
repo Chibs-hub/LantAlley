@@ -665,14 +665,29 @@
   var reviewNotes = {};
   var reviewAt = 0;
 
+  // Everything the bar shows about the current item, in one place, so the
+  // checkbox and the note field cannot drift out of step with each other.
+  function reviewPaint(row){
+    var mark = LanternReviewMode.getMark(reviewNotes, row.id);
+    var flagged = 0;
+    Object.keys(reviewNotes).forEach(function(key){
+      if(LanternReviewMode.getMark(reviewNotes, key).flagged) flagged += 1;
+    });
+    $("review-wrong").checked = mark.flagged;
+    $("review-bar").classList.toggle("is-flagged", mark.flagged);
+    $("review-count").textContent = (reviewAt + 1) + " / " + reviewRows.length
+      + "　（おかしい " + flagged + "）";
+    $("review-jump").options[reviewAt].textContent =
+      (mark.flagged ? "● " : (mark.note ? "○ " : "")) + row.place + " / " + row.group + " / " + row.id;
+  }
+
   function reviewShow(index){
     if(!reviewRows.length) return;
     reviewAt = Math.max(0, Math.min(index, reviewRows.length - 1));
     var row = reviewRows[reviewAt];
     $("review-jump").value = String(reviewAt);
-    $("review-note").value = reviewNotes[row.id] || "";
-    $("review-count").textContent = (reviewAt + 1) + " / " + reviewRows.length
-      + "　（メモ " + Object.keys(reviewNotes).length + "）";
+    $("review-note").value = LanternReviewMode.getMark(reviewNotes, row.id).note;
+    reviewPaint(row);
 
     if(row.kind === "episode"){
       // Open that place's episode and land on the question itself.
@@ -720,20 +735,26 @@
     reviewRows.forEach(function(row, i){
       var option = document.createElement("option");
       option.value = String(i);
-      option.textContent = (reviewNotes[row.id] ? "● " : "") + row.place + " / " + row.group + " / " + row.id;
+      var mark = LanternReviewMode.getMark(reviewNotes, row.id);
+      option.textContent = (mark.flagged ? "● " : (mark.note ? "○ " : ""))
+        + row.place + " / " + row.group + " / " + row.id;
       jump.appendChild(option);
     });
     jump.addEventListener("change", function(){ reviewShow(Number(this.value)); });
     $("review-prev").addEventListener("click", function(){ reviewShow(reviewAt - 1); });
     $("review-next").addEventListener("click", function(){ reviewShow(reviewAt + 1); });
-    $("review-note").addEventListener("input", function(){
+    // Flagging is one tap; the note is optional. Requiring a written reason
+    // before an item can be marked turns a read-through into an essay.
+    function reviewMark(){
       var row = reviewRows[reviewAt];
-      reviewNotes = LanternReviewMode.saveNote(localStorage, reviewNotes, row.id, this.value);
-      $("review-count").textContent = (reviewAt + 1) + " / " + reviewRows.length
-        + "　（メモ " + Object.keys(reviewNotes).length + "）";
-      jump.options[reviewAt].textContent =
-        (reviewNotes[row.id] ? "● " : "") + row.place + " / " + row.group + " / " + row.id;
-    });
+      reviewNotes = LanternReviewMode.setMark(localStorage, reviewNotes, row.id, {
+        flagged: $("review-wrong").checked,
+        note: $("review-note").value
+      });
+      reviewPaint(row);
+    }
+    $("review-wrong").addEventListener("change", reviewMark);
+    $("review-note").addEventListener("input", reviewMark);
     $("review-export").addEventListener("click", function(){
       var text = LanternReviewMode.exportNotes(reviewRows, reviewNotes);
       var box = document.createElement("textarea");

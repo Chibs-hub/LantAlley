@@ -28,13 +28,42 @@
     }
   }
 
-  function saveNote(storage, notes, id, note){
+  /* A mark is a flag, a note, or both.
+   *
+   * Marking has to be one tap. Requiring a sentence before an item can be
+   * flagged turns a fast read-through into an essay, and a reviewer then stops
+   * flagging things rather than stopping to explain them.
+   *
+   * Older saves stored a bare string, so those are read as a flagged item
+   * carrying that note.
+   */
+  function normalise(entry){
+    if(!entry) return null;
+    if(typeof entry === "string") return {flagged:true, note:entry};
+    return {flagged: !!entry.flagged, note: entry.note || ""};
+  }
+
+  function getMark(notes, id){
+    return normalise((notes || {})[id]) || {flagged:false, note:""};
+  }
+
+  function setMark(storage, notes, id, mark){
     var next = {};
     Object.keys(notes || {}).forEach(function(key){ next[key] = notes[key]; });
-    if(note && note.trim()) next[id] = note.trim();
+    var flagged = !!(mark && mark.flagged);
+    var note = (mark && mark.note ? String(mark.note) : "").trim();
+    if(flagged || note) next[id] = {flagged:flagged, note:note};
     else delete next[id];
     try{ storage.setItem(NOTES_KEY, JSON.stringify(next)); }catch(err){}
     return next;
+  }
+
+  function saveNote(storage, notes, id, note){
+    var current = getMark(notes, id);
+    return setMark(storage, notes, id, {
+      flagged: current.flagged || !!(note && note.trim()),
+      note: note
+    });
   }
 
   /* Every authored question, flattened, in the order a learner meets them.
@@ -82,18 +111,22 @@
 
   // A plain-text report of everything flagged, for pasting back.
   function exportNotes(rows, notes){
-    var flagged = rows.filter(function(row){ return notes[row.id]; });
-    if(!flagged.length) return "No notes yet.";
-    var out = ["# Japanese review notes", "", flagged.length + " item(s) flagged.", ""];
+    var marked = rows.filter(function(row){ return notes[row.id]; });
+    if(!marked.length) return "No items marked yet.";
+    var wrong = marked.filter(function(row){ return getMark(notes, row.id).flagged; }).length;
+    var out = ["# Japanese review", "",
+      marked.length + " item(s) marked, " + wrong + " flagged as wrong.", ""];
     var place = null;
-    flagged.forEach(function(row){
+    marked.forEach(function(row){
+      var mark = getMark(notes, row.id);
       if(row.place !== place){
         place = row.place;
         out.push("## " + place, "");
       }
       out.push("### " + row.id + "  (" + row.group + " / " + row.title + ")");
       out.push("JP: " + row.jp.replace(/\n/g, " / "));
-      out.push("NOTE: " + notes[row.id]);
+      out.push("MARK: " + (mark.flagged ? "WRONG" : "note only"));
+      out.push("NOTE: " + (mark.note || "(none)"));
       out.push("");
     });
     return out.join("\n");
@@ -104,6 +137,8 @@
     isEnabled: isEnabled,
     loadNotes: loadNotes,
     saveNote: saveNote,
+    getMark: getMark,
+    setMark: setMark,
     buildIndex: buildIndex,
     exportNotes: exportNotes
   });

@@ -1345,3 +1345,7 @@
   .review-export-box{width:min(680px,92vw); height:60vh; padding:12px;
     border-radius:8px; border:1px solid var(--wood-edge);
     background:#1b130c; color:#f3e6d4; font-size:.8rem; line-height:1.5}
+
+  .review-flag{display:flex; align-items:center; gap:5px; white-space:nowrap; cursor:pointer}
+  .review-flag input{width:16px; height:16px; cursor:pointer}
+  .review-bar.is-flagged{background:#3a1410; border-bottom-color:#a2503f}
