@@ -1,37 +1,42 @@
 # Lantern Alley Project Handoff
 
-Last updated: 2026-08-26
+Last updated: 2026-08-27
 
-## 0. Current status and approved plan
+## 0. Current status
 
-Current build work: Alley Entrance and Moonview Inn are the only implemented locations. The Inn uses one three-day agreement, announces Day 1 Learn, Day 2 Practice and Day 3 Challenge, and gives a matching Japanese reply after each answer. The shared room now uses larger photographic object art, a responsive one-row desktop/two-row mobile supply shelf, clearer woven mats and a dedicated loose, stained used-sheet image that visibly sits crooked over the futon.
+**The course is complete and playable end to end.** Five locations, four episodes each, ten questions per episode: 20 episodes and 200 authored questions teaching 200 distinct words. `validateStage` passes for every stage with nothing filtered out - including the four-episodes-per-stage rule, which had been excluded from the Inn's tests for months because the Inn had only one episode.
 
-Current verification: all 207 automated tests pass. `app.js`, `n2-home-inn-stage.js` and `sw.js` pass `node --check`; `git diff --check` reports only the repository's existing LF-to-CRLF notices. Browser verification of the rebuilt standalone artifact at 1280 by 720 confirmed that the sheet's dark source background is masked out, the loose sheet is visibly unfitted, the mats remain clear, and all ten shelf objects remain visible. Cache is `lantern-alley-v81`; the standalone artifact is 9.32 MB.
+| Place | Episodes | Story |
+| --- | --- | --- |
+| 路地の入口 | tutorial | Meeting Kon; answering Japanese with an action. |
+| 月見宿 | 4 | 宵の一時間 / 予約帳 / 戻り客 / 宿を閉じる |
+| 灯り市 | 4 | 宵の値段 / 品書き / 人の波 / 店じまい |
+| 夕月茶屋 | 4 | お運び / 品書きを直す / 混み合う夕 / 店を閉める |
+| 路地駅 | 4 | 終電まで / 窓口の書き付け / 放送が鳴る / 忘れ物 |
+| 灯守神社 | 4 | 宵宮 / 立て札 / 太鼓が鳴る / 後始末 |
 
-Approved full-course design: five locations, four authored story episodes per location and ten questions per episode, for 20 Tier 1 episodes and 200 authored questions. Each episode contains 3 Learn, 3 Practice and 4 Challenge questions. Tier 2 generates reading, meaning and cloze practice from the curated vocabulary catalog to cover items that do not fit the story layer. Correction practice repeats only missed items until the queue is empty; its timer is 5 seconds for single-word recognition, 8 seconds by default and 12 seconds for full-sentence repair. Delayed review returns at about 1, 3, 7 and 14 days. The all-stage Mistake Review randomizes mistakes, removes correct items and shows a small source-location note without splitting the queue by stage.
+Every place covers all five official item types. The four written ones - 表記, 語形成, 文の組み立て, 文章の文法 - live in each place's second episode, because a spelling cannot be heard and a sentence you assemble is one you are looking at.
 
-The authoritative course documents are `docs/superpowers/specs/2026-08-25-five-stage-n2-curriculum-design.md` and `docs/superpowers/plans/2026-08-25-five-stage-n2-curriculum.md`. The implementation plan contains Tasks 1 through 12 plus delivery gate Task 6A and catalog-practice Task 6B. This is planning only; the generic course engine and the four future stage builds have not been implemented.
+**Verification.** 259 automated tests pass, 0 fail. Bare `node --test` is the correct command. The standalone artifact is 9.58 MB and the service-worker cache is `lantern-alley-v100`.
 
-Curriculum source: local vocabulary comes from `research/openjlpt/n2.json` and `research/openjlpt/n3.json`, supplemented by `research/n2-supplement.json`. The upstream project is [evanclan/OpenJLPT](https://github.com/evanclan/OpenJLPT), which describes community JLPT level assignments and Tatoeba examples under CC BY-SA 4.0. The exact commit or release used for the copied local files is not recorded, so provenance is incomplete. The official JLPT does not publish a fixed post-2010 vocabulary, grammar or kanji list. No grammar or kanji catalog has been approved, so the project may claim coverage only of its named vocabulary catalog, not complete JLPT N2 coverage.
+**The one open decision.** Audio has not been generated for the four newer places. The course speaks 620 lines; 114 have clips. Inlining the remaining 506 would take the artifact to roughly 31 MB against a hard 16 MB limit, so on 2026-08-27 the owner chose to skip the audio run for now and to drop the Artifact as the delivery surface later, so that the finished game can ship with its voice. Nothing has been sent to Microsoft Edge TTS.
 
-Execution blockers and decisions still required: name a native Japanese reviewer or define an honest review-confidence policy; resolve the current single three-day Inn story against the planned four Inn episodes; approve grammar and kanji sources; and confirm that the standalone artifact remains an Entrance plus Inn Episode 1 demo under 15 MB. Publication remains a separate approval-gated action. No commit, push or publication has been made.
+**What that costs today.** On the four newer places a listening item is read rather than heard. The clock is paced by the length of the line instead of by a recording, so nothing is unplayable, but the five-second items are tighter than they are at the Inn, where the clip plays first and the learner has already heard the request before the clock starts.
 
-Working-tree note: the current object-art change modifies `app.js`, `n2-home-inn-stage.js`, `n2-home-inn-stage.test.mjs`, `pwa.test.mjs`, `styles.css`, `sw.js` and this handoff, and adds `assets/inn/sheet-stained-messy-v1.png`. The standalone artifact was regenerated but is ignored by Git. No commit was made.
+**Still outstanding.** The Japanese has not been reviewed by the owner, who is a native speaker and reviews after authoring rather than during. The two dashed test controls - **Skip to next day** and **Preview Episode** - still ship in the build.
 
 ## 1. Project summary
 
-Lantern Alley is a local, browser-based Japanese language learning game. The player explores a small map, listens to Japanese dialogue, and answers by acting inside a scene rather than by picking a vocabulary card.
+Lantern Alley is a local, browser-based JLPT N2 learning game. The player walks a small map, listens to or reads Japanese, and answers by doing the job rather than by picking a vocabulary card.
 
-The current build is a focused prototype. It contains:
+Two layers carry the language:
 
-- Alley Entrance: introductory fox dialogue and bow interaction.
-- Moonview Inn: the first N2-focused learning stage.
-- Five N2 action words, each answered by a physical or social action.
-- Learn, Practice, Challenge, focused review, medals, and saved progress.
+- **Tier 1, the story episodes.** 200 authored questions across five places. Each has a Japanese prompt, four choices, an explanation for every choice including the wrong ones, and a short correction form that returns at the end of the shift if it was missed.
+- **Tier 2, Kon's practice (コンの稽古).** Reading, meaning and cloze cards generated from the 3,579-item vocabulary catalog - 9,097 cards, no item unreachable. This is what makes covering the catalog affordable: the story teaches 200 words deeply, and practice reaches the rest.
 
-The current opening is a cinematic alley cover. A first visit and `最初から` both lead to Kon's three-beat Entrance tutorial; returning learners may continue to the open destination map. The Entrance is one illustrated scene with a front-facing bow action. Bulb replacement darkens the room before installation and produces a warm light transition after the decisive installation action.
+An episode is one shift in three parts (3 Learn, 3 Practice, 4 Challenge) against a clock, followed by 間違い直し, a timed correction round over only the items that were missed.
 
-The project is not a complete JLPT N2 course. Only the first N2 stage is implemented.
+The project covers its own named vocabulary catalog. It does not claim complete JLPT N2 coverage: the official exam publishes no fixed post-2010 vocabulary, grammar or kanji list, and no grammar or kanji catalog has been approved for this project.
 
 ## 2. How to run the game
 
@@ -57,101 +62,108 @@ Two consequences worth stating plainly:
 
 ## 4. Current learning design
 
-Moonview Inn teaches these five N2 words:
+### The shape of an episode
 
-| Word | Meaning used in the game | How the player answers |
-| --- | --- | --- |
-| 揃える | make uniform along some attribute | Group the cushions by the attribute the sentence names (色 / 大きさ). |
-| 代える | replace one thing with another | Put the named worn item in the bin, then its fresh counterpart in the fitting. Order matters. |
-| 温める | warm something deliberately | Move the named dish to the appliance the request names (コンロ / 電子レンジ). One action. |
-| 調整 | reconcile several conditions | Read the times from the Japanese only, set the schedule, confirm. |
-| 引き受ける | undertake, accept responsibility | Accept or decline the named duty. Declining is treated as an incorrect answer, and Kon explains that help is still needed. |
+Every episode is ten questions in a 3-3-4 shape, told as one continuous shift:
 
-Each harder item carries one close N2 near-miss, used for feedback when the player acts wrongly:
+- **Day 1 - Learn.** Three guided items, the request written out in full.
+- **Day 2 - Practice.** Three items in changed situations.
+- **Day 3 - Challenge.** Four items, longer and harder, including the reading.
+- **間違い直し.** Only the items that were missed, on a shorter clock. Three tries at any one card, then Kon gives the answer and leaves it for a later review - an uncapped queue held a learner who could not get one card right for ever.
 
-- 揃える versus 揃う (the items come to match by themselves).
-- 代える versus 代わる (something takes another's place).
-- 温める versus 温まる (something becomes warm).
-- 調整 versus 調節 (controlling a degree, such as temperature).
-- 引き受ける versus 引き止める (stopping someone from leaving).
+### Clocks
 
-### The shared room
+| Kind of question | Time |
+| --- | --- |
+| Short spoken reply | 5 or 8 seconds |
+| Integrated or judgement item | 12 seconds |
+| Spelling, word formation | 20 seconds |
+| Sentence assembly | 30 seconds |
+| Reading and passage items | 120 seconds |
 
-`揃える`, `代える` and `温める` all render one identical room:
+The official paper allows roughly 80 seconds an item. Kon's briefing states the rules of the shift before the first question, and a test asserts the briefing never promises more time than the questions actually give.
 
-- 4 cushions varying in colour, size and facing, plus 2 unlabelled mats.
-- A used towel and a burnt-out bulb, each beside a fresh one, plus a bin and a fitting.
-- Cold tea, soup and rice, plus a stove and a microwave.
+### Where the answer sits
 
-Thirteen movable objects and nine fixture destinations are present every time. Three worn items begin in the room; the wooden supply shelf begins with four cushions, three fresh replacements and three dishes. Dropping a cushion on a mat is 揃える; moving a worn item to its stated basket and then installing its fresh counterpart is 代える; moving a dish to the named appliance is 温める. Performing a different action gives "That is a different action from the one the request asked for."
+The correct choice is placed by a hash of the question id. Authored by hand it landed first 73% of the time, and in the correction round 100% of the time, which meant "always tap the top one" scored 73% without reading any Japanese. It is now 25/25/25/25 and 50/50. Re-run `node research/balance-answers.mjs <file>` after authoring; it carries each explanation note with its option and refuses to leave a sentence-assembly item in its own answer order.
 
-The three attributes of the cushions are deliberately crossed, so grouping by colour, by size and by facing all produce different answers. Facing is never asked for; it exists so the correct grouping cannot be guessed.
+### The words each place teaches
 
-### Learning phases
-
-- Day 1 - Learn (一日目・基礎 ★☆☆): 5 guided encounters, one per target word, full Japanese sentence shown.
-- Day 2 - Practice (二日目・実践 ★★☆): 5 interleaved encounters, one changed situation per word. The complete Japanese request remains visible.
-- Day 3 - Challenge (三日目・挑戦 ★★★): 5 new audio-focused encounters, one per word. Romaji, English meaning and hints are hidden.
-- Mastery: all 5 Challenge words correct.
-- Focused review: only missed words return; recalling them completes the stage without replaying the full Challenge.
-- Kon's Japanese lines reveal progressively while she speaks. Clicking any non-control area of the game stops the voice and reveals the full line; clicking a non-control area again advances when a continuation is allowed. Buttons, inputs and draggable objects keep their own actions. A request waiting for an answer cannot be skipped.
+The catalog is partitioned five ways. Partitioning was round-robin, which dealt the market words like 血液, 競馬 and 国籍 - so the words a story actually teaches are now **pinned** to the place that teaches them in `research/authored-targets.json`, and everything else still spreads evenly. Coverage is a property of the practice pool, not of which forty words a story happens to use. Partitions stay balanced at roughly 700-730 items each.
 
 ## 5. Progress and scoring
 
-Progress is stored in browser `localStorage` under the key `lanternAlley.v2`, holding visited and starred locations, the Moonview Inn phase and encounter position, challenge score, correct target words, misses, mastery and medal.
+Progress is stored in `localStorage` under `lanternAlley.v3`. The v2 key is read once and migrated, then left alone, so rolling back to an older build does not lose a learner's progress.
 
-Medals: Bronze at Practice, Silver at Challenge or focused review, Gold at Challenge mastery.
+The record holds visited and starred places, the Inn's three-day position, which episodes are finished (`episodesDone`), which places have been entered (`stageStarted`), the state of every catalog item met in practice (`items`), and any shift left half-finished - including its correction queue, so a reload during an episode no longer throws the hour away.
 
-Important: browser progress is not part of the project folder. Copying or zipping the folder transfers the game code, not a player's saved progress.
+A place's lantern lights when **every** one of its episodes is finished, not one of them.
+
+Browser progress is not part of the project folder. Copying the folder transfers the game, not a player's saved progress.
 
 ## 6. Main files
 
-| File or folder | Purpose |
+### Content - the course itself
+
+| File | Purpose |
 | --- | --- |
-| `index.html` | Page markup only. Loads styles.css and the five scripts. |
-| `styles.css` | All styling. |
-| `app.js` | Application: map, controller, speech, progress, scene rendering, SVG icons, drag-and-drop. |
-| `n2-home-inn-stage.js` | Moonview Inn content: the shared `ROOM` definition, per-encounter requirements, Japanese sentences, near-miss explanations, phase rules, mastery rules. |
-| `moonview-inn-interactions.js` | Pure state engine for the five interactions. Node-testable, no DOM. |
-| `lantern-map.js` | Map and stage-system model. Node-testable, no DOM. |
-| `entrance-stage-logic.js` | Alley Entrance fox poses plus the shared, testable dialogue reveal/advance controller. |
-| `build-artifact.mjs`, `build-artifact.py` | Build `lantern-alley-artifact.html`: inline CSS, all five scripts and every local image or audio clip. Use `node build-artifact.mjs`; it is the maintained builder. The Python one still works but needs the full interpreter path, because bare `python` on this machine is the Microsoft Store alias stub. |
-| `optimize-fox-poses.py` | Regenerates `assets/fox/*.webp` from the full-size masters. |
-| `manifest.webmanifest` | PWA manifest: name, icons, standalone display. |
-| `sw.js` | Service worker. Pre-caches the app shell for offline play. |
-| `generate-audio.py` | Renders every spoken line to MP3 with a neural voice. Re-run after changing any Japanese. |
-| `collect-spoken-lines.js` | Collects spoken Japanese from the Entrance and Moonview Inn for audio generation. |
-| `audio-index.js` | Generated. Maps each line to its clip; imported by both the page and `sw.js`. |
-| `assets/audio/` | Generated MP3 clips, named by hash of the sentence. |
-| `icons/`, `make-icons.py` | PWA icon set and the script that regenerates it. |
-| `assets/fox/`, `assets/kon/` | Web-sized character images the app actually loads. |
-| `assets/inn/` | The illustrated room background, transparent 4 by 4 movable-object sprite sheet and dedicated loose used-sheet image. |
-| `lantern-alley-artifact.html` | Generated. Do not edit by hand; it is overwritten by the build script. |
-| `assets/fox-poses/` | Full-size PNG masters. Not loaded by the app. |
-| `research/` | N5-N2 vocabulary source files and the extraction script. |
-| `*.test.mjs` | Automated behavior and regression tests. |
-| `docs/superpowers/` | Design and implementation planning documents. The 2026-08-25 curriculum documents are authoritative for course expansion. The 2026-08-24 documents remain the implementation record for the current Entrance, map and Inn visual work; older tag-matching designs are superseded. |
+| `n2-inn-episodes.js` | 月見宿, four episodes. Registers itself in `LanternEpisodeStages`. |
+| `n2-market-episodes.js` | 灯り市, four episodes. |
+| `n2-teahouse-episodes.js` | 夕月茶屋, four episodes. |
+| `n2-station-episodes.js` | 路地駅, four episodes. |
+| `n2-shrine-episodes.js` | 灯守神社, four episodes. |
+| `n2-home-inn-stage.js` | The Inn's original three-day stage, with the shared room and its drag-and-drop objects. Still the way the Inn is first entered. |
+| `curriculum-catalog.js` | Generated. 3,579 catalog items, partitioned five ways. Do not edit by hand. |
+| `research/authored-targets.json` | The words each place teaches, pinned to that place before the round-robin runs. |
+| `research/build-n2-catalog.mjs` | Rebuilds the catalog from the OpenJLPT sources plus the project supplement. |
+
+### Engine
+
+| File | Purpose |
+| --- | --- |
+| `app.js` | The controller: map, episodes, practice, speech, progress, scene rendering, drag-and-drop. |
+| `learning-content.js` | The episode contract, and `validateStage`. |
+| `question-renderer.js` | Turns a question into controls and a clock. The only part that touches the DOM, and it takes an injectable `document`. |
+| `review-engine.js` | The correction queue and the spaced-review intervals. Caps a card at three tries. |
+| `learning-progress.js` | The v3 progress model. |
+| `catalog-practice.js` | Tier 2: builds reading, meaning and cloze cards from the catalog. |
+| `lantern-map.js` | The map model. Node-testable, no DOM. |
+| `entrance-stage-logic.js` | The Entrance, plus the shared dialogue reveal controller. |
+| `moonview-inn-interactions.js` | Pure state engine for the Inn's room interactions. |
+
+### Tooling
+
+| File | Purpose |
+| --- | --- |
+| `research/balance-answers.mjs` | Moves each correct answer to a position derived from its question id. Run after authoring. |
+| `build-artifact.mjs` | Builds `lantern-alley-artifact.html`, inlining every script, style, image and audio clip. The maintained builder; the `.py` one still works but needs the full interpreter path. |
+| `generate-audio.py` | Renders every spoken line to MP3 with `ja-JP-NanamiNeural`. Hashes the text, so only changed lines cost anything. Needs network. |
+| `collect-spoken-lines.js` | Collects the spoken Japanese. Walks every registered stage. |
+| `audio-index.js` | Generated. Maps each line to its clip; imported by the page and by `sw.js`. |
+| `dom-harness.mjs` | A DOM small enough to read, so tests can render rather than match source text. |
+| `visual-smoke.mjs` | Manual screenshot script. Needs a browser on port 9223. Deliberately not named `*.test.mjs`. |
+| `sw.js`, `manifest.webmanifest`, `icons/` | The PWA shell. Bump `CACHE_VERSION` on every shipped change. |
+| `assets/` | Character art, the Inn room and its object sprites, and the generated audio. |
 
 ## 7. Testing and verification
 
-Run all automated tests from PowerShell in the project folder:
-
 ```powershell
-node --test curriculum-catalog.test.mjs entrance-stage.test.mjs lantern-map.test.mjs learning-content.test.mjs learning-progress.test.mjs moonview-inn-interactions.test.mjs n2-home-inn-stage.test.mjs n2-inn-episodes.test.mjs pwa.test.mjs question-renderer.test.mjs review-engine.test.mjs
+node --test
 ```
 
-Current verified baseline: 207 tests passed, 0 failed. `app.js`, `n2-home-inn-stage.js` and `sw.js` passed `node --check`. The rebuilt standalone artifact is 9,776,861 bytes and the service-worker cache is `lantern-alley-v81`.
+That is now the correct command and it needs no file list. 259 tests pass, 0 fail.
 
-Beyond the mechanics, the tests now guard the design rule itself:
+The suite guards three different things.
 
-- The arrange scene never states its own grouping rule, and the mats carry no answer label.
-- The grouping attribute exists only in the Japanese sentence, and all three cushion axes genuinely vary.
-- All object-moving encounters share one identical room, and all three verbs occur over it.
-- Practice narration describes evidence without naming the required English action. This test has already caught a real leak, where a narration used the word "replacement".
-- Encounter titles are story beats and never contain an action verb.
-- The Learn phase narrations run in story order.
-- Every spoken Entrance tutorial line has a pre-rendered audio clip, so it cannot silently fall back to a device voice.
-- The game screen keeps learning context and answer controls in separate adaptive regions, with a split desktop workspace and sticky mobile request.
+**The design rule.** The arrange scene never states its own grouping rule; the grouping attribute exists only in the Japanese; narration describes evidence without naming the required action; encounter titles are story beats, never verbs.
+
+**The course as a whole** (`curriculum.test.mjs`, nothing filtered): five places, 20 episodes, 200 questions, 200 distinct words, no prompt reused anywhere, every word taught by the place whose partition holds it, every place covering all five item types, four choices and four explanations everywhere, answer content in Japanese only, briefings never promising more time than the questions give, counters that stop at 九つ.
+
+**What a player would actually see** (`walkthrough.test.mjs`). This one boots the real `index.html` with every script and plays the game against `dom-harness.mjs`, solving the room the way the sentence tells it to. The invariant is blunt on purpose: wherever the game waits for the player, there is something to click.
+
+That last suite exists because roughly 260 assertions match the *source text* of `app.js`, which is how `challenge is not defined` once shipped green - the string the test looked for was still in the file while the question rendered a running clock and no buttons. When the walkthrough was written, the bug's exact shape was reinjected: all 42 assertions in the suites covering that code passed, and the walkthrough failed with the real `ReferenceError`.
+
+**Verify through the built artifact, not the dev server.** The dev server has repeatedly served stale files even after unregistering the service worker; the artifact has no service worker at all.
 
 ## 8. Publishing to the Artifact
 
@@ -1678,40 +1690,55 @@ The old single-file `lantern-alley.html` had no `<meta charset>`, so browsers de
 
 ## 10. Known limitations
 
-- Only Alley Entrance and Moonview Inn are active.
-- The game does not cover all N2 vocabulary.
-- **Japanese still needs a native-speaker review before release.** The two known errors are fixed (see section 9). One open question remains: `代える` is used for swapping a towel or bulb, where `取り替える` is more idiomatic.
-- 引き受ける is the one word not answered through the shared room; it is a spoken reply. Extending the shared-scene principle to it and to 調整 is listed in section 11.
-- Cushion grouping uses red versus blue as one axis. Size and facing also distinguish every cushion and `aria-label` spells out 赤/青, but a colour-blind-safe palette would be better.
-- The icons are simple hand-drawn SVG line art, intended as placeholders until real illustrations are produced.
-- Browser speech synthesis varies by machine and may be unavailable without a Japanese voice installed.
-- Player progress cannot be exported or imported.
-- The repository currently contains approved uncommitted work from several editing sessions; preserve unrelated changes and do not reset them.
-- `docs/superpowers/` contains both current implementation records and older superseded design notes. Check each document's status before using it.
+- **No audio on four of the five places.** 506 of the 620 spoken lines have no clip. Listening items there are read rather than heard, and on a device with no Japanese voice they are silent. This is a deliberate, recorded decision, not an oversight - see section 0.
+- **The five-second items are tighter without audio.** At the Inn the clip plays before the clock starts, so the request has already been heard. Elsewhere the learner reads it cold.
+- **The Japanese has not been reviewed.** 200 questions, five story arcs and every piece of Kon's dialogue were authored in this project and have not been checked by a native speaker. The owner reviews after authoring.
+- **Two test controls still ship.** **Skip to next day** and **Preview Episode** are dashed buttons in the live build.
+- **The Artifact cannot carry the finished game.** With audio it is about 31 MB against a 16 MB limit.
+- **Catalog provenance is incomplete.** The exact OpenJLPT commit used for the local copies was not recorded.
+- **No grammar or kanji catalog is approved**, so the project may claim coverage only of its named vocabulary catalog.
+- **The Inn is entered through its old three-day stage**, while the four newer places drop straight into their first episode. The two entry paths are different by history rather than by design.
 
 ## 11. Recommended next work
 
-1. Finish the current Inn delivery: approve and generate the two missing audio clips, update the audio index/cache, rebuild the artifact, then run the complete test and browser checks.
-2. Resolve the Inn story conflict before Task 6: either make Episode 1 the first three days of an open-ended stay, or redesign the four planned episodes around one three-day visit.
-3. Name a native Japanese reviewer or approve an explicit confidence and review-status policy, including the `代える` versus `取り替える` issue.
-4. Approve traceable grammar and kanji sources; until then, keep those coverage areas marked unmet.
-5. Execute the curriculum plan in order: catalog audit, shared contracts, review scheduler, generic progress, adaptive renderer, Inn migration, delivery gate, Tier 2 catalog practice, four future stages, all-stage Mistake Review, then final audio/offline delivery.
-6. Preserve the artifact as an Entrance plus Inn Episode 1 demo unless the owner explicitly changes that delivery decision.
-7. Add end-to-end browser tests for every interaction type and representative desktop/mobile sizes.
+In the order that gets the most for the least:
+
+1. **Native review of the Japanese.** Everything else is cheap to change; this is the thing only the owner can do. `generate-audio.py` hashes its input, so corrections cost only the lines that changed.
+2. **Decide the delivery surface.** The Artifact cannot hold the finished game. Until that is settled the audio run cannot be spent well.
+3. **Generate the audio** once the surface is known. `collect-spoken-lines.js` already walks every stage, so the run needs no code change.
+4. **Remove or flag the two test controls.** Left until last on purpose: every step above is verified through them. Note that they are currently the only quick way into a later episode without replaying what comes before, so removing them should come with a proper way to resume a place.
+5. **Give the four newer places their scene art.** They render on the shared workspace today. Nothing depends on this; it is the visible half of the work.
+6. **Reconcile the Inn's two entry paths** so all five places are entered the same way.
 
 ## 12. Handoff rules for the next developer or AI session
 
-- **Keep this file current.** On every change, update the affected sections and add a change-log entry in section 9 stating the reason, not just the edit.
+### Working agreement with the owner
+
+- **Commit verified fixes without asking.** The owner asked for this directly. A fix is committable once its tests pass and, where it is visible, it has been checked in the browser. Write the message about the cause, not the symptom.
+- **Ask before `git push`, before publishing the Artifact, and before anything that is not a fix** - new features, large refactors, deleting work.
+- **Anything that leaves the machine is approval-gated.** Audio generation sends Japanese text to Microsoft Edge TTS. Ask, every time.
+- **The owner is a native Japanese speaker and reviews after authoring, not during.** Do not gate work on review and do not raise "needs native review" as a blocker. Author it, then present it. Flag specific word choices worth a second opinion as questions in the summary.
+- **Flag a hard blocker before building a substitute**, not after.
+
+### Design rules
+
 - Never let the scene, a label, or the object set reveal the answer. See section 3.
-- Do not show a highlighted answer zone or exact target value before the player acts.
-- Explain control operation separately from the language problem.
 - Practice must not display the target word or name the required English action.
-- Challenge must remain audio-focused.
-- Every harder item should carry exactly one relevant close N2 near-miss with specific feedback.
-- Add or update tests before changing interaction behavior. Prefer tests that guard the design rule, not just the mechanics.
-- Do not claim full N2 coverage based on the automated candidate CSV.
+- A wrong answer explains the choice the learner actually made. "Not that one" teaches nothing.
+- Every harder item carries exactly one relevant close N2 near-miss.
+- A question must be answerable from what it shows. Two defensible answers is a broken item, not a hard one - every condition the answer turns on has to be written down.
+- English appears only in the how-to line and the explanation notes. Never in answer content.
+
+### Mechanical rules, each of which exists because it was broken once
+
+- **Run `node research/balance-answers.mjs` after authoring questions.** By hand, the correct answer lands first far too often.
+- **Bump `CACHE_VERSION` in `sw.js`** (and the matching assertion in `pwa.test.mjs`) on every shipped change.
+- **Verify through the built artifact, not the dev server.** The dev server serves stale files.
+- **Prefer a test that renders over a test that matches source text.** `walkthrough.test.mjs` exists because a source-text suite passed while the game crashed.
+- **Check that a catalog id exists before using it as a target.** Eleven invented ids reached a draft in one sitting.
+- **Keep this file current.** On every change, update the affected sections and add a section 9 entry stating the reason, not just the edit.
 - Remember that editing the local file does not update the desktop shortcut. See section 8.
-- Do not commit, push, publish, or deploy without the project owner's approval.
+- Do not claim full N2 coverage. The project covers its own named vocabulary catalog.
 
 ## 13. Sharing checklist
 
