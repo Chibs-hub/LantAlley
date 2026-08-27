@@ -473,3 +473,17 @@ test("each written item type says what job it is asking for", () => {
   }
   assert.ok(seen.size >= 4, "the written types share one how-to line");
 });
+
+test("a question that has been settled stops accepting taps and looks settled", () => {
+  const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  // Both ways a question can end have to disable its choices. Answering did;
+  // running out of time did not, so the buttons sat there live-looking and
+  // inert - which reads as a broken game rather than a clock that ran out.
+  assert.match(app, /function settlePreviewChoices/);
+  assert.match(app, /previewState\.answered = true;[\s\S]{0,400}settlePreviewChoices\(value\)/);
+  assert.match(app, /timer\.expired[\s\S]{0,400}settlePreviewChoices\(-1\)/);
+  // And the clock must not depend on a recording that may not exist.
+  assert.match(app, /function hasClip/);
+  assert.match(app, /hasClip\(question\.prompt\.jp\)/);
+  assert.match(app, /function spokenDuration/);
+});

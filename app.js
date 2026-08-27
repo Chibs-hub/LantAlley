@@ -1011,6 +1011,20 @@
 
   // Spoken requests start their clock only once Kon has stopped talking, so the
   // learner is timed on understanding rather than on listening.
+  // Whether this exact line has a pre-rendered clip. Lines added after the last
+  // audio run do not, and the episode clock must not depend on one.
+  function hasClip(text){
+    return !!(window.LanternAlleyAudio && window.LanternAlleyAudio[text]);
+  }
+
+  // Roughly how long the line would take to say, so a question without a clip
+  // is paced like one with a clip rather than starting instantly.
+  function spokenDuration(text){
+    return Math.min(6000, Math.max(1600, String(text || "").length * 95));
+  }
+
+  var pendingClock = null;
+
   function startQuestionClock(seconds, token){
     if(!previewState || previewState.token !== token) return;
     previewState.timer = LanternQuestionRenderer.startTimer(
@@ -1025,6 +1039,11 @@
       if(previewState.timer.expired){
         clearPreviewTimer();
         previewState.answered = true;
+        // The choices have to stop looking like choices here too. Left live
+        // after a timeout they read as a question waiting to be answered, and
+        // tapping one did nothing at all - which looks like a broken game
+        // rather than a clock that ran out.
+        settlePreviewChoices(-1);
         var entry = previewState.list[previewState.index];
         if(previewState.missed.indexOf(entry.question.id) < 0) previewState.missed.push(entry.question.id);
         showFeedback(false, "時間切れです。お客様を待たせました。この問題は最後にもう一度出ます。");
@@ -1095,6 +1114,10 @@
     $("hint-btn").style.display = "none";
     $("hint-box").classList.remove("show");
     $("feedback-row").classList.remove("show");
+    // Clear the text too. Hiding the row left the previous question's verdict
+    // on screen - a learner opening the market saw 時間切れ over a question they
+    // had not been asked yet.
+    $("feedback-text").textContent = "";
     $("next-row").style.display = "none";
 
     previewState.token = (previewState.token || 0) + 1;
@@ -1106,9 +1129,17 @@
     // is what makes them harder than the days.
     if(question.prompt.audio){
       speak(question.prompt.jp);
-      // Start counting when the voice finishes, or after a fallback if it never
-      // reports back - the same guard the rest of the game uses.
-      afterSpeech(function(){ startQuestionClock(question.seconds || 8, token); }, 1200);
+      if(hasClip(question.prompt.jp)){
+        // There is a recording: count from when it stops, so the learner is
+        // timed on understanding rather than on listening.
+        afterSpeech(function(){ startQuestionClock(question.seconds || 8, token); }, 1200);
+      }else{
+        // No recording for this line. Waiting on a voice that will never report
+        // back left the clock either firing at once - the question was dead
+        // before it could be read - or stuck on its placeholder for seven
+        // seconds. Wait roughly as long as the line would have taken to say.
+        pendingClock = {token: token, seconds: question.seconds || 8, delay: spokenDuration(question.prompt.jp)};
+      }
     }else if(dialogueFlow){
       // Silent questions must still hand the line to the dialogue controller.
       // Writing straight to #jp-line left the previous question's reply mid
@@ -1141,7 +1172,15 @@
 
     var spec = LanternQuestionRenderer.describe(question, {phase: entry.mode});
     $("inn-instruction").innerHTML = '<span>' + spec.howToInteract + '</span>';
-    if(!question.prompt.audio) startQuestionClock(question.seconds || 8, token);
+    // Only now that the question is on screen. Starting the clock before the
+    // scene was rebuilt counted down against a timer the learner could not see.
+    if(!question.prompt.audio){
+      startQuestionClock(question.seconds || 8, token);
+    }else if(pendingClock && pendingClock.token === token){
+      var armed = pendingClock;
+      pendingClock = null;
+      setTimeout(function(){ startQuestionClock(armed.seconds, armed.token); }, armed.delay);
+    }
 
     var options = (question.answer && question.answer.options) || [];
     if(!options.length){
