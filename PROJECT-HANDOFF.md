@@ -168,6 +168,16 @@ An artifact cannot load sibling `.js` files or local images, which is why the bu
 
 ## 9. Change log and reasons
 
+### 2026-08-27 - Delivery decision: the Artifact cannot carry the finished game
+
+**The measurement.** With all five places authored, the course speaks 620 lines. 114 have clips; 506 do not. Inlined as data URIs that is roughly 31 MB against an Artifact hard limit of 16 MB. Even the listening prompts alone - the 110 lines where the audio *is* the question - come to 6.9 MB on top of a build that is already 9.58 MB, and the scene art inside it has been WebP-optimised once already.
+
+**The decision, taken by the owner on 2026-08-27.** Skip the audio run for now, and plan to drop the Artifact as the delivery surface in order to finish the full game. The Artifact stays useful as a preview of what exists today; it cannot be what the finished five-location course ships as.
+
+**What that means in practice.** The new locations run on `spokenDuration()` - the clock is paced by the length of the line rather than by a recording - so nothing is unplayable and no question dies before it can be read. What is missing is the listening practice itself: on the four new places a listening item is read rather than heard, and on a device with no Japanese voice it is silent.
+
+`collect-spoken-lines.js` now walks every registered stage rather than the Inn alone, so whenever the audio run does happen it will pick up all 506 lines without further change. Nothing was sent to Microsoft Edge TTS.
+
 ### 2026-08-26 - Step D: Episode 2 「予約帳」 and the four missing item types
 
 **What was missing.** The official N2 paper has six vocabulary and grammar item types. Episode 1 carried two of them. 表記, 語形成, 文の組み立て and 文章の文法 had no home, and `sentence-order` sat declared in the renderer with nothing calling it.

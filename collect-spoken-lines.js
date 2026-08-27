@@ -62,8 +62,21 @@ if (stage.intro) {
 vm.runInContext(fs.readFileSync("curriculum-catalog.js", "utf8"), context);
 vm.runInContext(fs.readFileSync("learning-content.js", "utf8"), context);
 vm.runInContext(fs.readFileSync("n2-inn-episodes.js", "utf8"), context);
-const inn = context.N2InnEpisodes;
-inn.episodes.forEach((episode) => {
+// Every registered place, not just the Inn. A line without a clip falls back
+// to the device voice, which on iOS often has no Japanese at all.
+for (const file of [
+  "n2-market-episodes.js",
+  "n2-teahouse-episodes.js",
+  "n2-station-episodes.js",
+  "n2-shrine-episodes.js",
+]) {
+  vm.runInContext(fs.readFileSync(file, "utf8"), context);
+}
+
+const allEpisodes = Object.values(context.LanternEpisodeStages)
+  .flatMap((stage) => stage.episodes);
+
+allEpisodes.forEach((episode) => {
   if (episode.intro) add(episode.intro.jp);
   if (episode.briefing) add(episode.briefing.jp);
   // Spoken when the correction round starts. Kept here rather than in the
