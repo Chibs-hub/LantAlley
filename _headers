@@ -1,0 +1,21 @@
+# Cache rules for static hosts (Cloudflare Pages and Netlify both read this).
+#
+# The service worker and the page that registers it must never be served from a
+# cache, or a learner keeps running an old build forever: the worker is what
+# decides which version of everything else they get, so a stale worker pins the
+# whole app to a past release. This is the standard PWA update trap, and this
+# project has already lost time to its local cousin - a freshly edited script
+# was served from the browser cache while a new file beside it loaded fresh.
+#
+# Everything else is left to the host's defaults. The page stamps ?v=<version>
+# onto each script and stylesheet URL, so a release bump changes those URLs and
+# defeats any cache without needing a rule here.
+
+/sw.js
+  Cache-Control: no-cache
+
+/index.html
+  Cache-Control: no-cache
+
+/manifest.webmanifest
+  Cache-Control: no-cache
