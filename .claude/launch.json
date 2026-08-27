@@ -3,7 +3,8 @@
   "configurations": [
     {
       "name": "lantern-alley",
-      "runtimeExecutable": "python",
+      "//": "Full interpreter path on purpose: bare `python` on this machine is the Microsoft Store alias stub, which exits without serving anything.",
+      "runtimeExecutable": "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
       "runtimeArgs": ["-m", "http.server", "8743"],
       "port": 8743
     }

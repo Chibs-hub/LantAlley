@@ -272,7 +272,7 @@ test("the offline delivery contains the cinematic opening, Entrance, and room li
   const sw = read("sw.js");
   const artifact = read("lantern-alley-artifact.html");
 
-  assert.match(sw, /lantern-alley-v117/);
+  assert.match(sw, /lantern-alley-v118/);
   for (const pose of [
     "fox-neutral-idle-transparent-v2.webp",
     "fox-wave-closed-smile-transparent-v2.webp",

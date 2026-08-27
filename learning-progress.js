@@ -34,7 +34,15 @@
       // dropped here, so every one of them was lost on reload.
       episodesDone: [],
       stageStarted: [],
-      episode: null
+      episode: null,
+      // The daily practice layer. Added here at the same time as saveProgress
+      // writes them, because last time that was not done these were silently
+      // dropped on every reload.
+      reviewProgress: {},
+      dailyPractice: null,
+      streak: 0,
+      freezes: 0,
+      lastActiveDate: null
     };
   }
 
@@ -80,6 +88,11 @@
       next.episodesDone = (stored.episodesDone || []).slice();
       next.stageStarted = (stored.stageStarted || []).slice();
       next.episode = stored.episode ? clone(stored.episode) : null;
+      next.reviewProgress = clone(stored.reviewProgress || {});
+      next.dailyPractice = stored.dailyPractice ? clone(stored.dailyPractice) : null;
+      next.streak = Number(stored.streak) || 0;
+      next.freezes = Number(stored.freezes) || 0;
+      next.lastActiveDate = stored.lastActiveDate || null;
       return next;
     }
 

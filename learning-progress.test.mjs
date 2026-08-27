@@ -188,3 +188,42 @@ test("an empty record starts with no episode progress rather than undefined", ()
   assert.deepEqual(Array.from(fresh.stageStarted), []);
   assert.equal(fresh.episode, null);
 });
+
+test("the daily practice layer survives a reload too", () => {
+  const progress = load();
+  // Written into saveProgress and into migrateProgress in the same change,
+  // which is the discipline this file learned the hard way.
+  const stored = {
+    version: progress.VERSION,
+    visited: [], starred: [], stages: {}, items: {}, mistakes: [], repairQueue: [],
+    money: 300, paidAnswers: [], masteredByStage: {},
+    episodesDone: [], stageStarted: [], episode: null,
+    reviewProgress: { "w-souji": { step: 2, due: 1756000000000, delayedSuccesses: 1 } },
+    dailyPractice: { date: "2026-08-27", coins: 26 },
+    streak: 9,
+    freezes: 2,
+    lastActiveDate: "2026-08-27",
+  };
+
+  const out = progress.migrateProgress(stored);
+  assert.equal(out.reviewProgress["w-souji"].step, 2, "the spacing schedule survives");
+  assert.equal(out.reviewProgress["w-souji"].due, 1756000000000);
+  assert.equal(out.dailyPractice.coins, 26, "today's earnings survive, so the cap holds");
+  assert.equal(out.streak, 9);
+  assert.equal(out.freezes, 2);
+  assert.equal(out.lastActiveDate, "2026-08-27");
+
+  const again = progress.migrateProgress(out);
+  assert.equal(again.streak, 9, "and it round-trips");
+  assert.equal(again.reviewProgress["w-souji"].step, 2);
+});
+
+test("a fresh record starts with an empty schedule, not undefined", () => {
+  const progress = load();
+  const fresh = progress.migrateProgress(null);
+  assert.deepEqual(Object.keys(fresh.reviewProgress), []);
+  assert.equal(fresh.dailyPractice, null);
+  assert.equal(fresh.streak, 0);
+  assert.equal(fresh.freezes, 0);
+  assert.equal(fresh.lastActiveDate, null);
+});

@@ -343,6 +343,13 @@
         pendingMoney = v3.money || 0;
         pendingPaidAnswers = v3.paidAnswers || [];
         pendingMasteredByStage = v3.masteredByStage || {};
+        pendingReviewProgress = v3.reviewProgress || {};
+        pendingDaily = {
+          dailyPractice: v3.dailyPractice || null,
+          streak: v3.streak || 0,
+          freezes: v3.freezes || 0,
+          lastActiveDate: v3.lastActiveDate || null
+        };
         return legacyViewOf(v3);
       }
       var raw = localStorage.getItem(STORAGE_KEY);
@@ -414,6 +421,11 @@
         // The shift and its correction queue: memory-only until now, so a
         // reload during an episode threw away the whole hour.
         episode: savedEpisode,
+        reviewProgress: state.reviewProgress || {},
+        dailyPractice: state.dailyPractice || null,
+        streak: state.streak || 0,
+        freezes: state.freezes || 0,
+        lastActiveDate: state.lastActiveDate || null,
         episodesDone: Object.keys(state.episodesDone || {}),
         stageStarted: Object.keys(state.stageStarted || {}),
         items: state.itemStates || {},
@@ -565,6 +577,8 @@
   var savedEpisode = null;
   var pendingEpisodesDone = {};
   var pendingStageStarted = {};
+  var pendingReviewProgress = {};
+  var pendingDaily = {dailyPractice:null, streak:0, freezes:0, lastActiveDate:null};
   var migratedFromV2 = false;
   var pendingItemStates = {};
   var pendingMoney = 0;
@@ -588,6 +602,11 @@
   state.money = pendingMoney;
   state.paidAnswers = pendingPaidAnswers;
   state.masteredByStage = pendingMasteredByStage;
+  state.reviewProgress = pendingReviewProgress;
+  state.dailyPractice = pendingDaily.dailyPractice;
+  state.streak = pendingDaily.streak;
+  state.freezes = pendingDaily.freezes;
+  state.lastActiveDate = pendingDaily.lastActiveDate;
   if(pendingLegacyMasteryHydration) hydrateCompletedMastery();
   // Write the migrated record once, so the v2 shape is converted rather than
   // re-read on every load. The v2 key is left alone: if this build is rolled
@@ -1140,11 +1159,47 @@
     return {items: (state.itemStates || {})};
   }
 
+  /* The daily session.
+   *
+   * Due items first, new words after. `review-engine.js` has held the spacing
+   * schedule since it was written and nothing ever called it, so every card
+   * was equally likely and a word answered correctly once was never seen
+   * again. Now a word comes back at 1, 3, 7 and 14 days, and comes back
+   * tomorrow if it was missed.
+   */
+  function dailySessionCards(size){
+    var keys = practicePartitions();
+    if(!keys.length) return [];
+    var open = {};
+    keys.forEach(function(key){
+      LanternCurriculumCatalog.getPartition(key).forEach(function(item){ open[item.id] = true; });
+    });
+
+    var cards = [];
+    var used = {};
+    var due = LanternReviewEngine.getDueItems(state.reviewProgress || {}, Date.now());
+    for(var i = 0; i < due.length && cards.length < size; i++){
+      if(!open[due[i]]) continue;
+      var item = LanternCurriculumCatalog.getItem(due[i]);
+      if(!item) continue;
+      var built = LanternCatalogPractice.buildPracticeCards(item, LanternCurriculumCatalog);
+      if(!built.length) continue;
+      cards.push(built[Math.floor(Math.random() * built.length) % built.length]);
+      used[due[i]] = true;
+    }
+
+    if(cards.length < size){
+      var filler = LanternCatalogPractice.getPracticeSession(
+        keys, practiceProgress(), LanternCurriculumCatalog, size - cards.length);
+      filler.forEach(function(card){ if(!used[card.target]) cards.push(card); });
+    }
+    return cards;
+  }
+
   function startCatalogPractice(){
     if(typeof LanternCatalogPractice === "undefined") return;
-    var keys = practicePartitions();
-    if(!keys.length) return;
-    var cards = LanternCatalogPractice.getPracticeSession(keys, practiceProgress(), LanternCurriculumCatalog, 8);
+    var size = (typeof LanternDailyPractice !== "undefined") ? LanternDailyPractice.SESSION_SIZE : 8;
+    var cards = dailySessionCards(size);
     if(!cards.length) return;
     practiceState = {cards: cards, index: 0, correct: 0, answered: false};
     screenTitle.style.display = "none";
@@ -1200,6 +1255,12 @@
         // Mark the item either way: the learner has now met it, and the
         // coverage report distinguishes seen from tested.
         markItemState(card.target, right ? "tested" : "seen");
+        // Feed the spacing schedule either way: a miss has to bring the word
+        // back tomorrow, which is the whole point of recording it.
+        state.reviewProgress = LanternReviewEngine.recordOutcome(state.reviewProgress || {}, {
+          id: card.target, correct: right, now: Date.now()
+        });
+        if(right) earnPracticeCoins(1);
         $("jp-line").textContent = "「" + item.canonical + "」（" + item.reading + "）" + (item.meanings[0] || "");
         showFeedback(right, right ? "正解です。"
           : "正しい答えは「" + card.options[card.correctIndex] + "」です。");
@@ -1208,6 +1269,46 @@
       });
       host.appendChild(button);
     });
+  }
+
+  /* Practice income, which is the only renewable money in the game.
+   *
+   * Separate from `rewardCorrect`, which pays once per authored question and
+   * then never again. This pays per correct card against a daily cap, so a
+   * long grind cannot out-earn a good short session.
+   */
+  function earnPracticeCoins(amount){
+    if(typeof LanternDailyPractice === "undefined" || !amount) return 0;
+    var result = LanternDailyPractice.grant(state.dailyPractice, amount, Date.now());
+    state.dailyPractice = result.wallet;
+    if(result.granted){
+      state.money = (state.money || 0) + result.granted;
+      saveProgress();
+      renderHud();
+      playCoinSound();
+      showPayout(result.granted);
+    }
+    return result.granted;
+  }
+
+  // Finishing a session is what counts a day towards the streak - not opening
+  // the app, and not answering one card.
+  function completeDailySession(correct, total){
+    if(typeof LanternDailyPractice === "undefined") return null;
+    var earnings = LanternDailyPractice.sessionEarnings(correct, total);
+    var bonus = earnings.gate + earnings.perfect;
+    var paidBonus = bonus ? earnPracticeCoins(bonus) : 0;
+
+    var streak = LanternDailyPractice.advanceStreak({
+      streak: state.streak, freezes: state.freezes, lastActiveDate: state.lastActiveDate
+    }, Date.now());
+    state.streak = streak.streak;
+    state.freezes = streak.freezes;
+    state.lastActiveDate = streak.lastActiveDate;
+    var paidMilestone = streak.milestone ? earnPracticeCoins(streak.milestone) : 0;
+    saveProgress();
+    renderHud();
+    return {earnings:earnings, paidBonus:paidBonus, streak:streak, paidMilestone:paidMilestone};
   }
 
   function markItemState(id, value){
@@ -1240,6 +1341,7 @@
     practiceState.finished = true;
     var total = practiceState.cards.length;
     var right = practiceState.correct;
+    var summary = completeDailySession(right, total);
     var line = right === total ? "全部できたね。よく覚えている。"
       : right >= Math.ceil(total / 2) ? "いいね。あと少しだ。"
       : "まだ体が覚えていないな。もう一度やろう。";
@@ -1248,9 +1350,23 @@
     $("feedback-row").classList.remove("show");
     $("feedback-text").textContent = "";
     if(dialogueFlow) dialogueFlow.start(line, false);
+    var lines = [];
+    if(summary){
+      var e = summary.earnings;
+      lines.push('<li>正解 ' + right + ' / ' + total + '　(' + Math.round(e.accuracy * 100) + '%)</li>');
+      lines.push('<li>' + (e.gate ? '八割をこえました。おまけ ¥' + e.gate : 'あと少しで、おまけがつきます（八割から）') + '</li>');
+      if(e.perfect) lines.push('<li>全問正解。さらに ¥' + e.perfect + '</li>');
+      lines.push('<li>連続 ' + summary.streak.streak + ' 日目'
+        + (summary.streak.frozen ? '（お休みの分は、とっておいた札で埋めました）' : '') + '</li>');
+      if(summary.paidMilestone) lines.push('<li>七日つづきました。ごほうび ¥' + summary.paidMilestone + '</li>');
+      if(!summary.paidBonus && (e.gate + e.perfect) > 0){
+        lines.push('<li>今日のぶんは、もういっぱいです。また明日。</li>');
+      }
+    }
     $("scene").innerHTML = '<div class="inn-workspace">'
       + '<p class="inn-instruction"><span>Practice complete.</span></p>'
-      + '<p class="practice-score">' + right + ' / ' + total + '</p></div>';
+      + '<p class="practice-score">' + right + ' / ' + total + '</p>'
+      + '<ul class="practice-summary">' + lines.join("") + '</ul></div>';
     $("btn-next").textContent = "地図へもどる →";
     $("next-row").style.display = "block";
   }

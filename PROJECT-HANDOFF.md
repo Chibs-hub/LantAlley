@@ -203,6 +203,28 @@ This was not hypothetical: a freshly edited `lantern-map.js` was served from the
 
 ## 9. Change log and reasons
 
+### 2026-08-27 - Phase 0: practice pays, and the spacing schedule finally runs
+
+**The problem this solves.** Costing the reward plan showed the economy could not work: finishing the entire course pays 3,750 coins, one time, which is less than a single room upgrade. The plan assumed a daily faucet; this is a finite 200-question course. Meanwhile Kon's 稽古 - 9,097 generated cards, the one part a learner can do forever - paid nothing at all.
+
+**The faucet.** A session is now 20 cards, about three to five minutes. Each correct card pays ¥1. Finishing at 80% or better adds ¥10; a perfect session adds ¥5 more. A daily cap of ¥40 stops a long grind out-earning a good short session, and the cap applies to the day rather than the session, so a second sitting gets only what is left.
+
+The gate withholds the bonus without withholding the wage. Tapping through twenty cards still pays for whatever was actually right, because a bad day should never be worth nothing - that would punish learning, which is the one thing the Golden Rule forbids.
+
+**The schedule, at last.** `review-engine.js` has held the [1, 3, 7, 14] day intervals and `getDueItems` since it was written and **nothing ever called it**. A word answered correctly was simply never seen again. Sessions now take what is due first and fill the rest with new words. Verified in the app: after one session, the 7 words answered correctly are due in a day and the 13 missed are due immediately - and the next session opened with one of the missed ones.
+
+**Streaks.** A day counts when a session is finished, not when the app is opened. Seven unbroken days pays ¥50. A missed day breaks the streak unless a freeze is held, and **one freeze covers a whole gap** rather than one day of it - holding three and vanishing for a week should cost one, not three. The freeze reports that it fired, because a protection that works silently is indistinguishable from no protection.
+
+The rules live in `daily-practice.js` as pure functions, tested on their own, because they are date arithmetic and a streak that only breaks at local midnight cannot be exercised through a browser in any reasonable time.
+
+**Persistence, with the lesson applied.** `reviewProgress`, `dailyPractice`, `streak`, `freezes` and `lastActiveDate` were added to `saveProgress` **and** `migrateProgress` in the same change, with a round-trip test. The last time new fields were added to only one of those, they were silently dropped on every reload for months.
+
+**Also fixed:** `.claude/launch.json` invoked bare `python`, which on this machine is the Microsoft Store alias stub, so the dev server never came up. It now uses the full interpreter path - the same trap this document already warns about for `build-artifact.py`.
+
+**Verified in the app** from a seeded save: a 20-card session, coins incrementing only on correct answers, 35% accuracy correctly earning no bonus, the streak at 1 with the day recorded, `dailyPractice` accumulating 7 then 13 across two sessions in one day, and 20 words entered into the schedule.
+
+305 tests pass. Cache `lantern-alley-v118`.
+
 ### 2026-08-27 - The Artifact is retired, and わが家 opens on the map
 
 **Two decisions from the owner.** Drop the Artifact, because the game needs more space than it allows. And put the reward space in the middle of the map as a place the learner can enter, starting with one basic room.
