@@ -208,3 +208,14 @@ test("what Kon asks for is what the correct answer does", () => {
     }
   }
 });
+
+test("the game's own Japanese counts with 語, not the つ series", () => {
+  // The episode data is guarded above. This guards the lines app.js builds at
+  // runtime, where "40つ" was written into the finishing round's opening.
+  const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  const built = [...app.matchAll(/"([^"]*)"\s*\+\s*\w+\s*\+\s*"([^"]*)"/g)];
+  for (const [, , after] of built) {
+    assert.ok(!/^つ/.test(after),
+      "a number is being counted with つ in a built line, which only runs to 九つ");
+  }
+});

@@ -144,3 +144,47 @@ test("the legacy view carries every fact the day flow needs", () => {
   assert.deepEqual([...inn.misses], ["温める"]);
   assert.equal(inn.declined, true);
 });
+
+test("a saved record keeps its episode progress across a reload", () => {
+  const progress = load();
+  // saveProgress writes these three, and migrateProgress was dropping all of
+  // them: finished shifts, places walked into, and a half-finished shift. The
+  // effect was that reloading rewound the course to episode one and made the
+  // resume feature dead code.
+  const stored = {
+    version: progress.VERSION,
+    visited: ["entrance", "home-inn"],
+    starred: [],
+    stages: {},
+    items: {},
+    mistakes: [],
+    repairQueue: [],
+    money: 120,
+    paidAnswers: ["inn-e01-q01"],
+    masteredByStage: { "home-inn": ["v-soroeru", "v-torikaeru"] },
+    episodesDone: ["inn-e01", "inn-e02", "inn-e03"],
+    stageStarted: ["home-inn", "market"],
+    episode: { locationKey: "home-inn", episodeId: "inn-e04", index: 6, missed: ["inn-e04-q02"] },
+  };
+
+  const out = progress.migrateProgress(stored);
+  assert.deepEqual(Array.from(out.episodesDone), ["inn-e01", "inn-e02", "inn-e03"]);
+  assert.deepEqual(Array.from(out.stageStarted), ["home-inn", "market"]);
+  assert.ok(out.episode, "the half-finished shift survives");
+  assert.equal(out.episode.episodeId, "inn-e04");
+  assert.equal(out.episode.index, 6);
+  assert.deepEqual(Array.from(out.episode.missed), ["inn-e04-q02"]);
+
+  // And the record it produces is itself round-trippable.
+  const again = progress.migrateProgress(out);
+  assert.deepEqual(Array.from(again.episodesDone), Array.from(out.episodesDone));
+  assert.equal(again.episode.episodeId, "inn-e04");
+});
+
+test("an empty record starts with no episode progress rather than undefined", () => {
+  const progress = load();
+  const fresh = progress.migrateProgress(null);
+  assert.deepEqual(Array.from(fresh.episodesDone), []);
+  assert.deepEqual(Array.from(fresh.stageStarted), []);
+  assert.equal(fresh.episode, null);
+});

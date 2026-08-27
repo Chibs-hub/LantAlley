@@ -28,7 +28,13 @@
       mastered: [],
       money: 0,
       paidAnswers: [],
-      masteredByStage: {}
+      masteredByStage: {},
+      // Which shifts are finished, which places have been walked into, and any
+      // shift left half-done. These are written by saveProgress and were being
+      // dropped here, so every one of them was lost on reload.
+      episodesDone: [],
+      stageStarted: [],
+      episode: null
     };
   }
 
@@ -71,6 +77,9 @@
       next.money = Number(stored.money) || 0;
       next.paidAnswers = (stored.paidAnswers || []).slice();
       next.masteredByStage = clone(stored.masteredByStage || {});
+      next.episodesDone = (stored.episodesDone || []).slice();
+      next.stageStarted = (stored.stageStarted || []).slice();
+      next.episode = stored.episode ? clone(stored.episode) : null;
       return next;
     }
 

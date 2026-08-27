@@ -817,6 +817,111 @@
     return LanternLearningEconomy.isUnlocked(key, STAGE_ORDER, mastery);
   }
 
+  /* ---- 仕上げの稽古: keep asking until the place is actually learned ----
+   *
+   * The gauge exists so a learner knows how much of a place they hold, and the
+   * next place opens only at 100%. That is only fair if there is a way to
+   * finish: before this, a learner who ended the four episodes on 80% had
+   * nowhere to go but replay whole shifts, most of which asked about words
+   * they already knew.
+   *
+   * This collects exactly the questions whose word is still unproven and asks
+   * them, round after round, until none are left. A word is proven by being
+   * answered correctly - so reaching 100% means every one of the place's forty
+   * words has been answered right at least once, which is what the gauge
+   * claims.
+   *
+   * It pays nothing: `award` is once per question id, and these have all been
+   * asked before. The reward for this round is the gauge.
+   */
+  function unmasteredEntries(key){
+    var stage = stageFor(key);
+    if(!stage) return [];
+    var known = {};
+    ((state.masteredByStage || {})[key] || []).forEach(function(id){ known[id] = true; });
+    var out = [];
+    stage.episodes.forEach(function(episode){
+      episode.days.forEach(function(day){
+        day.questions.forEach(function(question){
+          if(question.target && !known[question.target]){
+            out.push({day:day.day, mode:day.mode, label:day.label, question:question});
+          }
+        });
+      });
+    });
+    return out;
+  }
+
+  function startMasteryLoop(key){
+    if(key) state.currentKey = key;
+    var list = unmasteredEntries(state.currentKey);
+    if(!list.length) return false;
+    previewState = {
+      index:0, list:list, answered:false, missed:[], repair:null, masteryRound:true
+    };
+    screenTitle.style.display = "none";
+    screenMap.style.display = "none";
+    screenGame.style.display = "block";
+    screenGame.classList.remove("entrance-stage");
+    renderMasteryIntro(list.length);
+    return true;
+  }
+
+  function renderMasteryIntro(remaining){
+    $("stage-phase-row").style.display = "none";
+    $("encounter-status").style.display = "none";
+    $("hint-btn").style.display = "none";
+    $("hint-box").classList.remove("show");
+    $("feedback-row").classList.remove("show");
+    $("feedback-text").textContent = "";
+    $("romaji-line").textContent = "";
+    $("meaning-line").textContent = "";
+    $("meaning-line").classList.remove("show");
+    $("next-row").style.display = "none";
+    $("narration").textContent = "仕上げの稽古";
+
+    var line = "コン：「まだ覚えていない言葉が" + remaining + "語あります。全部答えられるまで、何度でも出します。」";
+    if(dialogueFlow) dialogueFlow.start(line, false); else $("jp-line").textContent = line;
+    speak(line);
+
+    $("scene").innerHTML = '<div class="episode-open"><div class="episode-open-card episode-brief">'
+      + '<p class="episode-open-kicker">仕上げの稽古</p>'
+      + '<ul class="episode-brief-list">'
+      + '<li>覚えていない言葉だけが出ます。</li>'
+      + '<li>正しく答えた言葉は、もう出ません。</li>'
+      + '<li>間違えた言葉は、あとでもう一度出ます。</li>'
+      + '<li>全部答えられたら、この場所は100%になります。</li>'
+      + '</ul>'
+      + '<button class="btn btn-primary" id="btn-mastery-begin">始めます</button>'
+      + '</div></div>';
+    $("btn-mastery-begin").addEventListener("click", function(event){
+      event.stopImmediatePropagation();
+      renderPreviewQuestion();
+    });
+  }
+
+  function endMasteryLoop(){
+    var key = state.currentKey;
+    previewState = null;
+    forgetEpisode();
+    if(stageComplete(key) && stageMastery(key) === 100) state.visited[key] = true;
+    saveProgress();
+    renderHud();
+    $("stage-phase-row").style.display = "none";
+    $("narration").textContent = "仕上げの稽古";
+    var line = "コン：「全部覚えましたね。この場所はもう大丈夫です。」";
+    if(dialogueFlow) dialogueFlow.start(line, false); else $("jp-line").textContent = line;
+    speak(line, "correct");
+    $("scene").innerHTML = '<div class="episode-open"><div class="episode-open-card">'
+      + '<p class="episode-open-kicker">理解度 100%</p>'
+      + '<h2 class="episode-open-title">' + (getLocation(key) ? getLocation(key).name : "") + '</h2>'
+      + '<p class="episode-open-note">次の場所が開きました。</p>'
+      + '</div></div>';
+    showFeedback(true, "この場所の言葉をすべて覚えました。");
+    $("btn-next").textContent = "地図へもどる →";
+    $("next-row").style.display = "block";
+  }
+
   function markMastered(key, target){
     if(!key || !target) return;
     if(!state.masteredByStage[key]) state.masteredByStage[key] = [];
@@ -1441,6 +1546,22 @@
   }
 
   function advanceEpisodePreview(){
+    if(previewState.masteryRound){
+      if(previewState.index >= previewState.list.length - 1){
+        // Round over. Anything still unproven comes round again; when nothing
+        // is left the place is genuinely at 100%.
+        var again = unmasteredEntries(state.currentKey);
+        if(!again.length){ endMasteryLoop(); return; }
+        previewState.list = again;
+        previewState.index = 0;
+        previewState.answered = false;
+        renderPreviewQuestion();
+        return;
+      }
+      previewState.index += 1;
+      renderPreviewQuestion();
+      return;
+    }
     if(previewState.index >= previewState.list.length - 1){
       if(previewState.missed.length){ startRepairLoop(); return; }
       endEpisodePreview();
@@ -1833,6 +1954,11 @@
     state.stageMastered = false;
     state.resumedStageEntry = false;
     if(savedEpisode && savedEpisode.locationKey === loc.key && resumeEpisode()) return;
+    // Every shift done, but the place is not yet held: finish it properly
+    // rather than replaying an hour of questions already answered.
+    if(stageFor(loc.key) && stageComplete(loc.key) && stageMastery(loc.key) < 100){
+      if(startMasteryLoop(loc.key)) return;
+    }
     // An episode-only place has no room to walk into: the shift is the stage.
     if(!loc.encounters && stageFor(loc.key)){
       if(!state.stageStarted) state.stageStarted = {};

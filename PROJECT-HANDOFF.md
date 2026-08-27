@@ -194,6 +194,28 @@ An artifact cannot load sibling `.js` files or local images, which is why the bu
 
 ## 9. Change log and reasons
 
+### 2026-08-27 - 仕上げの稽古, and a save bug that had been eating episode progress
+
+**The request.** The gauge exists so a learner knows how much of a place they hold, and the next place should open only once they hold all of it. That is only fair if there is a way to finish.
+
+**What was missing.** A learner who ended a place's four episodes on 80% had nowhere to go. Replaying a whole shift asks mostly about words already known, and there was no round that asked only what was still unproven.
+
+**仕上げの稽古.** Entering a place whose shifts are all done but whose gauge is under 100% now opens a finishing round. It collects exactly the questions whose word is unproven and asks them, round after round, until none are left. Answered right, a word drops out; answered wrong, it comes back later. Reaching 100% therefore means every one of the place's forty words has been answered correctly at least once, which is what the gauge has always claimed.
+
+It reuses the episode renderer, so the clocks, feedback and explanations are the same ones. It pays nothing - `award` is once per question id and these have all been asked before. The reward for this round is the gauge.
+
+**A far worse bug, found while testing it.** `migrateProgress` never carried `episodesDone`, `stageStarted`, or a half-finished shift. Every reload dropped all three. That means: finished episodes were forgotten, so the Inn offered Episode 1 again; the practice pool forgot which places had been opened; and the resume-a-shift feature - built to stop a reload throwing away an hour - was dead code that could never fire, because `savedEpisode` was always null.
+
+This was not a regression from the economy work. The fields were added to `saveProgress` without being added to `migrateProgress`, so they had never survived a reload. It went unnoticed because the browser checks that found it were seeding storage and reading it back, rather than seeding, reloading and asking the game what it believed.
+
+Fixed, with a round-trip test over a full record and a test that an empty record starts with empty progress rather than undefined.
+
+**One of my own errors, caught in the browser.** The finishing round opened with 「まだ覚えていない言葉が40つあります」. The つ counter stops at 九つ; words take 語. The episode data was already guarded against this - the guard now covers the lines app.js builds at runtime too.
+
+**Verified in the built artifact.** Seeded with every Inn shift finished and no word proven: the Inn reads 学習中, 灯り市 is locked, entering the Inn opens 仕上げの稽古 saying 40語 remain, and the first question renders with four choices. In the harness the round was driven to completion from 75%: all forty words end proven, and it asked only the ten that were not.
+
+281 tests pass. Cache `lantern-alley-v111`, artifact 14.90 MB.
+
 ### 2026-08-27 - The understanding gauge did not work in the Inn's first stage
 
 **The fault.** Asked to check whether the gauge was actually working, and it was not. Through the whole three-day Inn stage the 理解度 gauge read 0% while the wallet filled up. Confirmed in the built artifact rather than by reading: two correct answers, `paidAnswers` at 2, wallet at ¥20, and `masteredByStage` still `{}`.
