@@ -1,0 +1,38 @@
+tea-house candidates available (not already pinned): 34
+
+注ぐ | v-sosogu | home-inn | N3 | to pour (into); to irrigate
+茶 | w-cha | market | N3 | tea
+濃い | w-koi | tea-house | N3 | thick (as of color; liquid)
+冷める | v-sameru-2 | tea-house | N2 | to become cool; to wear off
+煮る | v-niru | station | N2 | to boil; to cook
+蒸す | v-musu | market | N2 | to steam; to poultice
+混ぜる | v-mazeru-2 | shrine | N2 | to mix; to stir
+味わう | v-ajiwau | station | N2 | to taste; to savor
+香り | w-kaori | market | N3 | aroma; fragrance
+皿 | w-sara | shrine | N3 | plate; dish
+盆 | w-bon | home-inn | N2 | Lantern Festival; Festival of the Dead
+茶碗 | w-chawan | tea-house | N2 | rice bowl; tea cup
+座席 | w-zaseki | market | N3 | seat
+客席 | w-kyakuseki | tea-house | N2 | guest seating
+献立 | w-kondate | market | N2 | menu; program
+菓子 | w-kashi | shrine | N3 | pastry
+申し訳 | w-moushiwake | shrine | N3 | apology; excuse
+恐縮 | w-kyoushuku | tea-house | N2 | shame; very kind of you
+承る | w-uketamawaru | home-inn | N2 | (hum) to hear; to be told
+伺う | w-ukagau | tea-house | N3 | (hon) to visit; to ask
+拭く | v-fuku | market | N2 | to wipe; to dry
+こぼす | v-kobosu | tea-house | N2 | to spill
+追加 | w-tsuika | tea-house | N2 | addition; supplement
+変更 | w-henkou | tea-house | N3 | change; modification
+苦手 | w-nigate | shrine | N3 | poor (at); weak (in)
+好み | w-konomi | home-inn | N3 | liking; taste
+確かめる | v-tashikameru | station | N3 | to ascertain
+繰り返す | v-kurikaesu | shrine | N3 | to repeat; to do something over again
+順序 | w-junjo | shrine | N2 | order; sequence
+支度 | w-shitaku | market | N3 | preparation
+準備 | w-junbi | tea-house | N3 | preparation; arrangements
+営業 | w-eigyou | market | N3 | business; trade
+休憩 | w-kyuukei | home-inn | N3 | rest; break
+当番 | w-touban | shrine | N2 | being on duty
+
+not in catalog: 湯 味 薄い 甘い 苦い 熱い 冷たい 沸かす 焼く 器 急須 席 満席 予約 相席 品書き 定食 甘味 和菓子 伝票 釣銭 丁寧 失礼 召し上がる お待たせ 運ぶ 下げる 片づける 割れる 足りる 嫌い 禁物 注意 急ぐ 慌てる 落ち着く 丁度 用意 閉店 開店 交代 賄い
