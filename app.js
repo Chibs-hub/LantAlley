@@ -453,9 +453,82 @@
 
   var dialoguePanel = $("dialogue-panel");
   var dialogueContinue = $("dialogue-continue");
+  /* ---- Reading aid: tap a word for its reading and meaning ----
+   *
+   * Being stuck on one kanji in the middle of a request loses the whole
+   * request, and "you got it wrong" teaches nothing about why.
+   *
+   * Applied only once a line has finished revealing. While Kon is still
+   * speaking the line is plain text, because the reveal writes it a character
+   * at a time and buttons cannot be built a character at a time.
+   */
+  var glossIndex = null;
+  var glossExclusions = {};
+
+  function glossReady(){
+    if(typeof LanternGloss === "undefined" || typeof LanternCurriculumCatalog === "undefined") return false;
+    if(!glossIndex) glossIndex = LanternGloss.buildIndex(LanternCurriculumCatalog);
+    return true;
+  }
+
+  function setGlossQuestion(question){
+    glossExclusions = glossReady() && question
+      ? LanternGloss.exclusionsFor(question, LanternCurriculumCatalog)
+      : {};
+  }
+
+  function glossHtml(text){
+    if(!glossReady()) return null;
+    return LanternGloss.annotate(text, glossIndex, glossExclusions);
+  }
+
+  function hideGlossBubble(){
+    var open = document.querySelectorAll(".gloss-bubble");
+    Array.prototype.forEach.call(open, function(node){
+      if(node.parentNode) node.parentNode.removeChild(node);
+    });
+    var lit = document.querySelectorAll(".gloss.is-open");
+    Array.prototype.forEach.call(lit, function(node){ node.classList.remove("is-open"); });
+  }
+
+  function showGlossBubble(button){
+    hideGlossBubble();
+    var reading = button.getAttribute("data-reading") || "";
+    var meaning = button.getAttribute("data-meaning") || "";
+    if(!reading && !meaning) return;
+    var bubble = document.createElement("span");
+    bubble.className = "gloss-bubble";
+    bubble.innerHTML = '<b class="gloss-reading"></b><span class="gloss-meaning"></span>';
+    bubble.querySelector(".gloss-reading").textContent = reading;
+    bubble.querySelector(".gloss-meaning").textContent = meaning;
+    button.classList.add("is-open");
+    button.appendChild(bubble);
+  }
+
+  // One delegated handler on the document: glossed words live inside the
+  // dialogue and inside the reading panel, both of which are rebuilt often,
+  // and this runs before the screen element itself is resolved.
+  document.addEventListener("click", function(event){
+    var target = event.target;
+    var button = target && target.closest ? target.closest(".gloss") : null;
+    if(button){
+      // Tapping the dialogue normally advances it. A word is not an advance.
+      event.stopPropagation();
+      event.preventDefault();
+      if(button.classList.contains("is-open")) hideGlossBubble();
+      else showGlossBubble(button);
+      return;
+    }
+    hideGlossBubble();
+  }, true);
+
   dialogueFlow = LanternAlleyLogic.createDialogueFlow({
     render:function(visible, phase){
-      $("jp-line").textContent = visible;
+      var line = $("jp-line");
+      var marked = phase === "speaking" ? null : glossHtml(visible);
+      // Mid-reveal the line is plain text; finished, it becomes tappable.
+      if(marked === null) line.textContent = visible;
+      else line.innerHTML = marked;
       dialoguePanel.classList.toggle("dialogue-speaking", phase === "speaking");
       dialoguePanel.classList.toggle("dialogue-ready", phase === "ready");
       dialogueContinue.textContent = phase === "speaking" ? "»" : (phase === "ready" ? "▼" : "");
@@ -1392,6 +1465,10 @@
   function renderPreviewQuestion(){
     var entry = previewState.list[previewState.index];
     var question = entry.question;
+    // Before anything is rendered: the reading panel is built further down and
+    // would otherwise gloss this question's own answer using the last
+    // question's exclusions.
+    setGlossQuestion(question);
     setInnScene(innSceneFor(question));
     // An episode is one evening, not three days, so the badge names the part of
     // the shift the learner is in.
@@ -1448,15 +1525,19 @@
     }
 
     var doc = previewDocument(question);
+    var mark = function(line){
+      var marked = glossHtml(line);
+      return marked === null ? line : marked;
+    };
     var docMarkup = doc
-      ? '<div class="reading-document"><p class="reading-document-heading">' + doc.heading + '</p>'
+      ? '<div class="reading-document"><p class="reading-document-heading">' + mark(doc.heading) + '</p>'
         + '<ul class="reading-document-body">'
         + doc.body.map(function(line){
             var rule = line.indexOf("※") === 0;
-            return '<li' + (rule ? ' class="is-rule"' : '') + '>' + line + '</li>';
+            return '<li' + (rule ? ' class="is-rule"' : '') + '>' + mark(line) + '</li>';
           }).join("")
         + '</ul>'
-        + '<p class="reading-document-ask">' + doc.ask + '</p></div>'
+        + '<p class="reading-document-ask">' + mark(doc.ask) + '</p></div>'
       : "";
 
     var scene = $("scene");

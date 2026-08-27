@@ -194,6 +194,26 @@ An artifact cannot load sibling `.js` files or local images, which is why the bu
 
 ## 9. Change log and reasons
 
+### 2026-08-27 - Tap a word for its reading and meaning
+
+Being stuck on one kanji in the middle of a request loses the whole request, and the game's only answer was "you got it wrong", which teaches nothing about why. Every catalog word in a line is now tappable: tapping shows its reading in kana and its first meaning, in a small bubble above the word.
+
+**The line it does not cross.** The question's own target is never glossed, and neither is anything appearing in its answer options or its correction form. A learner who could tap 満員 to read "no vacancy" could answer a question about 満員 without knowing it, which is precisely the false progress the Golden Rule exists to stop. The aid is for reading the situation, not for reading the answer. Tests assert the exclusion over every question in the Inn.
+
+**Where it applies.** The dialogue line, once it has finished revealing - mid-reveal it stays plain text, because the reveal writes a character at a time and buttons cannot be built a character at a time - and the reading panel, which is static markup and is glossed as it is built.
+
+**Two faults found by using it rather than by reading it.**
+
+The exclusions were being set *after* the reading panel was built, so the panel used the previous question's list: 通知 was tappable inside the very passage that was teaching 通知. Moved to the top of the render, with a test that asserts the ordering rather than the behaviour, because the behaviour depends on the order.
+
+And a single kanji was being picked out of compounds the catalog does not hold: 様 became tappable inside お客様, shattering a word a reader takes as one thing. A single character now glosses only when nothing kanji is attached to it, so 灰 and 竹 still work while 様 inside お客様 does not.
+
+**What it does not cover.** The catalog holds N2 and N3 vocabulary, so ordinary words like 部屋 and 夕食 have no entry and stay plain. That is the right shape - the aid covers the level being studied - but it means short spoken prompts often have nothing to tap, while the long reading passages have plenty.
+
+**Verified in the built artifact.** In the Inn's 掃除 retrieval item the panel offers お帰り, 滞在 and 工事, while 掃除 - the word being taught - is not tappable. Tapping 滞在 opens a bubble reading たいざい / "stay", the tap does not advance the dialogue underneath, and tapping elsewhere closes it.
+
+290 tests pass. Cache `lantern-alley-v114`, artifact 14.91 MB.
+
 ### 2026-08-27 - 仕上げの稽古, and a save bug that had been eating episode progress
 
 **The request.** The gauge exists so a learner knows how much of a place they hold, and the next place should open only once they hold all of it. That is only fair if there is a way to finish.
