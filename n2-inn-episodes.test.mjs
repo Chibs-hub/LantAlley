@@ -331,7 +331,9 @@ const questionsOf = (episode) => episode.days.flatMap((d) => d.questions);
 
 test("Episode 2 exists, is 3-3-4, and every target resolves in the catalog", () => {
   const { context, episode } = episode2();
-  assert.equal(context.N2InnEpisodes.episodes.length, 2);
+  // The stage is complete: four episodes, which is what the contract has always
+  // said and what validateStage checks.
+  assert.equal(context.N2InnEpisodes.episodes.length, 4);
   assert.equal(episode.days.map((d) => d.questions.length).join(","), "3,3,4");
 
   const questions = questionsOf(episode);

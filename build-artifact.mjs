@@ -15,6 +15,8 @@ const scripts = [
   "n2-inn-episodes.js",
   "n2-market-episodes.js",
   "n2-teahouse-episodes.js",
+  "n2-station-episodes.js",
+  "n2-shrine-episodes.js",
   "audio-index.js",
   "curriculum-catalog.js",
   "learning-content.js",

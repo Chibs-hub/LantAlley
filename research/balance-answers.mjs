@@ -150,9 +150,30 @@ for (const file of FILES) {
       }
     }
 
+    // A sentence-assembly item must never end up showing its pieces in the
+    // order they belong in: the star position alone would then answer it
+    // without reading the Japanese. Shuffling can land on that order by
+    // chance, so re-salt until it does not. Decided here, before anything is
+    // rewritten, because the notes have to follow the same order.
+    let finalOrder = order;
+    let finalWant = want;
+    if (/sentence-order/.test(block)) {
+      const joined = (list) => list.map((s) => s.trim().replace(/^"|"$/g, "")).join("");
+      for (let salt = 0; salt < 32; salt += 1) {
+        const candidate = salt === 0
+          ? { order, want }
+          : permutation(id, options.length, correct, "answer" + salt);
+        if (!block.includes(joined(reorder(options, candidate.order)))) {
+          finalOrder = candidate.order;
+          finalWant = candidate.want;
+          break;
+        }
+      }
+    }
+
     // Rewrite from the back of the block forwards.
     if (notes && notesSpan) {
-      const rebuilt = "[\n            " + reorder(notes, order).join(",\n            ") + "\n          ]";
+      const rebuilt = "[\n            " + reorder(notes, finalOrder).join(",\n            ") + "\n          ]";
       block = block.slice(0, notesSpan.start) + rebuilt + block.slice(notesSpan.end);
     }
 
@@ -172,13 +193,13 @@ for (const file of FILES) {
       }
     }
 
-    const rebuiltOptions = "[" + reorder(options, order).join(",") + "]";
+    const rebuiltOptions = "[" + reorder(options, finalOrder).join(",") + "]";
     const afterOptions = block
       .slice(optionsSpan.end)
-      .replace(/correctIndex:\d+/, "correctIndex:" + want);
+      .replace(/correctIndex:\d+/, "correctIndex:" + finalWant);
     block = block.slice(0, optionsSpan.start) + rebuiltOptions + afterOptions;
 
-    spread.answer[want] += 1;
+    spread.answer[finalWant] += 1;
     totalQuestions += 1;
     text = text.slice(0, at) + block + text.slice(blockEnd);
   }

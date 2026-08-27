@@ -14,7 +14,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
 
-const EPISODE_FILES = ["n2-inn-episodes.js", "n2-market-episodes.js", "n2-teahouse-episodes.js"];
+const EPISODE_FILES = ["n2-inn-episodes.js", "n2-market-episodes.js", "n2-teahouse-episodes.js", "n2-station-episodes.js", "n2-shrine-episodes.js"];
 
 function loadStages() {
   const context = {};
