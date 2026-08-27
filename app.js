@@ -55,7 +55,13 @@
   var KON_PHOTO_WAVE_BOTH = "assets/kon/kon-wave-both.webp";
   var KON_PHOTO_SRC = "assets/kon/kon-idle.webp";
 
-  var PLAYER_ACTION_SPRITE = "assets/entrance/player-actions-v1.webp";
+  var PLAYER_ACTION_SPRITES = {
+    man:"assets/entrance/player-actions-v1.webp",
+    woman:"assets/entrance/player-actions-woman-v1.png"
+  };
+  function playerActionSprite(){
+    return PLAYER_ACTION_SPRITES[state.playerCharacter] || PLAYER_ACTION_SPRITES.man;
+  }
 
   var ENTRANCE_FOX_POSES = {
     idle:"assets/fox/fox-neutral-idle-transparent-v2.webp",
@@ -144,6 +150,8 @@
 
   var state = {
     currentKey:null,
+    playerCharacter:null,
+    characterSelected:false,
     mistakesThisVisit:0,
     romajiOn:true,
     voiceOn:true,
@@ -162,7 +170,10 @@
     resumedAfterDecline:false,
     stageProgress:{homeInn:null},
     visited:{},
-    starred:{}
+    starred:{},
+    money:0,
+    paidAnswers:[],
+    masteredByStage:{}
   };
 
   var jpVoice = null;
@@ -314,13 +325,18 @@
     try{
       var rawV3 = localStorage.getItem(STORAGE_KEY_V3);
       if(rawV3){
-        var v3 = JSON.parse(rawV3);
+        var storedV3 = JSON.parse(rawV3);
+        pendingLegacyMasteryHydration = !Object.prototype.hasOwnProperty.call(storedV3, "masteredByStage");
+        var v3 = LanternProgress.migrateProgress(storedV3);
         savedEpisode = v3.episode || null;
         pendingEpisodesDone = {};
         (v3.episodesDone || []).forEach(function(id){ pendingEpisodesDone[id] = true; });
         pendingStageStarted = {};
         (v3.stageStarted || []).forEach(function(key){ pendingStageStarted[key] = true; });
         pendingItemStates = v3.items || {};
+        pendingMoney = v3.money || 0;
+        pendingPaidAnswers = v3.paidAnswers || [];
+        pendingMasteredByStage = v3.masteredByStage || {};
         return legacyViewOf(v3);
       }
       var raw = localStorage.getItem(STORAGE_KEY);
@@ -340,6 +356,8 @@
   function legacyViewOf(v3){
     var inn = (v3.stages || {})["home-inn"];
     return {
+      playerCharacter: v3.playerCharacter || null,
+      characterSelected: v3.characterSelected === true,
       visited: v3.visited || [],
       starred: v3.starred || [],
       stageProgress: {homeInn: inn ? {
@@ -371,6 +389,8 @@
       var inn = state.stageProgress.homeInn;
       localStorage.setItem(STORAGE_KEY_V3, JSON.stringify({
         version: LanternProgress.VERSION,
+        playerCharacter: state.playerCharacter,
+        characterSelected: state.characterSelected,
         visited: Object.keys(state.visited),
         starred: Object.keys(state.starred),
         stages: inn ? {"home-inn": {
@@ -393,6 +413,9 @@
         items: state.itemStates || {},
         mistakes: [],
         repairQueue: savedEpisode ? (savedEpisode.repairQueue || []) : []
+        ,money: state.money || 0
+        ,paidAnswers: state.paidAnswers || []
+        ,masteredByStage: state.masteredByStage || {}
       }));
     }catch(e){ /* storage unavailable, progress just won't persist */ }
   }
@@ -400,6 +423,16 @@
     state.visited = {};
     state.starred = {};
     state.stageProgress = {homeInn:null};
+    state.playerCharacter = data ? (data.playerCharacter || null) : null;
+    state.characterSelected = data ? data.characterSelected === true : false;
+    if(!data){
+      state.money = 0;
+      state.paidAnswers = [];
+      state.masteredByStage = {};
+      state.itemStates = {};
+      state.episodesDone = {};
+      state.stageStarted = {};
+    }
     if(!data) return;
     (data.visited || []).forEach(function(k){ state.visited[k] = true; });
     (data.starred || []).forEach(function(k){ state.starred[k] = true; });
@@ -443,6 +476,7 @@
   });
 
   var screenTitle = $("screen-title");
+  var screenCharacter = $("screen-character");
   var screenMap = $("screen-map");
   var screenGame = $("screen-game");
   var selectedMapKey = "home-inn";
@@ -454,6 +488,10 @@
   var pendingStageStarted = {};
   var migratedFromV2 = false;
   var pendingItemStates = {};
+  var pendingMoney = 0;
+  var pendingPaidAnswers = [];
+  var pendingMasteredByStage = {};
+  var pendingLegacyMasteryHydration = false;
   var mapDetailAction = $("map-detail-action");
 
   screenGame.addEventListener("click", function(event){
@@ -468,6 +506,10 @@
   state.itemStates = pendingItemStates;
   state.episodesDone = pendingEpisodesDone;
   state.stageStarted = pendingStageStarted;
+  state.money = pendingMoney;
+  state.paidAnswers = pendingPaidAnswers;
+  state.masteredByStage = pendingMasteredByStage;
+  if(pendingLegacyMasteryHydration) hydrateCompletedMastery();
   // Write the migrated record once, so the v2 shape is converted rather than
   // re-read on every load. The v2 key is left alone: if this build is rolled
   // back, that record is still the learner's progress.
@@ -486,6 +528,7 @@
     // there means Kon explains the game before they are asked to choose a
     // destination from a map that means nothing to them yet. Once they have
     // been through it, the map is the more useful landing screen.
+    if(!state.characterSelected || !state.playerCharacter){ showCharacterSelection(); return; }
     if(!state.visited.entrance) enterLocation("entrance");
     else showMap();
   });
@@ -496,7 +539,24 @@
     $("progress-note").hidden = true;
     $("btn-restart").hidden = true;
     $("btn-start").textContent = "路地へ入る";
-    enterLocation("entrance");
+    showCharacterSelection();
+  });
+  function showCharacterSelection(){
+    screenTitle.style.display = "none";
+    screenMap.style.display = "none";
+    screenGame.style.display = "none";
+    screenCharacter.hidden = false;
+    var first = screenCharacter.querySelector(".character-option");
+    if(first) first.focus();
+  }
+  screenCharacter.querySelectorAll(".character-option").forEach(function(button){
+    button.addEventListener("click", function(){
+      state.playerCharacter = button.getAttribute("data-character");
+      state.characterSelected = true;
+      saveProgress();
+      screenCharacter.hidden = true;
+      enterLocation("entrance");
+    });
   });
   $("map-detail-practice").addEventListener("click", function(event){
     event.stopImmediatePropagation();
@@ -531,6 +591,7 @@
   });
 
   function showMap(){
+    screenCharacter.hidden = true;
     screenTitle.style.display = "none";
     screenGame.style.display = "none";
     screenMap.style.display = "block";
@@ -544,7 +605,9 @@
     destinationsEl.innerHTML = "";
     LanternAlleyMap.destinations.forEach(function(place){
       var progressState = LanternAlleyMap.resolveState(place.key, state);
-      var statusLabel = LanternAlleyMap.stateLabels[progressState];
+      var unlocked = locationUnlocked(place.key);
+      if(!unlocked) progressState = "locked";
+      var statusLabel = progressState === "locked" ? "未開放" : LanternAlleyMap.stateLabels[progressState];
       if(progressState === "completed") completedCount += 1;
       var btn = document.createElement("button");
       btn.type = "button";
@@ -563,7 +626,7 @@
         // picture behind it. Places with no action - the 準備中 ones - still
         // just select, so their story shows and nothing dead is offered.
         selectMapDestination(place.key);
-        var action = LanternAlleyMap.getAction(place.key, state);
+        var action = locationUnlocked(place.key) ? LanternAlleyMap.getAction(place.key, state) : null;
         if(action) runMapAction(place.key);
       });
       destinationsEl.appendChild(btn);
@@ -597,6 +660,7 @@
   }
 
   function runMapAction(key){
+    if(!locationUnlocked(key)) return;
     var action = LanternAlleyMap.getAction(key, state);
     if(action) enterLocation(action.locationKey);
   }
@@ -604,8 +668,9 @@
   function renderMapDetail(){
     var place = LanternAlleyMap.getDestination(selectedMapKey) || LanternAlleyMap.getDestination("home-inn");
     var progressState = LanternAlleyMap.resolveState(place.key, state);
-    var action = LanternAlleyMap.getAction(place.key, state);
-    var statusText = LanternAlleyMap.stateLabels[progressState];
+    var unlocked = locationUnlocked(place.key);
+    var action = unlocked ? LanternAlleyMap.getAction(place.key, state) : null;
+    var statusText = unlocked ? LanternAlleyMap.stateLabels[progressState] : "🔒 未開放";
     if(place.key === "home-inn" && state.stageProgress.homeInn){
       var medalIcons = {bronze:"🥉",silver:"🥈",gold:"🥇"};
       statusText += " " + (medalIcons[state.stageProgress.homeInn.medal] || "");
@@ -614,7 +679,7 @@
     $("map-detail-status").textContent = statusText;
     $("map-detail-name").textContent = place.name;
     $("map-detail-story").textContent = place.story;
-    $("map-detail-focus").textContent = place.focus;
+    $("map-detail-focus").textContent = unlocked ? place.focus : "前の場所を100%理解すると開きます。";
     mapDetailAction.style.display = action ? "inline-flex" : "none";
     mapDetailAction.textContent = action ? action.label : "";
 
@@ -724,6 +789,130 @@
     if(!stage || !stage.episodes.length) return false;
     var done = state.episodesDone || {};
     return stage.episodes.every(function(episode){ return !!done[episode.id]; });
+  }
+
+  var STAGE_ORDER = ["entrance", "home-inn", "market", "tea-house", "station", "shrine"];
+
+  function stageMaterial(key){
+    if(key === "entrance") return ["entrance-greeting"];
+    var stage = stageFor(key);
+    var ids = [];
+    if(!stage) return ids;
+    stage.episodes.forEach(function(episode){
+      episode.days.forEach(function(day){
+        day.questions.forEach(function(question){ if(question.target) ids.push(question.target); });
+      });
+    });
+    return ids;
+  }
+
+  function stageMastery(key){
+    if(key === "entrance") return state.visited.entrance ? 100 : 0;
+    return LanternLearningEconomy.masteryPercent((state.masteredByStage || {})[key] || [], stageMaterial(key));
+  }
+
+  function locationUnlocked(key){
+    var mastery = {};
+    STAGE_ORDER.forEach(function(stageKey){ mastery[stageKey] = stageMastery(stageKey); });
+    return LanternLearningEconomy.isUnlocked(key, STAGE_ORDER, mastery);
+  }
+
+  function markMastered(key, target){
+    if(!key || !target) return;
+    if(!state.masteredByStage[key]) state.masteredByStage[key] = [];
+    if(state.masteredByStage[key].indexOf(target) < 0) state.masteredByStage[key].push(target);
+  }
+
+  /* ---- Payday: being paid should be felt, not just recorded ----
+   *
+   * The wallet already counted up silently, which made the one moment of
+   * reward in a shift look like a number changing. This gives it a sound and
+   * a sight.
+   *
+   * The sound is synthesised rather than sampled. The artifact stands at
+   * 14.89 MB against a 15 MB ceiling, and a coin clip would cost tens of
+   * kilobytes for two notes; Web Audio costs nothing and works offline by
+   * construction. It follows the existing voice switch, so muting the fox
+   * mutes the till as well.
+   *
+   * It fires only where money is actually earned - which is once per
+   * question, never on a replay - so it cannot become a noise a learner
+   * earns by tapping.
+   */
+  var coinAudio = null;
+
+  function playCoinSound(){
+    if(!state.voiceOn) return;
+    try{
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      if(!Ctx) return;
+      if(!coinAudio) coinAudio = new Ctx();
+      if(coinAudio.state === "suspended" && coinAudio.resume) coinAudio.resume();
+      var now = coinAudio.currentTime;
+      // Two quick rising notes: the shape of a till, not a fanfare. This plays
+      // after every correct answer, so it has to stay welcome for an hour.
+      [[988, 0], [1319, 0.07]].forEach(function(note){
+        var osc = coinAudio.createOscillator();
+        var gain = coinAudio.createGain();
+        var at = now + note[1];
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(note[0], at);
+        gain.gain.setValueAtTime(0.0001, at);
+        gain.gain.exponentialRampToValueAtTime(0.16, at + 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.18);
+        osc.connect(gain);
+        gain.connect(coinAudio.destination);
+        osc.start(at);
+        osc.stop(at + 0.2);
+      });
+    }catch(err){
+      // A browser that refuses audio must not break answering a question.
+    }
+  }
+
+  function showPayout(amount){
+    var wallet = $("hud-money");
+    if(!wallet || !amount) return;
+    var host = wallet.parentNode;
+    if(!host) return;
+
+    var chip = document.createElement("span");
+    chip.className = "payout-chip";
+    chip.textContent = "+¥" + amount;
+    host.appendChild(chip);
+    // Visibility never depends on the animation. A global reduced-motion rule
+    // kills animations with !important, and a chip that faded in would simply
+    // never appear for those learners - the same trap the episode card fell
+    // into once already. It is visible on arrival and removed on a timer.
+    setTimeout(function(){
+      if(chip.parentNode) chip.parentNode.removeChild(chip);
+    }, 1100);
+
+    host.classList.add("is-paid");
+    setTimeout(function(){ host.classList.remove("is-paid"); }, 620);
+  }
+
+  function rewardCorrect(answerId, mode){
+    var result = LanternLearningEconomy.award({money:state.money, paid:state.paidAnswers}, answerId, mode);
+    state.money = result.money;
+    state.paidAnswers = result.paid;
+    saveProgress();
+    renderHud();
+    if(result.earned){
+      playCoinSound();
+      showPayout(result.earned);
+    }
+    return result.earned;
+  }
+
+  function hydrateCompletedMastery(){
+    Object.keys(episodeStages()).forEach(function(key){
+      var stage = stageFor(key);
+      stage.episodes.forEach(function(episode){
+        if(!(state.episodesDone || {})[episode.id]) return;
+        episode.days.forEach(function(day){ day.questions.forEach(function(question){ markMastered(key, question.target); }); });
+      });
+    });
   }
 
   function previewQuestions(key){
@@ -948,6 +1137,7 @@
   function renderPreviewIntro(){
     var episode = currentEpisode();
     if(!episode) return;
+    setInnScene("lobby");
     $("stage-phase-row").style.display = "none";
     $("encounter-status").style.display = "none";
     $("hint-btn").style.display = "none";
@@ -985,6 +1175,7 @@
   // clock from a bar that suddenly appears.
   function renderPreviewBriefing(){
     var episode = currentEpisode();
+    setInnScene("lobby");
     var brief = episode.briefing;
     $("jp-line").textContent = brief.jp;
     $("narration").textContent = episode.sourceNote;
@@ -1096,6 +1287,7 @@
   function renderPreviewQuestion(){
     var entry = previewState.list[previewState.index];
     var question = entry.question;
+    setInnScene(innSceneFor(question));
     // An episode is one evening, not three days, so the badge names the part of
     // the shift the learner is in.
     var dayLabel = (entry.label || "宵の一時間") + "・" + (entry.question.seconds || 8) + "秒";
@@ -1208,13 +1400,18 @@
         previewState.missed.push(question.id);
         rememberEpisode();
       }
+      var earned = 0;
+      if(correct){
+        markMastered(state.currentKey, question.target);
+        earned = rewardCorrect(question.id, entry.mode);
+      }
       $("jp-line").textContent = correct ? question.feedback.correct : question.feedback.incorrect;
       speak($("jp-line").textContent, correct ? "correct" : "wrong");
       // Say what the chosen answer actually meant. "Not that one" teaches
       // nothing; naming the word the learner reached for is the lesson.
       var note = (question.optionNotes || [])[value];
       var chosen = (question.answer.options || [])[value];
-      showFeedback(correct, correct ? "正解です。"
+      showFeedback(correct, correct ? "正解です。" + (earned ? " +¥" + earned : "")
         : (note ? "「" + chosen + "」 = " + note : "もう一度考えてみましょう。"));
       // A wrong answer used to re-render the same question after 1.8 seconds,
       // which wiped the explanation before it could be read - and retrying
@@ -1260,7 +1457,7 @@
       if(!state.episodesDone) state.episodesDone = {};
       state.episodesDone[finished.id] = true;
       // The lantern lights when the whole place is done, not one shift of it.
-      if(stageComplete(state.currentKey)) state.visited[state.currentKey] = true;
+      if(stageComplete(state.currentKey) && stageMastery(state.currentKey) === 100) state.visited[state.currentKey] = true;
     }
     previewState = null;
     forgetEpisode();
@@ -1418,18 +1615,24 @@
     rememberEpisode();
 
     if(outcome === "correct"){
-      showFeedback(true, "正解です。");
+      var repairedQuestion = repair.byId[cardId];
+      if(repairedQuestion) markMastered(state.currentKey, repairedQuestion.target);
+      var repairPay = rewardCorrect(cardId, "review");
+      showFeedback(true, "正解です。" + (repairPay ? " +¥" + repairPay : ""));
     }else if(result.exhausted){
-      // Three goes is enough. Holding a learner on one card until they guess it
-      // is a trap, so the answer is given and the item is left for review.
+      // Show the answer after three misses, then keep this target in the round.
+      // A stage cannot claim 100% while silently dropping an item.
+      repair.queue.push(cardId);
+      repair.attempts[cardId] = 0;
       $("jp-line").textContent = "コン：「この言葉は、また後で一緒に見ましょう。」";
-      showFeedback(false, "正しい答えは「" + card.options[card.correctIndex] + "」です。また後で出ます。");
+      showFeedback(false, "正しい答えは「" + card.options[card.correctIndex] + "」です。もう一度出ます。");
     }else if(outcome === "timeout"){
       // Slowness, not a misconception: the item simply comes back.
       showFeedback(false, "時間切れです。もう一度出ます。");
     }else{
       showFeedback(false, "正しい答えは「" + card.options[card.correctIndex] + "」です。");
     }
+    rememberEpisode();
     setTimeout(function(){ if(previewState && previewState.repair) renderRepairCard(); }, 1400);
   }
 
@@ -1516,7 +1719,33 @@
     startStagePhase(loc, "learn");
   }
 
+  var INN_SCENES = {
+    room:"assets/inn/scenes/guest-room.jpg",
+    lobby:"assets/inn/scenes/lobby.jpg",
+    kitchen:"assets/inn/scenes/kitchen.jpg",
+    dining:"assets/inn/scenes/dining-hall.jpg",
+    hallway:"assets/inn/scenes/hallway.jpg",
+    office:"assets/inn/scenes/office.jpg",
+    courtyard:"assets/inn/scenes/courtyard.jpg"
+  };
+  function innSceneFor(prompt){
+    var text = [prompt && prompt.target, prompt && prompt.mechanic,
+      prompt && prompt.jp, prompt && prompt.prompt && prompt.prompt.jp].join(" ");
+    if(/花火|祭|庭|外/.test(text)) return "courtyard";
+    if(/予定|確認|調整|知らせ|schedule|reading|evidence/.test(text)) return "office";
+    if(/料理|食事|注文|配膳|茶|汁|米|温め|warm/.test(text)) return "kitchen";
+    if(/座布団|夕食|朝食|宴会/.test(text)) return "dining";
+    if(/掃除|タオル|シーツ|布団|部屋|replace|arrange/.test(text)) return "room";
+    if(/案内|送る|廊下/.test(text)) return "hallway";
+    return "lobby";
+  }
+  function setInnScene(key){
+    var asset = INN_SCENES[key] || INN_SCENES.lobby;
+    screenGame.style.setProperty("--inn-scene-image", 'url("' + asset + '")');
+  }
+
   function renderStageIntro(loc){
+    setInnScene("lobby");
     var intro = loc.intro;
     $("scene-label").textContent = loc.label;
     $("stage-phase-row").style.display = "none";
@@ -1539,6 +1768,7 @@
 
   function renderStagePrompt(loc){
     var prompt = getActivePrompt(loc);
+    setInnScene(innSceneFor(prompt));
     var phaseName = state.stagePhase === "review" ? "focused review" : state.stagePhase;
     var phaseLabels = {learn:"Learn / 学ぶ", practice:"Practice / 練習", challenge:"Challenge / 挑戦", review:"Review / 復習"};
     var dayMeta = loc.getDayMeta ? loc.getDayMeta(state.stagePhase) : null;
@@ -1582,8 +1812,10 @@
     screenTitle.style.display = "none";
     screenMap.style.display = "none";
     screenGame.style.display = "block";
+    screenCharacter.hidden = true;
     screenGame.classList.toggle("entrance-stage", loc.key === "entrance");
     screenGame.classList.toggle("inn-stage", loc.key === "home-inn");
+    if(loc.key !== "home-inn") screenGame.style.removeProperty("--inn-scene-image");
     screenGame.classList.remove("entrance-complete");
     $("entrance-progress").hidden = loc.key !== "entrance";
 
@@ -1753,15 +1985,11 @@
   }
 
   function renderHud(){
-    var heartsEl = $("hud-hearts");
-    heartsEl.innerHTML = "";
-    for(var i=0;i<3;i++){
-      var s = document.createElement("span");
-      s.textContent = "❤";
-      s.className = i < (3 - state.mistakesThisVisit) ? "lit" : "";
-      heartsEl.appendChild(s);
-    }
     $("hud-star-count").textContent = starCount();
+    var mastery = stageMastery(state.currentKey || selectedMapKey || "entrance");
+    $("hud-mastery-value").textContent = mastery + "%";
+    $("hud-mastery-fill").style.width = mastery + "%";
+    $("hud-money").textContent = String(state.money || 0);
   }
 
   var ICON_SVGS = {
@@ -1928,11 +2156,9 @@
   function renderWordChoice(prompt){
     var scene = $("scene");
     scene.innerHTML = '<div class="inn-workspace"><p class="inn-instruction" id="inn-instruction"></p>'
-      + '<div class="inn-clue" id="inn-clue"></div>'
       + '<div class="inn-actions inn-replies" id="inn-word-choice"></div>'
       + '<div class="inn-status" id="inn-status"></div></div>';
     $("inn-instruction").innerHTML = '<span>Choose the word that matches the request.</span>';
-    $("inn-clue").textContent = prompt.interaction && prompt.interaction.clue ? prompt.interaction.clue : "";
     var host = $("inn-word-choice");
 
     prompt.options.forEach(function(option){
@@ -2361,7 +2587,7 @@
         scene.appendChild($("avatar-slot"));
         var stage = document.createElement("div");
         stage.className = "duo-stage";
-        stage.innerHTML = '<div class="player-figure" id="player-figure" style="--player-action-sprite:url(\'' + PLAYER_ACTION_SPRITE + '\')"><span class="entrance-player-art" aria-hidden="true"></span></div><div class="player-caption">You</div>';
+        stage.innerHTML = '<div class="player-figure" id="player-figure" style="--player-action-sprite:url(\'' + playerActionSprite() + '\')"><span class="entrance-player-art" aria-hidden="true"></span></div><div class="player-caption">You</div>';
         scene.appendChild(stage);
         var how = document.createElement("div");
         how.className = "inn-control-help entrance-control-help";
@@ -2375,7 +2601,7 @@
         var btn = document.createElement("button");
         btn.className = "hotspot";
         btn.setAttribute("data-key", opt.key);
-        btn.innerHTML = '<span class="entrance-action-art entrance-action-art-'+opt.key+'" aria-hidden="true" style="--player-action-sprite:url(\'' + PLAYER_ACTION_SPRITE + '\')"></span><span>'+opt.label+'</span>';
+        btn.innerHTML = '<span class="entrance-action-art entrance-action-art-'+opt.key+'" aria-hidden="true" style="--player-action-sprite:url(\'' + playerActionSprite() + '\')"></span><span>'+opt.label+'</span>';
         btn.addEventListener("click", function(){
           var key = this.getAttribute("data-key");
           if(loc.interactiveDuo){
@@ -2535,6 +2761,7 @@
 
       var already = !!state.starred[loc.key];
       state.visited[loc.key] = true;
+      rewardCorrect("entrance:greeting", "learn");
       if(state.mistakesThisVisit === 0 && !already){
         state.starred[loc.key] = true;
       }
@@ -2662,6 +2889,9 @@
     var stage = getLocation(prompt.stageKey);
     var items = state.phaseItems || stage.getPhaseItems(state.stagePhase);
     showKonStageResponse(stage, prompt, isCorrect, selectedKey);
+    if(isCorrect){
+      rewardCorrect("training:" + prompt.stageKey + ":" + state.stagePhase + ":" + (prompt.id || prompt.focusWord || state.encounterIndex), state.stagePhase);
+    }
 
     if(state.stagePhase === "challenge"){
       state.answered = true;

@@ -135,6 +135,20 @@
   .title-scene .title-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
   .title-scene .btn-primary{min-width:176px;background:linear-gradient(180deg,#d56843,#9f3e2f);box-shadow:0 8px 22px rgba(0,0,0,.34),inset 0 1px rgba(255,255,255,.35)}
   .title-scene .btn-ghost{padding:9px 15px;border-color:rgba(247,215,159,.45);color:#fff0cf;background:rgba(9,18,34,.62)}
+
+  .character-scene{min-height:min(760px,calc(100svh - 24px));display:grid;place-items:end center;padding:18px;background:linear-gradient(rgba(6,12,25,.08),rgba(6,12,25,.52)),url("assets/entrance/wooden-gate-v1.webp") center/cover;color:#fff0cf}
+  .character-panel{width:min(880px,100%);padding:14px 18px 16px;border:2px solid #8c562d;border-radius:16px;background:rgba(49,27,18,.78);backdrop-filter:blur(9px) saturate(115%);box-shadow:inset 0 1px rgba(255,226,167,.25),0 18px 45px rgba(0,0,0,.46)}
+  .character-guide{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:8px;text-align:left}
+  .character-guide img{width:76px;height:76px;object-fit:contain;filter:drop-shadow(0 6px 5px rgba(0,0,0,.35))}
+  .character-guide .title-kicker{margin:0;color:#f1bd70}
+  .character-panel h2{margin:2px 0 0;font-family:'Shippori Mincho',serif;font-size:clamp(1.2rem,3vw,1.75rem)}
+  .character-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .character-option{display:flex;flex-direction:column;align-items:center;min-height:290px;padding:6px;border:2px solid rgba(219,157,86,.72);border-radius:14px;background:rgba(24,18,18,.38);color:#fff0cf;font:800 1rem 'Zen Maru Gothic',sans-serif;cursor:pointer;box-shadow:0 5px 0 rgba(25,14,10,.72);transition:transform .16s ease,border-color .16s ease,background .16s ease}
+  .character-option:hover,.character-option:focus-visible{transform:translateY(-3px);border-color:#ffd27a;background:rgba(82,45,27,.68);outline:3px solid #f2ad55;outline-offset:2px}
+  .character-preview{display:block;width:min(150px,100%);aspect-ratio:1/2;margin:auto auto 3px;background-repeat:no-repeat;background-size:400% 100%;background-position:0 center;filter:drop-shadow(0 8px 5px rgba(0,0,0,.38))}
+  .character-preview-man{background-image:url("assets/entrance/player-actions-v1.webp")}
+  .character-preview-woman{background-image:url("assets/entrance/player-actions-woman-v1.png")}
+  @media(max-width:560px){.character-scene{padding:8px}.character-panel{padding:10px}.character-guide{gap:7px}.character-guide img{width:54px;height:54px}.character-options{gap:7px}.character-option{min-height:232px;padding:4px}.character-preview{width:108px}}
   [hidden]{display:none !important}
 
   @media(max-width:620px){
@@ -268,14 +282,19 @@
     display:flex; align-items:center; gap:5px;
   }
   .breadcrumb:hover{text-decoration:underline;}
-  .hud-hearts{display:flex; gap:4px; font-size:1.15rem;}
-  .hud-hearts span{opacity:0.28; transition:opacity 0.2s ease;}
-  .hud-hearts span.lit{opacity:1;}
   .hud-stars{
     font-family:'Zen Maru Gothic', sans-serif;
     font-weight:700; color:var(--momiji); font-size:0.92rem;
     display:flex; align-items:center; gap:4px;
   }
+  .learning-hud{display:flex;align-items:center;gap:12px;margin-left:auto}
+  .mastery-hud{display:grid;grid-template-columns:auto minmax(84px,150px) auto;align-items:center;gap:7px;font-size:.78rem;font-weight:700;color:#f7c877}
+  .mastery-track{height:10px;border:1px solid rgba(247,200,119,.55);border-radius:99px;background:rgba(20,12,9,.55);overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.45)}
+  .mastery-track span{display:block;width:0;height:100%;border-radius:inherit;background:linear-gradient(90deg,#d97835,#ffd36b);transition:width .35s ease}
+  .money-hud{min-width:58px;padding:5px 9px;border:1px solid rgba(247,200,119,.5);border-radius:99px;background:rgba(28,16,10,.55);color:#ffe4a0;font-weight:800;text-align:center}
+  .map-destination.state-locked{filter:grayscale(.8);opacity:.58}
+  .map-destination.state-locked .map-pin::after{content:"🔒";position:absolute;inset:50% auto auto 50%;transform:translate(-50%,-50%);font-size:.8rem}
+  @media(max-width:560px){.learning-hud{width:100%;justify-content:space-between}.mastery-hud{flex:1;grid-template-columns:auto minmax(60px,1fr) auto}}
 
   .narration{
     font-size:0.9rem; color:#5a4d3f; font-style:italic;
@@ -737,26 +756,28 @@
     min-height:min(690px,calc(100svh - 36px));
     padding:14px;
     color:#fff4da;
-    background:radial-gradient(circle at 76% 18%,rgba(230,157,62,.16),transparent 30%),linear-gradient(145deg,#081126,#101d36 58%,#080f20);
+    background-image:linear-gradient(rgba(6,12,24,.12),rgba(6,12,24,.42)),var(--inn-scene-image,linear-gradient(145deg,#081126,#101d36 58%,#080f20));
+    background-size:cover;
+    background-position:center;
     box-shadow:0 28px 70px rgba(3,7,20,.62),0 0 0 1px rgba(247,200,119,.18);
   }
   #screen-game.inn-stage::before{border-color:rgba(247,207,137,.34)}
-  .inn-stage .game-layout{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));grid-template-rows:auto minmax(0,1fr);gap:12px;align-items:stretch}
-  .inn-stage .stage-bar{grid-column:1/-1;grid-row:1;padding:9px 13px;border:2px solid #8c562d;border-radius:12px;background:linear-gradient(180deg,rgba(92,49,25,.96),rgba(48,25,16,.97));box-shadow:inset 0 0 0 2px rgba(244,202,128,.18),0 7px 20px rgba(0,0,0,.36)}
+  .inn-stage .game-layout{display:grid;min-height:calc(min(690px,100svh - 64px) - 28px);grid-template-columns:repeat(12,minmax(0,1fr));grid-template-rows:auto minmax(0,1fr);gap:12px;align-items:stretch}
+  .inn-stage .stage-bar{grid-column:1/-1;grid-row:1;padding:9px 13px;border:2px solid #8c562d;border-radius:12px;background:rgba(62,32,19,.86);backdrop-filter:blur(10px) saturate(115%);box-shadow:inset 0 1px rgba(244,202,128,.2),0 7px 20px rgba(0,0,0,.32)}
   .inn-stage .hud{margin-bottom:5px;padding-bottom:5px;border-color:rgba(247,215,159,.28)}
   .inn-stage .breadcrumb,.inn-stage .scene-label{color:#fff0cf}
   .inn-stage .hud-stars{color:#f3be6d}
   .inn-stage .stage-phase-badge{background:#9b4e32;color:#fff3d7}
   .inn-stage .stage-restart{border-color:#c38a56;background:#f5e4bf;color:#4a2b1b}
-  .inn-stage .learning-context{grid-column:1/5;grid-row:2;position:relative;min-width:0;min-height:0;padding:34px 10px 10px;border:2px solid #8c562d;border-radius:13px;background:linear-gradient(180deg,rgba(91,49,27,.97),rgba(44,24,17,.98));box-shadow:inset 0 0 0 2px rgba(244,202,128,.16),0 9px 24px rgba(0,0,0,.4)}
-  .inn-stage .narration{margin:0 0 9px;padding:7px 9px;border-radius:8px;background:rgba(9,19,36,.76);color:#efdbb8;font-style:normal;font-size:.75rem}
+  .inn-stage .learning-context{grid-column:1/5;grid-row:2;position:relative;align-self:end;min-width:0;min-height:0;padding:32px 0 0;border:0;border-radius:13px;background:transparent;box-shadow:none}
+  .inn-stage .narration{margin:0 0 9px;padding:7px 9px;border:1px solid rgba(219,164,94,.42);border-radius:8px;background:rgba(18,20,29,.82);backdrop-filter:blur(7px);color:#f7e5c5;font-style:normal;font-size:.75rem}
   .inn-stage .romaji-toggle{position:absolute;right:10px;top:8px;margin:0;color:#f1dfbd;font-size:.65rem}
   .inn-stage .dialogue.entrance-dialogue{position:relative;display:grid;grid-template-columns:minmax(88px,118px) minmax(0,1fr);gap:7px;align-items:end;margin:0;padding:0;background:transparent;box-shadow:none}
   .inn-stage .dialogue.entrance-dialogue::before{content:"コン (Kon)";position:absolute;left:116px;top:-29px;z-index:2;padding:4px 10px;border:2px solid #8c562d;border-radius:8px 8px 0 0;background:#5a321d;color:#ffe8b8;font-family:'Shippori Mincho',serif;font-size:.68rem;font-weight:800}
   .inn-stage .dialogue.entrance-dialogue .avatar.avatar-animated{width:118px;height:148px;align-self:end;filter:drop-shadow(0 8px 6px rgba(0,0,0,.38))}
   .inn-stage .dialogue.entrance-dialogue .speech{grid-column:2;min-height:148px;padding:13px 34px 11px 12px;border:2px solid rgba(156,95,48,.82);border-radius:11px;background:linear-gradient(180deg,#fffaf0,#eeddb8);color:#2d2926;box-shadow:0 5px 0 rgba(38,20,13,.8)}
   .inn-stage .speak-btn{position:absolute;right:8px;bottom:10px;margin:0;color:#5c3824}
-  .inn-stage .answer-workspace{grid-column:5/-1;grid-row:2;position:relative;min-width:0;min-height:0;padding:9px;border:2px solid #8c562d;border-radius:13px;background:linear-gradient(180deg,rgba(96,55,31,.97),rgba(49,27,18,.98));box-shadow:inset 0 0 0 2px rgba(244,202,128,.16),0 9px 24px rgba(0,0,0,.4)}
+  .inn-stage .answer-workspace{grid-column:5/-1;grid-row:2;position:relative;align-self:end;min-width:0;min-height:0;padding:0;border:0;border-radius:13px;background:transparent;box-shadow:none}
   .inn-stage .answer-workspace .scene{min-width:0}
   .inn-stage .inn-instruction{position:relative;margin:0 0 8px;padding:19px 10px 7px;border:1px solid rgba(203,145,85,.78);border-radius:9px;background:linear-gradient(180deg,#fffaf0,#eee0c0);color:#463123;font-size:.78rem}
   .inn-stage .inn-instruction::before{content:"HOW TO INTERACT";position:absolute;left:10px;top:4px;color:#9a5f30;font-size:.56rem;font-weight:900;letter-spacing:.13em}
@@ -769,8 +790,8 @@
     #screen-game.inn-stage{min-height:0;padding:10px}
     .inn-stage .game-layout{grid-template-columns:1fr;grid-template-rows:auto auto auto;gap:9px}
     .inn-stage .stage-bar{grid-column:1;grid-row:1;margin:0;padding:8px 10px}
-    .inn-stage .learning-context{display:block;grid-column:1;grid-row:2;padding:30px 8px 8px}
-    .inn-stage .answer-workspace{grid-column:1;grid-row:3;padding:7px}
+    .inn-stage .learning-context{display:block;grid-column:1;grid-row:2;padding:28px 0 0}
+    .inn-stage .answer-workspace{grid-column:1;grid-row:3;padding:0}
     .inn-stage .narration{font-size:.7rem;line-height:1.35}
     .inn-stage .dialogue.entrance-dialogue{position:relative;top:auto;grid-template-columns:70px minmax(0,1fr);padding:0;background:transparent;box-shadow:none}
     .inn-stage .dialogue.entrance-dialogue::before{left:68px;top:-25px;font-size:.62rem}
@@ -781,6 +802,41 @@
     .inn-stage .inn-instruction{font-size:.72rem}
     .inn-stage .inn-room-composite{width:100%;margin:0}
     .inn-stage .next-row{margin-left:-7px;margin-right:-7px}
+  }
+
+  /* Episode openings use the same bottom-dock composition as the Entrance.
+     The earlier narrow speech column plus a floating paper card made two
+     unrelated boxes hover over the room. These two panels now share one
+     baseline, material and visual weight while the inn remains visible. */
+  .inn-stage .game-layout:has(.episode-open){grid-template-columns:repeat(12,minmax(0,1fr));align-items:end}
+  .inn-stage .game-layout:has(.episode-open) .learning-context{
+    grid-column:1/8;min-height:226px;padding:34px 10px 10px;
+    border:2px solid #8c562d;background:rgba(58,31,20,.86);
+    backdrop-filter:blur(9px) saturate(115%);
+    box-shadow:inset 0 1px rgba(244,202,128,.2),0 8px 22px rgba(0,0,0,.36)
+  }
+  .inn-stage .answer-workspace:has(.episode-open){
+    grid-column:8/-1;min-height:226px;padding:10px;
+    border:2px solid #8c562d;background:rgba(58,31,20,.86);
+    backdrop-filter:blur(9px) saturate(115%);
+    box-shadow:inset 0 1px rgba(244,202,128,.2),0 8px 22px rgba(0,0,0,.36)
+  }
+  .inn-stage .answer-workspace:has(.episode-open) .scene{height:100%}
+  .inn-stage .episode-open{min-height:204px;height:100%;padding:0}
+  .inn-stage .episode-open-card{
+    display:grid;align-content:center;width:100%;max-width:none;min-height:204px;padding:18px 22px;
+    border:2px solid rgba(184,119,63,.82);border-radius:10px;
+    background:rgba(249,238,211,.94);box-shadow:0 4px 0 rgba(35,20,13,.72)
+  }
+  .inn-stage .episode-open-title{font-size:1.2rem}
+  .inn-stage .episode-open-card .btn{min-width:168px;margin-inline:auto}
+
+  @media(max-width:760px){
+    .inn-stage .game-layout:has(.episode-open){grid-template-columns:1fr;grid-template-rows:auto auto auto;align-items:stretch}
+    .inn-stage .game-layout:has(.episode-open) .learning-context{grid-column:1;grid-row:2;min-height:0;padding:28px 7px 7px}
+    .inn-stage .answer-workspace:has(.episode-open){grid-column:1;grid-row:3;min-height:0;padding:7px}
+    .inn-stage .episode-open,.inn-stage .episode-open-card{min-height:150px}
+    .inn-stage .episode-open-card{padding:12px 14px}
   }
 
   .inn-room{position:relative;min-height:310px;overflow:hidden;border:1px solid #c9b88d;border-radius:18px;background:linear-gradient(#eee4c8 0 58%,#c8b77c 58%);box-shadow:inset 0 0 55px rgba(92,67,31,.12)}
@@ -1188,3 +1244,25 @@
   border-color:var(--wood-edge);
   box-shadow:0 0 0 2px var(--wood-edge) inset;
 }
+
+  /* Being paid. The chip starts visible and is removed on a timer, so a
+     learner with reduced motion still sees it - it just does not travel. */
+  .money-hud{position:relative}
+  .payout-chip{
+    position:absolute; left:50%; top:-0.35em;
+    transform:translate(-50%,0);
+    font-weight:800; font-size:.95em; color:#ffe4a0;
+    text-shadow:0 1px 3px rgba(20,10,4,.85);
+    pointer-events:none; white-space:nowrap; z-index:5;
+    animation:payout-rise 1s ease-out forwards;
+  }
+  @keyframes payout-rise{
+    0%{opacity:0; transform:translate(-50%,.3em) scale(.9)}
+    18%{opacity:1; transform:translate(-50%,-.1em) scale(1.06)}
+    100%{opacity:0; transform:translate(-50%,-1.9em) scale(1)}
+  }
+  .money-hud.is-paid{
+    border-color:rgba(255,228,160,.95);
+    box-shadow:0 0 0 2px rgba(255,216,128,.35), 0 0 14px rgba(255,200,110,.45);
+    transition:box-shadow .18s ease-out, border-color .18s ease-out;
+  }

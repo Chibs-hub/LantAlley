@@ -7,6 +7,22 @@ const html = ["./index.html", "./styles.css", "./app.js"]
   .map((name) => readFileSync(new URL(name, import.meta.url), "utf8"))
   .join(String.fromCharCode(10));
 
+test("new learners choose either accessible player character before the entrance", () => {
+  assert.match(html, /id="screen-character"/);
+  assert.match(html, /data-character="man"/);
+  assert.match(html, /data-character="woman"/);
+  assert.match(html, /function showCharacterSelection/);
+  assert.match(html, /state\.playerCharacter/);
+  assert.match(html, /player-actions-woman-v1\.png/);
+});
+
+test("character choice uses the gate scene instead of two oversized paper cards", () => {
+  assert.match(html, /class="character-guide"/);
+  assert.match(html, /姿を選んでください/);
+  assert.match(html, /\.character-option\{[^}]*background:rgba/);
+  assert.match(html, /\.character-preview\{[^}]*aspect-ratio:1\/2/);
+});
+
 test("opening is a cinematic Japanese entry into the illustrated alley", () => {
   assert.match(html, /id="screen-title" class="frame title-scene"/);
   assert.match(html, /<h1[^>]*>言葉の路地<\/h1>/);
@@ -20,6 +36,12 @@ test("opening is a cinematic Japanese entry into the illustrated alley", () => {
   assert.match(html, /id="btn-restart"[^>]*hidden>最初から<\/button>/);
   assert.match(html, /btn-restart"\)\.addEventListener\("click", function\(\)\{[\s\S]*?enterLocation\("entrance"\);/);
   assert.doesNotMatch(html, /Dusk falls over a Tokyo backstreet/);
+});
+
+test("mistakes use feedback and retry without a three-life counter", () => {
+  assert.doesNotMatch(html, /id="hud-hearts"/);
+  assert.doesNotMatch(html, /Hearts remaining/);
+  assert.doesNotMatch(html, /heartsEl/);
 });
 
 test("greeting rests on the transparent fox after speech", () => {

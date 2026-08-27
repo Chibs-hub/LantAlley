@@ -7,7 +7,7 @@
  * Bump CACHE_VERSION whenever any shell file changes, or returning players
  * will keep the old build.
  */
-var CACHE_VERSION = "lantern-alley-v100";
+var CACHE_VERSION = "lantern-alley-v108";
 
 // audio-index.js assigns to `self`, so the worker and the page share one list
 // of clip paths. Importing it here means new lines are cached automatically
@@ -33,6 +33,7 @@ var SHELL = [
   "./learning-content.js",
   "./review-engine.js",
   "./learning-progress.js",
+  "./learning-economy.js",
   "./question-renderer.js",
   "./catalog-practice.js",
   "./manifest.webmanifest",
@@ -46,9 +47,17 @@ var SHELL = [
   "./assets/inn/room-empty-v4.webp",
   "./assets/inn/room-objects-v2.webp",
   "./assets/inn/sheet-stained-messy-v1.webp",
+  "./assets/inn/scenes/guest-room.jpg",
+  "./assets/inn/scenes/lobby.jpg",
+  "./assets/inn/scenes/kitchen.jpg",
+  "./assets/inn/scenes/dining-hall.jpg",
+  "./assets/inn/scenes/hallway.jpg",
+  "./assets/inn/scenes/office.jpg",
+  "./assets/inn/scenes/courtyard.jpg",
   "./assets/map/lantern-alley-map-v1.jpg",
   "./assets/entrance/wooden-gate-v1.webp",
   "./assets/entrance/player-actions-v1.webp",
+  "./assets/entrance/player-actions-woman-v1.png",
   "./assets/fox/fox-neutral-idle-transparent-v2.webp",
   "./assets/fox/fox-neutral-no-mouth-transparent.webp",
   "./assets/fox/fox-wave-closed-smile-transparent-v2.webp",

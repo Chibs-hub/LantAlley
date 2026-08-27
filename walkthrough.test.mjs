@@ -241,6 +241,24 @@ test("the page boots without throwing and shows a way in", () => {
   assert.ok(game.clickable().length > 0, "there is something to click on the title screen");
 });
 
+test("a new or unconfirmed learner must choose a character and the chosen pose renders", () => {
+  const game = boot();
+  game.$("btn-start").click();
+  assert.equal(game.$("screen-character").hidden, false);
+
+  const woman = game.doc.querySelector('[data-character="woman"]');
+  assert.ok(woman, "the woman choice is visible");
+  woman.click();
+  game.clock.advance(500);
+
+  assert.equal(game.$("screen-character").hidden, true);
+  assert.equal(game.$("screen-game").style.display, "block");
+  const saved = JSON.parse(game.storage.getItem("lanternAlley.v3"));
+  assert.equal(saved.playerCharacter, "woman");
+  assert.equal(saved.characterSelected, true);
+  assert.match(game.$("player-figure").getAttribute("style"), /player-actions-woman-v1\.png/);
+});
+
 test("the entrance runs to its end and always leaves something to click", () => {
   const game = boot();
   game.$("btn-start").click();
@@ -275,6 +293,9 @@ async function enterTheInn(game) {
   game.$("btn-start").click();
   game.clock.advance(500);
 
+  const character = game.doc.querySelectorAll("[data-character]")[0];
+  if (character) { character.click(); game.clock.advance(500); }
+
   for (let step = 0; step < 30; step += 1) {
     const choice = game.doc.querySelectorAll("[data-key]")[0];
     if (choice) { choice.click(); game.clock.advance(4000); break; }
@@ -303,6 +324,7 @@ async function drive(game, steps, onQuestion) {
   let questionsSeen = 0;
   let stalled = 0;
   let task = "";
+  const repairAttempts = new Map();
   const trace = process.env.WALKTHROUGH_DEBUG ? (...a) => console.log(...a) : () => {};
 
   for (let step = 0; step < steps; step += 1) {
@@ -322,7 +344,7 @@ async function drive(game, steps, onQuestion) {
       "| jp:", spoken.slice(0, 18),
       "| controls:", game.doc.querySelectorAll(".question-control, .reply-option").filter(game.visible).length,
       "| objects:", game.doc.querySelectorAll(".inn-object").filter(game.visible).length,
-      "| next:", game.$("next-row").style.display);
+      "| next:", game.$("next-row").style.display, "| errors:", game.errors.join(" / "));
     if (process.env.WALKTHROUGH_DUMP && step === Number(process.env.WALKTHROUGH_DUMP)) {
       console.log("SCENE:", game.$("scene").innerHTML.slice(0, 500));
       console.log("NEXTROW:", game.$("next-row").style.display);
@@ -354,7 +376,13 @@ async function drive(game, steps, onQuestion) {
     if (controls.length) {
       questionsSeen += 1;
       if (onQuestion) onQuestion(controls, questionsSeen);
-      const pick = controls.filter((c) => !c.textContent.startsWith("\u3059\u307f\u307e\u305b\u3093"))[0] || controls[0];
+      let pick = controls.filter((c) => !c.textContent.startsWith("\u3059\u307f\u307e\u305b\u3093"))[0] || controls[0];
+      if (game.$("stage-phase-badge").textContent === "\u9593\u9055\u3044\u76f4\u3057") {
+        const repairKey = spoken + (panel ? panel.textContent : "");
+        const attempt = repairAttempts.get(repairKey) || 0;
+        pick = controls[attempt % controls.length];
+        repairAttempts.set(repairKey, attempt + 1);
+      }
       pick.click();
       game.clock.advance(2500);
       stalled = 0;

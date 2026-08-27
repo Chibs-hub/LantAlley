@@ -40,11 +40,23 @@ test("Moonview Inn establishes the learner as Kon's helper before the first task
 
 test("Moonview Inn uses the same cinematic shell as the Alley Entrance", () => {
   assert.match(html, /screenGame\.classList\.toggle\("inn-stage", loc\.key === "home-inn"\)/);
-  assert.match(html, /#screen-game\.inn-stage\{[^}]*background:[^}]*#0[6-9][0-9a-f]{4}/i);
-  assert.match(html, /\.inn-stage \.stage-bar\{[^}]*border:2px solid[^}]*background:linear-gradient/);
-  assert.match(html, /\.inn-stage \.learning-context\{[^}]*background:linear-gradient/);
+  assert.match(html, /#screen-game\.inn-stage\{[^}]*background-image:[^}]*--inn-scene-image/);
+  assert.match(html, /\.inn-stage \.stage-bar\{[^}]*border:2px solid[^}]*background:rgba/);
+  assert.match(html, /\.inn-stage \.learning-context\{[^}]*background:transparent/);
   assert.match(html, /\.inn-stage \.answer-workspace\{[^}]*min-width:0/);
   assert.match(html, /@media\(max-width:760px\)[^{]*\{[\s\S]*?\.inn-stage \.game-layout\{[^}]*grid-template-columns:1fr/);
+});
+
+test("Inn questions keep the scene visible behind compact Entrance-style docks", () => {
+  assert.match(html, /\.inn-stage \.learning-context\{(?=[^}]*background:transparent)(?=[^}]*border:0)/);
+  assert.match(html, /\.inn-stage \.answer-workspace\{(?=[^}]*background:transparent)(?=[^}]*border:0)/);
+  assert.match(html, /\.inn-stage \.game-layout\{[^}]*min-height/);
+});
+
+test("episode openings form one aligned bottom dock instead of floating boxes", () => {
+  assert.match(html, /\.inn-stage \.game-layout:has\(\.episode-open\)/);
+  assert.match(html, /\.inn-stage \.answer-workspace:has\(\.episode-open\)/);
+  assert.match(html, /\.inn-stage \.episode-open-card\{[^}]*background:rgba/);
 });
 
 test("Moonview Inn mixes visible, object, and social actions", () => {

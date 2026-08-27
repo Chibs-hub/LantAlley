@@ -237,6 +237,21 @@ test("the illustrated Entrance scene and learner poses are available offline", (
   }
 });
 
+test("the offline build owns both player choices and the Inn scene set", () => {
+  const worker = readFileSync(new URL("./sw.js", import.meta.url), "utf8");
+  const assets = [
+    "assets/entrance/player-actions-woman-v1.png",
+    "assets/inn/scenes/guest-room.jpg",
+    "assets/inn/scenes/lobby.jpg",
+    "assets/inn/scenes/kitchen.jpg",
+    "assets/inn/scenes/dining-hall.jpg",
+    "assets/inn/scenes/hallway.jpg",
+    "assets/inn/scenes/office.jpg",
+    "assets/inn/scenes/courtyard.jpg",
+  ];
+  for (const asset of assets) assert.match(worker, new RegExp(asset.replaceAll("/", "\\/")));
+});
+
 test("the self-contained artifact embeds the selectable alley map", () => {
   const artifact = read("lantern-alley-artifact.html");
   const mapAsset = "assets/map/lantern-alley-map-v1.jpg";
@@ -255,7 +270,7 @@ test("the offline delivery contains the cinematic opening, Entrance, and room li
   const sw = read("sw.js");
   const artifact = read("lantern-alley-artifact.html");
 
-  assert.match(sw, /lantern-alley-v100/);
+  assert.match(sw, /lantern-alley-v108/);
   for (const pose of [
     "fox-neutral-idle-transparent-v2.webp",
     "fox-wave-closed-smile-transparent-v2.webp",

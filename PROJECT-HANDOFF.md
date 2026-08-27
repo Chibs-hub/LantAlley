@@ -4,6 +4,14 @@ Last updated: 2026-08-27
 
 ## 0. Current status
 
+### Golden Rule: Learning Integrity
+
+- Reward accuracy and demonstrated understanding, not merely speed or repeated tapping.
+- Every mechanic must serve the Japanese-learning objective. A learner must not be able to progress by guessing, memorizing answer positions, or mindlessly tapping.
+- Speed may add pressure only after comprehension is established; it must never replace evidence of understanding.
+- Before shipping a mechanic, ask: "Can a learner win without understanding the Japanese?" If yes, redesign it.
+- False progress breaks trust: leveling up without usable knowledge makes the learner feel cheated and harms retention.
+
 **The course is complete and playable end to end.** Five locations, four episodes each, ten questions per episode: 20 episodes and 200 authored questions teaching 200 distinct words. `validateStage` passes for every stage with nothing filtered out - including the four-episodes-per-stage rule, which had been excluded from the Inn's tests for months because the Inn had only one episode.
 
 | Place | Episodes | Story |
@@ -17,7 +25,13 @@ Last updated: 2026-08-27
 
 Every place covers all five official item types. The four written ones - 表記, 語形成, 文の組み立て, 文章の文法 - live in each place's second episode, because a spelling cannot be heard and a sentence you assemble is one you are looking at.
 
-**Verification.** 259 automated tests pass, 0 fail. Bare `node --test` is the correct command. The standalone artifact is 9.58 MB and the service-worker cache is `lantern-alley-v100`.
+**Verification.** 271 automated tests pass, 0 fail. Bare `node --test` is the correct command. The standalone artifact is 14.89 MB and the service-worker cache is `lantern-alley-v107`.
+
+**Mastery and earnings.** The stage HUD now shows a persistent understanding gauge and wallet. Mastery is the percentage of distinct authored targets answered correctly, never attempts or speed. Correct answers pay once per question (Learn ¥10, Practice ¥15, Challenge ¥25, correction ¥10), so replay cannot farm money. Places unlock in order only when the previous place reaches 100%: Entrance, Inn, Market, Teahouse, Station, Shrine. Existing completed episodes are converted into mastered targets on load. Locked map places remain visible and explain the 100% requirement. Money spending is intentionally deferred until its learning purpose is designed.
+
+The correction round now keeps a missed target in rotation until it is answered correctly. After three misses it reveals the answer, then asks it again later; it no longer drops the target while still allowing the mastery gauge to claim completion.
+
+Normal Inn word-choice questions no longer repeat the room inventory description above the answers. The Japanese request, English interaction instruction and answer choices are the complete question surface; room clues remain available only when the illustrated room interaction needs them.
 
 **The one open decision.** Audio has not been generated for the four newer places. The course speaks 620 lines; 114 have clips. Inlining the remaining 506 would take the artifact to roughly 31 MB against a hard 16 MB limit, so on 2026-08-27 the owner chose to skip the audio run for now and to drop the Artifact as the delivery surface later, so that the finished game can ship with its voice. Nothing has been sent to Microsoft Edge TTS.
 
@@ -179,6 +193,22 @@ Current artifact: `https://claude.ai/code/artifact/951c7147-1dcf-4b9d-aced-2928c
 An artifact cannot load sibling `.js` files or local images, which is why the build step inlines everything.
 
 ## 9. Change log and reasons
+
+### 2026-08-27 - Payday: the wallet now makes a sound and shows the coin
+
+The economy already paid correctly but silently, so the one moment of reward in a shift looked like a number quietly changing in the corner. A correct answer that earns money now plays a short two-note till sound and floats a `+¥10` chip above the wallet, which flashes as it takes the money.
+
+**The sound is synthesised, not sampled.** The artifact stands at 14.89 MB against a 15 MB ceiling, and a coin clip would have spent tens of kilobytes of a nearly exhausted delivery budget on two notes. Web Audio costs nothing, works offline by construction, and needs no cache entry. Two triangle notes at 988 Hz and 1319 Hz, 70 ms apart - the shape of a till rather than a fanfare, because it plays after every correct answer and has to stay welcome for an hour.
+
+It follows the existing voice switch: muting the fox mutes the till.
+
+**Both effects hang off `rewardCorrect`**, the single place money is granted. That matters for the Golden Rule: `award()` pays once per question id, so replaying a finished episode earns nothing, makes no sound and shows no chip. The reward cannot be farmed by tapping, because it is not attached to tapping - it is attached to being paid.
+
+**Visibility never depends on the animation.** The chip's keyframes start at `opacity:0`, but the rule itself sets no opacity, so when the global reduced-motion rule kills animations with `!important` the chip renders at opacity 1 and is removed by its own timer. This was verified rather than assumed: with the animation killed the chip computes to opacity 1, visible, and rendered. The episode card has been stuck invisible behind exactly this trap once before.
+
+**Not paid, deliberately:** Kon's practice cards. `rewardCorrect` is only called from the authored questions, so the 9,097 generated practice cards pay nothing. Left as the previous session designed it - paying per generated card would make money a function of volume rather than of understanding.
+
+Verified in the built artifact by spying on Web Audio: one context, two oscillators started, pitches 988 and 1319 scheduled, wallet 10 to 20, chip reading `+¥10` at 32 by 20 pixels with the wallet flashing. 273 tests pass, cache `lantern-alley-v108`, artifact 14.89 MB.
 
 ### 2026-08-27 - Review pass over all 200 questions
 
@@ -1747,3 +1777,28 @@ In the order that gets the most for the least:
 3. Ask the recipient to open `PROJECT-HANDOFF.md` first.
 4. Ask them to run the automated test command before making changes.
 5. Remind them that browser progress is separate from the folder.
+### 2026-08-27 - Persistent player choice and illustrated Inn scene set
+
+New games now open a two-card character chooser after `路地へ入る`. The existing man and the new blonde woman in a burgundy kimono each use a four-pose sheet; the choice is saved as `playerCharacter` in `lanternAlley.v3`, drives every learner pose, and is cleared by `最初から`. Existing saves migrate to the man so returning learners are not interrupted.
+
+The seven approved Inn images are now production assets under `assets/inn/scenes/`: guest room, lobby, kitchen, dining hall, hallway, office and courtyard. Training and episode questions select the matching setting from their action and Japanese context; the wood-and-washi learning and answer panels remain readable over the illustrated background. Offline cache is `lantern-alley-v102`.
+
+`lantern-alley-artifact.html` was rebuilt at 14.44 MB. Bare `node --test` passes 264 of 264 tests; `app.js` passes `node --check`.
+
+Follow-up verification found that old saves were silently assigned the man, which skipped the chooser. Selection now carries a separate `characterSelected` confirmation flag: any save that never explicitly chose opens the chooser once, while a confirmed choice persists. A rendered DOM walkthrough clicks Woman, confirms the Entrance opens, confirms the saved record, and confirms the woman pose sheet is actually rendered. Cache is `lantern-alley-v102`; 264 of 264 tests pass.
+
+### 2026-08-27 - Character and Inn questions now blend into their scenes
+
+The oversized cream character cards were removed. Character choice now sits as a compact translucent bottom dock over the wooden gate, with Kon and a Japanese request; both figures stand directly against the scene. The woman's four-pose production sheet was normalized 12% larger so her rendered scale matches the man instead of appearing undersized.
+
+Moonview Inn now follows the Entrance composition on training questions and episode screens: the generated 3:2 setting remains visible, the full-height brown columns are gone, and the narration, dialogue, controls and illustrated object room sit in compact bottom docks. The scene image is no longer buried behind opaque panels. Mobile collapses the two docks into a single readable column.
+
+Artifact rebuilt at 14.88 MB, cache `lantern-alley-v103`, and 266 of 266 tests pass.
+
+### 2026-08-27 - Inn episode opening dock alignment
+
+The episode opening no longer places a narrow tall Kon box at the far left and an unrelated paper card in the middle of the room. At desktop widths, the dialogue and episode action now form one 7/5 bottom dock with a shared baseline, 226px height, matching translucent wood, compact internal padding and a wider speech measure. The episode paper is reduced to the dock's inner surface instead of floating over the scene. Phone layouts stack the same two dock sections without shrinking their text. Artifact is 14.88 MB, cache `lantern-alley-v104`, and 267 of 267 tests pass.
+
+### 2026-08-27 - Three-life HUD removed
+
+The three hearts and their decreasing display were removed from the shared HUD. Wrong answers still receive contextual feedback and retry normally; no visible life counter or life-loss state remains. Stars and course progress are unchanged. Artifact is 14.88 MB, cache `lantern-alley-v105`, and 268 of 268 tests pass.

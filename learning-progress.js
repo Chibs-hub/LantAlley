@@ -17,13 +17,18 @@
   function emptyProgress(){
     return {
       version: VERSION,
+      playerCharacter: null,
+      characterSelected: false,
       visited: [],
       starred: [],
       stages: {},
       items: {},
       mistakes: [],
       repairQueue: [],
-      mastered: []
+      mastered: [],
+      money: 0,
+      paidAnswers: [],
+      masteredByStage: {}
     };
   }
 
@@ -55,13 +60,21 @@
     next.starred = (stored.starred || []).slice();
 
     if(stored.version === VERSION && stored.stages){
+      next.characterSelected = stored.characterSelected === true;
+      next.playerCharacter = next.characterSelected && stored.playerCharacter === "woman" ? "woman"
+        : (next.characterSelected && stored.playerCharacter === "man" ? "man" : null);
       next.stages = clone(stored.stages);
       next.items = clone(stored.items || {});
       next.mistakes = clone(stored.mistakes || []);
       next.repairQueue = (stored.repairQueue || []).slice();
       next.mastered = (stored.mastered || []).slice();
+      next.money = Number(stored.money) || 0;
+      next.paidAnswers = (stored.paidAnswers || []).slice();
+      next.masteredByStage = clone(stored.masteredByStage || {});
       return next;
     }
+
+    next.playerCharacter = null;
 
     // Version 2 held one hard-coded Inn record under a camelCase key.
     var legacy = stored.stageProgress || {};

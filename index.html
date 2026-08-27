@@ -45,6 +45,28 @@
     </div>
   </section>
 
+  <section id="screen-character" class="frame character-scene" hidden aria-labelledby="character-title">
+    <div class="character-panel">
+      <div class="character-guide">
+        <img src="assets/fox/fox-neutral-no-mouth-transparent.webp" alt="コン">
+        <div>
+          <p class="title-kicker">Choose your character</p>
+          <h2 id="character-title">路地で使う姿を選んでください</h2>
+        </div>
+      </div>
+      <div class="character-options">
+        <button class="character-option" data-character="man" aria-label="Choose the man">
+          <span class="character-preview character-preview-man" aria-hidden="true"></span>
+          <span>Man</span>
+        </button>
+        <button class="character-option" data-character="woman" aria-label="Choose the woman">
+          <span class="character-preview character-preview-woman" aria-hidden="true"></span>
+          <span>Woman</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
   <section id="screen-map" class="frame map-frame">
     <div class="map-top">
       <div class="map-heading">
@@ -79,8 +101,11 @@
       <div class="stage-bar">
         <div class="hud">
           <button class="breadcrumb" id="btn-back-map">&larr; Lantern Alley</button>
-          <div class="hud-hearts" id="hud-hearts" aria-label="Hearts remaining"></div>
           <div class="hud-stars"><span id="hud-star-count">0</span> <span>⭐</span></div>
+          <div class="learning-hud">
+            <div class="mastery-hud"><span>理解度</span><div class="mastery-track"><span id="hud-mastery-fill"></span></div><b id="hud-mastery-value">0%</b></div>
+            <div class="money-hud">¥<span id="hud-money">0</span></div>
+          </div>
         </div>
 
         <div class="stage-meta">
@@ -143,6 +168,7 @@
 <script src="learning-content.js"></script>
 <script src="review-engine.js"></script>
 <script src="learning-progress.js"></script>
+<script src="learning-economy.js"></script>
 <script src="question-renderer.js"></script>
 <script src="catalog-practice.js"></script>
 <script src="entrance-stage-logic.js"></script>

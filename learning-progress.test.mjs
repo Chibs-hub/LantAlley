@@ -14,8 +14,23 @@ function load() {
 test("no stored progress produces an empty v3 record", () => {
   const p = load().migrateProgress(null);
   assert.equal(p.version, 3);
+  assert.equal(p.playerCharacter, null);
   assert.deepEqual(Object.keys(p.stages), []);
   assert.deepEqual([...p.mistakes], []);
+});
+
+test("the selected player character survives a v3 reload", () => {
+  const saved = load().migrateProgress({
+    version: 3, playerCharacter: "woman", characterSelected: true, visited: [], starred: [], stages: {},
+  });
+  assert.equal(saved.playerCharacter, "woman");
+});
+
+test("older saves without an explicit choice open the character chooser once", () => {
+  const migrated = load().migrateProgress({
+    visited: ["entrance"], starred: [], stageProgress: {},
+  });
+  assert.equal(migrated.playerCharacter, null);
 });
 
 test("v2 Inn completion survives migration", () => {
