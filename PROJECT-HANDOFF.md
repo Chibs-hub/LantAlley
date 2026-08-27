@@ -1799,8 +1799,8 @@ The old single-file `lantern-alley.html` had no `<meta charset>`, so browsers de
 - **The Japanese has not been reviewed.** 200 questions, five story arcs and every piece of Kon's dialogue were authored in this project and have not been checked by a native speaker. The owner reviews after authoring.
 - **Two test controls still ship.** **Skip to next day** and **Preview Episode** are dashed buttons in the live build.
 - **The Artifact cannot carry the finished game.** With audio it is about 31 MB against a 16 MB limit.
-- **Catalog provenance is incomplete.** The exact OpenJLPT commit used for the local copies was not recorded.
-- **No grammar or kanji catalog is approved**, so the project may claim coverage only of its named vocabulary catalog.
+- **Catalog provenance is incomplete.** The exact OpenJLPT commit used for the local copies was not recorded. Section 14 lists the upstream sources this could be rebuilt from properly.
+- **No grammar or kanji catalog is approved**, so the project may claim coverage only of its named vocabulary catalog. Candidate sources are listed in section 14.
 - **The Inn is entered through its old three-day stage**, while the four newer places drop straight into their first episode. The two entry paths are different by history rather than by design.
 
 ## 11. Recommended next work
@@ -1809,7 +1809,7 @@ In the order that gets the most for the least:
 
 1. **Native review of the Japanese.** Everything else is cheap to change; this is the thing only the owner can do. `generate-audio.py` hashes its input, so corrections cost only the lines that changed.
 2. **Decide the delivery surface.** The Artifact cannot hold the finished game. Until that is settled the audio run cannot be spent well.
-3. **Generate the audio** once the surface is known. `collect-spoken-lines.js` already walks every stage, so the run needs no code change.
+3. **Generate the audio** once the surface is known. `collect-spoken-lines.js` already walks every stage, so the run needs no code change. A local open TTS model (section 14) would also remove the external-service approval gate, since nothing would leave the machine.
 4. **Remove or flag the two test controls.** Left until last on purpose: every step above is verified through them. Note that they are currently the only quick way into a later episode without replaying what comes before, so removing them should come with a proper way to resume a place.
 5. **Give the four newer places their scene art.** They render on the shared workspace today. Nothing depends on this; it is the visible half of the work.
 6. **Reconcile the Inn's two entry paths** so all five places are entered the same way.
@@ -1876,3 +1876,59 @@ The episode opening no longer places a narrow tall Kon box at the far left and a
 ### 2026-08-27 - Three-life HUD removed
 
 The three hearts and their decreasing display were removed from the shared HUD. Wrong answers still receive contextual feedback and retry normally; no visible life counter or life-loss state remains. Stars and course progress are unchanged. Artifact is 14.88 MB, cache `lantern-alley-v105`, and 268 of 268 tests pass.
+
+## 14. Open language data we can draw on
+
+Recorded by the owner on 2026-08-27. Several of these answer gaps this project has been carrying, so each one below is written next to the gap it would close rather than as a bare list. **None of it has been evaluated, downloaded or licence-checked yet** - treat every line as a lead, and confirm the licence and its attribution terms before any of it ships.
+
+### Vocabulary and dictionary
+
+- **JMdict / EDICT2** - the standard Japanese-English dictionary. Already used informally in this project to check word senses by hand; not shipped.
+- **NINJAL frequency lists** - word frequency from Japan's National Institute for Japanese Language and Linguistics.
+
+*The gap these close.* The catalog holds only the OpenJLPT N2 and N3 lists, whose provenance is incomplete - the exact upstream commit was never recorded (section 10). It also means the tap-to-read aid has no entry for ordinary words: 部屋 and 夕食 stay plain because they are below N3. A real dictionary would fix both, and frequency data would give a defensible order to teach in, which the round-robin partitioning currently has no basis for.
+
+### Kanji
+
+- **KANJIDIC2** - readings, meanings and JLPT levels for 13,000+ kanji.
+- **KanjiVG** - vector stroke data, correct stroke order.
+- **KanjiAPI.dev** - a REST API over Kanjidic2 and KanjiVG, clean JSON.
+
+*The gap these close.* "No grammar or kanji catalog has been approved, so the project may claim coverage only of its named vocabulary catalog" has been in this document since the start. KANJIDIC2 is the missing kanji catalog. KanjiVG would make stroke order teachable, which nothing in the game does today. Note that KanjiAPI is a network service: the game is offline-first and the artifact has no network at all, so it is a build-time source, not a runtime one.
+
+### Example sentences
+
+- **Tatoeba** - large open multilingual sentence database.
+
+*The gap this closes.* The catalog's example sentences come from the OpenJLPT copy of Tatoeba and three of them do not contain their own headword. Going to the source directly would let those be replaced rather than filtered out, and would give the generated cloze practice far more to work with.
+
+### Pitch accent
+
+- **Kanjium pitch accent database** - high/low patterns.
+- **Hatsuon / Japanese-Pitch-Accent-Resources** - rendering libraries.
+
+*The gap this closes.* Nothing in the game teaches pitch at all. This would be new ground rather than a repair.
+
+### Grammar
+
+- **Community Anki decks** - e.g. an "Ultimate JLPT Grammar Deck" converted to JSON or CSV.
+- **Tae Kim's Grammar Guide** - free and open.
+
+*The gap these close.* The other half of the missing-catalog problem. The authored 文の組み立て and 文章の文法 items were written by hand against no grammar list, so there is no way to say what grammar the course covers or what it leaves out. Community decks vary in quality and licence, so this is the entry on the list needing the most care.
+
+### Audio and pronunciation
+
+- **Yomitan audio packs** - native audio mapped to JMdict word IDs.
+- **Kokoro Speech Dataset** - public domain, 43,000+ clips.
+- **Open-source TTS** - Kokoro TTS, VITS and similar, for generating audio locally.
+
+*The gap these close.* This is the live one. 506 of the course's 620 spoken lines have no clip, and the run has been deferred because Edge TTS is an external service and because the audio does not fit the Artifact's 16 MB ceiling (section 0). A local open TTS model removes the external-service question entirely - nothing leaves the machine, so the approval gate that currently blocks each run disappears. It does not solve the size problem: that is still a delivery-surface decision.
+
+Word-level audio mapped to JMdict IDs is a different thing from what the game needs, which is whole spoken sentences. It would suit the vocabulary practice layer rather than the episodes.
+
+### Before using any of it
+
+1. Confirm the licence and what attribution it requires, and record it here. The project already carries one provenance failure and should not add another.
+2. Prefer build-time ingestion over runtime calls. The game is offline-first, and the artifact cannot reach the network at all.
+3. Record the exact version, commit or release used, in `research/`, next to the data.
+4. Check the size cost before committing to anything that ships inside the artifact.
