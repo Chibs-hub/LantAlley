@@ -279,6 +279,22 @@ This was not hypothetical: a freshly edited `lantern-map.js` was served from the
 
 ## 9. Change log and reasons
 
+### 2026-08-28 - A UI sweep, and the one thing it found that cannot be fixed in CSS
+
+Audited every screen at 1024, 390 and 320 px against the same checks: sideways scroll, controls off the edge, touch targets under 24px, unnamed controls, controls covered by something else, broken images, and text clipped by its own box.
+
+**Fixed.** Three pieces of chrome were too small to hit reliably on a phone and appear on every game screen: the breadcrumb back to the map (105x21), the hint link (81x20) and the romaji toggle (34x19). The breadcrumb and the hint link now have a 32px minimum height - the text is unchanged, the button grew. The romaji pill is meant to look small, so instead of resizing it, a pseudo-element extends its hit area to 34px square without touching the layout or the drawing.
+
+**Fixed.** The 「このゲームについて」 dialogue already declared `aria-modal`, moved focus into itself and closed on Escape, but Tab did not agree: the two title buttons stayed in the tab order underneath, so a keyboard could walk out of a modal it could not see. They are `inert` while it is open.
+
+**Found, and left alone deliberately.** The Inn's illustrated room has drop zones and objects well under a comfortable touch size on a phone: at 390px the stove zone is 51x18, the microwave 48x25, the recycling box 27x41, the broken bulb 23x23. Four are under 24px at 320px and ten under 44px.
+
+This one cannot be fixed by making the targets bigger. Their neighbours are only 29 to 45 px apart centre to centre - the stove and the microwave are 29px apart - so a 44px hit area would overlap the next zone and start stealing its taps, which is worse than a small target. The objects are positioned as percentages over a painted room, so the real fix is spacing them further apart in the artwork, which is a scene decision rather than a stylesheet one. Recorded here rather than half-fixed.
+
+**Two flags turned out to be my own measurement being wrong**, and are worth writing down so they are not re-reported. The Inn's captions look like text overflowing its box; they are absolutely positioned tooltips at opacity 0, meant to escape it. And a map pin's label is a few pixels wider than the pin - the label has `overflow:visible`, so it is never clipped, only wider. Both were checked before concluding.
+
+342 tests, 0 failures. Cache `lantern-alley-v134`.
+
 ### 2026-08-28 - Tell the learner where they left off
 
 An audit of the save and resume path found that the machinery worked and none of it was visible. These are the fixes.

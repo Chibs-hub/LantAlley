@@ -726,6 +726,16 @@
     if(!panel || !open || !close) return;
     function show(visible){
       panel.hidden = !visible;
+      /* The dialogue already says aria-modal, which hides the page behind it
+       * from a screen reader. Tab did not agree: the two title buttons stayed
+       * in the tab order underneath, so a keyboard could walk out of a modal
+       * it could not see. inert takes them out of reach and out of the
+       * accessibility tree together. */
+      [open, document.getElementById("btn-start")].forEach(function(node){
+        if(!node) return;
+        if(visible) node.setAttribute("inert", "");
+        else node.removeAttribute("inert");
+      });
       if(visible) close.focus(); else open.focus();
     }
     open.addEventListener("click", function(){ show(true); });
