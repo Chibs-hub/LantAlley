@@ -152,11 +152,10 @@ test("going home is never gated on understanding", () => {
   assert.doesNotMatch(order[1], /"home"/, "the home is not a stage in the progression");
 });
 
-test("the room is drawn, not photographed", () => {
+test("the home uses layered raster scenes with movable slots", () => {
   const room = readFileSync(new URL("./home-room.js", import.meta.url), "utf8");
-  // This room is going to grow a furniture catalogue. A picture would cost
-  // megabytes and could not be rearranged from data; slots can.
-  assert.match(room, /<svg/);
-  assert.doesNotMatch(room, /\.(png|jpg|jpeg|webp)/, "no raster art in the room");
+  assert.match(room, /starter-house-yard-v1\.webp/);
+  assert.match(room, /starter-room-v1\.webp/);
+  assert.match(room, /function scenes/);
   assert.match(room, /function slots/);
 });

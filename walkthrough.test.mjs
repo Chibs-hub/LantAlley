@@ -18,7 +18,10 @@ import { FakeClock, FakeDocument, FakeEvent, FakeStorage, parseInto } from "./do
 
 const read = (name) => readFileSync(new URL("./" + name, import.meta.url), "utf8");
 
-function boot() {
+/* `seed` is written before the app initialises, because it reads storage once
+ * on DOMContentLoaded and then owns it. Setting it afterwards seeds nothing:
+ * the first save overwrites it. */
+function boot(seed) {
   const html = read("index.html");
   const body = html.slice(html.indexOf("<body"), html.lastIndexOf("</body>"));
   const doc = new FakeDocument();
@@ -26,6 +29,9 @@ function boot() {
 
   const clock = new FakeClock();
   const storage = new FakeStorage();
+  // app.js reads progress while its IIFE runs, not on DOMContentLoaded, so a
+  // seed written any later is read after the game has already started empty.
+  if (seed) storage.setItem("lanternAlley.v3", JSON.stringify(seed));
   const errors = [];
   const heard = [];
 
@@ -538,3 +544,120 @@ function loadRenderer() {
   vm.runInContext(read("question-renderer.js"), context);
   return context.LanternQuestionRenderer;
 }
+
+/* ---- The garden grows from finished work, and only from finished work ----
+ *
+ * This is the rule the whole reward system rests on: a plant advances because
+ * the learner cleared a shift, not because time passed, not because they
+ * tapped, and not because they replayed something they had already done.
+ *
+ * It is checked by playing the game rather than by calling the engine, because
+ * the engine has been correct since Task 2. What was never proved is that the
+ * app calls it once, at the right moment, with the right id.
+ */
+function homeButton(game) {
+  return game.doc
+    .querySelectorAll(".map-destination")
+    .find((b) => b.textContent.includes("わが家"));
+}
+
+function gardenOf(game) {
+  const saved = JSON.parse(game.storage.getItem("lanternAlley.v3") || "{}");
+  return saved.garden || { plants: [], usedCreditIds: [] };
+}
+
+// A learner who has done the tutorial and has one camellia in the ground.
+// Written as a save so it arrives through the real migration on boot.
+function plantedCamelliaSave(extra) {
+  return Object.assign({
+    version: 3, characterSelected: true, playerCharacter: "woman",
+    visited: ["entrance"], starred: [], stages: {},
+    episodesDone: [], stageStarted: [], items: {}, mistakes: [], repairQueue: [],
+    money: 100, paidAnswers: [], masteredByStage: {}, reviewProgress: {},
+    homeTutorialComplete: true, starterSeedClaimed: true, starterCushionClaimed: true,
+    home: { owned: [], placed: {} }, homeVisited: true,
+    garden: {
+      plants: [{ id: "p1", typeId: "camellia", slotId: "garden-left-2",
+                 growthPoints: 0, stage: "planted", pendingAnimation: false }],
+      usedCreditIds: [], starterClaimed: true, nextInstanceId: 2,
+    },
+  }, extra || {});
+}
+
+test("finishing a shift grows the garden, and replaying it does not", async () => {
+  const game = boot(plantedCamelliaSave());
+  await enterTheInn(game);
+  await drive(game, 3200);
+
+  const after = gardenOf(game);
+  assert.ok(after.usedCreditIds.length >= 1,
+    "a finished shift credited the garden: " + JSON.stringify(after.usedCreditIds));
+  assert.ok(after.usedCreditIds.every((id) => id.startsWith("episode:")),
+    "credits are keyed by episode id: " + after.usedCreditIds.join(", "));
+  assert.equal(new Set(after.usedCreditIds).size, after.usedCreditIds.length,
+    "no episode was credited twice");
+
+  const plant = after.plants[0];
+  assert.ok(plant.growthPoints > 0, "the planted camellia gained ground");
+  assert.ok(plant.growthPoints <= 2 * after.usedCreditIds.length,
+    "at most one point plus one bonus per shift, not a per-question drip");
+  assert.notEqual(plant.stage, "planted", "crossing a threshold changed the stage");
+  assert.deepEqual(game.errors, [], "nothing threw");
+});
+
+test("growth is never credited before the correction round is cleared", async () => {
+  const game = boot(plantedCamelliaSave());
+  await enterTheInn(game);
+  // Long enough to be well inside an episode, not long enough to finish one.
+  await drive(game, 260);
+
+  const mid = gardenOf(game);
+  const done = (JSON.parse(game.storage.getItem("lanternAlley.v3") || "{}").episodesDone) || [];
+  if (!done.length) {
+    assert.equal(mid.usedCreditIds.length, 0,
+      "an unfinished shift must credit nothing: " + JSON.stringify(mid.usedCreditIds));
+  }
+});
+
+test("a plant only grows while it is in the ground", () => {
+  const game = boot();
+  const garden = game.context.LanternHomeGarden;
+  let state = garden.emptyGarden();
+  const bought = garden.buy(state, 500, "camellia");
+  state = bought.garden;                       // bought, never planted
+
+  const credited = garden.creditLesson(state, "episode:home-inn-e01", 0);
+  assert.equal(credited.garden.plants[0].growthPoints, 0,
+    "a seed sitting in storage does not grow");
+
+  const planted = garden.plant(credited.garden, bought.instanceId, "garden-left-1",
+    game.context.LanternHomeRoom.scenes().yard.slots);
+  const again = garden.creditLesson(planted.garden, "episode:home-inn-e01", 0);
+  assert.equal(again.garden.plants[0].growthPoints, 0,
+    "the shift it missed is not paid out retroactively");
+});
+
+test("the yard announces a plant that grew while the learner was away", async () => {
+  const game = boot(plantedCamelliaSave({
+    visited: ["entrance", "home-inn"], stageStarted: ["home-inn"],
+    garden: { plants: [{ id: "p1", typeId: "camellia", slotId: "garden-left-2",
+                         growthPoints: 2, stage: "sprout", pendingAnimation: true }],
+              usedCreditIds: ["episode:home-inn-e01"], starterClaimed: true, nextInstanceId: 2 },
+  }));
+
+  game.$("btn-start").click();
+  game.clock.advance(600);
+  const home = homeButton(game);
+  assert.ok(home, "わが家 is on the map");
+  home.click();
+  game.clock.advance(1200);
+
+  const note = game.doc.querySelectorAll(".home-goal")[0];
+  assert.ok(note && note.textContent.includes("椿"),
+    "the yard says which plant changed: " + (note ? note.textContent : "(no note)"));
+
+  // and it is said once: the flag is cleared and written back
+  const after = gardenOf(game);
+  assert.equal(after.plants[0].pendingAnimation, false,
+    "the growth moment is acknowledged, so it does not replay on every visit");
+});

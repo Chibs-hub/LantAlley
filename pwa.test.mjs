@@ -503,3 +503,59 @@ test("the app carries the attribution its data licence requires", () => {
     assert.ok(notice.includes(credit), `NOTICE.md omits ${credit}`);
   }
 });
+
+/* The house is the one place the game gives something back, so a learner who
+ * installed it offline and walks home to broken images has lost the reward
+ * rather than a decoration. Every picture the home can show has to be on disk
+ * and in the shell - and every picture the code names has to exist, which is
+ * the half that catches a catalogue entry added before its art. */
+test("every picture the home can show is on disk and cached", () => {
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(read("home-room.js"), context);
+  vm.runInContext(read("home-decor.js"), context);
+  vm.runInContext(read("home-garden.js"), context);
+  const sw = read("sw.js");
+  const app = read("app.js");
+
+  const wanted = new Set();
+  const scenes = context.LanternHomeRoom.scenes();
+  wanted.add(scenes.yard.background);
+  wanted.add(scenes.interior.background);
+
+  // Decor art is optional while the catalogue is still half-drawn, but any
+  // item that names a picture must actually have one.
+  for (const item of context.LanternHomeDecor.catalogue()) {
+    const full = context.LanternHomeDecor.getItem(item.id);
+    if (full.image) wanted.add(full.image);
+  }
+
+  // A plant is only sold once its four stages exist; the app decides that with
+  // GARDEN_ART_READY, so this reads the same list rather than a second copy.
+  const ready = (app.match(/var GARDEN_ART_READY = \{([^}]*)\}/) || [, ""])[1];
+  const readyIds = [...ready.matchAll(/([a-z-]+)\s*:\s*true/g)].map((m) => m[1]);
+  assert.ok(readyIds.length >= 1, "at least one plant is sellable");
+  for (const id of readyIds) {
+    assert.ok(context.LanternHomeGarden.catalogue().some((t) => t.id === id),
+      `GARDEN_ART_READY names "${id}", which is not a plant`);
+    for (const stage of ["planted", "sprout", "growing", "mature"]) {
+      wanted.add(`assets/home/garden/${id}-${stage}-v1.png`);
+    }
+  }
+
+  for (const path of wanted) {
+    assert.equal(existsSync(new URL("./" + path, import.meta.url)), true,
+      `the home references ${path}, which is not on disk`);
+    assert.ok(sw.includes('"./' + path + '"'),
+      `sw.js does not pre-cache ${path}, so it breaks offline`);
+  }
+});
+
+test("the raw supplied source images are not shipped", () => {
+  const sw = read("sw.js");
+  // 52MB of unprocessed PNGs live under assets/home/incoming-user while they
+  // are being turned into production art. Pre-caching those would make the
+  // offline install unusable on a phone.
+  assert.ok(!sw.includes("incoming-user"),
+    "sw.js pre-caches the raw source images");
+});

@@ -14,6 +14,13 @@
   // focused review happens at the end of day 3 rather than on a fourth day.
   var PHASE_DAY = {learn:1, practice:2, challenge:3, review:3};
 
+  function emptyGarden(){
+    if(root.LanternHomeGarden && typeof root.LanternHomeGarden.emptyGarden === "function"){
+      return root.LanternHomeGarden.emptyGarden();
+    }
+    return {plants:[], usedCreditIds:[], starterClaimed:false, nextInstanceId:1};
+  }
+
   function emptyProgress(){
     return {
       version: VERSION,
@@ -32,6 +39,12 @@
       // The room at わが家: what has been bought, and where it stands.
       home: {owned: [], placed: {}},
       homeVisited: false,
+      houseTier: "starter",
+      homeTutorialComplete: false,
+      starterSeedClaimed: false,
+      starterCushionClaimed: false,
+      activeWallpaper: "wallpaper-plain",
+      garden: emptyGarden(),
       // Which shifts are finished, which places have been walked into, and any
       // shift left half-done. These are written by saveProgress and were being
       // dropped here, so every one of them was lost on reload.
@@ -76,6 +89,35 @@
     next.visited = (stored.visited || []).slice();
     next.starred = (stored.starred || []).slice();
 
+    next.money = Number(stored.money) || 0;
+    next.home = {
+      owned: ((stored.home || {}).owned || []).slice(),
+      placed: clone((stored.home || {}).placed || {})
+    };
+    next.homeVisited = stored.homeVisited === true;
+    next.houseTier = typeof stored.houseTier === "string" && stored.houseTier ? stored.houseTier : "starter";
+    next.homeTutorialComplete = stored.homeTutorialComplete === true;
+    next.activeWallpaper = typeof stored.activeWallpaper === "string" && stored.activeWallpaper
+      ? stored.activeWallpaper : "wallpaper-plain";
+
+    var gardenSource = stored.garden || emptyGarden();
+    var gardenDefault = emptyGarden();
+    next.garden = {
+      plants: clone(gardenSource.plants || gardenDefault.plants || []),
+      usedCreditIds: (gardenSource.usedCreditIds || gardenDefault.usedCreditIds || []).slice(),
+      starterClaimed: gardenSource.starterClaimed === true,
+      nextInstanceId: Math.max(1, Number(gardenSource.nextInstanceId) || gardenDefault.nextInstanceId || 1)
+    };
+    var ownsStarterCushion = next.home.owned.some(function(id){
+      return id === "floor-cushion-red" || id === "floor-cushion-navy";
+    });
+    var ownsStarterSeed = next.garden.plants.some(function(plant){
+      return plant && plant.typeId === "camellia";
+    });
+    next.starterSeedClaimed = stored.starterSeedClaimed === true || ownsStarterSeed;
+    next.starterCushionClaimed = stored.starterCushionClaimed === true || ownsStarterCushion;
+    if(next.starterSeedClaimed) next.garden.starterClaimed = true;
+
     if(stored.version === VERSION && stored.stages){
       next.characterSelected = stored.characterSelected === true;
       next.playerCharacter = next.characterSelected && stored.playerCharacter === "woman" ? "woman"
@@ -85,14 +127,8 @@
       next.mistakes = clone(stored.mistakes || []);
       next.repairQueue = (stored.repairQueue || []).slice();
       next.mastered = (stored.mastered || []).slice();
-      next.money = Number(stored.money) || 0;
       next.paidAnswers = (stored.paidAnswers || []).slice();
       next.masteredByStage = clone(stored.masteredByStage || {});
-      next.home = {
-        owned: ((stored.home || {}).owned || []).slice(),
-        placed: clone((stored.home || {}).placed || {})
-      };
-      next.homeVisited = stored.homeVisited === true;
       next.episodesDone = (stored.episodesDone || []).slice();
       next.stageStarted = (stored.stageStarted || []).slice();
       next.episode = stored.episode ? clone(stored.episode) : null;

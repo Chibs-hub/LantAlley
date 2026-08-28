@@ -154,6 +154,13 @@
   var LOCATION_KEYS = locations.map(function(l){ return l.key; });
   var CHALLENGE_KEYS = LOCATION_KEYS.filter(function(k){ return k !== "festival"; });
 
+  function emptyGardenState(){
+    if(typeof LanternHomeGarden !== "undefined" && typeof LanternHomeGarden.emptyGarden === "function"){
+      return LanternHomeGarden.emptyGarden();
+    }
+    return {plants:[], usedCreditIds:[], starterClaimed:false, nextInstanceId:1};
+  }
+
   var state = {
     currentKey:null,
     playerCharacter:null,
@@ -181,7 +188,13 @@
     paidAnswers:[],
     masteredByStage:{},
     home:{owned:[], placed:{}},
-    homeVisited:false
+    homeVisited:false,
+    houseTier:"starter",
+    homeTutorialComplete:false,
+    starterSeedClaimed:false,
+    starterCushionClaimed:false,
+    activeWallpaper:"wallpaper-plain",
+    garden:emptyGardenState()
   };
 
   var jpVoice = null;
@@ -347,6 +360,12 @@
         pendingMasteredByStage = v3.masteredByStage || {};
         pendingHome = v3.home || {owned:[], placed:{}};
         pendingHomeVisited = v3.homeVisited === true;
+        pendingHouseTier = v3.houseTier || "starter";
+        pendingHomeTutorialComplete = v3.homeTutorialComplete === true;
+        pendingStarterSeedClaimed = v3.starterSeedClaimed === true;
+        pendingStarterCushionClaimed = v3.starterCushionClaimed === true;
+        pendingActiveWallpaper = v3.activeWallpaper || "wallpaper-plain";
+        pendingGarden = v3.garden || emptyGardenState();
         pendingReviewProgress = v3.reviewProgress || {};
         pendingDaily = {
           dailyPractice: v3.dailyPractice || null,
@@ -359,6 +378,18 @@
       var raw = localStorage.getItem(STORAGE_KEY);
       if(!raw) return null;
       var migrated = LanternProgress.migrateProgress(JSON.parse(raw));
+      pendingItemStates = migrated.items || {};
+      pendingMoney = migrated.money || 0;
+      pendingPaidAnswers = migrated.paidAnswers || [];
+      pendingMasteredByStage = migrated.masteredByStage || {};
+      pendingHome = migrated.home || {owned:[], placed:{}};
+      pendingHomeVisited = migrated.homeVisited === true;
+      pendingHouseTier = migrated.houseTier || "starter";
+      pendingHomeTutorialComplete = migrated.homeTutorialComplete === true;
+      pendingStarterSeedClaimed = migrated.starterSeedClaimed === true;
+      pendingStarterCushionClaimed = migrated.starterCushionClaimed === true;
+      pendingActiveWallpaper = migrated.activeWallpaper || "wallpaper-plain";
+      pendingGarden = migrated.garden || emptyGardenState();
       savedEpisode = null;
       migratedFromV2 = true;
       return legacyViewOf(migrated);
@@ -440,6 +471,12 @@
         ,masteredByStage: state.masteredByStage || {}
         ,home: state.home || {owned:[], placed:{}}
         ,homeVisited: state.homeVisited === true
+        ,houseTier: state.houseTier || "starter"
+        ,homeTutorialComplete: state.homeTutorialComplete === true
+        ,starterSeedClaimed: state.starterSeedClaimed === true
+        ,starterCushionClaimed: state.starterCushionClaimed === true
+        ,activeWallpaper: state.activeWallpaper || "wallpaper-plain"
+        ,garden: state.garden || emptyGardenState()
       }));
     }catch(e){ /* storage unavailable, progress just won't persist */ }
   }
@@ -455,6 +492,12 @@
       state.masteredByStage = {};
       state.home = {owned:[], placed:{}};
       state.homeVisited = false;
+      state.houseTier = "starter";
+      state.homeTutorialComplete = false;
+      state.starterSeedClaimed = false;
+      state.starterCushionClaimed = false;
+      state.activeWallpaper = "wallpaper-plain";
+      state.garden = emptyGardenState();
       state.itemStates = {};
       state.episodesDone = {};
       state.stageStarted = {};
@@ -594,6 +637,12 @@
   var pendingMasteredByStage = {};
   var pendingHome = {owned:[], placed:{}};
   var pendingHomeVisited = false;
+  var pendingHouseTier = "starter";
+  var pendingHomeTutorialComplete = false;
+  var pendingStarterSeedClaimed = false;
+  var pendingStarterCushionClaimed = false;
+  var pendingActiveWallpaper = "wallpaper-plain";
+  var pendingGarden = emptyGardenState();
   var pendingLegacyMasteryHydration = false;
   var mapDetailAction = $("map-detail-action");
 
@@ -614,6 +663,12 @@
   state.masteredByStage = pendingMasteredByStage;
   state.home = pendingHome;
   state.homeVisited = pendingHomeVisited;
+  state.houseTier = pendingHouseTier;
+  state.homeTutorialComplete = pendingHomeTutorialComplete;
+  state.starterSeedClaimed = pendingStarterSeedClaimed;
+  state.starterCushionClaimed = pendingStarterCushionClaimed;
+  state.activeWallpaper = pendingActiveWallpaper;
+  state.garden = pendingGarden;
   state.reviewProgress = pendingReviewProgress;
   state.dailyPractice = pendingDaily.dailyPractice;
   state.streak = pendingDaily.streak;
@@ -1558,6 +1613,7 @@
     }
     var list = previewQuestions();
     if(!list.length) return false;
+    snapshotMastery(state.currentKey);
     previewState = {
       index: Math.min(savedEpisode.index, list.length - 1),
       list: list,
@@ -1580,10 +1636,25 @@
     return true;
   }
 
+  /* What the learner already held before this shift began.
+   *
+   * The growth bonus is for meeting something new, so it has to be measured
+   * against the state at the start. Reading `masteredByStage` at the end would
+   * always find the shift's own targets in it and pay the bonus every time,
+   * including on a replay - which is exactly the farming the design forbids. */
+  var masteryBeforeEpisode = null;
+
+  function snapshotMastery(key){
+    var held = {};
+    ((state.masteredByStage || {})[key] || []).forEach(function(target){ held[target] = true; });
+    masteryBeforeEpisode = {key:key, held:held};
+  }
+
   function startEpisode(key){
     if(key) state.currentKey = key;
     var list = previewQuestions(state.currentKey);
     if(!list.length) return;
+    snapshotMastery(state.currentKey);
     previewState = {index:0, list:list, answered:false, missed:[], repair:null};
     screenTitle.style.display = "none";
     screenMap.style.display = "none";
@@ -1938,10 +2009,39 @@
     renderPreviewQuestion();
   }
 
+  /* The garden grows here and nowhere else.
+   *
+   * This is the only path out of a finished shift, and it is reached only once
+   * the correction queue is empty - so a plant grows for work completed, not
+   * for time passed, cards seen, or an hour abandoned halfway. The credit id is
+   * the episode's own id, so replaying it credits nothing: the engine keeps the
+   * ids it has already honoured.
+   *
+   * The bonus is for meeting a word this shift that the learner did not hold
+   * before it began. */
+  function creditGardenFor(episode){
+    if(typeof LanternHomeGarden === "undefined" || !episode) return;
+    var before = (masteryBeforeEpisode && masteryBeforeEpisode.key === state.currentKey)
+      ? masteryBeforeEpisode.held : {};
+    var held = {};
+    ((state.masteredByStage || {})[state.currentKey] || []).forEach(function(t){ held[t] = true; });
+    var introducedSomething = false;
+    episode.days.forEach(function(day){
+      day.questions.forEach(function(question){
+        if(held[question.target] && !before[question.target]) introducedSomething = true;
+      });
+    });
+    var result = LanternHomeGarden.creditLesson(
+      gardenState(), "episode:" + episode.id, introducedSomething ? 1 : 0);
+    state.garden = result.garden;
+    masteryBeforeEpisode = null;
+  }
+
   function endEpisodePreview(){
     var finished = currentEpisode();
     if(finished){
       if(!state.episodesDone) state.episodesDone = {};
+      creditGardenFor(finished);
       state.episodesDone[finished.id] = true;
       // The lantern lights when the whole place is done, not one shift of it.
       if(stageComplete(state.currentKey) && stageMastery(state.currentKey) === 100) state.visited[state.currentKey] = true;
@@ -2504,7 +2604,16 @@
     $("scene-label").textContent = "わが家";
     $("narration").textContent = "路地の奥の部屋";
 
-    var line = "コン：「おかえりなさい。ここがあなたの部屋です。まだ何もありませんが、稼いだお金で少しずつ整えていきましょう。」";
+    // Kon's welcome is the tutorial's first line on a first visit, so it is not
+    // also said here - the learner would be greeted twice.
+    if(!state.homeTutorialComplete){
+      $("jp-line").textContent = "";
+      startHomeTutorial(false);
+      renderHud();
+      return;
+    }
+
+    var line = "コン：「おかえりなさい。ゆっくりしていってください。」";
     if(dialogueFlow) dialogueFlow.start(line, false);
     else $("jp-line").textContent = line;
 
@@ -2512,18 +2621,50 @@
     renderHud();
   }
 
-  /* ---- The room, and the shop that fills it ----
+  /* ---- The yard, the room, and the shop that fills them ----
    *
    * Money counted upward for the whole game and bought nothing. This is the
-   * sink: coins earned at the inn and the market turn into a room that looks
+   * sink: coins earned at the inn and the market turn into a house that looks
    * like somebody lives in it.
    *
-   * The flow is two taps, because it has to work with a thumb. Tap something
-   * you own and the corners it could stand in light up; tap a corner and it
-   * goes there. Nothing is dragged onto a target too small to hit.
+   * The yard opens first and the house is behind a tap, because the garden is
+   * the part that changes on its own - a plant that grew while you were away is
+   * a reason to come back, and burying it one screen deep wastes it.
+   *
+   * The flow is two taps everywhere, because it has to work with a thumb. Tap
+   * something you own and only the places it could stand light up; tap a place
+   * and it goes there. Nothing is dragged onto a target too small to hit.
+   *
+   * Both scenes are a painted background with things positioned on top by
+   * percentage, so the same room works at 320px and on a desktop.
    */
-  var homeSelected = null;   // the item waiting to be placed
-  var homeTab = "storage";
+  var homeView = "yard";      // "yard" | "interior"
+  var homeSelected = null;    // {kind:"decor"|"plant", id:...} waiting to be placed
+  var homeTab = "garden";     // "garden" | "storage" | "shop"
+  var homeNotice = "";
+
+  /* Only the camellia has its four growth pictures so far. The others are real
+   * entries in the engine and are tested, but offering one in the shop before
+   * its art exists would sell the learner a broken image. */
+  var GARDEN_ART_READY = {camellia:true};
+
+  /* Where the plant meets the ground, per stage, as a percentage down its own
+   * file. The four camellia pictures do not share a baseline - the seedling's
+   * art stops at 77% of its frame and the mature bush at 94% - so anchoring
+   * them all the same way left the young plant hovering above its bed. These
+   * numbers come from each file's alpha bounding box.
+   *
+   * Task 7 generates the remaining species; each one needs its own row, or
+   * consistent baselines at generation time so this table can go away. */
+  var PLANT_BASE = {
+    camellia: {planted:77.4, sprout:82.7, growing:94.0, mature:94.5}
+  };
+  var PLANT_BASE_FALLBACK = {planted:90, sprout:90, growing:92, mature:94};
+
+  function plantBase(typeId, stage){
+    var rows = PLANT_BASE[typeId] || PLANT_BASE_FALLBACK;
+    return rows[stage] || rows.mature || 92;
+  }
 
   function homeState(){
     if(!state.home) state.home = {owned:[], placed:{}};
@@ -2532,124 +2673,559 @@
     return state.home;
   }
 
-  function homeSlots(){
-    return (typeof LanternHomeRoom !== "undefined") ? LanternHomeRoom.slots() : [];
+  function gardenState(){
+    if(!state.garden) state.garden = emptyGardenState();
+    return state.garden;
   }
 
-  function roomSvg(){
-    if(typeof LanternHomeRoom === "undefined") return "";
-    var art = LanternHomeRoom.baseRoomSvg();
-    if(typeof LanternHomeDecor === "undefined") return art;
-    var decor = LanternHomeDecor;
-    var home = homeState();
-    var picked = homeSelected ? decor.getItem(homeSelected) : null;
-    var layers = "";
+  function homeScenes(){
+    return (typeof LanternHomeRoom !== "undefined" && LanternHomeRoom.scenes)
+      ? LanternHomeRoom.scenes() : null;
+  }
 
-    homeSlots().forEach(function(slot){
-      var here = home.placed[slot.id];
-      if(!here) return;
-      var item = decor.getItem(here) || {name:""};
-      layers += '<g class="home-item" data-slot="' + slot.id + '"'
-        + ' role="button" tabindex="0" aria-label="' + item.name + ' をかたづける"'
-        + ' transform="translate(' + slot.x + ',' + slot.y + ')">'
-        + decor.svgFor(here) + '</g>';
+  function homeSlots(){
+    var scenes = homeScenes();
+    return scenes ? scenes.interior.slots : [];
+  }
+
+  function yardSlots(){
+    var scenes = homeScenes();
+    return scenes ? scenes.yard.slots : [];
+  }
+
+  function plantArt(typeId, stage){
+    return "assets/home/garden/" + typeId + "-" + (stage || "planted") + "-v1.png";
+  }
+
+  function plantName(typeId){
+    if(typeof LanternHomeGarden === "undefined") return typeId;
+    var type = LanternHomeGarden.catalogue().filter(function(t){ return t.id === typeId; })[0];
+    return type ? (PLANT_JP[type.id] || type.name) : typeId;
+  }
+
+  // The rest of the game speaks Japanese to the learner; the engine's own
+  // catalogue is in English for the tests that read it.
+  var PLANT_JP = {
+    "cherry-tree":"桜", "japanese-maple":"もみじ", "pine-tree":"松",
+    "hydrangea":"あじさい", "camellia":"椿", "iris":"あやめ",
+    "chrysanthemum":"菊", "lantern-flower-bed":"ほおずきの花壇"
+  };
+
+  var STAGE_JP = {planted:"植えたばかり", sprout:"芽", growing:"育ち中", mature:"満開"};
+
+  function plantsInYard(){
+    return (gardenState().plants || []).filter(function(p){ return p.slotId; });
+  }
+
+  function plantsInStorage(){
+    return (gardenState().plants || []).filter(function(p){ return !p.slotId; });
+  }
+
+  function findPlant(instanceId){
+    return (gardenState().plants || []).filter(function(p){ return p.id === instanceId; })[0] || null;
+  }
+
+  /* ---- scene painting ---- */
+
+  function sceneLayer(background, label){
+    return '<img class="home-scene-bg" src="' + background + '" alt="' + label + '">';
+  }
+
+  function positioned(className, slot, inner, attrs){
+    return '<div class="' + className + '" style="left:' + slot.x + '%;top:' + slot.y + '%"'
+      + (attrs || "") + '>' + inner + '</div>';
+  }
+
+  function targetButton(slot, occupied){
+    return '<button type="button" class="home-target' + (occupied ? " is-occupied" : "") + '"'
+      + ' data-slot="' + slot.id + '" style="left:' + slot.x + '%;top:' + slot.y + '%"'
+      + ' aria-label="' + slot.label + (occupied ? "（入れかえる）" : "に置く") + '">'
+      + '<span aria-hidden="true">' + (occupied ? "↔" : "+") + '</span></button>';
+  }
+
+  function renderHomeYard(){
+    var scenes = homeScenes();
+    if(!scenes) return "";
+    var yard = scenes.yard;
+    var slots = yard.slots;
+    var byId = {};
+    plantsInYard().forEach(function(p){ byId[p.slotId] = p; });
+    var picking = homeSelected && homeSelected.kind === "plant";
+
+    var html = '<div class="home-scene home-yard-scene">' + sceneLayer(yard.background, "わが家の庭");
+
+    // The house is a real button, not a hot region with no name: a learner who
+    // cannot see the picture still has to be able to go inside.
+    html += '<button type="button" class="home-house-hotspot" data-enter-house="1"'
+      + ' style="left:' + yard.houseHotspot.x + '%;top:' + yard.houseHotspot.y + '%;'
+      + 'width:' + yard.houseHotspot.width + '%;height:' + yard.houseHotspot.height + '%"'
+      + ' aria-label="' + yard.houseHotspot.label + '"><span>' + yard.houseHotspot.label + '</span></button>';
+
+    slots.forEach(function(slot){
+      var plant = byId[slot.id];
+      if(!plant) return;
+      var base = plantBase(plant.typeId, plant.stage);
+      html += '<div class="home-plant' + (plant.pendingAnimation ? " is-growing" : "") + '"'
+        + ' style="left:' + slot.x + '%;top:' + slot.y + '%;'
+        + 'transform:translate(-50%,-' + base + '%)"'
+        + ' data-plant="' + plant.id + '" role="button" tabindex="0"'
+        + ' aria-label="' + plantName(plant.typeId) + ' をあつかう">'
+        + '<img src="' + plantArt(plant.typeId, plant.stage) + '" alt="'
+        + plantName(plant.typeId) + '（' + (STAGE_JP[plant.stage] || plant.stage) + '）">'
+        + '</div>';
     });
 
-    // A corner lights up only when it could actually take what is selected.
-    if(picked){
-      homeSlots().forEach(function(slot){
-        if(slot.kind !== picked.kind) return;
-        layers += '<g class="home-target" data-slot="' + slot.id + '"'
-          + ' role="button" tabindex="0" aria-label="' + slot.label + 'に置く"'
-          + ' transform="translate(' + slot.x + ',' + slot.y + ')">'
-          + '<circle r="34" class="home-target-ring"/>'
-          + '<text y="9" text-anchor="middle" class="home-target-mark">+</text></g>';
-      });
+    if(picking){
+      slots.forEach(function(slot){ html += targetButton(slot, !!byId[slot.id]); });
     }
-    return art.replace(/<\/svg>\s*$/, layers + "</svg>");
+    return html + '</div>';
   }
 
-  function homeCard(id, label, sub, attr, extra){
+  function renderHomeInterior(){
+    var scenes = homeScenes();
+    if(!scenes) return "";
+    var interior = scenes.interior;
+    var home = homeState();
+    var decor = (typeof LanternHomeDecor !== "undefined") ? LanternHomeDecor : null;
+    var picked = (homeSelected && homeSelected.kind === "decor" && decor)
+      ? decor.getItem(homeSelected.id) : null;
+
+    var html = '<div class="home-scene home-interior-scene">'
+      + sceneLayer(interior.background, "わが家の部屋");
+
+    html += '<button type="button" class="home-leave-house" data-leave-house="1"'
+      + ' aria-label="庭へ戻る">庭へ戻る</button>';
+
+    if(decor){
+      interior.slots.forEach(function(slot){
+        var here = home.placed[slot.id];
+        if(!here) return;
+        var item = decor.getItem(here) || {name:""};
+        html += positioned("home-item", slot, decorArt(here, item.name),
+          ' data-slot-item="' + slot.id + '" role="button" tabindex="0"'
+            + ' aria-label="' + item.name + ' をかたづける"');
+      });
+      if(picked){
+        interior.slots.forEach(function(slot){
+          if(slot.kind !== picked.kind) return;
+          html += targetButton(slot, !!home.placed[slot.id]);
+        });
+      }
+    }
+    return html + '</div>';
+  }
+
+  /* Decor art is still drawn rather than painted: only the cushion has a
+   * picture so far. An item with an image uses it; the rest keep the vector
+   * they shipped with, so nothing in the room disappears mid-migration. */
+  function decorArt(id, name){
+    var decor = LanternHomeDecor;
+    var item = decor.getItem(id);
+    if(item && item.image) return '<img src="' + item.image + '" alt="' + name + '">';
+    return '<svg viewBox="-60 -52 120 104" role="img" aria-label="' + name + '">'
+      + decor.svgFor(id) + '</svg>';
+  }
+
+  /* ---- the dock: what you own and what you can buy ---- */
+
+  function dockCard(art, label, sub, attr, extra){
     return '<button type="button" class="home-card' + (extra || '') + '" ' + attr + '>'
-      + '<svg viewBox="-60 -52 120 104" class="home-card-art" aria-hidden="true">'
-      + LanternHomeDecor.svgFor(id) + '</svg>'
+      + '<span class="home-card-art" aria-hidden="true">' + art + '</span>'
       + '<span class="home-card-name">' + label + '</span>'
       + '<span class="home-card-sub">' + sub + '</span></button>';
   }
 
-  function homeShelf(){
-    var decor = LanternHomeDecor;
-    var home = homeState();
+  function decorCardArt(id){
+    var item = LanternHomeDecor.getItem(id);
+    if(item && item.image) return '<img src="' + item.image + '" alt="">';
+    return '<svg viewBox="-60 -52 120 104" aria-hidden="true">' + LanternHomeDecor.svgFor(id) + '</svg>';
+  }
+
+  function homeDock(){
     var money = state.money || 0;
     var html = "";
+    // While a gift is on offer the dock shows only the gift, so the one thing
+    // the learner is being asked to press is the only thing there.
+    var step = tutorialStep();
+    if(step && !homeTutorialReplay && (step.id === "claim-seed" || step.id === "claim-cushion")) return "";
+
+    if(homeTab === "garden"){
+      var waiting = plantsInStorage();
+      if(!(gardenState().plants || []).length){
+        return '<p class="home-empty">まだ何も植えていません。「店」で種を買ってみましょう。</p>';
+      }
+      if(!waiting.length){
+        return '<p class="home-empty">持っている草花は全部植えてあります。</p>'
+          + gardenSummary();
+      }
+      waiting.forEach(function(plant){
+        html += dockCard('<img src="' + plantArt(plant.typeId, plant.stage) + '" alt="">',
+          plantName(plant.typeId), STAGE_JP[plant.stage] || plant.stage,
+          'data-pick-plant="' + plant.id + '"',
+          (homeSelected && homeSelected.kind === "plant" && homeSelected.id === plant.id) ? " is-picked" : "");
+      });
+      return html + gardenSummary();
+    }
 
     if(homeTab === "storage"){
-      var stored = decor.inStorage(home);
-      if(!home.owned.length){
+      var stored = LanternHomeDecor.inStorage(homeState());
+      if(!homeState().owned.length){
         return '<p class="home-empty">まだ何も持っていません。「店」で買ってみましょう。</p>';
       }
       if(!stored.length){
         return '<p class="home-empty">持っているものは全部かざってあります。</p>';
       }
       stored.forEach(function(id){
-        var item = decor.getItem(id);
-        html += homeCard(id, item.name, item.category, 'data-pick="' + id + '"',
-          homeSelected === id ? " is-picked" : "");
+        var item = LanternHomeDecor.getItem(id);
+        html += dockCard(decorCardArt(id), item.name, item.category,
+          'data-pick="' + id + '"',
+          (homeSelected && homeSelected.kind === "decor" && homeSelected.id === id) ? " is-picked" : "");
       });
       return html;
     }
 
-    decor.catalogue().forEach(function(item){
-      var owned = decor.owns(home, item.id);
-      var sub = owned ? "持っている" : "¥" + item.price;
-      html += homeCard(item.id, item.name, sub,
+    // The shop sells seeds in the yard and furniture in the house, because a
+    // learner standing in the garden is not shopping for a wall scroll.
+    if(homeView === "yard"){
+      if(typeof LanternHomeGarden === "undefined") return '<p class="home-empty">店はまだ開いていません。</p>';
+      LanternHomeGarden.catalogue().forEach(function(type){
+        if(!GARDEN_ART_READY[type.id]) return;
+        html += dockCard('<img src="' + plantArt(type.id, "mature") + '" alt="">',
+          PLANT_JP[type.id] || type.name, "¥" + type.price,
+          'data-buy-plant="' + type.id + '"',
+          money >= type.price ? "" : " is-locked");
+      });
+      return html || '<p class="home-empty">売れる苗がまだありません。</p>';
+    }
+
+    LanternHomeDecor.catalogue().forEach(function(item){
+      var owned = LanternHomeDecor.owns(homeState(), item.id);
+      html += dockCard(decorCardArt(item.id), item.name,
+        owned ? "持っている" : "¥" + item.price,
         'data-buy="' + item.id + '"' + (owned ? " disabled" : ""),
         owned ? " is-owned" : (money >= item.price ? "" : " is-locked"));
     });
     return html;
   }
 
-  function paintHome(){
-    if(typeof LanternHomeDecor === "undefined"){
-      $("scene").innerHTML = '<div class="home-room">' + roomSvg() + '</div>';
-      return;
-    }
+  /* Growth is the whole point of the garden, so what a plant is still waiting
+   * for is stated rather than left to be guessed from its picture. */
+  function gardenSummary(){
+    if(typeof LanternHomeGarden === "undefined") return "";
+    var lines = plantsInYard().map(function(plant){
+      var left = LanternHomeGarden.lessonsRemaining(plant);
+      return '<li>' + plantName(plant.typeId) + '：'
+        + (left > 0 ? 'あと ' + left + ' 回の稽古で育ちます' : '満開です') + '</li>';
+    });
+    return lines.length ? '<ul class="home-garden-list">' + lines.join("") + '</ul>' : "";
+  }
+
+  function homeGoalLine(){
     var money = state.money || 0;
     var next = LanternHomeDecor.nearestUnaffordable(homeState(), money);
     /* The gap between what a learner has and the next thing they want is the
      * part that brings them back tomorrow, so it is said out loud. */
-    var goal = next
+    if(homeNotice) return '<p class="home-goal">' + homeNotice + '</p>';
+    return next
       ? '<p class="home-goal">あと <b>¥' + next.short + '</b> で「' + next.name + '」が買えます。</p>'
       : '<p class="home-goal">お店のものは全部そろいました。</p>';
+  }
 
-    $("scene").innerHTML = '<div class="home-room">' + roomSvg()
-      + '<p class="home-room-note">持っているお金：<b>¥' + money + '</b>'
-      + (homeSelected ? '　<span class="home-hint">置きたい場所をえらんでください</span>' : '')
-      + '</p>'
-      + goal
-      + '<div class="home-tabs" role="tablist">'
-      + '<button type="button" class="home-tab' + (homeTab === "storage" ? " is-on" : "") + '" data-tab="storage">持ち物</button>'
-      + '<button type="button" class="home-tab' + (homeTab === "shop" ? " is-on" : "") + '" data-tab="shop">店</button>'
-      + '</div>'
-      + '<div class="home-shelf" id="home-shelf">' + homeShelf() + '</div>'
+  /* ---- Kon's first visit ----
+   *
+   * A learner arriving at an empty yard with a wallet and no explanation will
+   * read it as scenery. The tutorial exists to make them do each thing once:
+   * take a seed, plant it, go inside, take a cushion, place it, move it. After
+   * that the house explains itself.
+   *
+   * Two rules shape the whole thing.
+   *
+   * It advances on the action, never on a Next button. A tutorial that can be
+   * clicked through teaches nothing, and this one is short enough that doing
+   * the step is faster than reading about it.
+   *
+   * Replaying it gives nothing away twice. 「使いかた」 walks the same script
+   * with the claim steps already satisfied, so a learner can re-read the
+   * explanation without farming free plants. The claim functions check current
+   * ownership as well as the flags, so even a corrupted save cannot mint a
+   * second camellia.
+   *
+   * Kon speaks Japanese because he always has. The one English line is the
+   * mechanical instruction - which thing to press - kept separate from the
+   * Japanese so a learner is never guessing at both at once.
+   */
+  var STARTER_PLANT = "camellia";
+  var STARTER_DECOR = "floor-cushion-navy";
+
+  var HOME_TUTORIAL = [
+    {id:"welcome",
+     jp:"コン：「おかえりなさい。ここがあなたの家と庭です。稽古で稼いだお金で、少しずつ好きなように整えていきましょう。」",
+     how:"Open the 店 tab.",
+     done:function(){ return homeTab === "shop"; }},
+
+    {id:"claim-seed",
+     jp:"コン：「まずは椿の苗を一つどうぞ。お代はいりません。」",
+     how:"Press the free 椿 seed to take it.",
+     done:function(){ return state.starterSeedClaimed === true; }},
+
+    {id:"plant-seed",
+     jp:"コン：「好きな花壇に植えてください。この庭の草花は、日にちではなく稽古で育ちます。」",
+     how:"Press a glowing bed to plant it.",
+     done:function(){ return plantsInYard().length > 0; }},
+
+    {id:"enter-house",
+     jp:"コン：「家の中も見ていきましょう。戸を押してください。」",
+     how:"Press the door to go inside.",
+     done:function(){ return homeView === "interior"; }},
+
+    {id:"claim-cushion",
+     jp:"コン：「座布団を一枚どうぞ。これもお代はいりません。」",
+     how:"Open 店 and press the free 座布団.",
+     done:function(){ return state.starterCushionClaimed === true; }},
+
+    {id:"place-cushion",
+     jp:"コン：「持ち物からえらんで、置きたいところに置いてください。」",
+     how:"Press the 座布団, then press a glowing spot.",
+     done:function(){ return decorPlacedAt(STARTER_DECOR) !== null; }},
+
+    {id:"move-cushion",
+     jp:"コン：「気に入らなければ、置いたものを押せば持ち物にもどせます。何度でもやり直せますよ。」",
+     how:"Press the cushion in the room to pick it up again.",
+     done:function(){ return homeTutorialMoved; }},
+
+    {id:"finish",
+     jp:"コン：「これで全部です。稽古をして、お金を貯めて、好きな家にしてください。」",
+     how:"Press 分かりました to finish.",
+     done:function(){ return false; }}
+  ];
+
+  var homeTutorialAt = -1;      // -1 means the tutorial is not running
+  var homeTutorialReplay = false;
+  var homeTutorialMoved = false;
+
+  function tutorialRunning(){
+    return homeTutorialAt >= 0 && homeTutorialAt < HOME_TUTORIAL.length;
+  }
+
+  function tutorialStep(){
+    return tutorialRunning() ? HOME_TUTORIAL[homeTutorialAt] : null;
+  }
+
+  function decorPlacedAt(id){
+    var placed = homeState().placed || {};
+    var found = null;
+    Object.keys(placed).forEach(function(slot){ if(placed[slot] === id) found = slot; });
+    return found;
+  }
+
+  function startHomeTutorial(replay){
+    homeTutorialReplay = !!replay;
+    homeTutorialMoved = false;
+    homeTutorialAt = 0;
+    homeView = "yard";
+    homeSelected = null;
+    homeTab = "garden";
+    paintHome();
+  }
+
+  /* Called after every home action. Steps whose work is already done - which is
+   * every claim step on a replay - fall through silently, so the script reads
+   * the same either way without handing anything out again. */
+  function advanceHomeTutorial(){
+    if(!tutorialRunning()) return;
+    var guard = 0;
+    while(tutorialRunning() && HOME_TUTORIAL[homeTutorialAt].done() && guard < HOME_TUTORIAL.length + 2){
+      homeTutorialAt += 1;
+      guard += 1;
+    }
+    if(homeTutorialAt >= HOME_TUTORIAL.length) endHomeTutorial();
+  }
+
+  function endHomeTutorial(){
+    homeTutorialAt = -1;
+    if(!homeTutorialReplay && !state.homeTutorialComplete){
+      state.homeTutorialComplete = true;
+      saveProgress();
+    }
+    homeTutorialReplay = false;
+    paintHome();
+  }
+
+  /* The free gifts. Both flags and current holdings are checked, because the
+   * flag is the record of the promise and the holding is the truth. */
+  function claimHomeStarter(kind){
+    if(homeTutorialReplay) return false;
+    if(kind === "plant"){
+      if(state.starterSeedClaimed) return false;
+      if(typeof LanternHomeGarden === "undefined") return false;
+      var claim = LanternHomeGarden.claimStarter(gardenState());
+      state.garden = claim.garden;
+      state.starterSeedClaimed = true;
+      saveProgress();
+      if(!claim.ok) return false;          // already had one; the flag is now honest
+      homeSelected = {kind:"plant", id:claim.instanceId};
+      homeTab = "garden";
+      return true;
+    }
+    if(state.starterCushionClaimed) return false;
+    state.starterCushionClaimed = true;
+    if(LanternHomeDecor.owns(homeState(), STARTER_DECOR)){
+      saveProgress();
+      return false;
+    }
+    state.home = {owned: homeState().owned.concat([STARTER_DECOR]),
+                  placed: homeState().placed};
+    homeSelected = {kind:"decor", id:STARTER_DECOR};
+    homeTab = "storage";
+    saveProgress();
+    return true;
+  }
+
+  function tutorialPanel(){
+    var step = tutorialStep();
+    if(!step) return "";
+    return '<div class="home-tutorial" role="status">'
+      + '<p class="home-tutorial-jp">' + step.jp + '</p>'
+      + '<p class="home-tutorial-how"><b>How to interact:</b> ' + step.how + '</p>'
+      /* A replay must be leavable at any point. Someone re-reading the
+       * explanation already knows how the room works, and holding them at a
+       * step until they put the cushion back down would be a trap - the first
+       * run earns the right to insist, a second reading does not. */
+      + (step.id === "finish"
+          ? '<button type="button" class="btn btn-primary" data-tutorial-done="1">分かりました</button>'
+          : (homeTutorialReplay
+              ? '<button type="button" class="btn btn-ghost" data-tutorial-done="1">閉じる</button>'
+              : ''))
       + '</div>';
+  }
+
+  /* The free items only appear while the step that gives them is on screen, so
+   * the shop does not carry a permanent "free" shelf to be re-checked later. */
+  function tutorialGiftCard(){
+    var step = tutorialStep();
+    if(!step || homeTutorialReplay) return "";
+    if(step.id === "claim-seed" && homeView === "yard"){
+      return dockCard('<img src="' + plantArt(STARTER_PLANT, "mature") + '" alt="">',
+        PLANT_JP[STARTER_PLANT], "ただ", 'data-claim="plant"', " is-gift");
+    }
+    if(step.id === "claim-cushion" && homeView === "interior"){
+      return dockCard(decorCardArt(STARTER_DECOR),
+        (LanternHomeDecor.getItem(STARTER_DECOR) || {name:""}).name, "ただ",
+        'data-claim="decor"', " is-gift");
+    }
+    return "";
+  }
+
+  function paintHome(){
+    if(typeof LanternHomeDecor === "undefined" || !homeScenes()){
+      $("scene").innerHTML = '<div class="home-room"></div>';
+      return;
+    }
+    var money = state.money || 0;
+    var tabs = homeView === "yard"
+      ? [["garden", "庭"], ["shop", "店"]]
+      : [["storage", "持ち物"], ["shop", "店"]];
+    // A tab that belongs to the other scene must not stay selected when the
+    // learner walks through the door.
+    if(!tabs.some(function(t){ return t[0] === homeTab; })) homeTab = tabs[0][0];
+
+    var hint = homeSelected
+      ? '　<span class="home-hint">置きたい場所をえらんでください</span>' : '';
+
+    $("scene").innerHTML = '<div class="home-room">'
+      + (homeView === "yard" ? renderHomeYard() : renderHomeInterior())
+      + '<p class="home-room-note">持っているお金：<b>¥' + money + '</b>' + hint + '</p>'
+      + homeGoalLine()
+      + '<div class="home-tabs" role="tablist">'
+      + tabs.map(function(t){
+          return '<button type="button" class="home-tab' + (homeTab === t[0] ? " is-on" : "")
+            + '" data-tab="' + t[0] + '" aria-pressed="' + (homeTab === t[0]) + '">' + t[1] + '</button>';
+        }).join("")
+      + '</div>'
+      + '<div class="home-shelf" id="home-shelf">' + tutorialGiftCard() + homeDock() + '</div>'
+      + (tutorialRunning() ? '' :
+          '<button type="button" class="home-howto" data-howto="1">使いかた</button>')
+      + '</div>'
+      + tutorialPanel();
+    homeNotice = "";
     renderHud();
+    settleGrowth();
+  }
+
+  /* A plant that changed while the learner was away is the reason to come back,
+   * so the change is announced rather than simply being there when they look.
+   *
+   * The flag is cleared straight after, so the moment happens once. The message
+   * stays even when motion is switched off - the animation is decoration, the
+   * news is not. */
+  function settleGrowth(){
+    if(typeof LanternHomeGarden === "undefined") return;
+    var grown = plantsInYard().filter(function(p){ return p.pendingAnimation; });
+    if(!grown.length) return;
+    var names = grown.map(function(p){
+      return "「" + plantName(p.typeId) + "」" + (STAGE_JP[p.stage] || "");
+    }).join("、");
+    homeSay(names + " になりました。");
+    state.garden = LanternHomeGarden.acknowledgeAnimations(gardenState());
+    saveProgress();
   }
 
   function homeSay(text){
+    homeNotice = text;
     var note = $("scene").querySelector(".home-goal");
     if(note) note.innerHTML = text;
+    homeNotice = "";
   }
 
-  // One delegated listener, because the room is rebuilt on every change.
+  // One delegated listener, because both scenes are rebuilt on every change.
   $("scene").addEventListener("click", function(event){
     if(state.currentKey !== "home" || typeof LanternHomeDecor === "undefined") return;
     if(!event.target || !event.target.closest) return;
     var decor = LanternHomeDecor;
+    var garden = (typeof LanternHomeGarden !== "undefined") ? LanternHomeGarden : null;
+
+    if(event.target.closest("[data-howto]")){
+      startHomeTutorial(true);
+      return;
+    }
+    if(event.target.closest("[data-tutorial-done]")){
+      endHomeTutorial();
+      return;
+    }
+    var claim = event.target.closest("[data-claim]");
+    if(claim){
+      var got = claimHomeStarter(claim.getAttribute("data-claim"));
+      advanceHomeTutorial();
+      paintHome();
+      if(got) playCoinSound();
+      homeSay(got
+        ? (claim.getAttribute("data-claim") === "plant"
+            ? "苗をもらいました。植えたい花壇をえらんでください。"
+            : "座布団をもらいました。置きたい場所をえらんでください。")
+        : "もう持っています。");
+      return;
+    }
+
+    if(event.target.closest("[data-enter-house]")){
+      homeView = "interior";
+      homeSelected = null;
+      homeTab = "storage";
+      advanceHomeTutorial();
+      paintHome();
+      return;
+    }
+    if(event.target.closest("[data-leave-house]")){
+      homeView = "yard";
+      homeSelected = null;
+      homeTab = "garden";
+      paintHome();
+      return;
+    }
 
     var tab = event.target.closest("[data-tab]");
     if(tab){
       homeTab = tab.getAttribute("data-tab");
+      advanceHomeTutorial();
       paintHome();
       return;
     }
@@ -2657,15 +3233,43 @@
     var pick = event.target.closest("[data-pick]");
     if(pick){
       var id = pick.getAttribute("data-pick");
-      homeSelected = (homeSelected === id) ? null : id;
+      homeSelected = (homeSelected && homeSelected.kind === "decor" && homeSelected.id === id)
+        ? null : {kind:"decor", id:id};
       paintHome();
+      return;
+    }
+
+    var pickPlant = event.target.closest("[data-pick-plant]");
+    if(pickPlant){
+      var instanceId = pickPlant.getAttribute("data-pick-plant");
+      homeSelected = (homeSelected && homeSelected.kind === "plant" && homeSelected.id === instanceId)
+        ? null : {kind:"plant", id:instanceId};
+      paintHome();
+      return;
+    }
+
+    var buyPlant = event.target.closest("[data-buy-plant]");
+    if(buyPlant && garden){
+      var bought = garden.buy(gardenState(), state.money || 0, buyPlant.getAttribute("data-buy-plant"));
+      if(!bought.ok){
+        paintHome();
+        if(bought.reason === "poor") homeSay("お金が足りません。もう少し稼ぎましょう。");
+        return;
+      }
+      state.garden = bought.garden;
+      state.money = bought.money;
+      playCoinSound();
+      homeSelected = {kind:"plant", id:bought.instanceId};
+      homeTab = "garden";
+      saveProgress();
+      paintHome();
+      homeSay("買いました。植えたい花壇をえらんでください。");
       return;
     }
 
     var buy = event.target.closest("[data-buy]");
     if(buy){
-      var wanted = buy.getAttribute("data-buy");
-      var result = decor.buy(homeState(), state.money || 0, wanted);
+      var result = decor.buy(homeState(), state.money || 0, buy.getAttribute("data-buy"));
       if(!result.ok){
         if(result.reason === "poor") homeSay("お金が足りません。もう少し稼ぎましょう。");
         return;
@@ -2673,7 +3277,7 @@
       state.home = result.home;
       state.money = result.money;
       playCoinSound();
-      homeSelected = wanted;
+      homeSelected = {kind:"decor", id:buy.getAttribute("data-buy")};
       homeTab = "storage";
       saveProgress();
       paintHome();
@@ -2683,12 +3287,37 @@
 
     var target = event.target.closest(".home-target");
     if(target && homeSelected){
-      var put = decor.place(homeState(), homeSelected, target.getAttribute("data-slot"), homeSlots());
-      if(!put.ok) return;
-      var displaced = put.displaced;
-      state.home = put.home;
+      var slotId = target.getAttribute("data-slot");
+      if(homeSelected.kind === "plant" && garden){
+        var here = plantsInYard().filter(function(p){ return p.slotId === slotId; })[0];
+        var existing = findPlant(homeSelected.id);
+        var put = existing && existing.slotId
+          ? garden.move(gardenState(), homeSelected.id, slotId, yardSlots())
+          : garden.plant(gardenState(), homeSelected.id, slotId, yardSlots());
+        if(!put.ok){
+          // A bed already taken keeps what is in it; the plan is explicit that
+          // an invalid destination must not quietly discard either plant.
+          paintHome();
+          homeSay(put.reason === "occupied"
+            ? "その花壇にはもう植わっています。"
+            : "そこには植えられません。");
+          return;
+        }
+        state.garden = put.garden;
+        homeSelected = null;
+        saveProgress();
+        advanceHomeTutorial();
+        paintHome();
+        homeSay("植えました。稽古をすると育ちます。");
+        return;
+      }
+      var placed = decor.place(homeState(), homeSelected.id, slotId, homeSlots());
+      if(!placed.ok) return;
+      var displaced = placed.displaced;
+      state.home = placed.home;
       homeSelected = null;
       saveProgress();
+      advanceHomeTutorial();
       paintHome();
       // A swap has to be visible, or the displaced item looks lost.
       if(displaced){
@@ -2698,12 +3327,25 @@
       return;
     }
 
-    var placedItem = event.target.closest(".home-item");
+    var plantInYard = event.target.closest("[data-plant]");
+    if(plantInYard && garden){
+      var dug = garden.store(gardenState(), plantInYard.getAttribute("data-plant"));
+      if(!dug.ok) return;
+      state.garden = dug.garden;
+      saveProgress();
+      paintHome();
+      homeSay("鉢にもどしました。育ち具合はそのままです。");
+      return;
+    }
+
+    var placedItem = event.target.closest("[data-slot-item]");
     if(placedItem){
-      var gone = decor.remove(homeState(), placedItem.getAttribute("data-slot"));
+      var gone = decor.remove(homeState(), placedItem.getAttribute("data-slot-item"));
       if(!gone.ok) return;
       state.home = gone.home;
+      if(gone.removed === STARTER_DECOR) homeTutorialMoved = true;
       saveProgress();
+      advanceHomeTutorial();
       paintHome();
       homeSay("「" + (decor.getItem(gone.removed) || {name:""}).name
         + "」を持ち物にもどしました。");

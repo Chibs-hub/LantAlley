@@ -24,6 +24,19 @@
   // the cheapest, a fortnight for the dearest.
   var ITEMS = [
     // --- floor -----------------------------------------------------------
+
+    /* The one thing in here that is given rather than sold. Kon hands it over
+     * during the first visit so a learner places something before they can
+     * afford anything - the tutorial has to teach placing, and teaching it on
+     * an empty room means teaching it on nothing.
+     *
+     * It carries a picture as well as a drawing: the picture is used where it
+     * loads, and the vector keeps the room intact if it does not. */
+    {id:"floor-cushion-navy", name:"座布団", kind:"floor", price:50, category:"床",
+     image:"assets/home/decor/floor-cushion-navy-v1.png",
+     svg:'<path d="M-46 8 L-30 -12 L34 -12 L50 8 L34 22 L-30 22 Z" fill="#2f4670" stroke="#1c2b47" stroke-width="3"/>'
+       + '<path d="M-30 -12 L-14 4 L50 8" fill="none" stroke="#4a648f" stroke-width="2"/>'
+       + '<path d="M-24 -6 L-8 0 M-6 -8 L10 -2 M12 -10 L28 -4" stroke="#d8cfae" stroke-width="2"/>'},
     {id:"rug-plain", name:"敷物", kind:"floor", price:50, category:"床",
      svg:'<ellipse cx="0" cy="0" rx="62" ry="22" fill="#8a4b3c" stroke="#5d2f24" stroke-width="3"/>'
        + '<ellipse cx="0" cy="0" rx="44" ry="13" fill="none" stroke="#d8a97a" stroke-width="2"/>'},
