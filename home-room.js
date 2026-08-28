@@ -23,10 +23,14 @@
   var SLOTS = [
     {id:"floor-left",   x:27, y:80, kind:"floor", label:"床の左"},
     {id:"floor-right",  x:73, y:80, kind:"floor", label:"床の右"},
+    {id:"floor-back-left", x:32, y:68, kind:"floor", label:"床の奥左"},
+    {id:"floor-back-right", x:68, y:68, kind:"floor", label:"床の奥右"},
+    {id:"floor-front", x:50, y:88, kind:"floor", label:"床の手前"},
     {id:"wall-left",    x:12, y:45, kind:"wall",  label:"壁の左"},
     {id:"wall-right",   x:88, y:45, kind:"wall",  label:"壁の右"},
     {id:"shelf",        x:50, y:66, kind:"shelf", label:"奥の段"},
-    {id:"window-sill",  x:34, y:60, kind:"sill",  label:"窓辺"}
+    {id:"window-sill",  x:34, y:60, kind:"sill",  label:"窓辺"},
+    {id:"tokonoma", x:50, y:51, kind:"shelf", label:"床の間"}
   ];
 
   /* The eight beds, measured off the painting rather than estimated from it.
@@ -43,14 +47,30 @@
    * in all eight towers nearly three times out of the back beds and onto the
    * gravel. These are the bed heights as a fraction of the nearest row. */
   var YARD_SLOTS = [
-    {id:"garden-left-1",  x:33.2, y:61.4, scale:0.37, kind:"garden", label:"左の花壇 1"},
-    {id:"garden-left-2",  x:28.5, y:68.9, scale:0.52, kind:"garden", label:"左の花壇 2"},
-    {id:"garden-left-3",  x:26.2, y:79.6, scale:0.74, kind:"garden", label:"左の花壇 3"},
-    {id:"garden-left-4",  x:24.3, y:94.3, scale:1.00, kind:"garden", label:"左の花壇 4"},
-    {id:"garden-right-1", x:67.9, y:61.4, scale:0.37, kind:"garden", label:"右の花壇 1"},
-    {id:"garden-right-2", x:69.8, y:68.9, scale:0.52, kind:"garden", label:"右の花壇 2"},
-    {id:"garden-right-3", x:73.9, y:79.6, scale:0.74, kind:"garden", label:"右の花壇 3"},
-    {id:"garden-right-4", x:75.6, y:94.3, scale:1.00, kind:"garden", label:"右の花壇 4"}
+    {id:"garden-left-1",x:25,y:58,scale:.42,kind:"garden",label:"庭の左奥 1"},
+    {id:"garden-left-2",x:34,y:63,scale:.50,kind:"garden",label:"庭の左奥 2"},
+    {id:"garden-left-3",x:21,y:72,scale:.64,kind:"garden",label:"庭の左中 1"},
+    {id:"garden-left-4",x:35,y:77,scale:.73,kind:"garden",label:"庭の左中 2"},
+    {id:"garden-right-1",x:75,y:58,scale:.42,kind:"garden",label:"庭の右奥 1"},
+    {id:"garden-right-2",x:66,y:63,scale:.50,kind:"garden",label:"庭の右奥 2"},
+    {id:"garden-right-3",x:79,y:72,scale:.64,kind:"garden",label:"庭の右中 1"},
+    {id:"garden-right-4",x:65,y:77,scale:.73,kind:"garden",label:"庭の右中 2"},
+    {id:"garden-free-09",x:15,y:61,scale:.48,kind:"garden",label:"庭 9"},
+    {id:"garden-free-10",x:43,y:60,scale:.46,kind:"garden",label:"庭 10"},
+    {id:"garden-free-11",x:57,y:60,scale:.46,kind:"garden",label:"庭 11"},
+    {id:"garden-free-12",x:85,y:61,scale:.48,kind:"garden",label:"庭 12"},
+    {id:"garden-free-13",x:12,y:78,scale:.72,kind:"garden",label:"庭 13"},
+    {id:"garden-free-14",x:28,y:84,scale:.82,kind:"garden",label:"庭 14"},
+    {id:"garden-free-15",x:41,y:82,scale:.80,kind:"garden",label:"庭 15"},
+    {id:"garden-free-16",x:59,y:82,scale:.80,kind:"garden",label:"庭 16"},
+    {id:"garden-free-17",x:72,y:84,scale:.82,kind:"garden",label:"庭 17"},
+    {id:"garden-free-18",x:88,y:78,scale:.72,kind:"garden",label:"庭 18"},
+    {id:"garden-free-19",x:10,y:93,scale:1,kind:"garden",label:"庭 19"},
+    {id:"garden-free-20",x:25,y:94,scale:1,kind:"garden",label:"庭 20"},
+    {id:"garden-free-21",x:40,y:94,scale:1,kind:"garden",label:"庭 21"},
+    {id:"garden-free-22",x:60,y:94,scale:1,kind:"garden",label:"庭 22"},
+    {id:"garden-free-23",x:75,y:94,scale:1,kind:"garden",label:"庭 23"},
+    {id:"garden-free-24",x:90,y:93,scale:1,kind:"garden",label:"庭 24"}
   ];
 
   function cloneSlots(source){
@@ -67,9 +87,9 @@
   function scenes(){
     return {
       yard: {
-        background: "assets/home/exterior/starter-house-yard-v1.webp",
+        background: "assets/home/exterior/open-house-yard-v1.webp",
         slots: cloneSlots(YARD_SLOTS),
-        houseHotspot: {x:43, y:25, width:16, height:27, label:"家に入る"}
+        houseHotspot: {x:43, y:22, width:16, height:31, label:"家に入る"}
       },
       interior: {
         background: "assets/home/interior/starter-room-v1.webp",

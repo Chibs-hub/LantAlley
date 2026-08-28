@@ -23,7 +23,8 @@
   }
 
   function emptyGarden(){
-    return {plants:[], usedCreditIds:[], starterClaimed:false, nextInstanceId:1};
+    return {plants:[], usedCreditIds:[], starterClaimed:false,
+            starterSceneryClaimed:false, nextInstanceId:1};
   }
 
   function normalized(garden){
@@ -32,6 +33,7 @@
       plants: ((source.plants || [])).map(copyPlant),
       usedCreditIds: (source.usedCreditIds || []).slice(),
       starterClaimed: source.starterClaimed === true,
+      starterSceneryClaimed: source.starterSceneryClaimed === true,
       nextInstanceId: Math.max(1, Number(source.nextInstanceId) || 1)
     };
   }
@@ -89,6 +91,43 @@
     next.starterClaimed = true;
     var instanceId = newInstance(next, "camellia");
     return {ok:true, reason:null, garden:next, instanceId:instanceId};
+  }
+
+  function claimStarterScenery(garden){
+    if(garden && garden.starterSceneryClaimed === true){
+      return {ok:false, reason:"claimed", garden:garden};
+    }
+    var next = normalized(garden);
+    next.starterSceneryClaimed = true;
+    [
+      {id:"starter-pine",typeId:"pine-tree",slotId:"garden-left-1"},
+      {id:"starter-maple",typeId:"japanese-maple",slotId:"garden-right-1"}
+    ].forEach(function(starter){
+      if(next.plants.some(function(p){ return p.id === starter.id; })) return;
+      var type = getType(starter.typeId);
+      next.plants.push({id:starter.id,typeId:starter.typeId,slotId:starter.slotId,
+        growthPoints:type.matureAt,stage:"mature",pendingAnimation:false});
+    });
+    return {ok:true, reason:null, garden:next};
+  }
+
+  function clearPlacement(garden){
+    var next = normalized(garden);
+    next.plants.forEach(function(plant){ plant.slotId = null; });
+    return next;
+  }
+
+  function restoreStarterLayout(garden){
+    var next = normalized(garden);
+    var targets = {"starter-pine":"garden-left-1","starter-maple":"garden-right-1"};
+    Object.keys(targets).forEach(function(id){
+      var plant = next.plants.filter(function(p){ return p.id === id; })[0];
+      if(!plant) return;
+      var target = targets[id];
+      var occupied = next.plants.some(function(p){ return p.id !== id && p.slotId === target; });
+      plant.slotId = occupied ? null : target;
+    });
+    return next;
   }
 
   function findPlantIndex(garden, instanceId){
@@ -183,10 +222,13 @@
     emptyGarden:emptyGarden,
     catalogue:catalogue,
     claimStarter:claimStarter,
+    claimStarterScenery:claimStarterScenery,
     buy:buy,
     plant:plant,
     move:move,
     store:store,
+    clearPlacement:clearPlacement,
+    restoreStarterLayout:restoreStarterLayout,
     creditLesson:creditLesson,
     acknowledgeAnimations:acknowledgeAnimations,
     lessonsRemaining:lessonsRemaining

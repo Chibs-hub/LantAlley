@@ -2,6 +2,24 @@
 
 Last updated: 2026-08-28
 
+### 2026-08-28 - Free home decoration direction approved
+
+The fixed-bed and fixed-furniture-slot model is being replaced by a dense invisible placement grid on neutral scene backgrounds. The house, fence, entrance path, room architecture and tokonoma stay fixed; starter trees, rocks, plants and every reward object can be moved or stored. Clearing is reversible and `Restore starter layout` never repurchases items. The approved design and implementation plan are `docs/superpowers/specs/2026-08-28-free-home-decoration-design.md` and `docs/superpowers/plans/2026-08-28-free-home-decoration.md`.
+
+Implementation started with `open-house-yard-v1.webp`, an undecorated gravel-and-moss yard, 24 invisible plant positions that preserve the eight legacy ids, and additional interior floor/tokonoma positions.
+
+The home derives morning/day/evening/night light from the learner's own clock, and that is all: **there is no picker, by decision.** The house is somewhere to come back to rather than something to configure, and what time it should look like is not a question a learner has a reason to have an opinion about.
+
+An override was designed, written into the scene metadata and given a stylesheet, and then dropped - but only the working half was ever built, so `lightingModes` and the `.home-light-button` rules sat in the tree describing a control that did not exist, and this entry claimed it shipped. Both are removed and the decision is recorded above `effectiveHomeLighting` in `app.js`, where anyone about to re-add it would look.
+
+Lighting changes only filters and overlays; it cannot affect growth, rewards or lessons.
+
+Offline cache advanced to `lantern-alley-v148`; every shell query is `?v=148` and the neutral yard is pre-cached.
+
+First home entry now grants a mature pine and maple as removable starter scenery. Clearing stores every plant without deleting ownership or growth; restoring places only those starter trees and never repurchases them.
+
+The yard controls expose `庭を空にする` and `最初の配置に戻す` as reversible actions under the scene. Verified rather than assumed: clearing moves every plant to storage with its ownership and growth points intact, restoring puts the starter trees back, and the wallet does not move at any point in the round trip.
+
 ### 2026-08-28 - Approved home and garden reward design
 
 The owner approved layout C: `わが家` opens on an illustrated yard, and tapping the house opens the interior. Purchased seeds and saplings become permanent movable decorations and grow through completed learning rather than real time. Growth requires cleared correction rounds, first-time mastery may add a bonus, and replaying mastered material cannot farm growth.
@@ -2248,3 +2266,29 @@ Written by the session that built the first three tasks of the home-and-garden p
 - The persisted garden schema follows the completed Task 2 engine: `plants`, `usedCreditIds`, `starterClaimed`, and `nextInstanceId`. This replaces stale field names in the original Task 3 plan.
 - Verification evidence is recorded in `.superpowers/sdd/2026-08-28-home-garden-rewards/task-3-report.md`.
 - Verified: `node --check app.js` exits 0; focused tests pass 34/34; full `node --test` passes 336/336.
+
+### 2026-08-28 - Free home decoration implementation
+
+- Replaced the fixed eight-bed yard with a neutral open yard and 24 invisible placement points while preserving the old eight slot ids for saved games.
+- Added removable starter pine and maple scenery, clear-yard and restore-starter-layout actions, expanded room placement points including the tokonoma, and automatic or manually selected time-of-day lighting. Lighting is cosmetic and never changes learning or growth.
+- Desktop home scenes retain their 16:9 coordinate system but cap their size against short viewports so the scene controls remain visible on common laptop screens.
+- Cache and asset references are version 143. The artifact rebuild inlined 24 scripts, one stylesheet, and 148 images at 14.11 MB. Full regression passes 343/343; the rebuilt-artifact walkthrough passes 46/46. Browser checks at 1280x720, 390x844, and 320x640 found no console warnings/errors or horizontal overflow; clear/restore changed visible yard plants 2 -> 0 -> 2.
+
+### 2026-08-28 - Home chrome merged into the scenes
+
+- Removed the separate home header and redundant location line. Back, stars, and money now sit in a compact translucent strip inside both yard and room artwork.
+- Lighting, reset actions, and Yard/Shop or Storage/Wallpaper/Shop tabs now share one bottom scene overlay on desktop. On phones the same controls remain directly attached below the artwork for readability.
+- The room's scene-integrated back control returns to the yard; the yard's returns to Lantern Alley, removing the covered duplicate room button. Cache and shell queries are version 145. Full regression passes 343/343; the rebuilt artifact is 14.11 MB. Browser checks at 1280x720 and 390x844 found no console warnings, errors, or horizontal overflow, and confirmed the mobile control panel begins exactly below the artwork.
+
+### 2026-08-28 - Separate shop and explicit decoration mode
+
+- Home lighting now always follows local time; manual lighting controls and state were removed.
+- Yard and room use a clear `飾る` / `店` menu. The clean scene hides inventory until `飾る` is selected; room inventory and valid placement interaction then become available.
+- `店` now opens a separate illustrated `灯り屋` stage with 草花, 家具, and 壁紙 categories, wallet display, owned/price states, purchases, and a return to the exact home scene it came from.
+- Cache and shell queries are version 146. New interaction tests were observed failing first, then passed. Full regression passes 346/346 and the rebuilt artifact is 14.33 MB. Browser QA at 1280x720 and 390x844 confirmed the shop replaces the yard, the clean room hides inventory until `飾る`, automatic lighting has no manual controls, and no console errors or horizontal overflow occurred.
+
+### 2026-08-28 - Home menu dock correction
+
+- The home menu now uses the same dark translucent material as the scene's top bar, spans the scene width, and attaches to its bottom edge instead of floating as a narrow dialog.
+- Yard reset actions moved from the permanent menu into a compact `•••` overflow control. The tutorial panel attaches directly below the scene composition; the frame remains content-sized so it does not create an empty internal floor on tall windows.
+- Cache and shell queries are version 148. The overflow behavior test was observed failing first and then passed. Full regression passes 347/347 and the rebuilt artifact is 14.34 MB. Browser QA at the reported 1114x947 viewport measured the menu bottom and scene bottom within 0.4 px, the tutorial starting at the same edge, no horizontal overflow, and no console warnings or errors.

@@ -154,7 +154,7 @@ test("going home is never gated on understanding", () => {
 
 test("the home uses layered raster scenes with movable slots", () => {
   const room = readFileSync(new URL("./home-room.js", import.meta.url), "utf8");
-  assert.match(room, /starter-house-yard-v1\.webp/);
+  assert.match(room, /open-house-yard-v1\.webp/);
   assert.match(room, /starter-room-v1\.webp/);
   assert.match(room, /function scenes/);
   assert.match(room, /function slots/);

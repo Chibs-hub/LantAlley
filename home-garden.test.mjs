@@ -61,6 +61,19 @@ test("starter claim is free and cannot duplicate a starter camellia", () => {
   assert.equal(migrated.garden.plants.length, 1);
 });
 
+test("starter yard trees are removable and restore without repurchase", () => {
+  const claimed = garden.claimStarterScenery(garden.emptyGarden());
+  assert.equal(claimed.ok, true);
+  assert.equal(claimed.garden.plants.length, 2);
+  assert.ok(claimed.garden.plants.every(p => p.stage === "mature" && p.slotId));
+  const cleared = garden.clearPlacement(claimed.garden);
+  assert.ok(cleared.plants.every(p => p.slotId === null));
+  const restored = garden.restoreStarterLayout(cleared);
+  assert.equal(restored.plants.find(p => p.id === "starter-pine").slotId, "garden-left-1");
+  assert.equal(restored.plants.find(p => p.id === "starter-maple").slotId, "garden-right-1");
+  assert.equal(garden.claimStarterScenery(restored).ok, false);
+});
+
 test("plant and move use valid empty garden slots without mutation", () => {
   const purchase = bought();
   const planted = garden.plant(purchase.garden, purchase.instanceId, slots[0].id, slots);

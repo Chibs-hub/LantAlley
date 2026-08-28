@@ -2690,6 +2690,10 @@
     }
     screenGame.classList.remove("entrance-stage", "inn-stage");
     screenGame.classList.add("home-stage");
+    if(typeof LanternHomeGarden !== "undefined" && !gardenState().starterSceneryClaimed){
+      state.garden = LanternHomeGarden.claimStarterScenery(gardenState()).garden;
+      saveProgress();
+    }
     $("stage-phase-row").style.display = "none";
     $("encounter-status").style.display = "none";
     $("hint-btn").style.display = "none";
@@ -2741,10 +2745,44 @@
    * Both scenes are a painted background with things positioned on top by
    * percentage, so the same room works at 320px and on a desktop.
    */
-  var homeView = "yard";      // "yard" | "interior"
+  var homeView = "yard";      // "yard" | "interior" | "shop"
+  var homeReturnView = "yard";
+  var homeDecorating = false;
+  var homeShopCategory = "plants";
   var homeSelected = null;    // {kind:"decor"|"plant", id:...} waiting to be placed
   var homeTab = "garden";     // "garden" | "storage" | "shop"
   var homeNotice = "";
+
+  /* The light in the yard and the room follows the learner's own clock, and
+   * that is the whole of it: there is no picker, on purpose.
+   *
+   * A cosmetic override was designed and dropped. The house is somewhere to
+   * come back to rather than something to configure, and asking what time it
+   * should look like is a question a learner has no reason to have an opinion
+   * about - their own evening is the right answer. Metadata and styling for a
+   * picker were removed with this comment; if it ever comes back, it comes
+   * back as a decision rather than as leftovers.
+   *
+   * Lighting touches filters and overlays only. It cannot reach growth,
+   * rewards or lessons. */
+  function effectiveHomeLighting(){
+    var hour = new Date().getHours();
+    if(hour >= 5 && hour < 10) return "morning";
+    if(hour >= 10 && hour < 17) return "day";
+    if(hour >= 17 && hour < 20) return "evening";
+    return "night";
+  }
+
+  function homeSceneChrome(area){
+    var back = area === "interior"
+      ? '<button type="button" class="home-scene-back" data-leave-house="1">&larr; 庭</button>'
+      : '<button type="button" class="home-scene-back" data-home-map="1">&larr; Lantern Alley</button>';
+    return '<div class="home-scene-chrome" aria-label="わが家の情報">'
+      + back
+      + '<span class="home-scene-stars">' + (state.stars || 0) + ' ⭐</span>'
+      + '<span class="home-scene-money">¥' + (state.money || 0) + '</span>'
+      + '</div>';
+  }
 
   /* Which species have painted art, and where each stage lives.
    *
@@ -2981,7 +3019,8 @@
     plantsInYard().forEach(function(p){ byId[p.slotId] = p; });
     var picking = homeSelected && homeSelected.kind === "plant";
 
-    var html = '<div class="home-scene home-yard-scene">' + sceneLayer(yard.background, "わが家の庭");
+    var html = '<div class="home-scene home-yard-scene light-' + effectiveHomeLighting() + '">'
+      + sceneLayer(yard.background, "わが家の庭") + homeSceneChrome("yard");
 
     // The house is a real button, not a hot region with no name: a learner who
     // cannot see the picture still has to be able to go inside.
@@ -3033,12 +3072,9 @@
     var picked = (homeSelected && homeSelected.kind === "decor" && decor)
       ? decor.getItem(homeSelected.id) : null;
 
-    var html = '<div class="home-scene home-interior-scene">'
+    var html = '<div class="home-scene home-interior-scene light-' + effectiveHomeLighting() + '">'
       + sceneLayer(interior.background, "わが家の部屋")
-      + wallpaperLayer();
-
-    html += '<button type="button" class="home-leave-house" data-leave-house="1"'
-      + ' aria-label="庭へ戻る">庭へ戻る</button>';
+      + wallpaperLayer() + homeSceneChrome("interior");
 
     if(decor){
       interior.slots.forEach(function(slot){
@@ -3221,7 +3257,7 @@
     {id:"welcome",
      jp:"コン：「おかえりなさい。ここがあなたの家と庭です。稽古で稼いだお金で、少しずつ好きなように整えていきましょう。」",
      how:"Open the 店 tab.",
-     done:function(){ return homeTab === "shop"; }},
+     done:function(){ return homeView === "shop"; }},
 
     {id:"claim-seed",
      jp:"コン：「まずは椿の苗を一つどうぞ。お代はいりません。」",
@@ -3324,6 +3360,8 @@
       saveProgress();
       if(!claim.ok) return false;          // already had one; the flag is now honest
       homeSelected = {kind:"plant", id:claim.instanceId};
+      homeView = homeReturnView;
+      homeDecorating = true;
       homeTab = "garden";
       return true;
     }
@@ -3336,6 +3374,8 @@
     state.home = {owned: homeState().owned.concat([STARTER_DECOR]),
                   placed: homeState().placed};
     homeSelected = {kind:"decor", id:STARTER_DECOR};
+    homeView = homeReturnView;
+    homeDecorating = true;
     homeTab = "storage";
     saveProgress();
     return true;
@@ -3364,11 +3404,11 @@
   function tutorialGiftCard(){
     var step = tutorialStep();
     if(!step || homeTutorialReplay) return "";
-    if(step.id === "claim-seed" && homeView === "yard"){
+    if(step.id === "claim-seed" && homeView === "shop"){
       return dockCard(plantFigure(STARTER_PLANT, "mature", ""),
         PLANT_JP[STARTER_PLANT], "ただ", 'data-claim="plant"', " is-gift");
     }
-    if(step.id === "claim-cushion" && homeView === "interior"){
+    if(step.id === "claim-cushion" && homeView === "shop"){
       return dockCard(decorCardArt(STARTER_DECOR),
         (LanternHomeDecor.getItem(STARTER_DECOR) || {name:""}).name, "ただ",
         'data-claim="decor"', " is-gift");
@@ -3376,15 +3416,65 @@
     return "";
   }
 
+  function homeShopDock(){
+    var money = state.money || 0;
+    var html = tutorialGiftCard();
+    if(homeShopCategory === "plants" && typeof LanternHomeGarden !== "undefined"){
+      LanternHomeGarden.catalogue().forEach(function(type){
+        html += dockCard(plantFigure(type.id, "mature", ""), PLANT_JP[type.id] || type.name,
+          "¥" + type.price, 'data-buy-plant="' + type.id + '"', money >= type.price ? "" : " is-locked");
+      });
+    }else if(homeShopCategory === "wallpaper"){
+      LanternHomeDecor.wallpapers().forEach(function(paper){
+        var owned = LanternHomeDecor.ownsWallpaper(homeState(), paper.id);
+        var swatch = paper.hasPattern
+          ? '<span class="home-swatch">' + LanternHomeDecor.wallpaperSvg(paper.id) + '</span>'
+          : '<span class="home-swatch is-plain"></span>';
+        html += dockCard(swatch, paper.name, owned ? "持っている" : "¥" + paper.price,
+          'data-buy-wallpaper="' + paper.id + '"' + (owned ? " disabled" : ""),
+          owned ? " is-owned" : (money >= paper.price ? "" : " is-locked"));
+      });
+    }else{
+      LanternHomeDecor.catalogue().forEach(function(item){
+        var owned = LanternHomeDecor.owns(homeState(), item.id);
+        html += dockCard(decorCardArt(item.id), item.name, owned ? "持っている" : "¥" + item.price,
+          'data-buy="' + item.id + '"' + (owned ? " disabled" : ""),
+          owned ? " is-owned" : (money >= item.price ? "" : " is-locked"));
+      });
+    }
+    return html || '<p class="home-empty">商品はまだありません。</p>';
+  }
+
+  function renderHomeShop(){
+    var categories = [["plants","草花"],["decor","家具"],["wallpaper","壁紙"]];
+    return '<div class="home-shop-stage">'
+      + '<img class="home-shop-bg" src="assets/map/lantern-alley-map-v1.jpg" alt="灯り市の店">'
+      + '<div class="home-shop-chrome"><button type="button" data-home-shop-back="1">&larr; わが家</button>'
+      + '<strong>灯り屋</strong><span>¥' + (state.money || 0) + '</span></div>'
+      + '<section class="home-shop-panel"><p class="home-shop-kicker">家と庭の道具</p><h2>灯り屋</h2>'
+      + '<div class="home-shop-categories" role="tablist">'
+      + categories.map(function(category){
+          return '<button type="button" data-shop-category="' + category[0] + '" class="home-tab'
+            + (homeShopCategory === category[0] ? ' is-on' : '') + '" aria-pressed="'
+            + (homeShopCategory === category[0]) + '">' + category[1] + '</button>';
+        }).join("") + '</div>'
+      + '<div class="home-shop-grid" id="home-shelf">' + homeShopDock() + '</div></section></div>';
+  }
+
   function paintHome(){
     if(typeof LanternHomeDecor === "undefined" || !homeScenes()){
       $("scene").innerHTML = '<div class="home-room"></div>';
       return;
     }
-    var money = state.money || 0;
+    if(homeView === "shop"){
+      $("scene").innerHTML = renderHomeShop() + tutorialPanel();
+      homeNotice = "";
+      renderHud();
+      return;
+    }
     var tabs = homeView === "yard"
-      ? [["garden", "庭"], ["shop", "店"]]
-      : [["storage", "持ち物"], ["wallpaper", "壁紙"], ["shop", "店"]];
+      ? [["garden", "草花"]]
+      : [["storage", "家具"], ["wallpaper", "壁紙"]];
     // A tab that belongs to the other scene must not stay selected when the
     // learner walks through the door.
     if(!tabs.some(function(t){ return t[0] === homeTab; })) homeTab = tabs[0][0];
@@ -3398,15 +3488,22 @@
       /* The wallet is already in the HUD a few pixels above; printing it again
        * under the picture was the same number twice. What is left is the line
        * that says something the HUD cannot: what to do next. */
+      + '<div class="home-scene-controls">'
       + (hint ? '<p class="home-room-note">' + hint + '</p>' : '')
       + homeGoalLine()
-      + '<div class="home-tabs" role="tablist">'
-      + tabs.map(function(t){
+      + '<div class="home-main-menu" role="group" aria-label="わが家のメニュー">'
+      + '<button type="button" data-home-decorate="1" class="home-menu-button'
+      + (homeDecorating ? ' is-on' : '') + '" aria-pressed="' + homeDecorating + '">飾る</button>'
+      + '<button type="button" data-home-shop="1" class="home-menu-button">店</button>'
+      + (homeView === "yard" ? '<details class="home-yard-more"><summary aria-label="庭のその他の操作">•••</summary>'
+          + '<div><button type="button" data-clear-yard="1">庭を空にする</button>'
+          + '<button type="button" data-restore-yard="1">最初の配置に戻す</button></div></details>' : '')
+      + '</div>'
+      + (homeDecorating ? '<div class="home-tabs" role="tablist">' + tabs.map(function(t){
           return '<button type="button" class="home-tab' + (homeTab === t[0] ? " is-on" : "")
             + '" data-tab="' + t[0] + '" aria-pressed="' + (homeTab === t[0]) + '">' + t[1] + '</button>';
-        }).join("")
-      + '</div>'
-      + '<div class="home-shelf" id="home-shelf">' + tutorialGiftCard() + homeDock() + '</div>'
+        }).join("") + '</div>' : '') + '</div>'
+      + (homeDecorating ? '<div class="home-shelf" id="home-shelf">' + homeDock() + '</div>' : '')
       + (tutorialRunning() ? '' :
           '<button type="button" class="home-howto" data-howto="1">使いかた</button>')
       + '</div>'
@@ -3448,12 +3545,62 @@
     var decor = LanternHomeDecor;
     var garden = (typeof LanternHomeGarden !== "undefined") ? LanternHomeGarden : null;
 
+    if(event.target.closest("[data-home-map]")){
+      showMap();
+      return;
+    }
+
     if(event.target.closest("[data-howto]")){
       startHomeTutorial(true);
       return;
     }
     if(event.target.closest("[data-tutorial-done]")){
       endHomeTutorial();
+      return;
+    }
+    if(event.target.closest("[data-home-decorate]")){
+      homeDecorating = !homeDecorating;
+      homeSelected = null;
+      homeTab = homeView === "yard" ? "garden" : "storage";
+      paintHome();
+      return;
+    }
+    if(event.target.closest("[data-home-shop]")){
+      homeReturnView = homeView === "interior" ? "interior" : "yard";
+      homeView = "shop";
+      homeDecorating = false;
+      homeSelected = null;
+      advanceHomeTutorial();
+      paintHome();
+      return;
+    }
+    if(event.target.closest("[data-home-shop-back]")){
+      homeView = homeReturnView;
+      homeDecorating = false;
+      homeSelected = null;
+      paintHome();
+      return;
+    }
+    var shopCategory = event.target.closest("[data-shop-category]");
+    if(shopCategory){
+      homeShopCategory = shopCategory.getAttribute("data-shop-category") || "plants";
+      paintHome();
+      return;
+    }
+    if(event.target.closest("[data-clear-yard]") && garden){
+      state.garden = garden.clearPlacement(gardenState());
+      homeSelected = null;
+      saveProgress();
+      paintHome();
+      homeSay("庭の物をすべて持ち物に戻しました。");
+      return;
+    }
+    if(event.target.closest("[data-restore-yard]") && garden){
+      state.garden = garden.restoreStarterLayout(gardenState());
+      homeSelected = null;
+      saveProgress();
+      paintHome();
+      homeSay("最初の木の配置に戻しました。");
       return;
     }
     var claim = event.target.closest("[data-claim]");
@@ -3472,6 +3619,7 @@
 
     if(event.target.closest("[data-enter-house]")){
       homeView = "interior";
+      homeDecorating = false;
       homeSelected = null;
       homeTab = "storage";
       advanceHomeTutorial();
@@ -3480,6 +3628,7 @@
     }
     if(event.target.closest("[data-leave-house]")){
       homeView = "yard";
+      homeDecorating = false;
       homeSelected = null;
       homeTab = "garden";
       paintHome();

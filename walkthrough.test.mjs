@@ -566,6 +566,61 @@ function gardenOf(game) {
   return saved.garden || { plants: [], usedCreditIds: [] };
 }
 
+function enterHome(game) {
+  game.$("btn-start").click();
+  game.clock.advance(600);
+  const home = homeButton(game);
+  assert.ok(home, "わが家 is on the map");
+  home.click();
+  game.clock.advance(50);
+}
+
+test("home lighting is automatic and has no manual controls", () => {
+  const game = boot(plantedCamelliaSave());
+  enterHome(game);
+  assert.equal(game.doc.querySelectorAll("[data-lighting]").length, 0);
+  assert.ok(game.doc.querySelectorAll(".home-scene")[0].className.includes("light-"));
+});
+
+test("the home shop opens as its own stage", () => {
+  const game = boot(plantedCamelliaSave());
+  enterHome(game);
+  const shop = game.doc.querySelectorAll("[data-home-shop]")[0];
+  assert.ok(shop, "the scene menu has a shop button");
+  shop.click();
+  assert.equal(game.doc.querySelectorAll(".home-shop-stage").length, 1);
+  assert.equal(game.doc.querySelectorAll(".home-yard-scene").length, 0,
+    "the shop does not remain inside the yard view");
+  assert.ok(game.doc.querySelectorAll("[data-home-shop-back]")[0]);
+});
+
+test("decorate mode reveals owned items and placement interaction", () => {
+  const game = boot(plantedCamelliaSave({
+    home: { owned: ["floor-cushion-navy"], placed: {} },
+  }));
+  enterHome(game);
+  game.doc.querySelectorAll("[data-enter-house]")[0].click();
+  const decorate = game.doc.querySelectorAll("[data-home-decorate]")[0];
+  assert.ok(decorate, "the room menu has a decorate button");
+  assert.equal(game.doc.querySelectorAll("#home-shelf").length, 0,
+    "inventory stays out of the clean room view");
+  decorate.click();
+  assert.equal(game.doc.querySelectorAll("#home-shelf").length, 1);
+  assert.ok(game.doc.querySelectorAll("[data-pick]").length >= 1,
+    "owned decor is available to place");
+});
+
+test("yard reset actions live in a compact overflow menu", () => {
+  const game = boot(plantedCamelliaSave());
+  enterHome(game);
+  const more = game.doc.querySelectorAll(".home-yard-more")[0];
+  assert.ok(more, "the yard has a compact more menu");
+  assert.ok(more.querySelectorAll("[data-clear-yard]")[0]);
+  assert.ok(more.querySelectorAll("[data-restore-yard]")[0]);
+  assert.equal(game.doc.querySelectorAll(".home-yard-actions").length, 0,
+    "reset actions are not a permanent row in the main menu");
+});
+
 // A learner who has done the tutorial and has one camellia in the ground.
 // Written as a save so it arrives through the real migration on boot.
 function plantedCamelliaSave(extra) {
