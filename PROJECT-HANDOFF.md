@@ -12,7 +12,11 @@ First entry includes a one-time Kon tutorial covering both garden and interior d
 
 Clothing remains a future shop category, but equipping clothing and generating complete pose sets are explicitly outside this first home-and-garden implementation.
 
-Implementation planning is complete in `docs/superpowers/plans/2026-08-28-home-garden-rewards.md`. The plan uses an image-backed vertical slice first, then a pure garden engine, migration, yard/interior UI, one-time tutorial, lesson-credit integration, full plant/decor asset generation, and adaptive/offline verification. No implementation from that plan has started yet.
+Implementation planning is complete in `docs/superpowers/plans/2026-08-28-home-garden-rewards.md`. The plan uses an image-backed vertical slice first, then a pure garden engine, migration, yard/interior UI, one-time tutorial, lesson-credit integration, full plant/decor asset generation, and adaptive/offline verification.
+
+**That work is built, on a branch, and is not in master.** Tasks 1-6 and 8 are complete and committed to `codex-home-garden-rewards`, in the worktree at `.superpowers/worktrees/home-garden-rewards`: 342 tests, cache `lantern-alley-v128`. `わが家` there opens on an illustrated yard, the house hotspot enters the interior, Kon's first visit hands over a free seed and a free cushion, and planted flowers grow when a shift is finished. Merging it is the owner's call.
+
+**Task 7 - the remaining art - is the only part still open**, and is delegated to the image-generating session: 28 plant stage images, 13 decor replacements, 3 wallpapers. The full requirement is written up in `.superpowers/sdd/2026-08-28-home-garden-rewards/task-7-brief.md` on that branch. Nothing else waits on it; the branch plays without it, offering the one plant species whose art exists.
 
 Plan self-review added the missing wallpaper path explicitly: plain washi, asanoha and sakura wallpaper are image-backed owned items, with one active wallpaper persisted independently from ownership.
 
