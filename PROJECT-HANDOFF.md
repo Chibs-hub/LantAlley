@@ -279,6 +279,20 @@ This was not hypothetical: a freshly edited `lantern-map.js` was served from the
 
 ## 9. Change log and reasons
 
+### 2026-08-28 - The home now carries its artwork instead of framing it
+
+The yard and the room were a bordered rectangle centred on a sheet of cream, with the stage showing above and below. The Entrance does not do that and looks right, so this copies what the Entrance does.
+
+**The artwork is the stage, not a picture on it.** The Entrance puts its scene behind the whole panel and floats the interface over it in wooden boxes. The home scene now runs edge to edge - no border, no rounded corners, past the panel's own inset - and the stage under it takes the room's own dark, warm light. Its bottom fades into the panel rather than stopping on a line, so the dock beneath reads as part of the same room.
+
+**The layout was fighting it.** `game-layout` is two columns, the dialogue beside the answer, because normally there is a question to answer. There is no question at home, so the room was being squeezed into the right-hand column - 594 of 1000 pixels, sitting 392px from the left edge. At home it is one column now, Kon above and the room below, which is the Entrance's arrangement.
+
+**And with a dark stage the text goes light again.** The previous entry made it dark ink to fix an invisible 1.02:1 on cream; the surface it sits on has now genuinely changed, so it is light on dark and measures 8.0 to 10.6:1.
+
+The 16/9 box is kept even though it is no longer a visible frame, because all eight yard slots are percentages of it - a cropped background would move every plant. Verified after the change: the scene is flush with the panel at desktop and at 320px, and every plant still sits on its own slot.
+
+342 tests, 0 failures. Cache `lantern-alley-v141`.
+
 ### 2026-08-28 - The garden had no perspective
 
 From a screenshot: a planted camellia sitting on the gravel above its bed rather than in it, and looking stuck on rather than part of the picture.
