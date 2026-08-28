@@ -2,100 +2,6 @@
 
 Last updated: 2026-08-28
 
-### 2026-08-28 - Free home decoration direction approved
-
-The fixed-bed and fixed-furniture-slot model is being replaced by a dense invisible placement grid on neutral scene backgrounds. The house, fence, entrance path, room architecture and tokonoma stay fixed; starter trees, rocks, plants and every reward object can be moved or stored. Clearing is reversible and `Restore starter layout` never repurchases items. The approved design and implementation plan are `docs/superpowers/specs/2026-08-28-free-home-decoration-design.md` and `docs/superpowers/plans/2026-08-28-free-home-decoration.md`.
-
-Implementation started with `open-house-yard-v1.webp`, an undecorated gravel-and-moss yard, 24 invisible plant positions that preserve the eight legacy ids, and additional interior floor/tokonoma positions.
-
-The home derives morning/day/evening/night light from the learner's own clock, and that is all: **there is no picker, by decision.** The house is somewhere to come back to rather than something to configure, and what time it should look like is not a question a learner has a reason to have an opinion about.
-
-An override was designed, written into the scene metadata and given a stylesheet, and then dropped - but only the working half was ever built, so `lightingModes` and the `.home-light-button` rules sat in the tree describing a control that did not exist, and this entry claimed it shipped. Both are removed and the decision is recorded above `effectiveHomeLighting` in `app.js`, where anyone about to re-add it would look.
-
-Lighting changes only filters and overlays; it cannot affect growth, rewards or lessons.
-
-Offline cache advanced to `lantern-alley-v148`; every shell query is `?v=148` and the neutral yard is pre-cached.
-
-First home entry now grants a mature pine and maple as removable starter scenery. Clearing stores every plant without deleting ownership or growth; restoring places only those starter trees and never repurchases them.
-
-The yard controls expose `庭を空にする` and `最初の配置に戻す` as reversible actions under the scene. Verified rather than assumed: clearing moves every plant to storage with its ownership and growth points intact, restoring puts the starter trees back, and the wallet does not move at any point in the round trip.
-
-### 2026-08-28 - Approved home and garden reward design
-
-The owner approved layout C: `わが家` opens on an illustrated yard, and tapping the house opens the interior. Purchased seeds and saplings become permanent movable decorations and grow through completed learning rather than real time. Growth requires cleared correction rounds, first-time mastery may add a bonus, and replaying mastered material cannot farm growth.
-
-The approved first release uses layered raster art: one starter-house-and-yard background, transparent furniture and garden assets, eight invisible planting areas, and four visual stages per plant. Initial plants are cherry, maple, pine, hydrangea, camellia, iris, chrysanthemum, and a lantern-flower bed. Progress reserves a future `houseTier` so larger houses can be purchased later without losing owned items.
-
-First entry includes a one-time Kon tutorial covering both garden and interior decorating. The player claims and plants one free flower seed, then claims, places, and moves one free cushion. `How it works` can replay the explanation without granting duplicates. The full approved design is in `docs/superpowers/specs/2026-08-28-home-garden-rewards-design.md`. No images or implementation from this design have been added yet.
-
-Clothing remains a future shop category, but equipping clothing and generating complete pose sets are explicitly outside this first home-and-garden implementation.
-
-Implementation planning is complete in `docs/superpowers/plans/2026-08-28-home-garden-rewards.md`. The plan uses an image-backed vertical slice first, then a pure garden engine, migration, yard/interior UI, one-time tutorial, lesson-credit integration, full plant/decor asset generation, and adaptive/offline verification.
-
-**Tasks 1-6 and 8 are built and merged.** `わが家` opens on an illustrated yard, the house hotspot leads inside, Kon's first visit hands over a free seed and a free cushion, and planted flowers grow when a shift is finished.
-
-**Task 7 - the remaining art - is the only part still open**, and is delegated to the image-generating session: 28 plant stage images and 13 decor replacements. The full requirement is in `docs/superpowers/plans/2026-08-28-home-garden-task-7-assets.md`. Nothing waits on it: every species is in the shop already, drawn from data, and swapping one to painted art is a single line in `GARDEN_ART_READY`.
-
-Plan self-review added the missing wallpaper path explicitly: plain washi, asanoha and sakura wallpaper are image-backed owned items, with one active wallpaper persisted independently from ownership. That is built, on tiling SVG patterns rather than raster.
-
-### 2026-08-28 - The house opens on a yard, and the garden grows from finished work
-
-Tasks 4, 5, 6 and 8 of the home-and-garden plan, picked up from a session that stopped mid-Task-3.
-
-**Task 3 was already done; one thing it missed was not.** Every approved field was in `emptyProgress`, `migrateProgress`, the app's load and hydrate path, `applyProgress(null)` and `saveProgress`. But `home-garden.js` had never been added to `index.html`, `sw.js` or `build-artifact.mjs`, so the engine did not load in the browser at all and `emptyGardenState()` took its fallback branch every time. The persistence was correct and the module was simply not shipped.
-
-**`わが家` now opens on the yard.** The house is a labelled button rather than an unnamed hot region, `庭へ戻る` comes back, and the dock changes with the scene: `庭` and `店` outside, `持ち物` and `店` inside, with the shop selling seeds outdoors and furniture indoors. A learner standing in the garden is not shopping for a wall scroll.
-
-**Two faults found by measuring the artwork rather than looking at it.**
-
-The eight yard slots were estimated. Sampling the painting showed the two columns of beds lean outward as they come forward; the shipped coordinates put every plant in the gravel beside its bed. The slots are now measured off the image, and a test asserts each one falls inside the tilled soil.
-
-The four camellia stages do not share a baseline - their alpha boxes end at 77.4, 82.7, 94.0 and 94.5 percent of frame - so one anchor left the seedling hovering. Each stage now carries its own anchor in `PLANT_BASE`. **That table exists only to compensate for inconsistent art**: generating each species with a common baseline and frame would delete it.
-
-The interior slots were still in the retired SVG's pixel space, and were converted to percentages measured against the painted room.
-
-**Kon's first visit teaches by making the learner do each thing once** - take a seed, plant it, go inside, take a cushion, place it, move it - and advances on the action rather than on a Next button. A tutorial that can be clicked through teaches nothing. Replaying it through `使いかた` walks the same script with the claim steps already satisfied, so the explanation can be re-read without farming free plants; the claim functions check current holdings as well as the flags, so even an edited save cannot mint a second camellia. The replay is dismissible at every step, because holding someone who already knows the room until they put the cushion back down is a trap.
-
-The starter cushion was referenced by Task 3's migration but did not exist in the catalogue. It does now, as `floor-cushion-navy`, carrying both the supplied picture and a drawn fallback.
-
-**Growth is credited at exactly one point in the code**: the path out of a finished shift, which is reached only once the correction queue is empty. The credit id is the episode's own id, so replaying it credits nothing. The bonus for meeting a new word is decided against a snapshot taken when the shift *began* - reading mastery at the end would find the shift's own targets and pay the bonus every time, including on a replay, which is the farming the design forbids. A plant in storage does not grow, and the shift it sat out is not paid retroactively.
-
-Four tests cover it, and they play the game rather than calling the engine: the engine has been right since Task 2, what was unproven was that the app calls it once, at the right moment, with the right id.
-
-**A layout fault at 320px that only measurement would have found.** `.home-room` is a column flex box with centred items, so the dock sized itself to its own max-content - five 96px tracks - and eight of the fourteen furniture cards sat off the side of the screen with no way to reach them. One `width:100%` fixes it. Verified at 320, 390 and desktop: nothing off-screen, nothing under 28px, no nested scrolling.
-
-**The offline contract now covers the house.** Every picture the home can show is asserted to be on disk and in the service worker, and the check reads `GARDEN_ART_READY` rather than keeping a second list - so a plant added to the shop before its art exists fails the build. The 52MB of raw supplied PNGs under `assets/home/incoming-user/` are asserted *not* to be pre-cached.
-
-**Task 7 - all remaining asset generation - is delegated** to the image-generating session and remains open: 28 plant stage images, 13 decor replacements, 3 wallpapers. The full requirement, with every filename, the species table, the size budget and the acceptance check, is in `docs/superpowers/plans/2026-08-28-home-garden-task-7-assets.md`.
-
-Nothing else waits on it. The shop offers only plants whose art exists - `GARDEN_ART_READY` in `app.js` is the switch, and `pwa.test.mjs` fails the build if a species is put in the shop before its four files are on disk and in the service worker. Decor without a picture keeps rendering its vector, so the room is never empty mid-migration.
-
-The single most useful thing that task can do is generate each species with a consistent baseline and frame. `PLANT_BASE` in `app.js` exists only because the camellia set does not have one, and it needs a hand-measured row per species until that changes.
-
-340 tests, 0 failures. Cache `lantern-alley-v128`. Nothing committed: the plan forbids committing without the owner saying so.
-
-### 2026-08-28 - The garden is playable before it is painted
-
-Task 7 is the owner's to schedule and it was holding back seven of the eight plant species and the whole wallpaper feature. Neither actually needed the art to exist.
-
-**Every species is now in the shop, drawn from data.** A silhouette per kind, a colour per species, four sizes for the four stages. They are obviously drawings, which is the point - nobody mistakes one for finished art, and the garden can be played, priced and balanced now instead of after. The economy needed this more than the pictures did: eight species at 90 to 500 yen is a shop, one species at 120 is a placeholder.
-
-Every caller goes through one function, `plantFigure()`, so switching a species to real art is adding one line to `GARDEN_ART_READY` - the yard, both dock cards and the tutorial gift change together. The drawn stand-ins are built with their ground line at a known height, so they need no `PLANT_BASE` row; that table stays only for painted sets whose stages disagree.
-
-**Wallpaper is built.** `activeWallpaper` had been persisted since Task 3 with nothing to show and no way to choose. There is now a 壁紙 tab indoors, and the pattern lays over the walls and stops above the tatami, multiplying into the painting so the room keeps its own light rather than being covered by a flat sheet.
-
-The patterns are tiling SVG - 麻の葉 and 桜 - because a seamless repeat is what vector is genuinely best at: a few hundred bytes, no seam at any size, recolourable from data. A raster version can replace either by giving the entry an `image`.
-
-Ownership and the active choice are stored separately, so changing your mind never costs the roll already paid for. 無地 is free and draws nothing, because it is the room as painted.
-
-**Two faults found while checking it.**
-
-A drawn plant rendered at 350% of the yard's height. The CSS sized `.home-plant img` and not `.home-plant svg`, so the stand-ins fell back to the browser's default replaced-element size.
-
-Buying wallpaper did nothing at all, silently. `buy()` resolves ids against the furniture catalogue, so every wallpaper came back `unknown` and the handler - which only reported "not enough money" - said nothing. There is now a `buyWallpaper`, and the handler reports any refusal rather than leaving a tap that appears broken.
-
-342 tests, 0 failures. Cache `lantern-alley-v131`.
-
 ## 0. Current status
 
 ### Golden Rule: Learning Integrity
@@ -129,7 +35,15 @@ Normal Inn word-choice questions no longer repeat the room inventory description
 
 **The house and garden.** `わが家` sits in the middle of the map and is never locked - coins may decide what goes inside it, but nothing about understanding decides whether a learner can go home. It opens on an illustrated yard; the house leads to an interior. Kon's first visit hands over a free camellia seed and a free cushion and makes the learner plant, place and move something once, advancing on the action rather than on a Next button; `使いかた` replays the explanation without handing anything out twice.
 
-Furniture is bought and placed in six named slots, one item per slot, one slot per item - moving something empties the corner it came from, and placing into an occupied one swaps and says which item went back. Plants are bought and planted in eight beds and **grow from finished work only**: one point when a shift is cleared past its correction round, one more if that shift introduced a word the learner did not already hold. The credit is keyed by the episode's own id, so replaying it grows nothing. A plant in storage does not grow, and the shift it sat out is not paid retroactively.
+**Placement is free, not slotted.** The yard began as eight painted beds and the room as six named corners; both were replaced by a dense grid of invisible positions over neutral backgrounds - 24 in the yard, keeping the original eight ids so existing saves do not lose their plants. The house, fence, path, room architecture and tokonoma are fixed scenery. Everything else - the starter pine and maple included - can be moved or put away.
+
+One item to a position and one position to an item: moving something empties where it came from, and placing into an occupied spot swaps and says which item went back. Each position carries a `scale`, so a plant at the back of the yard is smaller than the same plant at the front, because the painting has perspective and a fixed size ignored it.
+
+`庭を空にする` stores every plant without touching ownership or growth; `最初の配置に戻す` puts the starter trees back and never repurchases anything. Verified end to end: growth points survive the round trip and the wallet does not move.
+
+**Plants grow from finished work only** - one point when a shift is cleared past its correction round, one more if that shift introduced a word the learner did not already hold. The credit is keyed by the episode's own id, so replaying it grows nothing. A plant in storage does not grow, and the shift it sat out is not paid retroactively.
+
+**The light follows the learner's own clock** - morning, day, evening, night - and there is deliberately no picker. It changes filters and overlays only and cannot reach growth, rewards or lessons.
 
 Wallpaper is bought and hung; ownership and the active choice are stored separately, so changing your mind never costs the roll already paid for.
 
@@ -251,7 +165,7 @@ Browser progress is not part of the project folder. Copying the folder transfers
 | `review-engine.js` | The correction queue and the spaced-review intervals. Caps a card at three tries. |
 | `learning-progress.js` | The v3 progress model. |
 | `catalog-practice.js` | Tier 2: builds reading, meaning and cloze cards from the catalog. |
-| `home-room.js` | Scene metadata for `わが家`: the yard and interior backgrounds, six interior slots and eight garden beds. Every coordinate is a **percentage** of a 16/9 scene, and each bed carries a `scale` from its own measured height so plants shrink with the painting's perspective. `baseRoomSvg()` is the fallback for a scene whose image will not load. |
+| `home-room.js` | Scene metadata for `わが家`: the yard and interior backgrounds and every position something can stand in - 24 in the yard, more inside. Every coordinate is a **percentage** of a 16/9 scene, and each carries a `scale` so things shrink with the painting's perspective. The first eight yard ids are the original bed ids, kept so saves made before free placement still resolve. `baseRoomSvg()` is the fallback for a scene whose image will not load. |
 | `home-decor.js` | Furniture and wallpaper. Owns the two rules worth testing: an item is in one slot at a time, and placing into an occupied slot swaps rather than destroys. Wallpaper is separate - never placed, only one active - and its patterns are tiling SVG. |
 | `home-garden.js` | The pure garden engine: plant instances, placement, movement, storage, and growth credited by `creditLesson(garden, creditId, bonus)`. Immutable throughout; every rule that stops replay farming lives here. |
 | `learning-economy.js` | What a correct answer pays, and which places are unlocked. `award()` pays once per question id, so replay cannot farm money. |
@@ -318,6 +232,117 @@ location.reload();
 This was not hypothetical: a freshly edited `lantern-map.js` was served from the browser cache while a brand-new file beside it loaded fine, and the map silently rendered without わが家 on it.
 
 ## 9. Change log and reasons
+
+### 2026-08-28 - Making the handoff readable by someone who was not here
+
+Free placement landed and the parts of this file that describe the present tense did not move with it, which is the same drift the previous pass fixed and is now guarded against directly.
+
+**Four change-log entries had collected above section 0**, so the file opened with history rather than status - a reader met four accounts of the garden being built before reaching what the project currently is. They are in section 9 with the rest.
+
+**Section 0 still described eight painted beds and six named furniture corners.** Both were replaced by a dense grid of invisible positions on neutral backgrounds - 24 in the yard, keeping the original eight ids so existing saves do not lose their plants. It now says that, along with what is fixed scenery and what can be moved, what `庭を空にする` and `最初の配置に戻す` guarantee, and that the light follows the learner's clock with no picker. Section 6's entry for `home-room.js` said the same stale thing and now says why the first eight ids are the ones they are.
+
+**Two rules in section 12 had become wrong**, which matters more than a stale description because someone would follow them:
+
+- It said to bump `CACHE_VERSION` "and the matching assertion in `pwa.test.mjs`". That assertion was un-pinned - it used to break on every bump - so the instruction sent people looking for something that is not there.
+- It said to **verify through the built artifact rather than the dev server**. That was written when the Artifact was the delivery surface. It is retired and the build is now a cut-down demo, so following it would mean verifying against the wrong thing. It now points at section 2 and names the real trap: the service worker will serve a stale shell, or `index.html` in place of a URL it does not know, which looks exactly like a broken build.
+
+**And the rule that would have prevented all of this** is now explicit: entries go at the top of section 9, and sections 0, 6, 10 and 11 describe the present tense, so a change that makes one of them untrue is not finished until it is fixed.
+
+347 tests, 0 failures.
+
+### 2026-08-28 - Free home decoration direction approved
+
+The fixed-bed and fixed-furniture-slot model is being replaced by a dense invisible placement grid on neutral scene backgrounds. The house, fence, entrance path, room architecture and tokonoma stay fixed; starter trees, rocks, plants and every reward object can be moved or stored. Clearing is reversible and `Restore starter layout` never repurchases items. The approved design and implementation plan are `docs/superpowers/specs/2026-08-28-free-home-decoration-design.md` and `docs/superpowers/plans/2026-08-28-free-home-decoration.md`.
+
+Implementation started with `open-house-yard-v1.webp`, an undecorated gravel-and-moss yard, 24 invisible plant positions that preserve the eight legacy ids, and additional interior floor/tokonoma positions.
+
+The home derives morning/day/evening/night light from the learner's own clock, and that is all: **there is no picker, by decision.** The house is somewhere to come back to rather than something to configure, and what time it should look like is not a question a learner has a reason to have an opinion about.
+
+An override was designed, written into the scene metadata and given a stylesheet, and then dropped - but only the working half was ever built, so `lightingModes` and the `.home-light-button` rules sat in the tree describing a control that did not exist, and this entry claimed it shipped. Both are removed and the decision is recorded above `effectiveHomeLighting` in `app.js`, where anyone about to re-add it would look.
+
+Lighting changes only filters and overlays; it cannot affect growth, rewards or lessons.
+
+Offline cache advanced to `lantern-alley-v148`; every shell query is `?v=148` and the neutral yard is pre-cached.
+
+First home entry now grants a mature pine and maple as removable starter scenery. Clearing stores every plant without deleting ownership or growth; restoring places only those starter trees and never repurchases them.
+
+The yard controls expose `庭を空にする` and `最初の配置に戻す` as reversible actions under the scene. Verified rather than assumed: clearing moves every plant to storage with its ownership and growth points intact, restoring puts the starter trees back, and the wallet does not move at any point in the round trip.
+
+### 2026-08-28 - Approved home and garden reward design
+
+The owner approved layout C: `わが家` opens on an illustrated yard, and tapping the house opens the interior. Purchased seeds and saplings become permanent movable decorations and grow through completed learning rather than real time. Growth requires cleared correction rounds, first-time mastery may add a bonus, and replaying mastered material cannot farm growth.
+
+The approved first release uses layered raster art: one starter-house-and-yard background, transparent furniture and garden assets, eight invisible planting areas, and four visual stages per plant. Initial plants are cherry, maple, pine, hydrangea, camellia, iris, chrysanthemum, and a lantern-flower bed. Progress reserves a future `houseTier` so larger houses can be purchased later without losing owned items.
+
+First entry includes a one-time Kon tutorial covering both garden and interior decorating. The player claims and plants one free flower seed, then claims, places, and moves one free cushion. `How it works` can replay the explanation without granting duplicates. The full approved design is in `docs/superpowers/specs/2026-08-28-home-garden-rewards-design.md`. No images or implementation from this design have been added yet.
+
+Clothing remains a future shop category, but equipping clothing and generating complete pose sets are explicitly outside this first home-and-garden implementation.
+
+Implementation planning is complete in `docs/superpowers/plans/2026-08-28-home-garden-rewards.md`. The plan uses an image-backed vertical slice first, then a pure garden engine, migration, yard/interior UI, one-time tutorial, lesson-credit integration, full plant/decor asset generation, and adaptive/offline verification.
+
+**Tasks 1-6 and 8 are built and merged.** `わが家` opens on an illustrated yard, the house hotspot leads inside, Kon's first visit hands over a free seed and a free cushion, and planted flowers grow when a shift is finished.
+
+**Task 7 - the remaining art - is the only part still open**, and is delegated to the image-generating session: 28 plant stage images and 13 decor replacements. The full requirement is in `docs/superpowers/plans/2026-08-28-home-garden-task-7-assets.md`. Nothing waits on it: every species is in the shop already, drawn from data, and swapping one to painted art is a single line in `GARDEN_ART_READY`.
+
+Plan self-review added the missing wallpaper path explicitly: plain washi, asanoha and sakura wallpaper are image-backed owned items, with one active wallpaper persisted independently from ownership. That is built, on tiling SVG patterns rather than raster.
+
+### 2026-08-28 - The house opens on a yard, and the garden grows from finished work
+
+Tasks 4, 5, 6 and 8 of the home-and-garden plan, picked up from a session that stopped mid-Task-3.
+
+**Task 3 was already done; one thing it missed was not.** Every approved field was in `emptyProgress`, `migrateProgress`, the app's load and hydrate path, `applyProgress(null)` and `saveProgress`. But `home-garden.js` had never been added to `index.html`, `sw.js` or `build-artifact.mjs`, so the engine did not load in the browser at all and `emptyGardenState()` took its fallback branch every time. The persistence was correct and the module was simply not shipped.
+
+**`わが家` now opens on the yard.** The house is a labelled button rather than an unnamed hot region, `庭へ戻る` comes back, and the dock changes with the scene: `庭` and `店` outside, `持ち物` and `店` inside, with the shop selling seeds outdoors and furniture indoors. A learner standing in the garden is not shopping for a wall scroll.
+
+**Two faults found by measuring the artwork rather than looking at it.**
+
+The eight yard slots were estimated. Sampling the painting showed the two columns of beds lean outward as they come forward; the shipped coordinates put every plant in the gravel beside its bed. The slots are now measured off the image, and a test asserts each one falls inside the tilled soil.
+
+The four camellia stages do not share a baseline - their alpha boxes end at 77.4, 82.7, 94.0 and 94.5 percent of frame - so one anchor left the seedling hovering. Each stage now carries its own anchor in `PLANT_BASE`. **That table exists only to compensate for inconsistent art**: generating each species with a common baseline and frame would delete it.
+
+The interior slots were still in the retired SVG's pixel space, and were converted to percentages measured against the painted room.
+
+**Kon's first visit teaches by making the learner do each thing once** - take a seed, plant it, go inside, take a cushion, place it, move it - and advances on the action rather than on a Next button. A tutorial that can be clicked through teaches nothing. Replaying it through `使いかた` walks the same script with the claim steps already satisfied, so the explanation can be re-read without farming free plants; the claim functions check current holdings as well as the flags, so even an edited save cannot mint a second camellia. The replay is dismissible at every step, because holding someone who already knows the room until they put the cushion back down is a trap.
+
+The starter cushion was referenced by Task 3's migration but did not exist in the catalogue. It does now, as `floor-cushion-navy`, carrying both the supplied picture and a drawn fallback.
+
+**Growth is credited at exactly one point in the code**: the path out of a finished shift, which is reached only once the correction queue is empty. The credit id is the episode's own id, so replaying it credits nothing. The bonus for meeting a new word is decided against a snapshot taken when the shift *began* - reading mastery at the end would find the shift's own targets and pay the bonus every time, including on a replay, which is the farming the design forbids. A plant in storage does not grow, and the shift it sat out is not paid retroactively.
+
+Four tests cover it, and they play the game rather than calling the engine: the engine has been right since Task 2, what was unproven was that the app calls it once, at the right moment, with the right id.
+
+**A layout fault at 320px that only measurement would have found.** `.home-room` is a column flex box with centred items, so the dock sized itself to its own max-content - five 96px tracks - and eight of the fourteen furniture cards sat off the side of the screen with no way to reach them. One `width:100%` fixes it. Verified at 320, 390 and desktop: nothing off-screen, nothing under 28px, no nested scrolling.
+
+**The offline contract now covers the house.** Every picture the home can show is asserted to be on disk and in the service worker, and the check reads `GARDEN_ART_READY` rather than keeping a second list - so a plant added to the shop before its art exists fails the build. The 52MB of raw supplied PNGs under `assets/home/incoming-user/` are asserted *not* to be pre-cached.
+
+**Task 7 - all remaining asset generation - is delegated** to the image-generating session and remains open: 28 plant stage images, 13 decor replacements, 3 wallpapers. The full requirement, with every filename, the species table, the size budget and the acceptance check, is in `docs/superpowers/plans/2026-08-28-home-garden-task-7-assets.md`.
+
+Nothing else waits on it. The shop offers only plants whose art exists - `GARDEN_ART_READY` in `app.js` is the switch, and `pwa.test.mjs` fails the build if a species is put in the shop before its four files are on disk and in the service worker. Decor without a picture keeps rendering its vector, so the room is never empty mid-migration.
+
+The single most useful thing that task can do is generate each species with a consistent baseline and frame. `PLANT_BASE` in `app.js` exists only because the camellia set does not have one, and it needs a hand-measured row per species until that changes.
+
+340 tests, 0 failures. Cache `lantern-alley-v128`. Nothing committed: the plan forbids committing without the owner saying so.
+
+### 2026-08-28 - The garden is playable before it is painted
+
+Task 7 is the owner's to schedule and it was holding back seven of the eight plant species and the whole wallpaper feature. Neither actually needed the art to exist.
+
+**Every species is now in the shop, drawn from data.** A silhouette per kind, a colour per species, four sizes for the four stages. They are obviously drawings, which is the point - nobody mistakes one for finished art, and the garden can be played, priced and balanced now instead of after. The economy needed this more than the pictures did: eight species at 90 to 500 yen is a shop, one species at 120 is a placeholder.
+
+Every caller goes through one function, `plantFigure()`, so switching a species to real art is adding one line to `GARDEN_ART_READY` - the yard, both dock cards and the tutorial gift change together. The drawn stand-ins are built with their ground line at a known height, so they need no `PLANT_BASE` row; that table stays only for painted sets whose stages disagree.
+
+**Wallpaper is built.** `activeWallpaper` had been persisted since Task 3 with nothing to show and no way to choose. There is now a 壁紙 tab indoors, and the pattern lays over the walls and stops above the tatami, multiplying into the painting so the room keeps its own light rather than being covered by a flat sheet.
+
+The patterns are tiling SVG - 麻の葉 and 桜 - because a seamless repeat is what vector is genuinely best at: a few hundred bytes, no seam at any size, recolourable from data. A raster version can replace either by giving the entry an `image`.
+
+Ownership and the active choice are stored separately, so changing your mind never costs the roll already paid for. 無地 is free and draws nothing, because it is the room as painted.
+
+**Two faults found while checking it.**
+
+A drawn plant rendered at 350% of the yard's height. The CSS sized `.home-plant img` and not `.home-plant svg`, so the stand-ins fell back to the browser's default replaced-element size.
+
+Buying wallpaper did nothing at all, silently. `buy()` resolves ids against the furniture catalogue, so every wallpaper came back `unknown` and the handler - which only reported "not enough money" - said nothing. There is now a `buyWallpaper`, and the handler reports any refusal rather than leaving a tap that appears broken.
+
+342 tests, 0 failures. Cache `lantern-alley-v131`.
 
 ### 2026-08-28 - The home now carries its artwork instead of framing it
 
@@ -2132,11 +2157,12 @@ In the order that gets the most for the least:
 ### Mechanical rules, each of which exists because it was broken once
 
 - **Run `node research/balance-answers.mjs` after authoring questions.** By hand, the correct answer lands first far too often.
-- **Bump `CACHE_VERSION` in `sw.js`** (and the matching assertion in `pwa.test.mjs`) on every shipped change.
-- **Verify through the built artifact, not the dev server.** The dev server serves stale files.
+- **Bump `CACHE_VERSION` in `sw.js` on every shipped change.** It stamps `?v=` onto every script and stylesheet URL, which is the only thing that reliably defeats both caches. A test ties the two together, so forgetting fails the suite. `pwa.test.mjs` no longer pins the literal version - it used to, and every bump broke it.
+- **Do not verify through the built artifact.** That advice was written when the Artifact was the delivery surface; it is retired, and the build is now a cut-down demo. Verify against the served app, and read section 2 first - the service worker will hand you a stale shell, or even `index.html` in place of a URL it does not recognise, which looks exactly like a broken build.
 - **Prefer a test that renders over a test that matches source text.** `walkthrough.test.mjs` exists because a source-text suite passed while the game crashed.
 - **Check that a catalog id exists before using it as a target.** Eleven invented ids reached a draft in one sitting.
-- **Keep this file current.** On every change, update the affected sections and add a section 9 entry stating the reason, not just the edit.
+- **Keep this file current.** On every change, update the affected sections *and* add an entry stating the reason, not just the edit.
+- **New change-log entries go at the top of section 9, not at the top of the file.** Four entries have already collected above section 0, where a reader meets history before they meet the status. Sections 0, 6, 10 and 11 describe the present tense and go stale silently: if a change makes one of them untrue, fixing it is part of the change.
 - Remember that editing the local file does not update the desktop shortcut. See section 8.
 - Do not claim full N2 coverage. The project covers its own named vocabulary catalog.
 
