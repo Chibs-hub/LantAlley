@@ -1385,3 +1385,11 @@
     .home-target-ring{animation:home-pulse 1.6s ease-in-out infinite}
   }
   @keyframes home-pulse{50%{fill:rgba(255,212,137,.34)}}
+
+  /* What the map owes a returning learner: the shift they left half-done, and
+     how the day stands. Both were being tracked and neither was ever shown. */
+  .map-resume{margin-top:6px}
+  .map-day-status{
+    margin:8px 0 0; font-size:.8rem; color:#e3c48c; opacity:.9; text-align:center;
+  }
+  .map-day-status[hidden]{display:none}

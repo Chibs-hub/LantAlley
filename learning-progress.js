@@ -32,6 +32,8 @@
       // The room at わが家: what has been bought, and where it stands.
       home: {owned: [], placed: {}},
       homeVisited: false,
+      // The place the learner was last in, so the map can open there.
+      lastPlace: null,
       // Which shifts are finished, which places have been walked into, and any
       // shift left half-done. These are written by saveProgress and were being
       // dropped here, so every one of them was lost on reload.
@@ -93,6 +95,7 @@
         placed: clone((stored.home || {}).placed || {})
       };
       next.homeVisited = stored.homeVisited === true;
+      next.lastPlace = stored.lastPlace || null;
       next.episodesDone = (stored.episodesDone || []).slice();
       next.stageStarted = (stored.stageStarted || []).slice();
       next.episode = stored.episode ? clone(stored.episode) : null;

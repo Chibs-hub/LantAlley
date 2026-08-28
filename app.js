@@ -347,6 +347,7 @@
         pendingMasteredByStage = v3.masteredByStage || {};
         pendingHome = v3.home || {owned:[], placed:{}};
         pendingHomeVisited = v3.homeVisited === true;
+        pendingLastPlace = v3.lastPlace || null;
         pendingReviewProgress = v3.reviewProgress || {};
         pendingDaily = {
           dailyPractice: v3.dailyPractice || null,
@@ -440,6 +441,7 @@
         ,masteredByStage: state.masteredByStage || {}
         ,home: state.home || {owned:[], placed:{}}
         ,homeVisited: state.homeVisited === true
+        ,lastPlace: state.lastPlace || null
       }));
     }catch(e){ /* storage unavailable, progress just won't persist */ }
   }
@@ -455,6 +457,7 @@
       state.masteredByStage = {};
       state.home = {owned:[], placed:{}};
       state.homeVisited = false;
+      state.lastPlace = null;
       state.itemStates = {};
       state.episodesDone = {};
       state.stageStarted = {};
@@ -583,6 +586,16 @@
   // The episode as it stood at the last save: which question, what was missed,
   // and the correction queue if the round had started.
   var savedEpisode = null;
+
+  /* Which place the learner was last in.
+   *
+   * The resume machinery has always worked and has always been invisible: it
+   * fires when someone walks back into the place they left, and nothing ever
+   * told them which place that was. The map opened on a hardcoded default, so
+   * a learner halfway through a market shift came back looking at the finished
+   * inn. This is the one fact needed to point them at their own unfinished
+   * work. */
+  var pendingLastPlace = null;
   var pendingEpisodesDone = {};
   var pendingStageStarted = {};
   var pendingReviewProgress = {};
@@ -614,6 +627,11 @@
   state.masteredByStage = pendingMasteredByStage;
   state.home = pendingHome;
   state.homeVisited = pendingHomeVisited;
+  state.lastPlace = pendingLastPlace;
+  // Open the map where the learner actually was, not on a fixed default.
+  if(state.lastPlace && LanternAlleyMap.getDestination(state.lastPlace)){
+    selectedMapKey = state.lastPlace;
+  }
   state.reviewProgress = pendingReviewProgress;
   state.dailyPractice = pendingDaily.dailyPractice;
   state.streak = pendingDaily.streak;
@@ -813,6 +831,11 @@
       enterLocation("entrance");
     });
   });
+
+  $("map-resume").addEventListener("click", function(){
+    var key = this.getAttribute("data-resume-key");
+    if(key) enterLocation(key);
+  });
   $("map-detail-practice").addEventListener("click", function(event){
     event.stopImmediatePropagation();
     startCatalogPractice();
@@ -920,6 +943,19 @@
     if(action) enterLocation(action.locationKey);
   }
 
+  /* The place holding an unfinished shift, if there is one.
+   *
+   * `savedEpisode` has always known this and nothing ever said it out loud, so
+   * resuming depended on the learner remembering. It also has to be a place
+   * they can still get into: a shift saved somewhere that later reads as locked
+   * is not a lead, it is a dead end. */
+  function unfinishedPlace(){
+    if(!savedEpisode || !savedEpisode.locationKey) return null;
+    if(!locationUnlocked(savedEpisode.locationKey)) return null;
+    var place = LanternAlleyMap.getDestination(savedEpisode.locationKey);
+    return place || null;
+  }
+
   function renderMapDetail(){
     var place = LanternAlleyMap.getDestination(selectedMapKey) || LanternAlleyMap.getDestination("home-inn");
     var progressState = LanternAlleyMap.resolveState(place.key, state);
@@ -938,7 +974,44 @@
     mapDetailAction.style.display = action ? "inline-flex" : "none";
     mapDetailAction.textContent = action ? action.label : "";
 
+    /* An unfinished shift is the single most useful thing the map can say, so
+     * it is said on the map itself rather than left for the learner to
+     * remember. Pressing it goes straight back into the questions. */
+    var resume = $("map-resume");
+    var waiting = unfinishedPlace();
+    if(waiting){
+      resume.hidden = false;
+      resume.textContent = "「" + waiting.name + "」の仕事の続き →";
+      resume.setAttribute("data-resume-key", waiting.key);
+    }else{
+      resume.hidden = true;
+      resume.removeAttribute("data-resume-key");
+    }
 
+    /* How the day is going: the streak, and how much is due. Both were being
+     * tracked and neither was ever shown, which is the whole reason a learner
+     * would come back today rather than on Friday. */
+    var status = $("map-day-status");
+    var bits = [];
+    if(state.streak > 0){
+      bits.push("連続 " + state.streak + " 日目");
+      if(state.freezes > 0) bits.push("お休みの札 " + state.freezes);
+    }
+    var due = dueTodayCount();
+    if(due > 0) bits.push("今日の復習 " + due + " 問");
+    status.hidden = bits.length === 0;
+    status.textContent = bits.join("　・　");
+  }
+
+  // How many already-met words the schedule wants back today.
+  function dueTodayCount(){
+    if(typeof LanternReviewEngine === "undefined") return 0;
+    var open = {};
+    practicePartitions().forEach(function(key){
+      LanternCurriculumCatalog.getPartition(key).forEach(function(item){ open[item.id] = true; });
+    });
+    return LanternReviewEngine.getDueItems(state.reviewProgress || {}, Date.now())
+      .filter(function(id){ return open[id]; }).length;
   }
 
   $("romaji-switch").addEventListener("click", function(){
@@ -1750,6 +1823,10 @@
   function renderPreviewQuestion(){
     var entry = previewState.list[previewState.index];
     var question = entry.question;
+    /* The wallet is only written by renderHud and by a payout, so a learner
+     * resuming a shift read ¥0 until they got something right - their money
+     * was there, the HUD simply had never been painted for this screen. */
+    renderHud();
     // Before anything is rendered: the reading panel is built further down and
     // would otherwise gloss this question's own answer using the last
     // question's exclusions.
@@ -2295,6 +2372,10 @@
   function enterLocation(key){
     var loc = getLocation(key);
     if(!loc) return;
+    if(loc.key !== "home"){
+      state.lastPlace = loc.key;
+      saveProgress();
+    }
 
     screenTitle.style.display = "none";
     screenMap.style.display = "none";

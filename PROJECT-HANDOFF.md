@@ -2,6 +2,22 @@
 
 Last updated: 2026-08-27
 
+### 2026-08-28 - Approved home and garden reward design
+
+The owner approved layout C: `わが家` opens on an illustrated yard, and tapping the house opens the interior. Purchased seeds and saplings become permanent movable decorations and grow through completed learning rather than real time. Growth requires cleared correction rounds, first-time mastery may add a bonus, and replaying mastered material cannot farm growth.
+
+The approved first release uses layered raster art: one starter-house-and-yard background, transparent furniture and garden assets, eight invisible planting areas, and four visual stages per plant. Initial plants are cherry, maple, pine, hydrangea, camellia, iris, chrysanthemum, and a lantern-flower bed. Progress reserves a future `houseTier` so larger houses can be purchased later without losing owned items.
+
+First entry includes a one-time Kon tutorial covering both garden and interior decorating. The player claims and plants one free flower seed, then claims, places, and moves one free cushion. `How it works` can replay the explanation without granting duplicates. The full approved design is in `docs/superpowers/specs/2026-08-28-home-garden-rewards-design.md`. No images or implementation from this design have been added yet.
+
+Clothing remains a future shop category, but equipping clothing and generating complete pose sets are explicitly outside this first home-and-garden implementation.
+
+Implementation planning is complete in `docs/superpowers/plans/2026-08-28-home-garden-rewards.md`. The plan uses an image-backed vertical slice first, then a pure garden engine, migration, yard/interior UI, one-time tutorial, lesson-credit integration, full plant/decor asset generation, and adaptive/offline verification. No implementation from that plan has started yet.
+
+Plan self-review added the missing wallpaper path explicitly: plain washi, asanoha and sakura wallpaper are image-backed owned items, with one active wallpaper persisted independently from ownership.
+
+The owner supplied 21 source PNGs in `your-download.zip`. Inventory found one usable interior background, one wallpaper pattern, thirteen furniture/decor subjects needing background cleanup, and five mature garden candidates; there is no exterior background or complete four-stage plant set. The supplied navy cushion replaces the plan's placeholder red starter cushion. Missing Task 1 exterior and camellia stages will be generated to match the supplied interior.
+
 ## 0. Current status
 
 ### Golden Rule: Learning Integrity
@@ -202,6 +218,24 @@ location.reload();
 This was not hypothetical: a freshly edited `lantern-map.js` was served from the browser cache while a brand-new file beside it loaded fine, and the map silently rendered without わが家 on it.
 
 ## 9. Change log and reasons
+
+### 2026-08-28 - Tell the learner where they left off
+
+An audit of the save and resume path found that the machinery worked and none of it was visible. These are the fixes.
+
+**The resume was invisible.** `savedEpisode` restores a half-finished shift down to the question and the correction queue, and it fires only when the learner walks back into the place they left - which nothing ever named. The title screen said only 「訪れた場所 2/7」, and the map opened on a hardcoded `selectedMapKey = "home-inn"`, so someone halfway through a market shift came back looking at the finished inn. The map now opens on the place they were last in, and carries a button naming the unfinished shift that goes straight back into it. `lastPlace` is written on the way into a location and carried through migration.
+
+**The streak was tracked and never shown.** It is the main reason to come back tomorrow and the learner could not see it. The map now says 「連続 N 日目」 and how many freezes are in hand.
+
+**Nothing said what was due.** The spacing schedule prioritises due cards inside a practice session, but the button read 「コンの稽古　0 / 1415」 - known out of total - so there was no reason to come back today rather than on Friday. The map now says 「今日の復習 N 問」 when the schedule wants something back.
+
+**One freeze covered an unlimited gap.** Verified before the change: five-day streak, one freeze, eight days away, and the streak came back as six. A streak that survives a week off teaches the learner the number means nothing, which costs more than the streak was worth. One freeze now covers one missed day; a gap longer than the freezes held breaks the streak and keeps the unspendable freezes rather than burning them.
+
+**The wallet read \u00a50 during a resumed episode.** `renderHud` is what writes it and it was never called when an episode rendered, so a returning learner saw zero until their first correct answer paid out. Verified: the save held 120 and the HUD said 0.
+
+Also fixed while in there: a shift saved at a place that later reads as locked no longer offers a resume lead into a dead end.
+
+318 tests, 0 failures. Cache `lantern-alley-v125`.
 
 ### 2026-08-27 - Money finally buys something
 

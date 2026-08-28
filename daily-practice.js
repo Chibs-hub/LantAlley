@@ -90,10 +90,16 @@
       streak = 1;                       // first session ever
     }else if(gap <= 1){
       streak = streak + 1;              // yesterday, or the same day rolled over
-    }else if(freezes > 0){
-      freezes -= 1;
+    }else if(freezes >= gap - 1){
+      /* One freeze covers one missed day.
+       *
+       * It used to cover any gap at all, so a single held freeze carried a
+       * five-day streak across eight days away and reported six. A streak that
+       * survives a week off teaches the learner the number means nothing, which
+       * costs more than the streak was ever worth. */
+      freezes -= (gap - 1);
       frozen = true;
-      streak = streak + 1;              // one freeze covers the whole gap
+      streak = streak + 1;
     }else{
       streak = 1;                       // broken, and starting again today
     }

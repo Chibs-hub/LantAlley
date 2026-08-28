@@ -103,14 +103,30 @@ test("a missed day breaks the streak, unless a freeze covers it", () => {
   assert.equal(withFreeze.freezes, 1);
 });
 
-test("one freeze covers a whole gap, not one day of it", () => {
+test("one freeze covers one missed day, and a week away needs a week of them", () => {
   const p = load();
-  const start = { streak: 5, freezes: 1, lastActiveDate: "2026-08-20" };
-  // A week away. Holding one freeze should not be silently drained by seven.
-  const back = p.advanceStreak(start, at(2026, 8, 27));
-  assert.equal(back.freezes, 0, "exactly one freeze is spent");
-  assert.equal(back.streak, 6);
-  assert.equal(back.frozen, true);
+
+  // One day missed, one freeze held: the streak survives and the freeze goes.
+  const oneDay = p.advanceStreak(
+    { streak: 5, freezes: 1, lastActiveDate: "2026-08-25" }, at(2026, 8, 27));
+  assert.equal(oneDay.streak, 6);
+  assert.equal(oneDay.frozen, true, "the learner has to be told it fired");
+  assert.equal(oneDay.freezes, 0);
+
+  /* A week away on a single freeze must break the streak. A five-day streak
+   * that comes back as six after eight days off is not a streak, and a learner
+   * who notices stops believing the number. */
+  const weekAway = p.advanceStreak(
+    { streak: 5, freezes: 1, lastActiveDate: "2026-08-20" }, at(2026, 8, 28));
+  assert.equal(weekAway.streak, 1, "the streak starts again");
+  assert.equal(weekAway.frozen, false);
+  assert.equal(weekAway.freezes, 1, "an unspendable freeze is kept, not burned");
+
+  // Enough freezes for every missed day does carry it.
+  const stocked = p.advanceStreak(
+    { streak: 5, freezes: 9, lastActiveDate: "2026-08-20" }, at(2026, 8, 28));
+  assert.equal(stocked.streak, 6);
+  assert.equal(stocked.freezes, 2, "one freeze per missed day");
 });
 
 test("every seventh day pays a milestone", () => {
