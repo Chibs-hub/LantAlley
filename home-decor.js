@@ -33,7 +33,7 @@
      * It carries a picture as well as a drawing: the picture is used where it
      * loads, and the vector keeps the room intact if it does not. */
     {id:"floor-cushion-navy", name:"座布団", kind:"floor", price:50, category:"床",
-     image:"assets/home/decor/floor-cushion-navy-v1.png",
+     image:"assets/home/decor/floor-cushion-navy-v1.webp",
      svg:'<path d="M-46 8 L-30 -12 L34 -12 L50 8 L34 22 L-30 22 Z" fill="#2f4670" stroke="#1c2b47" stroke-width="3"/>'
        + '<path d="M-30 -12 L-14 4 L50 8" fill="none" stroke="#4a648f" stroke-width="2"/>'
        + '<path d="M-24 -6 L-8 0 M-6 -8 L10 -2 M12 -10 L28 -4" stroke="#d8cfae" stroke-width="2"/>'},

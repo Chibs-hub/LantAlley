@@ -39,11 +39,11 @@ test("home scenes use the production raster asset paths", () => {
   for(const assetPath of [
     scenes.yard.background,
     scenes.interior.background,
-    "assets/home/garden/camellia-planted-v1.png",
-    "assets/home/garden/camellia-sprout-v1.png",
-    "assets/home/garden/camellia-growing-v1.png",
-    "assets/home/garden/camellia-mature-v1.png",
-    "assets/home/decor/floor-cushion-navy-v1.png"
+    "assets/home/garden/camellia-planted-v1.webp",
+    "assets/home/garden/camellia-sprout-v1.webp",
+    "assets/home/garden/camellia-growing-v1.webp",
+    "assets/home/garden/camellia-mature-v1.webp",
+    "assets/home/decor/floor-cushion-navy-v1.webp"
   ]){
     assert.ok(fs.existsSync(new URL(`./${assetPath}`, import.meta.url)), `${assetPath} is missing`);
   }

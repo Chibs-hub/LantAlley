@@ -533,13 +533,13 @@ test("every picture the home can show is on disk and cached", () => {
   // A plant is only sold once its four stages exist; the app decides that with
   // GARDEN_ART_READY, so this reads the same list rather than a second copy.
   const ready = (app.match(/var GARDEN_ART_READY = \{([^}]*)\}/) || [, ""])[1];
-  const readyIds = [...ready.matchAll(/([a-z-]+)\s*:\s*true/g)].map((m) => m[1]);
-  assert.ok(readyIds.length >= 1, "at least one plant is sellable");
-  for (const id of readyIds) {
+  const painted = [...ready.matchAll(/([a-z-]+)\s*:\s*"(\w+)"/g)].map((m) => ({ id: m[1], ext: m[2] }));
+  assert.ok(painted.length >= 1, "at least one plant has painted art");
+  for (const { id, ext } of painted) {
     assert.ok(context.LanternHomeGarden.catalogue().some((t) => t.id === id),
       `GARDEN_ART_READY names "${id}", which is not a plant`);
     for (const stage of ["planted", "sprout", "growing", "mature"]) {
-      wanted.add(`assets/home/garden/${id}-${stage}-v1.png`);
+      wanted.add(`assets/home/garden/${id}-${stage}-v1.${ext}`);
     }
   }
 

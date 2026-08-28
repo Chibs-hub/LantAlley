@@ -2643,10 +2643,12 @@
   var homeTab = "garden";     // "garden" | "storage" | "shop"
   var homeNotice = "";
 
-  /* Only the camellia has its four growth pictures so far. The others are real
-   * entries in the engine and are tested, but offering one in the shop before
-   * its art exists would sell the learner a broken image. */
-  var GARDEN_ART_READY = {camellia:true};
+  /* Which species have painted art, and in what format.
+   *
+   * The value is the file extension rather than `true`, because the two
+   * questions - is it painted, and what is it called - always travel together.
+   * Adding a species is still one line: `"cherry-tree": "webp"`. */
+  var GARDEN_ART_READY = {camellia:"webp"};
 
   /* Stand-in art, so the whole garden is playable before it is painted.
    *
@@ -2738,7 +2740,7 @@
   }
 
   function plantHasArt(typeId){
-    return GARDEN_ART_READY[typeId] === true;
+    return !!GARDEN_ART_READY[typeId];
   }
 
   /* One picture of a plant, however it happens to be drawn today. Every caller
@@ -2800,7 +2802,8 @@
   }
 
   function plantArt(typeId, stage){
-    return "assets/home/garden/" + typeId + "-" + (stage || "planted") + "-v1.png";
+    return "assets/home/garden/" + typeId + "-" + (stage || "planted")
+      + "-v1." + (GARDEN_ART_READY[typeId] || "png");
   }
 
   function plantName(typeId){

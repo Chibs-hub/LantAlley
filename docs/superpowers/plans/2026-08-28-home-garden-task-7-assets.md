@@ -133,11 +133,21 @@ because it is the room as painted.
 
 ## Sizes
 
-The production files that exist are 155-296KB as WebP and 1.2-1.6MB as PNG. The
-PNGs are too heavy: everything here is pre-cached by the service worker, so the
-whole set is downloaded before a learner can play offline. Use WebP wherever alpha
-survives it, and keep PNG only where it gives cleaner transparent edges. Aim under
-200KB per asset.
+Everything here is pre-cached by the service worker, so the whole set downloads
+before a learner can play offline. Generate large, then cut down.
+
+The camellia set and the cushion arrived as 1.2-1.6MB PNGs at 1300-1700px wide,
+for pictures shown at roughly 150px. Resampled to 640px and saved as WebP at
+quality 88 they came to 27-90KB each - **6.8MB became 0.3MB, and nothing about
+how they look on screen changed.** The whole shipped asset set is now 720KB.
+
+So: **640px on the long edge, WebP with alpha, quality 88.** Keep PNG only where
+it genuinely gives cleaner transparent edges. `GARDEN_ART_READY` in `app.js`
+carries the extension per species, so either is fine - `"cherry-tree": "webp"`.
+
+Check the alpha bounding box before and after with a threshold (alpha > 24), not
+a raw `getbbox()`: lossy WebP leaves a haze of alpha 1-8 across the transparent
+area, which makes a raw box read as the whole frame.
 
 ## How to know it is done
 
