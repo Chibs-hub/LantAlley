@@ -147,7 +147,7 @@
   .character-option:hover,.character-option:focus-visible{transform:translateY(-3px);border-color:#ffd27a;background:rgba(82,45,27,.68);outline:3px solid #f2ad55;outline-offset:2px}
   .character-preview{display:block;width:min(150px,100%);aspect-ratio:1/2;margin:auto auto 3px;background-repeat:no-repeat;background-size:400% 100%;background-position:0 center;filter:drop-shadow(0 8px 5px rgba(0,0,0,.38))}
   .character-preview-man{background-image:url("assets/entrance/player-actions-v1.webp")}
-  .character-preview-woman{background-image:url("assets/entrance/player-actions-woman-v1.png")}
+  .character-preview-woman{background-image:url("assets/entrance/player-actions-woman-v1.webp")}
   @media(max-width:560px){.character-scene{padding:8px}.character-panel{padding:10px}.character-guide{gap:7px}.character-guide img{width:54px;height:54px}.character-options{gap:7px}.character-option{min-height:232px;padding:4px}.character-preview{width:108px}}
   [hidden]{display:none !important}
 
@@ -1305,9 +1305,24 @@
   .home-room{display:flex; flex-direction:column; align-items:center; gap:10px}
   .home-room-art{width:100%; max-width:650px; height:auto; border-radius:12px;
     border:1px solid var(--wood-edge); box-shadow:0 8px 24px rgba(20,10,4,.45)}
-  .home-room-note{margin:0; color:#f3e6d4; font-size:.95rem}
-  .home-room-note b{color:#ffe4a0}
+  /* These three lines sit directly on the game panel, which is a cream
+     gradient - not the dark alley background the rest of the home styling was
+     written against. Pale-on-pale measured 1.02:1, which is invisible rather
+     than merely low contrast. Dark ink on cream, and a deep amber for the
+     numbers instead of pale gold. */
+  .home-room-note{margin:0; color:#3d3228; font-size:.95rem}
+  .home-room-note b{color:#8a4b1c}
   #screen-game.home-stage .stage-phase-row{display:none!important}
+  /* Nothing is asked at home, so when Kon has nothing to say the speech panel
+     is an empty box with a mute button in it, taking a hundred pixels off the
+     top of the yard for no reason. */
+  #screen-game.home-stage #dialogue-shell.is-silent{display:none}
+  /* Nothing at home is a question, so the furigana switch has no sentence to
+     act on and the understanding gauge has no material to measure - a 理解度 0%
+     bar at your own house is both meaningless and discouraging. The wallet
+     stays: it is the one number the house is about. */
+  #screen-game.home-stage .romaji-toggle,
+  #screen-game.home-stage .mastery-hud{display:none}
 
   /* The attribution screen. Reachable from the title, dismissible three ways. */
   .title-about-link{
@@ -1363,9 +1378,9 @@
   /* The room at わが家, and the shop that fills it.
      Cards are large because this is a thumb interface, and the room itself is
      the only place in the game with no clock running. */
-  .home-goal{margin:6px 0 2px; text-align:center; font-size:.9rem; color:#e8d3ae}
-  .home-goal b{color:#ffd489}
-  .home-hint{color:#ffd489}
+  .home-goal{margin:6px 0 2px; text-align:center; font-size:.9rem; color:#4a3b2c}
+  .home-goal b{color:#8a4b1c}
+  .home-hint{color:#8a4b1c; font-weight:700}
   .home-tabs{display:flex; gap:8px; justify-content:center; margin:10px 0 8px}
   .home-tab{padding:6px 18px; border-radius:999px; cursor:pointer; font-size:.9rem;
     border:1px solid var(--wood-edge); background:#2b1f14; color:#e8d3ae}
@@ -1476,7 +1491,7 @@
   .home-card-art img, .home-card-art svg{width:100%; height:100%; object-fit:contain}
   .home-garden-list{
     grid-column:1/-1; margin:6px 0 0; padding-left:1.1em;
-    font-size:.8rem; opacity:.85; text-align:left;
+    font-size:.8rem; color:#4a3b2c; text-align:left;
   }
 
   /* Kon's first visit. The Japanese and the mechanical instruction are kept
@@ -1492,11 +1507,11 @@
   .home-card.is-gift{border-color:#ffd489; box-shadow:0 0 0 2px rgba(255,212,137,.4)}
   .home-card.is-gift .home-card-sub{color:#ffd489}
   .home-howto{
-    display:block; margin:10px auto 0; padding:5px 14px; border-radius:999px;
-    font-size:.78rem; cursor:pointer; opacity:.75;
+    display:block; margin:12px auto 0; padding:6px 14px; border-radius:999px;
+    font-size:.78rem; cursor:pointer; min-height:32px;
     border:1px solid var(--wood-edge); background:#2b1f14; color:#e8d3ae;
   }
-  .home-howto:hover{opacity:1}
+  .home-howto:hover{background:#3a2819}
 
   /* Wallpaper sits over the walls of the painted room, not over the tatami, and
      multiplies into the picture rather than covering it - the room keeps its

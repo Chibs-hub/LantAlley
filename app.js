@@ -63,7 +63,7 @@
 
   var PLAYER_ACTION_SPRITES = {
     man:"assets/entrance/player-actions-v1.webp",
-    woman:"assets/entrance/player-actions-woman-v1.png"
+    woman:"assets/entrance/player-actions-woman-v1.webp"
   };
   function playerActionSprite(){
     return PLAYER_ACTION_SPRITES[state.playerCharacter] || PLAYER_ACTION_SPRITES.man;
@@ -2482,6 +2482,14 @@
   function enterLocation(key){
     var loc = getLocation(key);
     if(!loc) return;
+    /* Only the home silences the speech panel or hides the furigana switch and
+     * the understanding gauge, so both are restored here.
+     *
+     * `home-stage` was being added by renderHome and never taken off again, so
+     * it followed the learner into every other place. Nothing depended on it
+     * until now, which is exactly why it went unnoticed. */
+    $("dialogue-shell").classList.remove("is-silent");
+    screenGame.classList.remove("home-stage");
     if(loc.key !== "home"){
       state.lastPlace = loc.key;
       saveProgress();
@@ -2695,14 +2703,18 @@
     $("scene-label").textContent = "わが家";
     $("narration").textContent = "路地の奥の部屋";
 
-    // Kon's welcome is the tutorial's first line on a first visit, so it is not
-    // also said here - the learner would be greeted twice.
+    /* Kon's welcome is the tutorial's first line on a first visit, so it is not
+     * also said here - the learner would be greeted twice. With nothing to say,
+     * the speech panel is an empty box and a mute button holding a hundred
+     * pixels above the yard, so it is taken out rather than left blank. */
     if(!state.homeTutorialComplete){
       $("jp-line").textContent = "";
+      $("dialogue-shell").classList.add("is-silent");
       startHomeTutorial(false);
       renderHud();
       return;
     }
+    $("dialogue-shell").classList.remove("is-silent");
 
     var line = "コン：「おかえりなさい。ゆっくりしていってください。」";
     if(dialogueFlow) dialogueFlow.start(line, false);
@@ -2734,12 +2746,24 @@
   var homeTab = "garden";     // "garden" | "storage" | "shop"
   var homeNotice = "";
 
-  /* Which species have painted art, and in what format.
+  /* Which species have painted art, and where each stage lives.
    *
-   * The value is the file extension rather than `true`, because the two
-   * questions - is it painted, and what is it called - always travel together.
-   * Adding a species is still one line: `"cherry-tree": "webp"`. */
-  var GARDEN_ART_READY = {camellia:"webp"};
+   * Spelled out rather than built from the id and the stage, because a path
+   * assembled at runtime never appears in the source - and the standalone
+   * build inlines assets by finding their paths in the source. Concatenating
+   * them meant every planted camellia was a broken image in the artifact while
+   * looking perfectly fine when served as files.
+   *
+   * The table is also the switch: a species with an entry is painted, one
+   * without is drawn. Adding a species is one block. */
+  var PLANT_ART = {
+    camellia: {
+      planted: "assets/home/garden/camellia-planted-v1.webp",
+      sprout:  "assets/home/garden/camellia-sprout-v1.webp",
+      growing: "assets/home/garden/camellia-growing-v1.webp",
+      mature:  "assets/home/garden/camellia-mature-v1.webp"
+    }
+  };
 
   /* Stand-in art, so the whole garden is playable before it is painted.
    *
@@ -2750,7 +2774,7 @@
    * the finished art, and the garden can be played and balanced now.
    *
    * Swapping in a real set is one line: drop the four PNGs into
-   * assets/home/garden/ and add the species to GARDEN_ART_READY. Nothing else
+   * assets/home/garden/ and add the species to PLANT_ART. Nothing else
    * changes, and pwa.test.mjs will fail the build if the files are not there.
    *
    * Because these are generated, every stage shares a baseline exactly, so no
@@ -2831,7 +2855,7 @@
   }
 
   function plantHasArt(typeId){
-    return !!GARDEN_ART_READY[typeId];
+    return !!PLANT_ART[typeId];
   }
 
   /* One picture of a plant, however it happens to be drawn today. Every caller
@@ -2893,8 +2917,8 @@
   }
 
   function plantArt(typeId, stage){
-    return "assets/home/garden/" + typeId + "-" + (stage || "planted")
-      + "-v1." + (GARDEN_ART_READY[typeId] || "png");
+    var set = PLANT_ART[typeId];
+    return set ? (set[stage || "planted"] || set.planted) : "";
   }
 
   function plantName(typeId){
@@ -3356,12 +3380,16 @@
     // learner walks through the door.
     if(!tabs.some(function(t){ return t[0] === homeTab; })) homeTab = tabs[0][0];
 
+    // No leading space now that this is a line of its own rather than a tail.
     var hint = homeSelected
-      ? '　<span class="home-hint">置きたい場所をえらんでください</span>' : '';
+      ? '<span class="home-hint">置きたい場所をえらんでください</span>' : '';
 
     $("scene").innerHTML = '<div class="home-room">'
       + (homeView === "yard" ? renderHomeYard() : renderHomeInterior())
-      + '<p class="home-room-note">持っているお金：<b>¥' + money + '</b>' + hint + '</p>'
+      /* The wallet is already in the HUD a few pixels above; printing it again
+       * under the picture was the same number twice. What is left is the line
+       * that says something the HUD cannot: what to do next. */
+      + (hint ? '<p class="home-room-note">' + hint + '</p>' : '')
       + homeGoalLine()
       + '<div class="home-tabs" role="tablist">'
       + tabs.map(function(t){

@@ -242,7 +242,7 @@ test("the illustrated Entrance scene and learner poses are available offline", (
 test("the offline build owns both player choices and the Inn scene set", () => {
   const worker = readFileSync(new URL("./sw.js", import.meta.url), "utf8");
   const assets = [
-    "assets/entrance/player-actions-woman-v1.png",
+    "assets/entrance/player-actions-woman-v1.webp",
     "assets/inn/scenes/guest-room.jpg",
     "assets/inn/scenes/lobby.jpg",
     "assets/inn/scenes/kitchen.jpg",
@@ -531,17 +531,20 @@ test("every picture the home can show is on disk and cached", () => {
   }
 
   // A plant is only sold once its four stages exist; the app decides that with
-  // GARDEN_ART_READY, so this reads the same list rather than a second copy.
-  const ready = (app.match(/var GARDEN_ART_READY = \{([^}]*)\}/) || [, ""])[1];
-  const painted = [...ready.matchAll(/([a-z-]+)\s*:\s*"(\w+)"/g)].map((m) => ({ id: m[1], ext: m[2] }));
-  assert.ok(painted.length >= 1, "at least one plant has painted art");
-  for (const { id, ext } of painted) {
+  // PLANT_ART, so this reads the same list rather than a second copy.
+  // PLANT_ART spells every stage path out, so this reads them rather than
+  // rebuilding the names and hoping the two agree.
+  const table = (app.match(/var PLANT_ART = \{([\s\S]*?)\n  \};/) || [, ""])[1];
+  const species = [...table.matchAll(/^\s{4}([a-z-]+):\s*\{/gm)].map((m) => m[1]);
+  assert.ok(species.length >= 1, "at least one plant has painted art");
+  for (const id of species) {
     assert.ok(context.LanternHomeGarden.catalogue().some((t) => t.id === id),
-      `GARDEN_ART_READY names "${id}", which is not a plant`);
-    for (const stage of ["planted", "sprout", "growing", "mature"]) {
-      wanted.add(`assets/home/garden/${id}-${stage}-v1.${ext}`);
-    }
+      `PLANT_ART names "${id}", which is not a plant`);
   }
+  const declared = [...table.matchAll(/"(assets\/home\/garden\/[^"]+)"/g)].map((m) => m[1]);
+  assert.equal(declared.length, species.length * 4,
+    "every painted species needs all four stages");
+  for (const path of declared) wanted.add(path);
 
   for (const path of wanted) {
     assert.equal(existsSync(new URL("./" + path, import.meta.url)), true,

@@ -279,6 +279,22 @@ This was not hypothetical: a freshly edited `lantern-map.js` was served from the
 
 ## 9. Change log and reasons
 
+### 2026-08-28 - Text you could not read, and a top of the screen doing nothing
+
+From a screenshot of the yard. Three things were wrong and one of them was invisible to every check made so far.
+
+**The text on the home screen was not low contrast, it was gone.** The money line and the goal line measured **1.02:1** against the panel behind them. The home styling was written against the dark alley background, but `#screen-game` paints a cream gradient, so pale-on-pale. An earlier contrast pass missed it because it read `backgroundColor` and walked straight past a `background-image` gradient to the dark page root - the check said 14:1 while the screen said otherwise. They are dark ink now, 5.7 to 13.8:1, all passing AA.
+
+**The top of the screen was an empty box.** On a first visit Kon's greeting belongs to the tutorial, so the speech line was blanked - leaving an empty panel and a mute button holding ninety pixels above the yard. It collapses when there is nothing to say, and returns everywhere else.
+
+**A broken image in the yard, only in the standalone build.** `plantArt` assembled its path from the id and the stage, so the finished path never appeared in the source - and the artifact build inlines pictures by finding their paths in the source. Every planted camellia was a broken image there while looking perfect served as files. `PLANT_ART` now spells all four stage paths out in full, and doubles as the "is it painted" switch that `GARDEN_ART_READY` used to be.
+
+**Two more things at home that meant nothing there**: the furigana switch, with no sentence to act on, and a 理解度 0% gauge for a place that has no material to learn - meaningless and quietly discouraging at your own house. Both hidden there, kept everywhere else. The wallet was also printed twice, in the HUD and again under the picture; the second one is gone and what remains is the line the HUD cannot say, which is what to do next.
+
+**A bug that had been harmless until now.** `home-stage` was added by `renderHome` and never removed, so the class followed the learner into every other place. Nothing read it, so nothing broke - until these rules were scoped to it and the furigana switch vanished at the Inn.
+
+342 tests, 0 failures. Cache `lantern-alley-v137`.
+
 ### 2026-08-28 - A UI sweep, and the one thing it found that cannot be fixed in CSS
 
 Audited every screen at 1024, 390 and 320 px against the same checks: sideways scroll, controls off the edge, touch targets under 24px, unnamed controls, controls covered by something else, broken images, and text clipped by its own box.

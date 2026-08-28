@@ -19,7 +19,7 @@ showing is drawn from data rather than painted, and it is meant to be replaced.
 **Swapping in a real plant set is one line of code:**
 
 1. Drop the four files into `assets/home/garden/` using the exact names below.
-2. Add `"{id}": true` to `GARDEN_ART_READY` in `app.js`.
+2. Add a block to `PLANT_ART` in `app.js` naming all four stage paths in full.
 3. Add the four paths to the shell list in `sw.js`.
 
 That is the whole change. `plantFigure()` in `app.js` is the only thing that
@@ -27,6 +27,12 @@ decides between painted and drawn, and every caller goes through it, so the
 shop card, the storage card, the yard and the tutorial gift all switch together.
 `pwa.test.mjs` fails the build if a species is switched on before its files are
 on disk and cached - which is the safety net, so use it.
+
+**Write the paths out in full, never build them by concatenation.** The
+standalone artifact build inlines pictures by finding their paths in the source,
+so a path assembled at runtime is invisible to it: every planted camellia was a
+broken image in the artifact while looking perfectly fine served as files.
+
 
 **Swapping in real decor** is even smaller: add `image: "assets/home/decor/{id}-v1.png"`
 to that item in `home-decor.js` and add the path to `sw.js`. **Keep the existing
@@ -56,7 +62,7 @@ candidates, not production assets; each needs cleanup and renaming.
 - New assets under `assets/home/garden/`, `assets/home/decor/`, `assets/home/interior/`
 - `home-garden.js` (only to add art metadata, not to change growth rules)
 - `home-decor.js` (only to add `image:` fields)
-- `app.js` (only `GARDEN_ART_READY` and, if the baselines below are met, deleting `PLANT_BASE`; the drawn stand-ins in `placeholderPlant`/`PLANT_TINT` can go once every species is painted)
+- `app.js` (only `PLANT_ART` and, if the baselines below are met, deleting `PLANT_BASE`; the drawn stand-ins in `placeholderPlant`/`PLANT_TINT` can go once every species is painted)
 - `sw.js` (every new asset must be pre-cached)
 - `PROJECT-HANDOFF.md`
 
@@ -142,8 +148,8 @@ quality 88 they came to 27-90KB each - **6.8MB became 0.3MB, and nothing about
 how they look on screen changed.** The whole shipped asset set is now 720KB.
 
 So: **640px on the long edge, WebP with alpha, quality 88.** Keep PNG only where
-it genuinely gives cleaner transparent edges. `GARDEN_ART_READY` in `app.js`
-carries the extension per species, so either is fine - `"cherry-tree": "webp"`.
+it genuinely gives cleaner transparent edges. `PLANT_ART` in `app.js` holds each
+stage path in full, so either extension is fine.
 
 Check the alpha bounding box before and after with a threshold (alpha > 24), not
 a raw `getbbox()`: lossy WebP leaves a haze of alpha 1-8 across the transparent
@@ -152,9 +158,9 @@ area, which makes a raw box read as the whole frame.
 ## How to know it is done
 
 `node --test` passes, including `pwa.test.mjs`'s "every picture the home can show
-is on disk and cached" - which reads `GARDEN_ART_READY` directly, so adding a
+is on disk and cached" - which reads `PLANT_ART` directly, so adding a
 species to the shop before its four files exist fails the build. Add each finished
-species to `GARDEN_ART_READY` in `app.js`; that is what puts it in the shop.
+species to `PLANT_ART` in `app.js`; that is what puts it in the shop.
 
 Then look at it: place one of each plant and each decor item, at desktop and at
 320px, and check nothing hovers, sinks, or overlaps.

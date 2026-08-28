@@ -13,7 +13,7 @@ test("new learners choose either accessible player character before the entrance
   assert.match(html, /data-character="woman"/);
   assert.match(html, /function showCharacterSelection/);
   assert.match(html, /state\.playerCharacter/);
-  assert.match(html, /player-actions-woman-v1\.png/);
+  assert.match(html, /player-actions-woman-v1\.webp/);
 });
 
 test("character choice uses the gate scene instead of two oversized paper cards", () => {

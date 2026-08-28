@@ -3,7 +3,7 @@
 // The split files remain the source of truth. The published artifact cannot
 // load sibling scripts, styles, images, or audio, so this build inlines them.
 
-import { readFileSync, writeFileSync, statSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync, statSync } from "node:fs";
 import vm from "node:vm";
 import { extname } from "node:path";
 
@@ -116,6 +116,10 @@ for (const name of scripts) {
 const images = [...html.matchAll(/["']((?:assets\/[^"']+|[\w.-]+\.ico))["']/g)]
   .map((match) => match[1])
   .filter((item, index, all) => all.indexOf(item) === index)
+  // Not every "assets/..." string in the source is a file. The garden builds
+  // its image URL from the literal "assets/home/garden/", and handing a
+  // directory to readFileSync throws EISDIR and takes the whole build with it.
+  .filter((item) => !item.endsWith("/") && existsSync(item) && statSync(item).isFile())
   .sort();
 
 for (const relative of images) {
