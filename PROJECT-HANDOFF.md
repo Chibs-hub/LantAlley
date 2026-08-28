@@ -279,6 +279,22 @@ This was not hypothetical: a freshly edited `lantern-map.js` was served from the
 
 ## 9. Change log and reasons
 
+### 2026-08-28 - The garden had no perspective
+
+From a screenshot: a planted camellia sitting on the gravel above its bed rather than in it, and looking stuck on rather than part of the picture.
+
+**The anchor arithmetic was right and the size was wrong.** The plant's foot landed at 59.9% and the bed spanned 57.8-62.2%, so by the numbers it was in the bed. But the plant's visible ink was **11.7% of the scene tall against a bed 4.4% tall** - nearly three times its own bed - so all of it rose out onto the gravel behind. Only the last two percent was ever inside.
+
+The cause is that every plant was drawn at a fixed 20% of the scene width, and the beds are not a fixed size: they run from 4.4% of the scene tall at the back to 12.0% at the front, because the yard is painted in perspective. A slot now carries a `scale` taken from its own bed's height, and one number, `PLANT_WIDTH`, sets the front row. The same mature camellia is now 8.1% wide in the back row and 21.9% at the front.
+
+**Feet moved from the middle of each bed to near its front edge.** Something standing in the middle of a bed drawn in perspective reads as standing behind it.
+
+Verified by measuring each plant's alpha box against the bed it was planted in: all eight feet inside, and a seedling is now 1.08x its bed's height rather than 2.7x.
+
+**The blending was a lighting mismatch, not a position one.** The yard is lit from the house at sunset; the plant art is lit flatly from the front. There is now a contact shadow, and a small warm grade - `saturate(.92) sepia(.10) brightness(.97)` - to pull a neutrally-lit cut-out toward the scene it is standing in. That is a dial rather than a fix: the real answer is generating the art to match the painting, which is Task 7's job.
+
+342 tests, 0 failures. Cache `lantern-alley-v139`.
+
 ### 2026-08-28 - Text you could not read, and a top of the screen doing nothing
 
 From a screenshot of the yard. Three things were wrong and one of them was invisible to every check made so far.

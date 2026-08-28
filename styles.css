@@ -1431,7 +1431,22 @@
      footprint rather than a corner that drifts as the picture scales. */
   /* A plant carries its own vertical anchor inline, because each growth stage
      sits at a different height inside its picture. */
+  /* Width comes from the slot now, because it varies with depth in the yard.
+     The shadow is what stops a cut-out looking pasted on: the painting lights
+     everything from the house, so anything standing in it needs to sit in that
+     light rather than float above it. */
   .home-plant, .home-item{position:absolute; width:20%; cursor:pointer; line-height:0}
+  /* Three small things, all of which stop a cut-out reading as pasted on.
+
+     The shadow gives it contact with the ground. The warm grade pulls a
+     neutrally-lit picture towards the scene's dusk - the yard is lit from the
+     house at sunset, and anything dropped into it lit flatly from the front
+     announces itself. And the plants sit under the same soft light overlay the
+     lanterns cast, rather than in front of it. */
+  .home-plant img, .home-plant svg{
+    filter:drop-shadow(0 2px 3px rgba(28,16,8,.55)) saturate(.92) sepia(.10) brightness(.97);
+  }
+  .home-item img, .home-item svg{filter:drop-shadow(0 2px 4px rgba(28,16,8,.45))}
   .home-item{width:18%; transform:translate(-50%,-70%)}
   /* svg as well as img: a drawn stand-in that is not sized here falls back to
      the browser's default replaced-element size and renders several times the

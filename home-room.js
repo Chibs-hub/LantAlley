@@ -30,23 +30,33 @@
   ];
 
   /* The eight beds, measured off the painting rather than estimated from it.
+   *
    * The two columns lean outward as they come forward, which is what gives the
-   * yard its depth - slots on a straight grid sat in the gravel. Each pair is
-   * the centre of the tilled soil, found by sampling the image. */
+   * yard its depth - slots on a straight grid sat in the gravel.
+   *
+   * `y` is where a plant's foot goes, near the front edge of its bed rather
+   * than the middle: something standing in the middle of a bed drawn in
+   * perspective reads as standing behind it.
+   *
+   * `scale` is the same perspective, applied to size. The back beds are 4.4%
+   * of the scene tall and the front ones 12.0%, so a plant drawn the same size
+   * in all eight towers nearly three times out of the back beds and onto the
+   * gravel. These are the bed heights as a fraction of the nearest row. */
   var YARD_SLOTS = [
-    {id:"garden-left-1",  x:33.2, y:60.0, kind:"garden", label:"左の花壇 1"},
-    {id:"garden-left-2",  x:28.5, y:67.1, kind:"garden", label:"左の花壇 2"},
-    {id:"garden-left-3",  x:26.2, y:77.4, kind:"garden", label:"左の花壇 3"},
-    {id:"garden-left-4",  x:24.3, y:91.3, kind:"garden", label:"左の花壇 4"},
-    {id:"garden-right-1", x:67.9, y:60.0, kind:"garden", label:"右の花壇 1"},
-    {id:"garden-right-2", x:69.8, y:67.1, kind:"garden", label:"右の花壇 2"},
-    {id:"garden-right-3", x:73.9, y:77.4, kind:"garden", label:"右の花壇 3"},
-    {id:"garden-right-4", x:75.6, y:91.3, kind:"garden", label:"右の花壇 4"}
+    {id:"garden-left-1",  x:33.2, y:61.4, scale:0.37, kind:"garden", label:"左の花壇 1"},
+    {id:"garden-left-2",  x:28.5, y:68.9, scale:0.52, kind:"garden", label:"左の花壇 2"},
+    {id:"garden-left-3",  x:26.2, y:79.6, scale:0.74, kind:"garden", label:"左の花壇 3"},
+    {id:"garden-left-4",  x:24.3, y:94.3, scale:1.00, kind:"garden", label:"左の花壇 4"},
+    {id:"garden-right-1", x:67.9, y:61.4, scale:0.37, kind:"garden", label:"右の花壇 1"},
+    {id:"garden-right-2", x:69.8, y:68.9, scale:0.52, kind:"garden", label:"右の花壇 2"},
+    {id:"garden-right-3", x:73.9, y:79.6, scale:0.74, kind:"garden", label:"右の花壇 3"},
+    {id:"garden-right-4", x:75.6, y:94.3, scale:1.00, kind:"garden", label:"右の花壇 4"}
   ];
 
   function cloneSlots(source){
     return source.map(function(slot){
-      return {id:slot.id, x:slot.x, y:slot.y, kind:slot.kind, label:slot.label};
+      return {id:slot.id, x:slot.x, y:slot.y, scale:slot.scale || 1,
+              kind:slot.kind, label:slot.label};
     });
   }
 

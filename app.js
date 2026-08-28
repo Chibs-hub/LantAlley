@@ -2794,6 +2794,11 @@
   // How tall each stage stands, as a fraction of the mature plant.
   var STAGE_SCALE = {planted:0.28, sprout:0.45, growing:0.72, mature:1};
 
+  /* A plant's width in the front row, as a percentage of the scene. Every bed
+   * takes a fraction of this from its own `scale`, so one number sets the
+   * whole garden's sense of size. */
+  var PLANT_WIDTH = 22;
+
   function placeholderPlant(typeId, stage){
     var tint = PLANT_TINT[typeId] || {leaf:"#4f7d4a", bloom:"#c4485c"};
     var type = (typeof LanternHomeGarden !== "undefined")
@@ -2989,8 +2994,12 @@
       var plant = byId[slot.id];
       if(!plant) return;
       var base = plantBase(plant.typeId, plant.stage);
+      /* Sized against its own bed, not against the scene. A camellia in the
+       * back row is a third the size of the same camellia at the front,
+       * because that is what the painting does with everything else in it. */
+      var width = (PLANT_WIDTH * (slot.scale || 1)).toFixed(2);
       html += '<div class="home-plant' + (plant.pendingAnimation ? " is-growing" : "") + '"'
-        + ' style="left:' + slot.x + '%;top:' + slot.y + '%;'
+        + ' style="left:' + slot.x + '%;top:' + slot.y + '%;width:' + width + '%;'
         + 'transform:translate(-50%,-' + base + '%)"'
         + ' data-plant="' + plant.id + '" role="button" tabindex="0"'
         + ' aria-label="' + plantName(plant.typeId) + ' をあつかう">'
