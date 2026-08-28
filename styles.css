@@ -1408,7 +1408,11 @@
      sits at a different height inside its picture. */
   .home-plant, .home-item{position:absolute; width:20%; cursor:pointer; line-height:0}
   .home-item{width:18%; transform:translate(-50%,-70%)}
-  .home-plant img, .home-item img, .home-item svg{width:100%; height:auto; display:block}
+  /* svg as well as img: a drawn stand-in that is not sized here falls back to
+     the browser's default replaced-element size and renders several times the
+     height of the whole yard. */
+  .home-plant img, .home-plant svg,
+  .home-item img, .home-item svg{width:100%; height:auto; display:block}
   .home-plant:hover, .home-item:hover{filter:brightness(1.12)}
 
   /* An empty place shows itself only while something is waiting to go into it,
@@ -1483,3 +1487,18 @@
     border:1px solid var(--wood-edge); background:#2b1f14; color:#e8d3ae;
   }
   .home-howto:hover{opacity:1}
+
+  /* Wallpaper sits over the walls of the painted room, not over the tatami, and
+     multiplies into the picture rather than covering it - the room keeps its
+     own light and shadow and simply gains a pattern. */
+  .home-wallpaper{
+    position:absolute; left:0; right:0; top:0; height:70%;
+    pointer-events:none; mix-blend-mode:multiply; opacity:.55;
+  }
+  .home-wallpaper-art{width:100%; height:100%; display:block}
+  .home-swatch{
+    display:block; width:100%; height:52px; overflow:hidden; border-radius:6px;
+    background:#e8dabd;
+  }
+  .home-swatch.is-plain{background:linear-gradient(160deg,#efe3c8,#d9c7a6)}
+  .home-swatch .home-wallpaper-art{height:52px}

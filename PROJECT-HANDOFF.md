@@ -52,6 +52,28 @@ The single most useful thing that task can do is generate each species with a co
 
 340 tests, 0 failures. Cache `lantern-alley-v128`. Nothing committed: the plan forbids committing without the owner saying so.
 
+### 2026-08-28 - The garden is playable before it is painted
+
+Task 7 is the owner's to schedule and it was holding back seven of the eight plant species and the whole wallpaper feature. Neither actually needed the art to exist.
+
+**Every species is now in the shop, drawn from data.** A silhouette per kind, a colour per species, four sizes for the four stages. They are obviously drawings, which is the point - nobody mistakes one for finished art, and the garden can be played, priced and balanced now instead of after. The economy needed this more than the pictures did: eight species at 90 to 500 yen is a shop, one species at 120 is a placeholder.
+
+Every caller goes through one function, `plantFigure()`, so switching a species to real art is adding one line to `GARDEN_ART_READY` - the yard, both dock cards and the tutorial gift change together. The drawn stand-ins are built with their ground line at a known height, so they need no `PLANT_BASE` row; that table stays only for painted sets whose stages disagree.
+
+**Wallpaper is built.** `activeWallpaper` had been persisted since Task 3 with nothing to show and no way to choose. There is now a 壁紙 tab indoors, and the pattern lays over the walls and stops above the tatami, multiplying into the painting so the room keeps its own light rather than being covered by a flat sheet.
+
+The patterns are tiling SVG - 麻の葉 and 桜 - because a seamless repeat is what vector is genuinely best at: a few hundred bytes, no seam at any size, recolourable from data. A raster version can replace either by giving the entry an `image`.
+
+Ownership and the active choice are stored separately, so changing your mind never costs the roll already paid for. 無地 is free and draws nothing, because it is the room as painted.
+
+**Two faults found while checking it.**
+
+A drawn plant rendered at 350% of the yard's height. The CSS sized `.home-plant img` and not `.home-plant svg`, so the stand-ins fell back to the browser's default replaced-element size.
+
+Buying wallpaper did nothing at all, silently. `buy()` resolves ids against the furniture catalogue, so every wallpaper came back `unknown` and the handler - which only reported "not enough money" - said nothing. There is now a `buyWallpaper`, and the handler reports any refusal rather than leaving a tap that appears broken.
+
+342 tests, 0 failures. Cache `lantern-alley-v131`.
+
 ## 0. Current status
 
 ### Golden Rule: Learning Integrity

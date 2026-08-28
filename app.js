@@ -2648,6 +2648,109 @@
    * its art exists would sell the learner a broken image. */
   var GARDEN_ART_READY = {camellia:true};
 
+  /* Stand-in art, so the whole garden is playable before it is painted.
+   *
+   * Seven of the eight species have no pictures yet. Rather than hide them and
+   * ship a shop with one thing in it, they are drawn from data: a silhouette
+   * per kind, a colour per species, and four sizes for the four stages. They
+   * are obviously drawings, which is the point - nobody will mistake one for
+   * the finished art, and the garden can be played and balanced now.
+   *
+   * Swapping in a real set is one line: drop the four PNGs into
+   * assets/home/garden/ and add the species to GARDEN_ART_READY. Nothing else
+   * changes, and pwa.test.mjs will fail the build if the files are not there.
+   *
+   * Because these are generated, every stage shares a baseline exactly, so no
+   * PLANT_BASE row is needed for a species until it gets real art.
+   */
+  var PLANT_TINT = {
+    "cherry-tree":     {leaf:"#5f8a52", bloom:"#e8a9bd"},
+    "japanese-maple":  {leaf:"#6a8a4e", bloom:"#c4543a"},
+    "pine-tree":       {leaf:"#3f6b46", bloom:"#3f6b46"},
+    "hydrangea":       {leaf:"#4f7d4a", bloom:"#7f8fc4"},
+    "camellia":        {leaf:"#3f6b46", bloom:"#c4485c"},
+    "iris":            {leaf:"#4f7d4a", bloom:"#7a6ab5"},
+    "chrysanthemum":   {leaf:"#4f7d4a", bloom:"#e0c25e"},
+    "lantern-flower-bed": {leaf:"#4f7d4a", bloom:"#e08a3c"}
+  };
+
+  // How tall each stage stands, as a fraction of the mature plant.
+  var STAGE_SCALE = {planted:0.28, sprout:0.45, growing:0.72, mature:1};
+
+  function placeholderPlant(typeId, stage){
+    var tint = PLANT_TINT[typeId] || {leaf:"#4f7d4a", bloom:"#c4485c"};
+    var type = (typeof LanternHomeGarden !== "undefined")
+      ? LanternHomeGarden.catalogue().filter(function(t){ return t.id === typeId; })[0] : null;
+    var kind = type ? type.kind : "flower";
+    var k = STAGE_SCALE[stage] || 1;
+    var h = (kind === "tree" ? 96 : kind === "shrub" ? 62 : 52) * k;   // above ground
+    var w = (kind === "tree" ? 62 : kind === "shrub" ? 74 : 40) * k;
+
+    // Drawn on a 120x120 box with the ground line at y=104, so every stage of
+    // every species stands on the same spot.
+    var art = '<ellipse cx="60" cy="104" rx="' + (16 + w * 0.22).toFixed(1)
+      + '" ry="5" fill="#4a3524" opacity="0.55"/>';
+
+    if(stage === "planted"){
+      art += '<path d="M60 104 q-3 -' + h.toFixed(0) + ' 4 -' + (h + 4).toFixed(0)
+        + '" stroke="' + tint.leaf + '" stroke-width="3" fill="none"/>'
+        + '<ellipse cx="' + (62 + w * 0.2).toFixed(1) + '" cy="' + (104 - h).toFixed(1)
+        + '" rx="7" ry="4" fill="' + tint.leaf + '"/>';
+      return art;
+    }
+
+    art += '<line x1="60" y1="104" x2="60" y2="' + (104 - h).toFixed(1)
+      + '" stroke="' + (kind === "tree" ? "#6b4530" : tint.leaf)
+      + '" stroke-width="' + (kind === "tree" ? 6 * k + 2 : 3).toFixed(1) + '"/>';
+
+    if(kind === "tree"){
+      art += '<circle cx="60" cy="' + (104 - h).toFixed(1) + '" r="' + (w * 0.55).toFixed(1)
+        + '" fill="' + tint.leaf + '"/>'
+        + '<circle cx="' + (60 - w * 0.34).toFixed(1) + '" cy="' + (104 - h * 0.82).toFixed(1)
+        + '" r="' + (w * 0.36).toFixed(1) + '" fill="' + tint.leaf + '"/>'
+        + '<circle cx="' + (60 + w * 0.34).toFixed(1) + '" cy="' + (104 - h * 0.82).toFixed(1)
+        + '" r="' + (w * 0.36).toFixed(1) + '" fill="' + tint.leaf + '"/>';
+    }else if(kind === "shrub"){
+      art += '<path d="M' + (60 - w * 0.5).toFixed(1) + ' 104 q0 -' + h.toFixed(0)
+        + ' ' + (w * 0.5).toFixed(1) + ' -' + h.toFixed(0)
+        + ' q' + (w * 0.5).toFixed(1) + ' 0 ' + (w * 0.5).toFixed(1) + ' ' + h.toFixed(0)
+        + ' Z" fill="' + tint.leaf + '"/>';
+    }else{
+      art += '<ellipse cx="' + (60 - w * 0.42).toFixed(1) + '" cy="' + (104 - h * 0.45).toFixed(1)
+        + '" rx="' + (w * 0.4).toFixed(1) + '" ry="' + (h * 0.16).toFixed(1)
+        + '" fill="' + tint.leaf + '"/>'
+        + '<ellipse cx="' + (60 + w * 0.42).toFixed(1) + '" cy="' + (104 - h * 0.6).toFixed(1)
+        + '" rx="' + (w * 0.4).toFixed(1) + '" ry="' + (h * 0.16).toFixed(1)
+        + '" fill="' + tint.leaf + '"/>';
+    }
+
+    // Flowers only once it is worth looking at, so the stages read differently.
+    if(stage === "growing" || stage === "mature"){
+      var blooms = stage === "mature" ? 3 : 1;
+      for(var i = 0; i < blooms; i++){
+        var bx = 60 + (i - (blooms - 1) / 2) * w * 0.44;
+        var by = 104 - h - (kind === "tree" ? -w * 0.2 : 2);
+        art += '<circle cx="' + bx.toFixed(1) + '" cy="' + by.toFixed(1)
+          + '" r="' + (5 + 3 * k).toFixed(1) + '" fill="' + tint.bloom + '"/>';
+      }
+    }
+    return art;
+  }
+
+  function plantHasArt(typeId){
+    return GARDEN_ART_READY[typeId] === true;
+  }
+
+  /* One picture of a plant, however it happens to be drawn today. Every caller
+   * goes through this, so the day the art lands nothing else has to change. */
+  function plantFigure(typeId, stage, label){
+    if(plantHasArt(typeId)){
+      return '<img src="' + plantArt(typeId, stage) + '" alt="' + (label || "") + '">';
+    }
+    return '<svg viewBox="0 0 120 120" class="home-plant-drawn" role="img" aria-label="'
+      + (label || "") + '">' + placeholderPlant(typeId, stage) + '</svg>';
+  }
+
   /* Where the plant meets the ground, per stage, as a percentage down its own
    * file. The four camellia pictures do not share a baseline - the seedling's
    * art stops at 77% of its frame and the mature bush at 94% - so anchoring
@@ -2662,6 +2765,9 @@
   var PLANT_BASE_FALLBACK = {planted:90, sprout:90, growing:92, mature:94};
 
   function plantBase(typeId, stage){
+    // A drawn stand-in is built with its ground line at y=104 of a 120 box, so
+    // its anchor is known exactly rather than measured.
+    if(!plantHasArt(typeId)) return 86.7;
     var rows = PLANT_BASE[typeId] || PLANT_BASE_FALLBACK;
     return rows[stage] || rows.mature || 92;
   }
@@ -2770,8 +2876,8 @@
         + 'transform:translate(-50%,-' + base + '%)"'
         + ' data-plant="' + plant.id + '" role="button" tabindex="0"'
         + ' aria-label="' + plantName(plant.typeId) + ' をあつかう">'
-        + '<img src="' + plantArt(plant.typeId, plant.stage) + '" alt="'
-        + plantName(plant.typeId) + '（' + (STAGE_JP[plant.stage] || plant.stage) + '）">'
+        + plantFigure(plant.typeId, plant.stage,
+            plantName(plant.typeId) + '（' + (STAGE_JP[plant.stage] || plant.stage) + '）')
         + '</div>';
     });
 
@@ -2779,6 +2885,16 @@
       slots.forEach(function(slot){ html += targetButton(slot, !!byId[slot.id]); });
     }
     return html + '</div>';
+  }
+
+  /* The chosen wallpaper, over the upper part of the room only.
+   *
+   * The room is a painting, so the pattern is laid over the walls rather than
+   * replacing them - it tints and textures what is already there, and stops
+   * above the tatami. 無地 draws nothing at all, which is the room as painted. */
+  function wallpaperLayer(){
+    var svg = LanternHomeDecor.wallpaperSvg(state.activeWallpaper || "wallpaper-plain");
+    return svg ? '<div class="home-wallpaper" aria-hidden="true">' + svg + '</div>' : "";
   }
 
   function renderHomeInterior(){
@@ -2791,7 +2907,8 @@
       ? decor.getItem(homeSelected.id) : null;
 
     var html = '<div class="home-scene home-interior-scene">'
-      + sceneLayer(interior.background, "わが家の部屋");
+      + sceneLayer(interior.background, "わが家の部屋")
+      + wallpaperLayer();
 
     html += '<button type="button" class="home-leave-house" data-leave-house="1"'
       + ' aria-label="庭へ戻る">庭へ戻る</button>';
@@ -2859,12 +2976,29 @@
           + gardenSummary();
       }
       waiting.forEach(function(plant){
-        html += dockCard('<img src="' + plantArt(plant.typeId, plant.stage) + '" alt="">',
+        html += dockCard(plantFigure(plant.typeId, plant.stage, ""),
           plantName(plant.typeId), STAGE_JP[plant.stage] || plant.stage,
           'data-pick-plant="' + plant.id + '"',
           (homeSelected && homeSelected.kind === "plant" && homeSelected.id === plant.id) ? " is-picked" : "");
       });
       return html + gardenSummary();
+    }
+
+    if(homeTab === "wallpaper"){
+      /* Owned and active are separate, so changing your mind never costs the
+       * roll you already paid for. A pattern you own is always one tap away. */
+      LanternHomeDecor.wallpapers().forEach(function(paper){
+        var owned = LanternHomeDecor.ownsWallpaper(homeState(), paper.id);
+        var active = (state.activeWallpaper || "wallpaper-plain") === paper.id;
+        var swatch = paper.hasPattern
+          ? '<span class="home-swatch">' + LanternHomeDecor.wallpaperSvg(paper.id) + '</span>'
+          : '<span class="home-swatch is-plain"></span>';
+        html += dockCard(swatch, paper.name,
+          active ? "使用中" : (owned ? "はる" : "¥" + paper.price),
+          (owned ? 'data-wallpaper="' : 'data-buy-wallpaper="') + paper.id + '"',
+          active ? " is-picked" : (owned || money >= paper.price ? "" : " is-locked"));
+      });
+      return html;
     }
 
     if(homeTab === "storage"){
@@ -2889,8 +3023,7 @@
     if(homeView === "yard"){
       if(typeof LanternHomeGarden === "undefined") return '<p class="home-empty">店はまだ開いていません。</p>';
       LanternHomeGarden.catalogue().forEach(function(type){
-        if(!GARDEN_ART_READY[type.id]) return;
-        html += dockCard('<img src="' + plantArt(type.id, "mature") + '" alt="">',
+        html += dockCard(plantFigure(type.id, "mature", ""),
           PLANT_JP[type.id] || type.name, "¥" + type.price,
           'data-buy-plant="' + type.id + '"',
           money >= type.price ? "" : " is-locked");
@@ -3105,7 +3238,7 @@
     var step = tutorialStep();
     if(!step || homeTutorialReplay) return "";
     if(step.id === "claim-seed" && homeView === "yard"){
-      return dockCard('<img src="' + plantArt(STARTER_PLANT, "mature") + '" alt="">',
+      return dockCard(plantFigure(STARTER_PLANT, "mature", ""),
         PLANT_JP[STARTER_PLANT], "ただ", 'data-claim="plant"', " is-gift");
     }
     if(step.id === "claim-cushion" && homeView === "interior"){
@@ -3124,7 +3257,7 @@
     var money = state.money || 0;
     var tabs = homeView === "yard"
       ? [["garden", "庭"], ["shop", "店"]]
-      : [["storage", "持ち物"], ["shop", "店"]];
+      : [["storage", "持ち物"], ["wallpaper", "壁紙"], ["shop", "店"]];
     // A tab that belongs to the other scene must not stay selected when the
     // learner walks through the door.
     if(!tabs.some(function(t){ return t[0] === homeTab; })) homeTab = tabs[0][0];
@@ -3264,6 +3397,36 @@
       saveProgress();
       paintHome();
       homeSay("買いました。植えたい花壇をえらんでください。");
+      return;
+    }
+
+    var setPaper = event.target.closest("[data-wallpaper]");
+    if(setPaper){
+      state.activeWallpaper = setPaper.getAttribute("data-wallpaper");
+      saveProgress();
+      paintHome();
+      return;
+    }
+
+    var buyPaper = event.target.closest("[data-buy-wallpaper]");
+    if(buyPaper){
+      var paperId = buyPaper.getAttribute("data-buy-wallpaper");
+      var paid = decor.buyWallpaper(homeState(), state.money || 0, paperId);
+      if(!paid.ok){
+        // Never fail in silence: a tap that does nothing reads as a broken app.
+        homeSay(paid.reason === "poor"
+          ? "お金が足りません。もう少し稼ぎましょう。"
+          : "その壁紙は今は買えません。");
+        return;
+      }
+      state.home = paid.home;
+      state.money = paid.money;
+      // Bought and up: nobody buys wallpaper to leave it rolled in a cupboard.
+      state.activeWallpaper = paperId;
+      playCoinSound();
+      saveProgress();
+      paintHome();
+      homeSay("はりました。");
       return;
     }
 
