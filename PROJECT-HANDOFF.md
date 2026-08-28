@@ -1,6 +1,6 @@
 # Lantern Alley Project Handoff
 
-Last updated: 2026-08-27
+Last updated: 2026-08-28
 
 ### 2026-08-28 - Approved home and garden reward design
 
@@ -101,19 +101,29 @@ Buying wallpaper did nothing at all, silently. `buy()` resolves ids against the 
 
 Every place covers all five official item types. The four written ones - 表記, 語形成, 文の組み立て, 文章の文法 - live in each place's second episode, because a spelling cannot be heard and a sentence you assemble is one you are looking at.
 
-**Verification.** 271 automated tests pass, 0 fail. Bare `node --test` is the correct command. The standalone artifact is 14.89 MB and the service-worker cache is `lantern-alley-v107`.
+**Verification.** 342 automated tests pass, 0 fail. Bare `node --test` is the correct command. The service-worker cache is `lantern-alley-v141`.
 
-**Mastery and earnings.** The stage HUD now shows a persistent understanding gauge and wallet. Mastery is the percentage of distinct authored targets answered correctly, never attempts or speed. Correct answers pay once per question (Learn ¥10, Practice ¥15, Challenge ¥25, correction ¥10), so replay cannot farm money. Places unlock in order only when the previous place reaches 100%: Entrance, Inn, Market, Teahouse, Station, Shrine. Existing completed episodes are converted into mastered targets on load. Locked map places remain visible and explain the 100% requirement. Money spending is intentionally deferred until its learning purpose is designed.
+**Mastery and earnings.** The stage HUD now shows a persistent understanding gauge and wallet. Mastery is the percentage of distinct authored targets answered correctly, never attempts or speed. Correct answers pay once per question (Learn ¥10, Practice ¥15, Challenge ¥25, correction ¥10), so replay cannot farm money. Places unlock in order only when the previous place reaches 100%: Entrance, Inn, Market, Teahouse, Station, Shrine. Existing completed episodes are converted into mastered targets on load. Locked map places remain visible and explain the 100% requirement. Money now buys something: see **the house and garden** below.
 
 The correction round now keeps a missed target in rotation until it is answered correctly. After three misses it reveals the answer, then asks it again later; it no longer drops the target while still allowing the mastery gauge to claim completion.
 
 Normal Inn word-choice questions no longer repeat the room inventory description above the answers. The Japanese request, English interaction instruction and answer choices are the complete question surface; room clues remain available only when the illustrated room interaction needs them.
 
+**The house and garden.** `わが家` sits in the middle of the map and is never locked - coins may decide what goes inside it, but nothing about understanding decides whether a learner can go home. It opens on an illustrated yard; the house leads to an interior. Kon's first visit hands over a free camellia seed and a free cushion and makes the learner plant, place and move something once, advancing on the action rather than on a Next button; `使いかた` replays the explanation without handing anything out twice.
+
+Furniture is bought and placed in six named slots, one item per slot, one slot per item - moving something empties the corner it came from, and placing into an occupied one swaps and says which item went back. Plants are bought and planted in eight beds and **grow from finished work only**: one point when a shift is cleared past its correction round, one more if that shift introduced a word the learner did not already hold. The credit is keyed by the episode's own id, so replaying it grows nothing. A plant in storage does not grow, and the shift it sat out is not paid retroactively.
+
+Wallpaper is bought and hung; ownership and the active choice are stored separately, so changing your mind never costs the roll already paid for.
+
+**What the reward system still owes.** Only the camellia is painted. The other seven species are drawn from data - obviously drawings, deliberately - so the garden can be played and priced now. Thirteen of the fourteen furniture items still render as their vector. Switching a species to painted art is one block in `PLANT_ART`; the full requirement is `docs/superpowers/plans/2026-08-28-home-garden-task-7-assets.md`.
+
 **The one open decision.** Audio has not been generated for the four newer places. The course speaks 620 lines; 114 have clips. Inlining the remaining 506 would take the artifact to roughly 31 MB against a hard 16 MB limit, so on 2026-08-27 the owner chose to skip the audio run for now and to drop the Artifact as the delivery surface later, so that the finished game can ship with its voice. Nothing has been sent to Microsoft Edge TTS.
 
 **What that costs today.** On the four newer places a listening item is read rather than heard. The clock is paced by the length of the line instead of by a recording, so nothing is unplayable, but the five-second items are tighter than they are at the Inn, where the clip plays first and the learner has already heard the request before the clock starts.
 
-**Still outstanding.** The Japanese has not been reviewed by the owner, who is a native speaker and reviews after authoring rather than during. The two dashed test controls - **Skip to next day** and **Preview Episode** - still ship in the build.
+**Coming back.** A half-finished shift has always been restored down to the question and the correction round, and until 2026-08-28 nothing ever said so: the map opened on a fixed default and the learner had to remember where they were. The map now opens on the place they were last in and names the unfinished shift on a button that goes straight back into it. It also shows the streak and how many words the schedule wants back today, both of which were tracked and never shown. One freeze covers one missed day, not an unlimited gap.
+
+**Still outstanding.** The Japanese has not been reviewed by the owner, who is a native speaker and reviews after authoring rather than during - and that now includes Kon's eight tutorial lines at the house and every string in the garden and shop. The two dashed test controls - **Skip to next day** and **Preview Episode** - still ship in the build.
 
 ## 1. Project summary
 
@@ -132,10 +142,16 @@ The project covers its own named vocabulary catalog. It does not claim complete 
 
 No installation or package manager is required.
 
-1. Open `index.html` in Microsoft Edge, Google Chrome, or another modern browser.
-2. Select `路地へ入る`.
-3. Open `Moonview Inn` from the map.
-4. If an older version is visible after an update, press `Ctrl+F5`.
+1. Serve the folder over HTTP rather than opening the file directly - a service worker will not run from `file://`, so offline install and caching are silently absent. Any static server does; this repo's `.claude/launch.json` runs `python -m http.server 8743`.
+2. Open `http://localhost:8743/index.html`, select `路地へ入る`, then open `Moonview Inn` from the map.
+3. Add `?review=1` to open the owner's Japanese review mode.
+
+**Seeing an old version after a change is the most common way to waste an hour here, and `Ctrl+F5` does not fix it.** There are two separate caches:
+
+- The **service worker**, which serves the app shell cache-first. It also intercepts URLs it does not know: while testing, it quietly served `index.html` in place of `lantern-alley-artifact.html`, which looked exactly like a broken build. Bump `CACHE_VERSION` in `sw.js`, or unregister it in DevTools > Application.
+- The **browser's own HTTP cache**, which holds each script. Every local script and stylesheet URL carries `?v=<CACHE_VERSION>`, so bumping that one number defeats both. Always bump it after editing anything the page loads - a test ties the two together so a forgotten bump fails the suite.
+
+A `?bust=anything` on the page URL only reloads `index.html` itself; the scripts underneath still come from cache with their old `?v=`. Bump the version.
 
 Japanese audio plays from pre-rendered neural-voice MP3s, so pronunciation is identical on every device. If a line has no clip the game falls back to browser speech synthesis.
 
@@ -217,6 +233,12 @@ Browser progress is not part of the project folder. Copying the folder transfers
 | `review-engine.js` | The correction queue and the spaced-review intervals. Caps a card at three tries. |
 | `learning-progress.js` | The v3 progress model. |
 | `catalog-practice.js` | Tier 2: builds reading, meaning and cloze cards from the catalog. |
+| `home-room.js` | Scene metadata for `わが家`: the yard and interior backgrounds, six interior slots and eight garden beds. Every coordinate is a **percentage** of a 16/9 scene, and each bed carries a `scale` from its own measured height so plants shrink with the painting's perspective. `baseRoomSvg()` is the fallback for a scene whose image will not load. |
+| `home-decor.js` | Furniture and wallpaper. Owns the two rules worth testing: an item is in one slot at a time, and placing into an occupied slot swaps rather than destroys. Wallpaper is separate - never placed, only one active - and its patterns are tiling SVG. |
+| `home-garden.js` | The pure garden engine: plant instances, placement, movement, storage, and growth credited by `creditLesson(garden, creditId, bonus)`. Immutable throughout; every rule that stops replay farming lives here. |
+| `learning-economy.js` | What a correct answer pays, and which places are unlocked. `award()` pays once per question id, so replay cannot farm money. |
+| `daily-practice.js` | The practice session's earnings, the accuracy gate, and the streak. One freeze covers one missed day. |
+| `review-mode.js` | The owner's in-app Japanese review, reached with `?review=1`. Builds an index of all 215 authored items, stores marks under its own storage key so reviewing never disturbs a save, and exports a plain-text report. |
 | `lantern-map.js` | The map model. Node-testable, no DOM. |
 | `entrance-stage-logic.js` | The Entrance, plus the shared dialogue reveal controller. |
 | `moonview-inn-interactions.js` | Pure state engine for the Inn's room interactions. |
@@ -2048,9 +2070,12 @@ The old single-file `lantern-alley.html` had no `<meta charset>`, so browsers de
 
 - **No audio on four of the five places.** 506 of the 620 spoken lines have no clip. Listening items there are read rather than heard, and on a device with no Japanese voice they are silent. This is a deliberate, recorded decision, not an oversight - see section 0.
 - **The five-second items are tighter without audio.** At the Inn the clip plays before the clock starts, so the request has already been heard. Elsewhere the learner reads it cold.
-- **The Japanese has not been reviewed.** 200 questions, five story arcs and every piece of Kon's dialogue were authored in this project and have not been checked by a native speaker. The owner reviews after authoring.
+- **The Japanese has not been reviewed.** 200 questions, five story arcs, every piece of Kon's dialogue, the eight tutorial lines at the house and every garden and shop string were authored in this project and have not been checked by a native speaker. The owner reviews after authoring. `?review=1` opens the in-app review mode, which walks all 215 items in place with the clock off and an おかしい checkbox.
 - **Two test controls still ship.** **Skip to next day** and **Preview Episode** are dashed buttons in the live build.
-- ~~The Artifact cannot carry the finished game.~~ Resolved on 2026-08-27: the Artifact is retired and the app is the product. See section 8.
+- ~~The Artifact cannot carry the finished game.~~ Resolved on 2026-08-27: the Artifact is retired and the app is the product. See section 8. It was rebuilt on 2026-08-28 purely as a **link to test on a phone** - a demo build with a cut-down catalogue at 14.10 MB, against a 15 MB self-imposed ceiling and a 16 MB hard limit. It is not the delivery surface.
+- **Tap targets in the Inn's illustrated room are small on a phone.** At 390px the stove zone is 51x18 and the broken bulb 23x23; four are under 24px at 320px. They cannot simply be enlarged - neighbouring zones are 29 to 45 px apart centre to centre, so a comfortable hit area would overlap the next zone and steal its taps. The fix is spacing them further apart in the artwork, which is a scene decision.
+- **53.9 MB of the 58.5 MB of PNG/JPG under `assets/` is unreferenced** - leftover originals from before the JPG and WebP conversions. Harmless at runtime, but it is most of the working tree, and it is already in git history so deleting it does not shrink a clone.
+- **Only one of eight plant species is painted**, and thirteen of fourteen furniture items still render as vector. Deliberate: the garden ships playable on stand-ins rather than waiting. See section 11.
 - **Catalog provenance is incomplete.** The exact OpenJLPT commit used for the local copies was not recorded. The licence chain itself is now verified and recorded in `NOTICE.md`; only the version is missing.
 - **No grammar or kanji catalog is approved**, so the project may claim coverage only of its named vocabulary catalog. Candidate sources are in section 14; KANJIDIC2's licence is now verified.
 - **The Inn is entered through its old three-day stage**, while the four newer places drop straight into their first episode. The two entry paths are different by history rather than by design.
@@ -2062,9 +2087,10 @@ In the order that gets the most for the least:
 1. **Native review of the Japanese.** Everything else is cheap to change; this is the thing only the owner can do. `generate-audio.py` hashes its input, so corrections cost only the lines that changed.
 2. ~~Decide the delivery surface.~~ Settled on 2026-08-27: the app is the product, the Artifact is retired. The audio run is no longer blocked by size.
 3. **Generate the audio** once the surface is known. `collect-spoken-lines.js` already walks every stage, so the run needs no code change. A local open TTS model (section 14) would also remove the external-service approval gate, since nothing would leave the machine.
-4. **Remove or flag the two test controls.** Left until last on purpose: every step above is verified through them. Note that they are currently the only quick way into a later episode without replaying what comes before, so removing them should come with a proper way to resume a place.
-5. **Give the four newer places their scene art.** They render on the shared workspace today. Nothing depends on this; it is the visible half of the work.
-6. **Reconcile the Inn's two entry paths** so all five places are entered the same way.
+4. **Generate the home and garden art** - 28 plant stage images and 13 furniture replacements. The whole system runs without it, so this is presentation rather than function, but it is the difference between a garden and a diagram. The complete requirement, with filenames, sizes and the one constraint that matters (consistent baselines per species), is in `docs/superpowers/plans/2026-08-28-home-garden-task-7-assets.md`.
+5. **Remove or flag the two test controls.** Left until last on purpose: every step above is verified through them. The objection that used to block this - that they were the only quick way back into a place - is gone: the map now names an unfinished shift and goes straight back into it.
+6. **Give the four newer places their scene art.** They render on the shared workspace today. Nothing depends on this; it is the visible half of the work. The home is now the worked example of how a place with real artwork should be put together - the picture is the stage rather than a picture on it, and the interface floats over it.
+7. **Reconcile the Inn's two entry paths** so all five places are entered the same way.
 
 ## 12. Handoff rules for the next developer or AI session
 
@@ -2185,7 +2211,11 @@ Word-level audio mapped to JMdict IDs is a different thing from what the game ne
 3. Record the exact version, commit or release used, in `research/`, next to the data.
 4. Check the size cost before committing to anything that ships inside the artifact.
 
-## 2026-08-28 Home and garden visual foundation
+## 15. Home and garden build log (tasks 1-3)
+
+Written by the session that built the first three tasks of the home-and-garden plan, and left below section 14 rather than in the change log. Kept as-is because it records asset decisions - which supplied images were used, which were rejected and why - that nothing else captures. The narrative summary of the same work, and of tasks 4 to 8, is in section 9.
+
+### 2026-08-28 Visual foundation
 
 - Added `LanternHomeRoom.scenes()` with a raster yard, eight percentage-positioned garden slots, a house hotspot, and the existing interior slots. `slots()` remains the interior compatibility API and `baseRoomSvg()` remains temporarily.
 - Production assets: generated `starter-house-yard-v1.webp` and four camellia growth stages; converted supplied `imgi_76_1787837606.png` to `starter-room-v1.webp`; extracted supplied `imgi_71_1787837436.png` as `floor-cushion-navy-v1.png`.
