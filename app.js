@@ -3216,15 +3216,57 @@
     return lines.length ? '<ul class="home-garden-list">' + lines.join("") + '</ul>' : "";
   }
 
-  function homeGoalLine(){
+  /* What the shop still holds, across all three of its shelves.
+   *
+   * This used to ask `LanternHomeDecor.nearestUnaffordable`, which knows only
+   * about furniture. Once the shop began selling plants and wallpaper the line
+   * was answering a question about a third of the stock, and its empty case
+   * made things worse: a null there means "nothing is currently out of reach",
+   * and it was being read as "you own everything". A learner with 2,120 yen,
+   * five unbought species and thirteen unbought furniture items was being told
+   * the shop was cleared out. */
+  function homeWants(){
     var money = state.money || 0;
-    var next = LanternHomeDecor.nearestUnaffordable(homeState(), money);
+    var home = homeState();
+    var wanted = [];
+
+    LanternHomeDecor.catalogue().forEach(function(item){
+      if(!LanternHomeDecor.owns(home, item.id)) wanted.push({name:item.name, price:item.price});
+    });
+    LanternHomeDecor.wallpapers().forEach(function(paper){
+      if(!LanternHomeDecor.ownsWallpaper(home, paper.id)) wanted.push({name:paper.name, price:paper.price});
+    });
+    if(typeof LanternHomeGarden !== "undefined"){
+      LanternHomeGarden.catalogue().forEach(function(type){
+        wanted.push({name:PLANT_JP[type.id] || type.name, price:type.price});
+      });
+    }
+
+    var short = wanted.filter(function(w){ return w.price > money; })
+                      .sort(function(a, b){ return a.price - b.price; })[0];
+    return {
+      // Nothing left to buy at all.
+      empty: wanted.length === 0,
+      // Something is out of reach, and how far.
+      next: short ? {name:short.name, short:short.price - money} : null,
+      // Everything left is affordable, which is a different thing entirely.
+      affordable: wanted.length > 0 && !short
+    };
+  }
+
+  function homeGoalLine(){
     /* The gap between what a learner has and the next thing they want is the
      * part that brings them back tomorrow, so it is said out loud. */
     if(homeNotice) return '<p class="home-goal">' + homeNotice + '</p>';
-    return next
-      ? '<p class="home-goal">あと <b>¥' + next.short + '</b> で「' + next.name + '」が買えます。</p>'
-      : '<p class="home-goal">お店のものは全部そろいました。</p>';
+    var want = homeWants();
+    if(want.next){
+      return '<p class="home-goal">あと <b>¥' + want.next.short + '</b> で「'
+        + want.next.name + '」が買えます。</p>';
+    }
+    if(want.affordable){
+      return '<p class="home-goal">お店のものは今なら全部買えます。</p>';
+    }
+    return '<p class="home-goal">お店のものは全部そろいました。</p>';
   }
 
   /* ---- Kon's first visit ----

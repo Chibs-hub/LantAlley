@@ -233,6 +233,20 @@ This was not hypothetical: a freshly edited `lantern-map.js` was served from the
 
 ## 9. Change log and reasons
 
+### 2026-08-28 - Free placement checked end to end, and two things it got wrong
+
+Played the whole home rather than reading it. Buying, placing, moving, storing, clearing, restoring, wallpaper, both scenes, desktop and 320px.
+
+**What holds.** The neutral yard loads and offers all 24 positions, two of them marked as occupied so a swap is visible before you commit. A plant bought in the shop arrives in storage, appears in 飾る, and can be placed anywhere - I put a cherry in `garden-free-22`, a position that did not exist under the old bed model. Tapping a planted thing puts it away with its growth intact, so a move is store-then-place rather than a drag. Furniture and wallpaper both buy, place and render. `庭を空にする` and `最初の配置に戻す` do what they say: growth points survive the round trip and the wallet does not move. The starter pine and maple are granted once and are ordinary movable scenery afterwards.
+
+**A wrong statement to the learner.** The line under the scene read 「お店のものは全部そろいました。」 - the shop is cleared out - while five plant species and thirteen furniture items sat unbought in it. Two faults in one line. It asked `nearestUnaffordable`, which knows only about furniture, so it was answering a question about a third of the stock once the shop began selling plants and wallpaper. And its empty case means "nothing is currently out of reach", which was being read as "you own everything". It now looks at all three shelves and distinguishes the two: 「あと ¥N で…」 when something is out of reach, 「お店のものは今なら全部買えます。」 when it is all affordable but unbought, and the original line only when the shop is genuinely empty. Checked at ¥60, ¥2,120 and ¥9,000.
+
+**Two new back buttons at 22px.** `home-scene-back` and the shop's `← わが家` came in below the 24px floor - the same miss the breadcrumb had, in new chrome. Both are 32px now, and the narrow-screen override no longer undoes it.
+
+**One thing I called broken and was not.** From the shop, an owned wallpaper is a disabled card, so pressing 無地 there does nothing and it looks like a learner can never go back to plain. They can: the select path is 飾る → 壁紙, where owned papers read はる and 使用中 and switching is free. The shop correctly refuses to re-sell what you own. Worth knowing before someone "fixes" it.
+
+347 tests, 0 failures. No console errors, no broken images, nothing off-screen or undersized at 320px. Cache `lantern-alley-v151`.
+
 ### 2026-08-28 - Making the handoff readable by someone who was not here
 
 Free placement landed and the parts of this file that describe the present tense did not move with it, which is the same drift the previous pass fixed and is now guarded against directly.

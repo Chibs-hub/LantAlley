@@ -1348,8 +1348,12 @@
     box-shadow:0 6px 18px rgba(7,4,2,.2),inset 0 1px rgba(255,244,214,.12);
     backdrop-filter:blur(12px) saturate(125%);
   }
-  .home-scene-back{justify-self:start;padding:5px 7px;border:0;background:transparent;color:inherit;
-    cursor:pointer;font-weight:700;font-size:.78rem}
+  /* 32px minimum, like every other piece of chrome. These came in at 22px tall,
+     which is the same miss the breadcrumb had: the label is small on purpose,
+     the thing you press should not be. */
+  .home-scene-back{justify-self:start;padding:6px 8px;border:0;background:transparent;color:inherit;
+    cursor:pointer;font-weight:700;font-size:.78rem;min-height:32px}
+  .home-shop-chrome button{min-height:32px;padding:6px 10px}
   .home-scene-stars{font-size:.8rem;color:#ffd489}
   .home-scene-money{padding:5px 10px;border-radius:999px;background:rgba(18,10,6,.46);
     color:#ffe1a2;font-weight:800;font-size:.82rem}
@@ -1368,7 +1372,7 @@
   }
   @media(max-width:620px){
     .home-scene-chrome{left:7px;right:7px;top:7px;min-height:34px;gap:6px;padding:3px 5px 3px 7px}
-    .home-scene-back{font-size:.68rem;padding:5px 3px}
+    .home-scene-back{font-size:.68rem;padding:6px 4px}
     .home-scene-stars{font-size:.7rem}
     .home-scene-money{font-size:.72rem;padding:4px 7px}
     .home-scene-controls{
