@@ -7,7 +7,7 @@
  * Bump CACHE_VERSION whenever any shell file changes, or returning players
  * will keep the old build.
  */
-var CACHE_VERSION = "lantern-alley-v125";
+var CACHE_VERSION = "lantern-alley-v133";
 
 // audio-index.js assigns to `self`, so the worker and the page share one list
 // of clip paths. Importing it here means new lines are cached automatically
@@ -37,6 +37,16 @@ var SHELL = [
   "./learning-gloss.js",
   "./home-room.js",
   "./home-decor.js",
+  "./home-garden.js",
+  // The house and yard. A learner who installed the game offline and
+  // walks home to a broken image has lost the reward, not a decoration.
+  "./assets/home/exterior/starter-house-yard-v1.webp",
+  "./assets/home/interior/starter-room-v1.webp",
+  "./assets/home/decor/floor-cushion-navy-v1.webp",
+  "./assets/home/garden/camellia-planted-v1.webp",
+  "./assets/home/garden/camellia-sprout-v1.webp",
+  "./assets/home/garden/camellia-growing-v1.webp",
+  "./assets/home/garden/camellia-mature-v1.webp",
   "./daily-practice.js",
   "./review-mode.js",
   "./question-renderer.js",

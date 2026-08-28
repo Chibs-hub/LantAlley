@@ -24,6 +24,19 @@
   // the cheapest, a fortnight for the dearest.
   var ITEMS = [
     // --- floor -----------------------------------------------------------
+
+    /* The one thing in here that is given rather than sold. Kon hands it over
+     * during the first visit so a learner places something before they can
+     * afford anything - the tutorial has to teach placing, and teaching it on
+     * an empty room means teaching it on nothing.
+     *
+     * It carries a picture as well as a drawing: the picture is used where it
+     * loads, and the vector keeps the room intact if it does not. */
+    {id:"floor-cushion-navy", name:"座布団", kind:"floor", price:50, category:"床",
+     image:"assets/home/decor/floor-cushion-navy-v1.webp",
+     svg:'<path d="M-46 8 L-30 -12 L34 -12 L50 8 L34 22 L-30 22 Z" fill="#2f4670" stroke="#1c2b47" stroke-width="3"/>'
+       + '<path d="M-30 -12 L-14 4 L50 8" fill="none" stroke="#4a648f" stroke-width="2"/>'
+       + '<path d="M-24 -6 L-8 0 M-6 -8 L10 -2 M12 -10 L28 -4" stroke="#d8cfae" stroke-width="2"/>'},
     {id:"rug-plain", name:"敷物", kind:"floor", price:50, category:"床",
      svg:'<ellipse cx="0" cy="0" rx="62" ry="22" fill="#8a4b3c" stroke="#5d2f24" stroke-width="3"/>'
        + '<ellipse cx="0" cy="0" rx="44" ry="13" fill="none" stroke="#d8a97a" stroke-width="2"/>'},
@@ -86,6 +99,99 @@
        + '<line x1="0" y1="0" x2="0" y2="16" stroke="#6a90a0" stroke-width="2"/>'
        + '<rect x="-5" y="16" width="10" height="14" fill="#e8dabd" stroke="#a98f68" stroke-width="2"/>'}
   ];
+
+  /* Wallpaper.
+   *
+   * Not decor: it is not placed, it does not occupy a slot, and only one can be
+   * up at a time. It is bought like everything else and then chosen, which is
+   * why ownership and the active choice are stored separately - changing your
+   * mind must not cost you the roll you already paid for.
+   *
+   * The patterns are drawn as tiling SVG rather than photographed. A seamless
+   * repeat is exactly what vector is good at: it costs a few hundred bytes,
+   * tiles without a seam at any size, and recolours from data. Raster versions
+   * can replace them later by giving an entry an `image`, with no other change.
+   *
+   * 無地 has no art at all, because the painted room already has walls.
+   */
+  var WALLPAPERS = [
+    {id:"wallpaper-plain", name:"無地", price:0, pattern:null},
+
+    {id:"wallpaper-asanoha", name:"麻の葉", price:180,
+     tile:56,
+     pattern:'<g stroke="#8a6a45" stroke-width="1.6" fill="none" opacity="0.85">'
+       + '<path d="M28 0 L28 56 M0 14 L56 14 M0 42 L56 42"/>'
+       + '<path d="M0 14 L28 0 L56 14 L56 42 L28 56 L0 42 Z"/>'
+       + '<path d="M0 14 L28 28 L56 14 M0 42 L28 28 L56 42"/>'
+       + '<path d="M14 7 L14 21 M42 7 L42 21 M14 35 L14 49 M42 35 L42 49"/>'
+       + '</g>'},
+
+    {id:"wallpaper-sakura", name:"桜", price:220,
+     tile:64,
+     pattern:'<g fill="#c98a92" opacity="0.7">'
+       + blossom(16, 14, 7) + blossom(48, 34, 6) + blossom(30, 54, 5)
+       + '</g>'
+       + '<g fill="#e2b3b8" opacity="0.5">'
+       + blossom(54, 8, 4) + blossom(6, 44, 4)
+       + '</g>'}
+  ];
+
+  /* Five petals around a centre. Written once rather than five times per
+   * blossom, because the pattern needs several and they must match. */
+  function blossom(cx, cy, r){
+    var out = "";
+    for(var i = 0; i < 5; i++){
+      var a = (i * 72 - 90) * Math.PI / 180;
+      out += '<ellipse cx="' + (cx + Math.cos(a) * r).toFixed(1)
+        + '" cy="' + (cy + Math.sin(a) * r).toFixed(1)
+        + '" rx="' + (r * 0.62).toFixed(1) + '" ry="' + (r * 0.46).toFixed(1)
+        + '" transform="rotate(' + (i * 72) + ' ' + (cx + Math.cos(a) * r).toFixed(1)
+        + ' ' + (cy + Math.sin(a) * r).toFixed(1) + ')"/>';
+    }
+    return out;
+  }
+
+  function wallpapers(){
+    return WALLPAPERS.map(function(w){
+      return {id:w.id, name:w.name, price:w.price, hasPattern: !!(w.pattern || w.image)};
+    });
+  }
+
+  function getWallpaper(id){
+    return WALLPAPERS.filter(function(w){ return w.id === id; })[0] || null;
+  }
+
+  /* A whole wall of the chosen pattern, as a tiling SVG. Returns "" for 無地,
+   * which is the room's own walls and needs no layer at all. */
+  function wallpaperSvg(id){
+    var paper = getWallpaper(id);
+    if(!paper || !paper.pattern) return "";
+    var tile = paper.tile || 56;
+    var name = "wp-" + paper.id;
+    return '<svg class="home-wallpaper-art" preserveAspectRatio="none" aria-hidden="true">'
+      + '<defs><pattern id="' + name + '" width="' + tile + '" height="' + tile
+      + '" patternUnits="userSpaceOnUse">' + paper.pattern + '</pattern></defs>'
+      + '<rect width="100%" height="100%" fill="url(#' + name + ')"/></svg>';
+  }
+
+  /* Wallpaper has its own purchase because it has its own list. Routing it
+   * through buy() looked right and quietly did nothing: buy() resolves ids
+   * against the furniture catalogue, so every wallpaper came back "unknown"
+   * and the tap simply had no effect. */
+  function buyWallpaper(home, money, id){
+    var paper = getWallpaper(id);
+    var wallet = Number(money) || 0;
+    if(!paper) return {ok:false, reason:"unknown", home:home, money:wallet};
+    if(ownsWallpaper(home, id)) return {ok:false, reason:"owned", home:home, money:wallet};
+    if(wallet < paper.price) return {ok:false, reason:"poor", home:home, money:wallet};
+    return {ok:true, reason:null, spent:paper.price, money:wallet - paper.price,
+            home:{owned:((home && home.owned) || []).concat([id]), placed:copyPlaced(home)}};
+  }
+
+  function ownsWallpaper(home, id){
+    // 無地 is what the room already is, so it is never bought.
+    return id === "wallpaper-plain" || owns(home, id);
+  }
 
   function catalogue(){
     return ITEMS.map(function(item){
@@ -166,11 +272,19 @@
   }
 
   // Owned but not currently in the room.
+  function isWallpaper(id){
+    return !!getWallpaper(id);
+  }
+
   function inStorage(home){
     var placed = (home && home.placed) || {};
     var out = [];
     Object.keys(placed).forEach(function(slot){ out.push(placed[slot]); });
-    return ((home && home.owned) || []).filter(function(id){ return out.indexOf(id) < 0; });
+    // A wallpaper is owned but never placed, so without this it would sit in
+    // the storage shelf forever offering a spot that does not exist.
+    return ((home && home.owned) || []).filter(function(id){
+      return out.indexOf(id) < 0 && !isWallpaper(id);
+    });
   }
 
   /* "Only 30 coins away from the 座卓." Shown after a session, because the
@@ -187,6 +301,12 @@
 
   root.LanternHomeDecor = Object.freeze({
     catalogue: catalogue,
+    wallpapers: wallpapers,
+    getWallpaper: getWallpaper,
+    wallpaperSvg: wallpaperSvg,
+    ownsWallpaper: ownsWallpaper,
+    buyWallpaper: buyWallpaper,
+    isWallpaper: isWallpaper,
     categories: categories,
     getItem: getItem,
     svgFor: svgFor,

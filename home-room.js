@@ -1,17 +1,18 @@
-/* わが家 - the room the learner comes back to.
+/* わが家 - the yard and the room the learner comes back to.
  *
  * Everything else on the map is work. This is the one place that asks nothing:
  * no clock, no question, no gauge. It exists so the coins earned at the inn and
  * the market have somewhere to land.
  *
- * Drawn as inline SVG rather than as a picture, for two reasons. It costs
- * kilobytes instead of megabytes, which matters because this room is going to
- * grow a catalogue of furniture. And it can be recoloured and rearranged from
- * data, which a photograph cannot - the decor system needs slots it can put
- * things into, not a flat image.
+ * This file used to draw the room in SVG and now only describes it. The scenes
+ * are painted backgrounds; what this module owns is where things can stand on
+ * top of them.
  *
- * The base layer is deliberately sparse but not empty: a room with nothing in
- * it reads as broken rather than as a room waiting to be furnished.
+ * Every coordinate is a percentage of the scene, not a pixel. The backgrounds
+ * are fluid - the same room has to work at 320px and on a desktop - so a slot
+ * fixed in pixels would drift off its own tatami mat the moment the window
+ * changed. `baseRoomSvg` is kept as the fallback for a scene whose image
+ * cannot be fetched, and for the standalone artifact build.
  */
 (function(root){
   "use strict";
@@ -20,16 +21,51 @@
   // room rather than by what goes in them, so a lamp and a plant can compete
   // for the same corner.
   var SLOTS = [
-    {id:"floor-left",   x:290, y:352, kind:"floor", label:"床の左"},
-    {id:"floor-right",  x:520, y:352, kind:"floor", label:"床の右"},
-    {id:"wall-left",    x:130, y:120, kind:"wall",  label:"壁の左"},
-    {id:"wall-right",   x:545, y:66,  kind:"wall",  label:"壁の右"},
-    {id:"shelf",        x:545, y:146, kind:"shelf", label:"棚の上"},
-    {id:"window-sill",  x:325, y:184, kind:"sill",  label:"窓辺"}
+    {id:"floor-left",   x:27, y:80, kind:"floor", label:"床の左"},
+    {id:"floor-right",  x:73, y:80, kind:"floor", label:"床の右"},
+    {id:"wall-left",    x:12, y:45, kind:"wall",  label:"壁の左"},
+    {id:"wall-right",   x:88, y:45, kind:"wall",  label:"壁の右"},
+    {id:"shelf",        x:50, y:66, kind:"shelf", label:"奥の段"},
+    {id:"window-sill",  x:34, y:60, kind:"sill",  label:"窓辺"}
   ];
 
+  /* The eight beds, measured off the painting rather than estimated from it.
+   * The two columns lean outward as they come forward, which is what gives the
+   * yard its depth - slots on a straight grid sat in the gravel. Each pair is
+   * the centre of the tilled soil, found by sampling the image. */
+  var YARD_SLOTS = [
+    {id:"garden-left-1",  x:33.2, y:60.0, kind:"garden", label:"左の花壇 1"},
+    {id:"garden-left-2",  x:28.5, y:67.1, kind:"garden", label:"左の花壇 2"},
+    {id:"garden-left-3",  x:26.2, y:77.4, kind:"garden", label:"左の花壇 3"},
+    {id:"garden-left-4",  x:24.3, y:91.3, kind:"garden", label:"左の花壇 4"},
+    {id:"garden-right-1", x:67.9, y:60.0, kind:"garden", label:"右の花壇 1"},
+    {id:"garden-right-2", x:69.8, y:67.1, kind:"garden", label:"右の花壇 2"},
+    {id:"garden-right-3", x:73.9, y:77.4, kind:"garden", label:"右の花壇 3"},
+    {id:"garden-right-4", x:75.6, y:91.3, kind:"garden", label:"右の花壇 4"}
+  ];
+
+  function cloneSlots(source){
+    return source.map(function(slot){
+      return {id:slot.id, x:slot.x, y:slot.y, kind:slot.kind, label:slot.label};
+    });
+  }
+
   function slots(){
-    return SLOTS.map(function(slot){ return {id:slot.id, x:slot.x, y:slot.y, kind:slot.kind, label:slot.label}; });
+    return cloneSlots(SLOTS);
+  }
+
+  function scenes(){
+    return {
+      yard: {
+        background: "assets/home/exterior/starter-house-yard-v1.webp",
+        slots: cloneSlots(YARD_SLOTS),
+        houseHotspot: {x:43, y:25, width:16, height:27, label:"家に入る"}
+      },
+      interior: {
+        background: "assets/home/interior/starter-room-v1.webp",
+        slots: cloneSlots(SLOTS)
+      }
+    };
   }
 
   /* The empty room. One wall, one window on a night sky, tatami, a futon
@@ -96,6 +132,7 @@
   }
 
   root.LanternHomeRoom = Object.freeze({
+    scenes: scenes,
     slots: slots,
     baseRoomSvg: baseRoomSvg
   });

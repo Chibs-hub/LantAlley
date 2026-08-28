@@ -19,6 +19,63 @@ test("no stored progress produces an empty v3 record", () => {
   assert.deepEqual([...p.mistakes], []);
 });
 
+test("empty progress includes independent home and garden reward defaults", () => {
+  const progress = load();
+  const first = progress.emptyProgress();
+  const second = progress.emptyProgress();
+  assert.equal(first.houseTier, "starter");
+  assert.equal(first.homeTutorialComplete, false);
+  assert.equal(first.starterSeedClaimed, false);
+  assert.equal(first.starterCushionClaimed, false);
+  assert.equal(first.activeWallpaper, "wallpaper-plain");
+  assert.deepEqual(JSON.parse(JSON.stringify(first.garden)), {
+    plants: [], usedCreditIds: [], starterClaimed: false, nextInstanceId: 1,
+  });
+
+  first.garden.plants.push({ id: "plant-1" });
+  assert.deepEqual([...second.garden.plants], []);
+});
+
+test("legacy reward progress preserves money and home while adding starter state", () => {
+  const migrated = load().migrateProgress({
+    version: 3,
+    money: 90,
+    home: { owned: ["rug-plain"], placed: { "floor-left": "rug-plain" } },
+  });
+  assert.equal(migrated.money, 90);
+  assert.deepEqual([...migrated.home.owned], ["rug-plain"]);
+  assert.equal(migrated.home.placed["floor-left"], "rug-plain");
+  assert.equal(migrated.houseTier, "starter");
+  assert.deepEqual([...migrated.garden.plants], []);
+});
+
+test("reward migration deep clones state and recognizes existing starter items", () => {
+  const stored = {
+    version: 3,
+    stages: {},
+    home: { owned: ["floor-cushion-red"], placed: {} },
+    garden: {
+      plants: [{
+        id: "plant-4", typeId: "camellia", slotId: "garden-left",
+        growthPoints: 2, stage: "growing", pendingAnimation: true,
+      }],
+      usedCreditIds: ["inn-e01"], starterClaimed: false, nextInstanceId: 5,
+    },
+  };
+  const migrated = load().migrateProgress(stored);
+  assert.equal(migrated.starterSeedClaimed, true);
+  assert.equal(migrated.starterCushionClaimed, true);
+  assert.equal(migrated.garden.starterClaimed, true);
+  assert.equal(migrated.garden.plants[0].growthPoints, 2);
+
+  stored.home.owned.push("fan");
+  stored.garden.plants[0].growthPoints = 99;
+  stored.garden.usedCreditIds.push("later");
+  assert.deepEqual([...migrated.home.owned], ["floor-cushion-red"]);
+  assert.equal(migrated.garden.plants[0].growthPoints, 2);
+  assert.deepEqual([...migrated.garden.usedCreditIds], ["inn-e01"]);
+});
+
 test("the selected player character survives a v3 reload", () => {
   const saved = load().migrateProgress({
     version: 3, playerCharacter: "woman", characterSelected: true, visited: [], starred: [], stages: {},

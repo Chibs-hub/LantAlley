@@ -13,3 +13,10 @@ Thumbs.db
 
 # Local Edge TTS environment used by generate-audio.py. Not a game dependency.
 .audio-python/
+
+# The raw images supplied for the home and garden. 52MB of unprocessed source
+# PNGs that are cut down into the production assets under assets/home/decor,
+# /garden, /exterior and /interior. Committing them would put 52MB in the
+# history forever for files the game never loads - pwa.test.mjs already asserts
+# the service worker does not ship them.
+assets/home/incoming-user/

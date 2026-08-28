@@ -14,7 +14,40 @@ const context = vm.createContext({});
 vm.runInContext(fs.readFileSync(new URL("./home-decor.js", import.meta.url), "utf8"), context);
 vm.runInContext(fs.readFileSync(new URL("./home-room.js", import.meta.url), "utf8"), context);
 const decor = context.LanternHomeDecor;
-const slots = context.LanternHomeRoom.slots();
+const room = context.LanternHomeRoom;
+const slots = room.slots();
+
+test("home scenes use the production raster asset paths", () => {
+  const scenes = room.scenes();
+  assert.equal(scenes.yard.background, "assets/home/exterior/starter-house-yard-v1.webp");
+  assert.equal(scenes.yard.slots.length, 8);
+  assert.ok(scenes.yard.houseHotspot.width > 0);
+  assert.ok(scenes.yard.houseHotspot.height > 0);
+  assert.equal(scenes.yard.houseHotspot.label, "家に入る");
+  assert.equal(scenes.interior.background, "assets/home/interior/starter-room-v1.webp");
+
+  for(const slot of scenes.yard.slots){
+    assert.equal(slot.kind, "garden");
+    assert.ok(slot.id && slot.label);
+    assert.ok(slot.x >= 0 && slot.x <= 100);
+    assert.ok(slot.y >= 0 && slot.y <= 100);
+  }
+  assert.deepEqual(room.slots(), scenes.interior.slots);
+  scenes.interior.slots[0].x = -1;
+  assert.notEqual(room.slots()[0].x, -1, "scene slots must be cloned");
+
+  for(const assetPath of [
+    scenes.yard.background,
+    scenes.interior.background,
+    "assets/home/garden/camellia-planted-v1.webp",
+    "assets/home/garden/camellia-sprout-v1.webp",
+    "assets/home/garden/camellia-growing-v1.webp",
+    "assets/home/garden/camellia-mature-v1.webp",
+    "assets/home/decor/floor-cushion-navy-v1.webp"
+  ]){
+    assert.ok(fs.existsSync(new URL(`./${assetPath}`, import.meta.url)), `${assetPath} is missing`);
+  }
+});
 
 const empty = () => ({owned: [], placed: {}});
 
