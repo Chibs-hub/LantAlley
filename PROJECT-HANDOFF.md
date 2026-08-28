@@ -44,7 +44,11 @@ Four tests cover it, and they play the game rather than calling the engine: the 
 
 **The offline contract now covers the house.** Every picture the home can show is asserted to be on disk and in the service worker, and the check reads `GARDEN_ART_READY` rather than keeping a second list - so a plant added to the shop before its art exists fails the build. The 52MB of raw supplied PNGs under `assets/home/incoming-user/` are asserted *not* to be pre-cached.
 
-**Task 7 - all remaining asset generation - is delegated** to the image-generating session and remains open: 28 plant stage images, 13 decor replacements, 3 wallpapers. Nothing else waits on it. The shop offers only plants whose art exists, so the camellia ships and the other seven stay out rather than selling a broken image; decor without a picture keeps rendering its vector.
+**Task 7 - all remaining asset generation - is delegated** to the image-generating session and remains open: 28 plant stage images, 13 decor replacements, 3 wallpapers. The full requirement, with every filename, the species table, the size budget and the acceptance check, is in `.superpowers/sdd/2026-08-28-home-garden-rewards/task-7-brief.md`.
+
+Nothing else waits on it. The shop offers only plants whose art exists - `GARDEN_ART_READY` in `app.js` is the switch, and `pwa.test.mjs` fails the build if a species is put in the shop before its four files are on disk and in the service worker. Decor without a picture keeps rendering its vector, so the room is never empty mid-migration.
+
+The single most useful thing that task can do is generate each species with a consistent baseline and frame. `PLANT_BASE` in `app.js` exists only because the camellia set does not have one, and it needs a hand-measured row per species until that changes.
 
 340 tests, 0 failures. Cache `lantern-alley-v128`. Nothing committed: the plan forbids committing without the owner saying so.
 
