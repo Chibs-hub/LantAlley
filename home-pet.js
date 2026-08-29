@@ -114,6 +114,28 @@
     return next;
   }
 
+  /* Real cats rest for long periods, but literal hours would look broken in a
+   * game. These compressed pauses preserve the rhythm without stalling play. */
+  function dwellMs(state){
+    var behavior = state && state.behavior || "loaf";
+    var seed = Math.abs(Number(state && state.seed) || 1) >>> 0;
+    if(behavior === "curl-sleep" || behavior === "side-sleep") return 18000 + seed % 18000;
+    if(behavior === "loaf" || behavior === "sit") return 10000 + seed % 12000;
+    if(behavior === "groom") return 8000 + seed % 8000;
+    if(behavior === "enter") return 1400;
+    return 5000 + seed % 6000;
+  }
+
+  function enterScene(scene, seed){
+    if(!SCENES[scene]) return null;
+    var previous = scene === "yard" ? "interior" : "yard";
+    var door = SCENES[previous].filter(function(row){ return row.kind === "door"; })[0];
+    var state = {scene:previous, anchorId:door.id, targetId:null, x:door.x, y:door.y,
+      facing:scene === "yard" ? 1 : -1, behavior:"look", frame:0, clock:0,
+      seed:Math.abs(Number(seed) || 1) >>> 0};
+    return crossDoor(state);
+  }
+
   function spriteFor(state){
     var row = SPRITES[state && state.behavior] || SPRITES.loaf;
     var frames = Math.max(1, row.frames || 1);
@@ -128,6 +150,8 @@
     sendTo:sendTo,
     step:step,
     crossDoor:crossDoor,
+    enterScene:enterScene,
+    dwellMs:dwellMs,
     spriteFor:spriteFor
   };
 })(typeof self !== "undefined" ? self : this);

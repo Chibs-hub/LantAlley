@@ -3026,15 +3026,29 @@
     return '<img class="home-scene-bg" src="' + background + '" alt="' + label + '">';
   }
 
-  function positioned(className, slot, inner, attrs){
-    return '<div class="' + className + '" style="left:' + slot.x + '%;top:' + slot.y + '%"'
+  function positioned(className, slot, inner, attrs, extraStyle){
+    return '<div class="' + className + '" style="left:' + slot.x + '%;top:' + slot.y + '%;'
+      + (extraStyle || "") + '"'
       + (attrs || "") + '>' + inner + '</div>';
+  }
+
+  function decorSceneWidth(item){
+    var widths = {
+      "rug-plain":26, "low-table":28, kotatsu:30, "folding-screen":32,
+      "floor-cushion-navy":18, "plant-small":12, brazier:12,
+      "floor-lantern":10, chrysanthemum:12, scroll:12, "wall-lamp":9,
+      fan:10, mask:9, teapot:8, books:10, "cat-figure":8, daruma:8,
+      "sakura-bonsai":13, "pine-bonsai":13, "sill-plant":7, "wind-chime":7
+    };
+    return widths[item && item.id] || 18;
   }
 
   function homePetMarkup(scene){
     if(typeof LanternHomePet === "undefined") return "";
     if(!homePetState || homePetState.scene !== scene){
-      homePetState = LanternHomePet.create(scene, Date.now());
+      homePetState = LanternHomePet.enterScene
+        ? LanternHomePet.enterScene(scene, Date.now())
+        : LanternHomePet.create(scene, Date.now());
       homePetIdleMs = 0;
     }
     var sprite = LanternHomePet.spriteFor(homePetState);
@@ -3075,7 +3089,8 @@
       homePetState = LanternHomePet.step(homePetState, elapsed, {paused:document.hidden, reducedMotion:reduced});
       if(homePetState && !homePetState.targetId){
         homePetIdleMs += elapsed;
-        if(!reduced && homePetIdleMs > 3200 + (homePetState.seed % 2800)){
+        var dwell = LanternHomePet.dwellMs ? LanternHomePet.dwellMs(homePetState) : 6000;
+        if(!reduced && homePetIdleMs > dwell){
           var anchors = LanternHomePet.anchors(homePetState.scene);
           var choices = anchors.filter(function(anchor){ return anchor.id !== homePetState.anchorId; });
           homePetState.seed = (homePetState.seed * 1664525 + 1013904223) >>> 0;
@@ -3170,7 +3185,8 @@
         var item = decor.getItem(here) || {name:""};
         html += positioned("home-item", slot, decorArt(here, item.name),
           ' data-slot-item="' + slot.id + '" role="button" tabindex="0"'
-            + ' aria-label="' + item.name + ' をかたづける"');
+            + ' aria-label="' + item.name + ' をかたづける"',
+          'width:' + decorSceneWidth(item) + '%');
       });
       if(picked){
         interior.slots.forEach(function(slot){
@@ -3225,7 +3241,14 @@
           + gardenSummary();
       }
       waiting.forEach(function(plant){
-        html += dockCard(plantFigure(plant.typeId, plant.stage, ""),
+        /* The picture stage, not the engine stage.
+         *
+         * Sakura and maple are painted in five steps and the engine counts in
+         * four, so `growing` has no picture of its own and falls back to the
+         * bare seedling. The yard already resolves that; this card did not, so
+         * the same half-grown tree was a sapling in the ground and a sprout in
+         * the cupboard. */
+        html += dockCard(plantFigure(plant.typeId, plantVisualStage(plant), ""),
           plantName(plant.typeId), STAGE_JP[plant.stage] || plant.stage,
           'data-pick-plant="' + plant.id + '"',
           (homeSelected && homeSelected.kind === "plant" && homeSelected.id === plant.id) ? " is-picked" : "");
@@ -3681,6 +3704,14 @@
   }
 
   // One delegated listener, because both scenes are rebuilt on every change.
+  $("scene").addEventListener("keydown", function(event){
+    if(event.key !== "Enter" && event.key !== " ") return;
+    var control = event.target.closest("[data-plant],[data-slot-item]");
+    if(!control) return;
+    event.preventDefault();
+    control.click();
+  });
+
   $("scene").addEventListener("click", function(event){
     if(state.currentKey !== "home" || typeof LanternHomeDecor === "undefined") return;
     if(!event.target || !event.target.closest) return;

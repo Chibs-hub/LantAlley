@@ -4,6 +4,52 @@ Last updated: 2026-08-29
 
 ## 0. Current status
 
+### 2026-08-29 - Cat motion, clipping, and scene-scale repair (next session priority)
+
+The user reported that the cat is jumpy, parts are cut off during movement, and both the cat and placed objects do not fit the scene scale. Do not commit or push the current working tree until this repair is completed and verified.
+
+Verified root causes:
+
+1. `assets/home/pet/calico-walk-v1.webp` places cat pixels directly against sprite-cell edges. CSS cannot recover pixels outside a frame, so the sheet must be repacked with transparent padding.
+2. `.home-pet` in `styles.css` always uses `width:13%` (`12%` reduced motion), regardless of anchor depth. This makes the cat too large and inconsistent with the room/yard perspective.
+3. `home-pet.js` advances walking frames every 90 ms and moves at `elapsed * 0.012` scene-percent per millisecond. The fast pose changes and travel speed make the motion look jumpy.
+4. `app.js::decorSceneWidth()` scales by item only. It does not combine item size with slot depth, so foreground and background objects cannot blend consistently.
+
+Approved direction still required before implementation (the bounded design was presented, but the user has not explicitly approved it yet):
+
+- Repack all four cat sprite sheets into equal cells with transparent safety padding; preserve their current frame order and metadata.
+- Add authored pet scale per anchor or derive a clamped depth scale, approximately 6-9% scene width. Keep the paws anchored to the ground while scale changes.
+- Slow walking and use smooth continuous position interpolation; use a calmer frame cadence around 140-180 ms. Avoid CSS transitions that lag behind the state or slide after arrival.
+- Scale placed decor by both physical item size and slot depth. Keep wall/shelf/floor classes separately calibrated.
+- Write failing tests first for scale metadata, bounded cat size, travel speed, and decor depth scaling. Then implement one cause at a time.
+- Bump cache from v157 only after production changes.
+- Verify sprite edges, paws/ground contact, cat size, movement, and decor blending in yard and room at desktop and mobile. Run `node --test`, `node --check app.js`, `node --check home-pet.js`, and `git diff --check`.
+- Update this handoff after implementation. Never claim visual completion from automated tests alone.
+
+Current uncommitted work from the previous repair remains in `PROJECT-HANDOFF.md`, `app.js`, `home-pet.js`, `home-pet.test.mjs`, `index.html`, `styles.css`, and `sw.js`. It added longer cat dwell times, doorway entry, per-item decor widths, wallpaper fit, keyboard activation, and cache v157. Focused PWA/pet tests passed 43/43; the final browser visual QA was not completed.
+
+### 2026-08-29 - Visual and cat-behavior audit repairs (implemented, browser QA remains)
+
+The v156 audit found five concrete issues to repair:
+
+1. Furniture needs per-item scene scale instead of one fixed 18% width.
+2. Raster wallpaper must preserve its pattern proportions instead of stretching.
+3. Placed plant and furniture pseudo-buttons need Enter/Space activation.
+4. The cat needs game-compressed realistic rhythms: longer resting/sleeping, medium grooming, short exploration/play - not literal 12-hour sleeps and not movement every 3-6 seconds.
+5. Scene changes must bring the cat through the door instead of recreating it at a random anchor; the existing `crossDoor()` path is currently unused.
+
+Implemented in the working tree without commit or push:
+
+- Furniture now uses per-item scene widths so large furnishings and small ornaments render at appropriate scales.
+- Raster wallpaper uses `object-fit: cover`, preserving its proportions.
+- Placed plants and furniture activate with Enter or Space as well as pointer input.
+- Cat dwell times are compressed for play: sleep 18-36 seconds, loaf/sit 10-22 seconds, groom 8-16 seconds, and exploration 5-11 seconds. It no longer moves every 3-6 seconds.
+- Entering the yard or room now initializes the cat at that scene's doorway through the existing `crossDoor()` path.
+- Cache version is v157.
+- `node --check app.js`, `node --check home-pet.js`, focused tests, and `node --test` logic all passed after the cache mismatch was corrected. Final focused PWA/pet run: 43/43. The earlier full run was 355/356 only because some index scripts still had v156; that defect is fixed and the PWA test now passes.
+
+Remaining work for the next session: visually verify v157 room, yard, wallpaper, furniture scale, keyboard pickup, and cat rhythm at desktop and mobile. Add a DOM regression test for Enter/Space pickup if practical. Do not commit or push without asking.
+
 ### Golden Rule: Learning Integrity
 
 - Reward accuracy and demonstrated understanding, not merely speed or repeated tapping.
@@ -254,6 +300,20 @@ location.reload();
 This was not hypothetical: a freshly edited `lantern-map.js` was served from the browser cache while a brand-new file beside it loaded fine, and the map silently rendered without わが家 on it.
 
 ## 9. Change log and reasons
+
+### 2026-08-29 - A half-grown tree was a seedling in the cupboard
+
+Read the handoff for what was still outstanding and checked the claims on the way through. One real fault, found by noticing that two things which should have matched did not.
+
+**Sakura and maple are painted in five steps; the engine counts in four.** The art has `sapling` and `young` where the engine only ever says `growing`, so `growing` has no picture of its own. `plantVisualStage` exists to bridge that - it maps `growing` onto `sapling` or `young` by how far through the plant is - and the yard uses it.
+
+**The storage card did not.** It passed the raw engine stage, so the lookup missed and fell back to `planted`: the same cherry tree at 7 of 12 points was a sapling standing in the yard and a bare seedling in 持ち物. A quiet fault, because a missing key falls back to a real picture rather than to nothing, and no test asserts which image a growing tree shows. Both now read `sapling`, and a maple at 9 of 10 reads `young`.
+
+The bridge is now written into section 11 beside the art task, because the trap is not the bug - it is that a species painted in five steps needs every renderer to go through `plantVisualStage`, and the next one added will hit the same fallback.
+
+**Two stale statements corrected while reading.** Section 11 still asked for "28 plant stage images and 13 furniture replacements" and contradicted section 10's counts, which are right: five species and six furniture items remain. And the artifact bullet still described itself as the way to test on a phone, which section 2 now answers better with the LAN address.
+
+356 tests, 0 failures. Cache `lantern-alley-v158`.
 
 ### 2026-08-29 - A full pass over the game, and the backgrounds cut to the size they are shown at
 
@@ -2239,7 +2299,7 @@ The old single-file `lantern-alley.html` had no `<meta charset>`, so browsers de
 - **The five-second items are tighter without audio.** At the Inn the clip plays before the clock starts, so the request has already been heard. Elsewhere the learner reads it cold.
 - **The Japanese has not been reviewed.** 200 questions, five story arcs, every piece of Kon's dialogue, the eight tutorial lines at the house and every garden and shop string were authored in this project and have not been checked by a native speaker. The owner reviews after authoring. `?review=1` opens the in-app review mode, which walks all 215 items in place with the clock off and an おかしい checkbox.
 - **Two test controls still ship.** **Skip to next day** and **Preview Episode** are dashed buttons in the live build.
-- ~~The Artifact cannot carry the finished game.~~ Resolved on 2026-08-27: the Artifact is retired and the app is the product. See section 8. It was rebuilt on 2026-08-28 purely as a **link to test on a phone** - a demo build with a cut-down catalogue at 14.10 MB, against a 15 MB self-imposed ceiling and a 16 MB hard limit. It is not the delivery surface.
+- ~~The Artifact cannot carry the finished game.~~ Resolved on 2026-08-27: the Artifact is retired and the app is the product. See section 8. It was rebuilt on 2026-08-28 purely as a **link to test on a phone**, which section 2 now answers better: the dev server is reachable from a phone on the same Wi-Fi at this machine's LAN address, with no build and always showing the working tree. The artifact remains only for a phone that is not on this network, and should be deleted once the app is hosted.
 - **Tap targets in the Inn's illustrated room are small on a phone.** At 390px the stove zone is 51x18 and the broken bulb 23x23; four are under 24px at 320px. They cannot simply be enlarged - neighbouring zones are 29 to 45 px apart centre to centre, so a comfortable hit area would overlap the next zone and steal its taps. The fix is spacing them further apart in the artwork, which is a scene decision.
 - **53.9 MB of the 58.5 MB of PNG/JPG under `assets/` is unreferenced** - leftover originals from before the JPG and WebP conversions. Harmless at runtime, but it is most of the working tree, and it is already in git history so deleting it does not shrink a clone.
 - **Three of eight plant species are painted** - sakura, maple, camellia - and six of twenty-one furniture items still render as vector. Deliberate: the garden ships playable on stand-ins rather than waiting. See section 11.
@@ -2255,7 +2315,9 @@ In the order that gets the most for the least:
 1. **Native review of the Japanese.** Everything else is cheap to change; this is the thing only the owner can do. `generate-audio.py` hashes its input, so corrections cost only the lines that changed.
 2. ~~Decide the delivery surface.~~ Settled on 2026-08-27: the app is the product, the Artifact is retired. The audio run is no longer blocked by size.
 3. **Generate the audio** once the surface is known. `collect-spoken-lines.js` already walks every stage, so the run needs no code change. A local open TTS model (section 14) would also remove the external-service approval gate, since nothing would leave the machine.
-4. **Generate the home and garden art** - 28 plant stage images and 13 furniture replacements. The whole system runs without it, so this is presentation rather than function, but it is the difference between a garden and a diagram. The complete requirement, with filenames, sizes and the one constraint that matters (consistent baselines per species), is in `docs/superpowers/plans/2026-08-28-home-garden-task-7-assets.md`.
+4. **Finish the home and garden art.** Five of the eight species are still drawn from data and six of the twenty-one furniture items still render as their vector. The whole system runs without it, so this is presentation rather than function, but it is the difference between a garden and a diagram. The requirement is in `docs/superpowers/plans/2026-08-28-home-garden-task-7-assets.md`.
+
+   **Note the stage counts differ by species.** Camellia is painted in four steps matching the engine - `planted, sprout, growing, mature` - while sakura and maple are painted in five, with `sapling` and `young` in place of `growing`. `plantVisualStage` in `app.js` bridges the two: a five-step species maps the engine's `growing` onto `sapling` or `young` by how far through it is. **Anything that renders a plant must go through it**, or the missing `growing` key falls back to the bare seedling - which is what the storage card did until 2026-08-29.
 5. **Remove or flag the two test controls.** Left until last on purpose: every step above is verified through them. The objection that used to block this - that they were the only quick way back into a place - is gone: the map now names an unfinished shift and goes straight back into it.
 6. **Give the four newer places their scene art.** They render on the shared workspace today. Nothing depends on this; it is the visible half of the work. The home is now the worked example of how a place with real artwork should be put together - the picture is the stage rather than a picture on it, and the interface floats over it.
 7. **Reconcile the Inn's two entry paths** so all five places are entered the same way.
