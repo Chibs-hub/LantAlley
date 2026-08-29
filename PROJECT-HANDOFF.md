@@ -236,6 +236,24 @@ This was not hypothetical: a freshly edited `lantern-map.js` was served from the
 
 ## 9. Change log and reasons
 
+### 2026-08-29 - A full pass over the game, and the backgrounds cut to the size they are shown at
+
+Checked the whole game rather than only the newest work, because the request was whether everything works.
+
+**The learning game is intact.** A returning learner lands on the map at the place they left, the resume button names the unfinished shift and drops them on the right question with the right wallet, the day line reads 「連続 4 日目・お休みの札 1・今日の復習 4 問」, a correct answer pays and the HUD moves with it, the practice session builds and answers, and review mode still opens 215 items with its checkbox and export. 355 tests over 22 suites, no console errors, nothing broken at 320px.
+
+**The offline shell is complete**: the worker registers and activates, 238 entries cached, and the newest pet, tree and furniture art is all in it.
+
+**The standalone build had stopped building.** It reached 15.89 MB against a self-imposed 15 MB ceiling - the guard refused to emit, which is what it is for. The cause was not the new art but the scene backgrounds, which were 1400-1672px wide for a panel that is at most 1000px. Every one of them is paid for twice, once by anyone installing offline and once by the build.
+
+Eleven backgrounds are now 1200px on the long edge, same format and same filename so no code moved: **2.73 MB to 1.52 MB, 44% off**, aspect ratios unchanged to three decimals. The build is 14.16 MB again and the whole app is lighter to install.
+
+**One thing to know when checking this.** Image URLs carry no `?v=`, only scripts and stylesheets do, so a browser that has already fetched a picture keeps serving the old bytes after a resize even though the file on disk has changed. The first verification read 1672x941 from cache and looked like the resize had silently failed. It had not - fetching with a cache-buster showed 1200x675. Bumping `CACHE_VERSION` replaces the service worker's copy, but the browser's own HTTP cache is a separate thing.
+
+**One transient test failure**, worth naming so it is not hunted: a suite reads the built artifact, and the failed 15.89 MB build had left an oversized file on disk for it to read. Two clean runs afterwards, 355/355 both times.
+
+Cache `lantern-alley-v156`.
+
 ### 2026-08-29 - Checking the trees, the cat and the furniture against the running game
 
 Verified the three entries above rather than trusting them. Every claim in them holds.
