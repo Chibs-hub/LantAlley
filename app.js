@@ -2752,6 +2752,10 @@
   var homeSelected = null;    // {kind:"decor"|"plant", id:...} waiting to be placed
   var homeTab = "garden";     // "garden" | "storage" | "shop"
   var homeNotice = "";
+  var homePetState = null;
+  var homePetFrame = 0;
+  var homePetLastTime = 0;
+  var homePetIdleMs = 0;
 
   /* The light in the yard and the room follows the learner's own clock, and
    * that is the whole of it: there is no picker, on purpose.
@@ -2795,6 +2799,20 @@
    * The table is also the switch: a species with an entry is painted, one
    * without is drawn. Adding a species is one block. */
   var PLANT_ART = {
+    "cherry-tree": {
+      planted: "assets/home/garden/sakura-planted-v1.webp",
+      sprout:  "assets/home/garden/sakura-sprout-v1.webp",
+      sapling: "assets/home/garden/sakura-sapling-v1.webp",
+      young:   "assets/home/garden/sakura-young-v1.webp",
+      mature:  "assets/home/garden/sakura-mature-v1.webp"
+    },
+    "japanese-maple": {
+      planted: "assets/home/garden/maple-planted-v1.webp",
+      sprout:  "assets/home/garden/maple-sprout-v1.webp",
+      sapling: "assets/home/garden/maple-sapling-v1.webp",
+      young:   "assets/home/garden/maple-young-v1.webp",
+      mature:  "assets/home/garden/maple-mature-v1.webp"
+    },
     camellia: {
       planted: "assets/home/garden/camellia-planted-v1.webp",
       sprout:  "assets/home/garden/camellia-sprout-v1.webp",
@@ -2911,6 +2929,14 @@
       + (label || "") + '">' + placeholderPlant(typeId, stage) + '</svg>';
   }
 
+  function plantVisualStage(plant){
+    if(!plant || plant.stage !== "growing") return plant ? plant.stage : "planted";
+    var type = (typeof LanternHomeGarden !== "undefined")
+      ? LanternHomeGarden.catalogue().filter(function(row){ return row.id === plant.typeId; })[0] : null;
+    if(!type || !PLANT_ART[plant.typeId] || !PLANT_ART[plant.typeId].young) return "growing";
+    return plant.growthPoints >= Math.ceil(type.matureAt * 0.72) ? "young" : "sapling";
+  }
+
   /* Where the plant meets the ground, per stage, as a percentage down its own
    * file. The four camellia pictures do not share a baseline - the seedling's
    * art stops at 77% of its frame and the mature bush at 94% - so anchoring
@@ -2920,7 +2946,9 @@
    * Task 7 generates the remaining species; each one needs its own row, or
    * consistent baselines at generation time so this table can go away. */
   var PLANT_BASE = {
-    camellia: {planted:77.4, sprout:82.7, growing:94.0, mature:94.5}
+    camellia: {planted:77.4, sprout:82.7, growing:94.0, mature:94.5},
+    "cherry-tree": {planted:96.5, sprout:96.5, sapling:96.5, young:96.5, mature:96.5},
+    "japanese-maple": {planted:96.5, sprout:96.5, sapling:96.5, young:96.5, mature:96.5}
   };
   var PLANT_BASE_FALLBACK = {planted:90, sprout:90, growing:92, mature:94};
 
@@ -3003,6 +3031,64 @@
       + (attrs || "") + '>' + inner + '</div>';
   }
 
+  function homePetMarkup(scene){
+    if(typeof LanternHomePet === "undefined") return "";
+    if(!homePetState || homePetState.scene !== scene){
+      homePetState = LanternHomePet.create(scene, Date.now());
+      homePetIdleMs = 0;
+    }
+    var sprite = LanternHomePet.spriteFor(homePetState);
+    return '<div class="home-pet" aria-hidden="true" style="left:' + homePetState.x
+      + '%;top:' + homePetState.y + '%;--pet-facing:' + homePetState.facing + '">'
+      + '<span style="background-image:url(\'' + sprite.path + '\');background-size:'
+      + (sprite.columns * 100) + '% ' + (sprite.rows * 100) + '%"></span></div>';
+  }
+
+  function updateHomePetNode(){
+    var node = document.querySelector(".home-pet");
+    if(!node || !homePetState || typeof LanternHomePet === "undefined") return;
+    var sprite = LanternHomePet.spriteFor(homePetState);
+    var column = sprite.frame % sprite.columns;
+    var row = Math.floor(sprite.frame / sprite.columns);
+    var x = sprite.columns > 1 ? column * 100 / (sprite.columns - 1) : 0;
+    var y = sprite.rows > 1 ? row * 100 / (sprite.rows - 1) : 0;
+    node.style.left = homePetState.x + "%";
+    node.style.top = homePetState.y + "%";
+    node.style.setProperty("--pet-facing", homePetState.facing);
+    var art = node.firstElementChild;
+    if(art){
+      art.style.backgroundImage = "url('" + sprite.path + "')";
+      art.style.backgroundSize = (sprite.columns * 100) + "% " + (sprite.rows * 100) + "%";
+      art.style.backgroundPosition = x + "% " + y + "%";
+    }
+  }
+
+  function startHomePetMotion(){
+    if(homePetFrame && typeof cancelAnimationFrame === "function") cancelAnimationFrame(homePetFrame);
+    if(typeof requestAnimationFrame !== "function" || homeView === "shop") return;
+    homePetLastTime = 0;
+    function tick(time){
+      if(state.currentKey !== "home" || homeView === "shop") return;
+      var elapsed = homePetLastTime ? Math.min(80, time - homePetLastTime) : 16;
+      homePetLastTime = time;
+      var reduced = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+      homePetState = LanternHomePet.step(homePetState, elapsed, {paused:document.hidden, reducedMotion:reduced});
+      if(homePetState && !homePetState.targetId){
+        homePetIdleMs += elapsed;
+        if(!reduced && homePetIdleMs > 3200 + (homePetState.seed % 2800)){
+          var anchors = LanternHomePet.anchors(homePetState.scene);
+          var choices = anchors.filter(function(anchor){ return anchor.id !== homePetState.anchorId; });
+          homePetState.seed = (homePetState.seed * 1664525 + 1013904223) >>> 0;
+          homePetState = LanternHomePet.sendTo(homePetState, choices[homePetState.seed % choices.length].id);
+          homePetIdleMs = 0;
+        }
+      }
+      updateHomePetNode();
+      homePetFrame = requestAnimationFrame(tick);
+    }
+    homePetFrame = requestAnimationFrame(tick);
+  }
+
   function targetButton(slot, occupied){
     return '<button type="button" class="home-target' + (occupied ? " is-occupied" : "") + '"'
       + ' data-slot="' + slot.id + '" style="left:' + slot.x + '%;top:' + slot.y + '%"'
@@ -3020,7 +3106,7 @@
     var picking = homeSelected && homeSelected.kind === "plant";
 
     var html = '<div class="home-scene home-yard-scene light-' + effectiveHomeLighting() + '">'
-      + sceneLayer(yard.background, "わが家の庭") + homeSceneChrome("yard");
+      + sceneLayer(yard.background, "わが家の庭") + homePetMarkup("yard") + homeSceneChrome("yard");
 
     // The house is a real button, not a hot region with no name: a learner who
     // cannot see the picture still has to be able to go inside.
@@ -3032,7 +3118,8 @@
     slots.forEach(function(slot){
       var plant = byId[slot.id];
       if(!plant) return;
-      var base = plantBase(plant.typeId, plant.stage);
+      var visualStage = plantVisualStage(plant);
+      var base = plantBase(plant.typeId, visualStage);
       /* Sized against its own bed, not against the scene. A camellia in the
        * back row is a third the size of the same camellia at the front,
        * because that is what the painting does with everything else in it. */
@@ -3042,7 +3129,7 @@
         + 'transform:translate(-50%,-' + base + '%)"'
         + ' data-plant="' + plant.id + '" role="button" tabindex="0"'
         + ' aria-label="' + plantName(plant.typeId) + ' をあつかう">'
-        + plantFigure(plant.typeId, plant.stage,
+        + plantFigure(plant.typeId, visualStage,
             plantName(plant.typeId) + '（' + (STAGE_JP[plant.stage] || plant.stage) + '）')
         + '</div>';
     });
@@ -3074,7 +3161,7 @@
 
     var html = '<div class="home-scene home-interior-scene light-' + effectiveHomeLighting() + '">'
       + sceneLayer(interior.background, "わが家の部屋")
-      + wallpaperLayer() + homeSceneChrome("interior");
+      + wallpaperLayer() + homePetMarkup("interior") + homeSceneChrome("interior");
 
     if(decor){
       interior.slots.forEach(function(slot){
@@ -3095,9 +3182,8 @@
     return html + '</div>';
   }
 
-  /* Decor art is still drawn rather than painted: only the cushion has a
-   * picture so far. An item with an image uses it; the rest keep the vector
-   * they shipped with, so nothing in the room disappears mid-migration. */
+  /* Use production pictures where the catalogue has them and retain the
+   * original vectors as reliable fallbacks. */
   function decorArt(id, name){
     var decor = LanternHomeDecor;
     var item = decor.getItem(id);
@@ -3564,6 +3650,7 @@
       + '</div>'
       + tutorialPanel();
     homeNotice = "";
+    startHomePetMotion();
     renderHud();
     settleGrowth();
   }

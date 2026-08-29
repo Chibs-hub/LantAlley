@@ -60,6 +60,31 @@ test("every catalogue item can actually go somewhere in the room", () => {
   }
 });
 
+test("available reward artwork is connected to matching shop items", () => {
+  const expected = {
+    "rug-plain":"rug-plain-v1.webp",
+    "plant-small":"bonsai-green-v1.webp",
+    "low-table":"low-table-round-v1.webp",
+    "wall-lamp":"paper-lantern-red-v1.webp",
+    scroll:"hanging-scroll-bamboo-v1.webp",
+    "cat-figure":"maneki-neko-v1.webp",
+    "wind-chime":"wind-chime-blue-v1.webp",
+    kotatsu:"kotatsu-blue-v1.webp",
+    daruma:"daruma-red-v1.webp",
+    "folding-screen":"folding-screen-cranes-v1.webp",
+    "floor-lantern":"floor-lantern-v1.webp",
+    chrysanthemum:"chrysanthemum-pot-v1.webp",
+    "sakura-bonsai":"sakura-bonsai-v1.webp",
+    "pine-bonsai":"pine-bonsai-v1.webp"
+  };
+  for(const [id, filename] of Object.entries(expected)){
+    assert.equal(decor.getItem(id)?.image, `assets/home/decor/${filename}`, `${id} image mapping`);
+    assert.ok(fs.existsSync(new URL(`./assets/home/decor/${filename}`, import.meta.url)), `${filename} missing`);
+  }
+  assert.equal(decor.getWallpaper("wallpaper-asanoha")?.image,
+    "assets/home/decor/wallpaper-asanoha-blue-v1.webp");
+});
+
 test("prices span a range, so there is always something just out of reach", () => {
   const prices = decor.catalogue().map(i => i.price);
   assert.ok(Math.min(...prices) <= 60);

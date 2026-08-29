@@ -22,6 +22,17 @@ test("every file the service worker pre-caches actually exists", () => {
   }
 });
 
+test("sakura and maple each ship five consistent growth-stage assets", () => {
+  const app = read("app.js");
+  for (const tree of ["sakura", "maple"]) {
+    for (const stage of ["planted", "sprout", "sapling", "young", "mature"]) {
+      const path = `assets/home/garden/${tree}-${stage}-v1.webp`;
+      assert.equal(existsSync(new URL("./" + path, import.meta.url)), true, path);
+      assert.ok(app.includes(path), `${path} is not mapped by the app`);
+    }
+  }
+});
+
 test("the manifest is valid and its icons exist", () => {
   const manifest = JSON.parse(read("manifest.webmanifest"));
 
@@ -535,15 +546,19 @@ test("every picture the home can show is on disk and cached", () => {
   // PLANT_ART spells every stage path out, so this reads them rather than
   // rebuilding the names and hoping the two agree.
   const table = (app.match(/var PLANT_ART = \{([\s\S]*?)\n  \};/) || [, ""])[1];
-  const species = [...table.matchAll(/^\s{4}([a-z-]+):\s*\{/gm)].map((m) => m[1]);
+  const blocks = [...table.matchAll(/^\s{4}(?:"([^"]+)"|([a-z-]+)):\s*\{([\s\S]*?)^\s{4}\},?/gm)];
+  const species = blocks.map((m) => m[1] || m[2]);
   assert.ok(species.length >= 1, "at least one plant has painted art");
   for (const id of species) {
     assert.ok(context.LanternHomeGarden.catalogue().some((t) => t.id === id),
       `PLANT_ART names "${id}", which is not a plant`);
   }
   const declared = [...table.matchAll(/"(assets\/home\/garden\/[^"]+)"/g)].map((m) => m[1]);
-  assert.equal(declared.length, species.length * 4,
-    "every painted species needs all four stages");
+  for (const block of blocks) {
+    const stages = [...block[3].matchAll(/"(assets\/home\/garden\/[^"]+)"/g)].map((m) => m[1]);
+    assert.ok(stages.length === 4 || stages.length === 5,
+      `${block[1] || block[2]} needs four logical stages or five detailed stages`);
+  }
   for (const path of declared) wanted.add(path);
 
   for (const path of wanted) {

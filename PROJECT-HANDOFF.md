@@ -1,6 +1,6 @@
 # Lantern Alley Project Handoff
 
-Last updated: 2026-08-28
+Last updated: 2026-08-29
 
 ## 0. Current status
 
@@ -47,7 +47,9 @@ One item to a position and one position to an item: moving something empties whe
 
 Wallpaper is bought and hung; ownership and the active choice are stored separately, so changing your mind never costs the roll already paid for.
 
-**What the reward system still owes.** Only the camellia is painted. The other seven species are drawn from data - obviously drawings, deliberately - so the garden can be played and priced now. Thirteen of the fourteen furniture items still render as their vector. Switching a species to painted art is one block in `PLANT_ART`; the full requirement is `docs/superpowers/plans/2026-08-28-home-garden-task-7-assets.md`.
+**A cosmetic cat lives here.** One long-haired calico moves between authored anchors in the yard and the room, follows the learner between the two, and does nothing else: `pointer-events:none`, absent from the shop, still under reduced motion, paused in a hidden tab. It cannot touch lessons, money, growth or placement, and that separation is the point of it.
+
+**What the reward system still owes.** Sakura, maple and camellia are painted; the other five species are drawn from data - obviously drawings, deliberately - so the garden can be played and priced now. Fifteen of the twenty-one furniture items are illustrated and six still render as their vector: 火鉢, 扇, 面, 急須, 本, 小さな鉢. Every item keeps its vector as the fallback when an image will not load. Switching a species to painted art is one block in `PLANT_ART`; the remaining requirement is `docs/superpowers/plans/2026-08-28-home-garden-task-7-assets.md`.
 
 **The one open decision.** Audio has not been generated for the four newer places. The course speaks 620 lines; 114 have clips. Inlining the remaining 506 would take the artifact to roughly 31 MB against a hard 16 MB limit, so on 2026-08-27 the owner chose to skip the audio run for now and to drop the Artifact as the delivery surface later, so that the finished game can ship with its voice. Nothing has been sent to Microsoft Edge TTS.
 
@@ -167,6 +169,7 @@ Browser progress is not part of the project folder. Copying the folder transfers
 | `catalog-practice.js` | Tier 2: builds reading, meaning and cloze cards from the catalog. |
 | `home-room.js` | Scene metadata for `わが家`: the yard and interior backgrounds and every position something can stand in - 24 in the yard, more inside. Every coordinate is a **percentage** of a 16/9 scene, and each carries a `scale` so things shrink with the painting's perspective. The first eight yard ids are the original bed ids, kept so saves made before free placement still resolve. `baseRoomSvg()` is the fallback for a scene whose image will not load. |
 | `home-decor.js` | Furniture and wallpaper. Owns the two rules worth testing: an item is in one slot at a time, and placing into an occupied slot swaps rather than destroys. Wallpaper is separate - never placed, only one active - and its patterns are tiling SVG. |
+| `home-pet.js` | The calico. Kept apart from everything else on purpose: it is the one thing in the game that moves on its own, so the rule that it cannot reach lessons, money, growth or placement is easier to hold if it has no access to them. |
 | `home-garden.js` | The pure garden engine: plant instances, placement, movement, storage, and growth credited by `creditLesson(garden, creditId, bonus)`. Immutable throughout; every rule that stops replay farming lives here. |
 | `learning-economy.js` | What a correct answer pays, and which places are unlocked. `award()` pays once per question id, so replay cannot farm money. |
 | `daily-practice.js` | The practice session's earnings, the accuracy gate, and the streak. One freeze covers one missed day. |
@@ -232,6 +235,47 @@ location.reload();
 This was not hypothetical: a freshly edited `lantern-map.js` was served from the browser cache while a brand-new file beside it loaded fine, and the map silently rendered without わが家 on it.
 
 ## 9. Change log and reasons
+
+### 2026-08-29 - Checking the trees, the cat and the furniture against the running game
+
+Verified the three entries above rather than trusting them. Every claim in them holds.
+
+**Assets.** All 36 home images referenced by the code exist, all are pre-cached, and the whole home comes to **2.24 MB**. Only the yard background exceeds the 200KB object budget, which is right for a full-scene background. The furniture claim is exact: 21 items, 15 illustrated, 6 still vector, none broken.
+
+**The cat does what it promises.** At a real viewport it is 124x124, about 13% of the scene. It moves between anchors and rests. `pointer-events:none`, so it cannot be pressed. Absent from the shop - confirmed by looking, not by assuming. It stopped dead for two seconds under a simulated hidden tab and resumed after. Nothing it does can reach lessons, money, growth or placement.
+
+**Two things that looked like faults and were not**, recorded so they are not chased again:
+
+- The pet measured 3.6px square and appeared broken. The preview pane had collapsed and the scene with it - the cat was 13% of a 31px scene, which is correct. Anything measured while that pane is collapsed is meaningless; force a viewport first.
+- `chrysanthemum` is now an id in two catalogues - a plant species and the 菊の鉢 floor item. Both can be bought and held at once, because plants live in `garden.plants` and furniture in `home.owned` and nothing resolves an id across both. Left alone, and written into section 10, because the next code that looks up an id without knowing which catalogue it came from will fail silently.
+
+Clean at 320px on all four home screens: nothing off-screen, nothing under 24px, no broken images, no console errors. 355 tests, 0 failures, cache `lantern-alley-v155`.
+
+**The three entries had been appended past section 15 again**, so the file ended with change-log entries after its last real section. They are in section 9 with the rest, and sections 0, 6 and 10 have been brought in line: the painted-art counts were still saying one species and thirteen vector items, and `home-pet.js` was missing from the file map.
+
+### 2026-08-29 - Animated cat and focused tree-art plan
+
+- Scope is now limited to beautiful five-stage sakura and maple growth art; other plant species remain placeholders for now.
+- Approved pet direction: one autonomous long-haired calico with real-time movement, walk and transition animation, multiple rest/sleep/sniff/groom/play poses, contextual room/yard anchors, and door-based scene travel.
+- The pet is cosmetic and cannot affect lessons, money, plant growth, decoration placement, or input. Reduced-motion and hidden-tab behavior are required.
+- Design and implementation plan are recorded in `docs/superpowers/specs/2026-08-29-animated-cat-and-trees-design.md` and `docs/superpowers/plans/2026-08-29-animated-cat-and-trees.md`. No commit or push was made.
+
+### 2026-08-29 - Sakura, maple, and autonomous calico implemented
+
+- Added five painted growth stages each for sakura and Japanese maple and connected them to the learning-growth state.
+- Added one cosmetic long-haired calico with four sprite sheets: eight-frame walking, sitting/standing/door transitions, resting/sleeping/grooming, and sniffing/stretching/looking/playing.
+- The cat moves smoothly between authored yard and room anchors, follows the player between those scenes, ignores input, pauses in hidden tabs, and becomes still under reduced-motion preferences. It never appears in the shop and cannot change learning, money, growth, or decoration state.
+- Added `home-pet.js` and `home-pet.test.mjs`; pet files and all new tree assets are part of the offline shell. Cache and shell queries are version 154. No commit or push was made.
+- Browser QA corrected the room anchors after the first render placed the cat above the tatami; the final yard and room renders keep its paws on the scene floor with no console warnings or errors.
+- Final verification: full `node --test` passes 354/354; `node --check app.js` and `node --check home-pet.js` pass. Browser QA confirmed animated yard and room rendering, zero pet elements in the shop, and no console warnings or errors. New tree and pet production art totals about 1.05 MB.
+
+### 2026-08-29 - Existing reward-object artwork implemented
+
+- Optimized and connected the supplied rug, green bonsai, round table, red paper lantern, bamboo scroll, maneki-neko, wind chime, blue kotatsu, daruma, crane folding screen, floor lantern, chrysanthemum pot, sakura bonsai, pine bonsai, and blue asanoha wallpaper.
+- Added shop entries for the supplied objects that had no catalogue item: kotatsu, folding screen, floor lantern, chrysanthemum pot, daruma, sakura bonsai, and pine bonsai. Every item uses the existing placement, ownership, purchase, swap, and storage rules.
+- Original vectors remain as loading fallbacks. All production images are optimized WebP files and are available offline. Cache and shell queries are version 155.
+- TDD: the image-mapping test failed before mappings/assets existed, then passed; the offline cache test failed before adding the new files to `sw.js`, then passed. Browser QA confirmed 15 illustrated furniture cards and the raster wallpaper with no console warnings or errors. No commit or push was made.
+- Final verification: full `node --test` passes 355/355; `node --check app.js` and `node --check home-decor.js` pass.
 
 ### 2026-08-29 - The tutorial had stopped teaching the thing it exists for
 
@@ -2146,7 +2190,8 @@ The old single-file `lantern-alley.html` had no `<meta charset>`, so browsers de
 - ~~The Artifact cannot carry the finished game.~~ Resolved on 2026-08-27: the Artifact is retired and the app is the product. See section 8. It was rebuilt on 2026-08-28 purely as a **link to test on a phone** - a demo build with a cut-down catalogue at 14.10 MB, against a 15 MB self-imposed ceiling and a 16 MB hard limit. It is not the delivery surface.
 - **Tap targets in the Inn's illustrated room are small on a phone.** At 390px the stove zone is 51x18 and the broken bulb 23x23; four are under 24px at 320px. They cannot simply be enlarged - neighbouring zones are 29 to 45 px apart centre to centre, so a comfortable hit area would overlap the next zone and steal its taps. The fix is spacing them further apart in the artwork, which is a scene decision.
 - **53.9 MB of the 58.5 MB of PNG/JPG under `assets/` is unreferenced** - leftover originals from before the JPG and WebP conversions. Harmless at runtime, but it is most of the working tree, and it is already in git history so deleting it does not shrink a clone.
-- **Only one of eight plant species is painted**, and thirteen of fourteen furniture items still render as vector. Deliberate: the garden ships playable on stand-ins rather than waiting. See section 11.
+- **Three of eight plant species are painted** - sakura, maple, camellia - and six of twenty-one furniture items still render as vector. Deliberate: the garden ships playable on stand-ins rather than waiting. See section 11.
+- **`chrysanthemum` is an id in two different catalogues**: a plant species in `home-garden.js` and the 菊の鉢 floor item in `home-decor.js`. Nothing breaks today, because plants live in `garden.plants` and furniture in `home.owned` and the two are never looked up together - both can be bought and held at once, which is what a learner would expect. It is recorded because the next thing that resolves an id without knowing which catalogue it came from will find the wrong object, and that failure would be silent.
 - **Catalog provenance is incomplete.** The exact OpenJLPT commit used for the local copies was not recorded. The licence chain itself is now verified and recorded in `NOTICE.md`; only the version is missing.
 - **No grammar or kanji catalog is approved**, so the project may claim coverage only of its named vocabulary catalog. Candidate sources are in section 14; KANJIDIC2's licence is now verified.
 - **The Inn is entered through its old three-day stage**, while the four newer places drop straight into their first episode. The two entry paths are different by history rather than by design.

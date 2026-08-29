@@ -7,7 +7,7 @@
  * Bump CACHE_VERSION whenever any shell file changes, or returning players
  * will keep the old build.
  */
-var CACHE_VERSION = "lantern-alley-v153";
+var CACHE_VERSION = "lantern-alley-v155";
 
 // audio-index.js assigns to `self`, so the worker and the page share one list
 // of clip paths. Importing it here means new lines are cached automatically
@@ -38,15 +38,45 @@ var SHELL = [
   "./home-room.js",
   "./home-decor.js",
   "./home-garden.js",
+  "./home-pet.js",
   // The house and yard. A learner who installed the game offline and
   // walks home to a broken image has lost the reward, not a decoration.
   "./assets/home/exterior/open-house-yard-v1.webp",
   "./assets/home/interior/starter-room-v1.webp",
   "./assets/home/decor/floor-cushion-navy-v1.webp",
+  "./assets/home/decor/rug-plain-v1.webp",
+  "./assets/home/decor/bonsai-green-v1.webp",
+  "./assets/home/decor/low-table-round-v1.webp",
+  "./assets/home/decor/paper-lantern-red-v1.webp",
+  "./assets/home/decor/hanging-scroll-bamboo-v1.webp",
+  "./assets/home/decor/maneki-neko-v1.webp",
+  "./assets/home/decor/wind-chime-blue-v1.webp",
+  "./assets/home/decor/kotatsu-blue-v1.webp",
+  "./assets/home/decor/daruma-red-v1.webp",
+  "./assets/home/decor/folding-screen-cranes-v1.webp",
+  "./assets/home/decor/floor-lantern-v1.webp",
+  "./assets/home/decor/chrysanthemum-pot-v1.webp",
+  "./assets/home/decor/sakura-bonsai-v1.webp",
+  "./assets/home/decor/pine-bonsai-v1.webp",
+  "./assets/home/decor/wallpaper-asanoha-blue-v1.webp",
   "./assets/home/garden/camellia-planted-v1.webp",
   "./assets/home/garden/camellia-sprout-v1.webp",
   "./assets/home/garden/camellia-growing-v1.webp",
   "./assets/home/garden/camellia-mature-v1.webp",
+  "./assets/home/garden/sakura-planted-v1.webp",
+  "./assets/home/garden/sakura-sprout-v1.webp",
+  "./assets/home/garden/sakura-sapling-v1.webp",
+  "./assets/home/garden/sakura-young-v1.webp",
+  "./assets/home/garden/sakura-mature-v1.webp",
+  "./assets/home/garden/maple-planted-v1.webp",
+  "./assets/home/garden/maple-sprout-v1.webp",
+  "./assets/home/garden/maple-sapling-v1.webp",
+  "./assets/home/garden/maple-young-v1.webp",
+  "./assets/home/garden/maple-mature-v1.webp",
+  "./assets/home/pet/calico-walk-v1.webp",
+  "./assets/home/pet/calico-transitions-v1.webp",
+  "./assets/home/pet/calico-idles-v1.webp",
+  "./assets/home/pet/calico-interactions-v1.webp",
   "./daily-practice.js",
   "./review-mode.js",
   "./question-renderer.js",
