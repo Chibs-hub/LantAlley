@@ -71,7 +71,7 @@ Wallpaper is bought and hung; ownership and the active choice are stored separat
 
 **A cosmetic cat lives here.** One long-haired calico moves between authored anchors in the yard and the room, follows the learner between the two, and does nothing else: `pointer-events:none`, absent from the shop, still under reduced motion, paused in a hidden tab. It cannot touch lessons, money, growth or placement, and that separation is the point of it.
 
-**What the reward system still owes.** Sakura, maple and camellia are painted; the other five species are drawn from data - obviously drawings, deliberately - so the garden can be played and priced now. Fifteen of the twenty-one furniture items are illustrated and six still render as their vector: 火鉢, 扇, 面, 急須, 本, 小さな鉢. Every item keeps its vector as the fallback when an image will not load. Switching a species to painted art is one block in `PLANT_ART`; the remaining requirement is `docs/superpowers/plans/2026-08-28-home-garden-task-7-assets.md`.
+**What the reward system still owes.** Sakura, maple and camellia are painted; the other five species are not. Fifteen of the twenty-one furniture items are illustrated; 火鉢, 扇, 面, 急須, 本 and 小さな鉢 are not. **The shop sells only what has been painted** - an unfinished drawing is honest while a learner watches something they own grow, and dishonest on a price tag. Anything already bought keeps rendering from its vector, so no existing save loses an object. Adding the art is what puts an item back on the shelf. Switching a species to painted art is one block in `PLANT_ART`; the remaining requirement is `docs/superpowers/plans/2026-08-28-home-garden-task-7-assets.md`.
 
 **The one open decision.** Audio has not been generated for the four newer places. The course speaks 620 lines; 114 have clips. Inlining the remaining 506 would take the artifact to roughly 31 MB against a hard 16 MB limit, so on 2026-08-27 the owner chose to skip the audio run for now and to drop the Artifact as the delivery surface later, so that the finished game can ship with its voice. Nothing has been sent to Microsoft Edge TTS.
 
@@ -276,6 +276,20 @@ location.reload();
 This was not hypothetical: a freshly edited `lantern-map.js` was served from the browser cache while a brand-new file beside it loaded fine, and the map silently rendered without わが家 on it.
 
 ## 9. Change log and reasons
+
+### 2026-08-29 - The cat stops resizing, walks on the floor, and the shop stops selling drawings
+
+Four things from a screenshot of the room.
+
+**The size rule was right and was being applied at the wrong moments.** `updateHomePetNode` runs every animation frame and wrote position but never width - width was only set when the whole scene repainted. So the cat kept whatever size it had when it set off and then snapped to the correct one at the next interaction, which is what "size keeps changing" looked like. Width is written beside position now: **the largest change between two frames is 0.01%.** The band was also narrowed to 6.4-8.6% over a shorter depth range, so a full walk changes size by 1.44% rather than 3.
+
+**It was walking through the wall because its anchors were in it.** Sampling the two backgrounds puts the yard's gravel at about y=55 and the room's tatami at about y=70; `yard-door` sat at y=45, inside the house, and `interior-door` at y=65, against the shoji. A journey is a straight line between two anchors, so an anchor in the building makes the cat cross the building to reach anything. Every anchor now sits below its scene's floor line - yard from y=59, room from y=74 - which means no path between two of them can leave the ground.
+
+**The shop sold things that have not been drawn yet.** Five plant species and six furniture items were on sale as vector stand-ins. A stand-in is fine while a learner watches something they already own grow; on a price tag it is a placeholder sold as the thing. The shop now offers only painted goods - three species, fifteen items, **every card carrying a photograph and not one vector left on sale**. Ownership is untouched: anything already bought still renders from its vector, so no save loses an object, and adding the art is what puts an item back on the shelf.
+
+**On the clipping.** The sheets were repacked in the previous change from 3px to 12px of margin, which removes the seam bleed that caused it. If it still shows after a hard reload, the cause is elsewhere and needs finding rather than more padding - the frames now have eight device pixels of clearance at render size.
+
+356 tests, 0 failures. Cache `lantern-alley-v164`.
 
 ### 2026-08-29 - The cat and the furniture now respect the perspective
 

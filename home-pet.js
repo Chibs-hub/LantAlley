@@ -1,21 +1,30 @@
 (function(root){
   "use strict";
 
+  /* Every anchor stands on ground the cat could actually stand on.
+   *
+   * Sampled from the two backgrounds: the yard's gravel begins at about y=55
+   * and the room's tatami at about y=70; above those lines are the house and
+   * the shoji. `yard-door` was at y=45 and `interior-door` at y=65, which put
+   * the cat inside the building and against the paper screen - and because a
+   * journey is a straight line between anchors, it then walked across the wall
+   * to get anywhere. Nothing sits above its scene's floor line now, so no path
+   * between two anchors can leave the ground. */
   var SCENES = {
     yard: [
-      {id:"yard-door", x:50, y:45, kind:"door", behaviors:["look"]},
+      {id:"yard-door", x:50, y:59, kind:"door", behaviors:["look"]},
       {id:"yard-shade", x:17, y:72, kind:"shade", behaviors:["loaf","curl-sleep","side-sleep"]},
       {id:"yard-rock", x:38, y:75, kind:"rock", behaviors:["sniff","sit","look"]},
-      {id:"yard-path", x:55, y:78, kind:"path", behaviors:["sit","groom"]},
-      {id:"yard-veranda", x:72, y:54, kind:"veranda", behaviors:["loaf","groom","look"]},
-      {id:"yard-play", x:64, y:72, kind:"garden", behaviors:["play","sniff","stretch"]}
+      {id:"yard-path", x:55, y:80, kind:"path", behaviors:["sit","groom"]},
+      {id:"yard-veranda", x:76, y:64, kind:"veranda", behaviors:["loaf","groom","look"]},
+      {id:"yard-play", x:64, y:74, kind:"garden", behaviors:["play","sniff","stretch"]}
     ],
     interior: [
-      {id:"interior-door", x:50, y:65, kind:"door", behaviors:["look"]},
-      {id:"interior-cushion", x:38, y:80, kind:"furniture", behaviors:["curl-sleep","side-sleep","loaf"]},
-      {id:"interior-window", x:20, y:72, kind:"window", behaviors:["look","groom"]},
-      {id:"interior-center", x:55, y:82, kind:"tatami", behaviors:["sit","play","stretch"]},
-      {id:"interior-alcove", x:74, y:72, kind:"alcove", behaviors:["sniff","sit"]}
+      {id:"interior-door", x:50, y:74, kind:"door", behaviors:["look"]},
+      {id:"interior-cushion", x:36, y:83, kind:"furniture", behaviors:["curl-sleep","side-sleep","loaf"]},
+      {id:"interior-window", x:22, y:78, kind:"window", behaviors:["look","groom"]},
+      {id:"interior-center", x:55, y:88, kind:"tatami", behaviors:["sit","play","stretch"]},
+      {id:"interior-alcove", x:73, y:79, kind:"alcove", behaviors:["sniff","sit"]}
     ]
   };
 
@@ -45,10 +54,10 @@
    * the back to y=88 at the front; this maps that onto the approved 6-9% band
    * and clamps, so a position outside the authored range cannot produce an
    * absurd size. */
-  var PET_MIN_WIDTH = 6;
-  var PET_MAX_WIDTH = 9;
-  var PET_NEAR_Y = 88;
-  var PET_FAR_Y = 45;
+  var PET_MIN_WIDTH = 6.4;
+  var PET_MAX_WIDTH = 8.6;
+  var PET_NEAR_Y = 90;
+  var PET_FAR_Y = 58;
 
   function widthAt(y){
     var depth = (Number(y) - PET_FAR_Y) / (PET_NEAR_Y - PET_FAR_Y);

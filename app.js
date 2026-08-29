@@ -3038,6 +3038,13 @@
     var row = Math.floor(sprite.frame / sprite.columns);
     var x = sprite.columns > 1 ? column * 100 / (sprite.columns - 1) : 0;
     var y = sprite.rows > 1 ? row * 100 / (sprite.rows - 1) : 0;
+    /* Width every frame, beside position.
+     *
+     * It was only written when the whole scene was repainted, so the cat kept
+     * whatever size it had when it set off and then jumped to the right one at
+     * the next interaction. That snap is what read as the size changing on its
+     * own: the rule was right and it was being applied at the wrong moments. */
+    if(LanternHomePet.widthAt) node.style.width = LanternHomePet.widthAt(homePetState.y) + "%";
     node.style.left = homePetState.x + "%";
     node.style.top = homePetState.y + "%";
     node.style.setProperty("--pet-facing", homePetState.facing);
@@ -3552,11 +3559,25 @@
     return "";
   }
 
+  /* The shop sells only what has been painted.
+   *
+   * A drawn stand-in is honest while a learner watches something they already
+   * own grow, and dishonest on a price tag: it is a placeholder sold as the
+   * thing. Anything already bought keeps rendering from its vector, so no
+   * save loses an object - the rule is about what is offered, not what is
+   * owned. Adding the art is what puts an item back on the shelf.
+   */
+  function shopHasArtFor(itemId){
+    var item = LanternHomeDecor.getItem(itemId);
+    return !!(item && item.image);
+  }
+
   function homeShopDock(){
     var money = state.money || 0;
     var html = tutorialGiftCard();
     if(homeShopCategory === "plants" && typeof LanternHomeGarden !== "undefined"){
       LanternHomeGarden.catalogue().forEach(function(type){
+        if(!plantHasArt(type.id)) return;
         html += dockCard(plantFigure(type.id, "mature", ""), PLANT_JP[type.id] || type.name,
           "¥" + type.price, 'data-buy-plant="' + type.id + '"', money >= type.price ? "" : " is-locked");
       });
@@ -3572,6 +3593,7 @@
       });
     }else{
       LanternHomeDecor.catalogue().forEach(function(item){
+        if(!shopHasArtFor(item.id)) return;
         var owned = LanternHomeDecor.owns(homeState(), item.id);
         html += dockCard(decorCardArt(item.id), item.name, owned ? "持っている" : "¥" + item.price,
           'data-buy="' + item.id + '"' + (owned ? " disabled" : ""),
