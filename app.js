@@ -923,15 +923,6 @@
     }
   });
 
-  $("btn-preview-episode").addEventListener("click", function(event){
-    event.stopImmediatePropagation();
-    startEpisode();
-  });
-
-  $("btn-skip-day").addEventListener("click", function(event){
-    event.stopImmediatePropagation();
-    skipToNextDay();
-  });
 
   function showMap(){
     screenCharacter.hidden = true;
@@ -1509,8 +1500,6 @@
     var item = LanternCurriculumCatalog.getItem(card.target);
 
     $("stage-phase-row").style.display = "flex";
-    $("btn-skip-day").style.display = "none";
-    $("btn-preview-episode").style.display = "none";
     $("stage-phase-badge").textContent = "コンの稽古";
     $("encounter-status").style.display = "block";
     $("encounter-progress").textContent = String(practiceState.index + 1);
@@ -1623,8 +1612,6 @@
         return;
       }
       practiceState = null;
-      $("btn-skip-day").style.display = "inline-flex";
-      $("btn-preview-episode").style.display = "inline-flex";
       showMap();
       return;
     }
@@ -1918,7 +1905,6 @@
     var dayLabel = (entry.label || "宵の一時間") + "・" + (entry.question.seconds || 8) + "秒";
 
     $("stage-phase-row").style.display = "flex";
-    $("btn-skip-day").style.display = "none";
     $("stage-phase-badge").textContent = dayLabel;
     $("scene-label").textContent = "Episode 1 preview - " + question.skill;
     $("encounter-status").style.display = "block";
@@ -2135,7 +2121,6 @@
     }
     previewState = null;
     forgetEpisode();
-    $("btn-skip-day").style.display = "inline-flex";
     showMap();
   }
 
@@ -2324,25 +2309,6 @@
     previewState.missed = [];
   }
 
-  function skipToNextDay(){
-    var loc = getLocation(state.currentKey);
-    if(!loc || !loc.encounters) return;
-    var at = DAY_ORDER.indexOf(state.stagePhase);
-    var next = DAY_ORDER[at + 1];
-    if(!next){
-      // Past the last day the shift begins, the same as finishing them
-      // properly. Skipping used to land on the map and hide the handover.
-      if(typeof N2InnEpisodes !== "undefined" && loc.key === "home-inn"){
-        startEpisode();
-        return;
-      }
-      showMap();
-      return;
-    }
-    state.phaseItems = null;
-    state.answered = false;
-    startStagePhase(loc, next);
-  }
 
   function startStagePhase(loc, phase, items){
     state.stagePhase = phase;
@@ -2448,8 +2414,6 @@
     var dayMeta = loc.getDayMeta ? loc.getDayMeta(state.stagePhase) : null;
     $("scene-label").textContent = prompt.stageLabel + " - " + prompt.label;
     $("stage-phase-row").style.display = "flex";
-    $("btn-skip-day").style.display = loc.getDayMeta ? "inline-flex" : "none";
-    $("btn-preview-episode").style.display = loc.getDayMeta ? "inline-flex" : "none";
     $("stage-phase-badge").textContent = dayMeta ? dayMeta.label + "・" + dayMeta.mode + " " + dayMeta.stars : (phaseLabels[state.stagePhase] || phaseName);
     $("encounter-status").style.display = "block";
     $("encounter-progress").textContent = String(state.encounterIndex + 1);
@@ -2576,8 +2540,6 @@
 
     var prompt = getActivePrompt(loc);
     $("stage-phase-row").style.display = loc.encounters ? "flex" : "none";
-    $("btn-skip-day").style.display = (loc.encounters && loc.getDayMeta) ? "inline-flex" : "none";
-    $("btn-preview-episode").style.display = (loc.encounters && loc.getDayMeta) ? "inline-flex" : "none";
     $("scene-label").textContent = loc.key === "entrance" ? "路地の入口" : (loc.encounters ? loc.label + " - " + prompt.label : loc.label);
     $("encounter-status").style.display = loc.encounters ? "block" : "none";
     // Resuming into a stage never ran renderStagePrompt, so the day badge kept

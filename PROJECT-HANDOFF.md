@@ -103,7 +103,7 @@ Wallpaper is bought and hung; ownership and the active choice are stored separat
 
 **Coming back.** A half-finished shift has always been restored down to the question and the correction round, and until 2026-08-28 nothing ever said so: the map opened on a fixed default and the learner had to remember where they were. The map now opens on the place they were last in and names the unfinished shift on a button that goes straight back into it. It also shows the streak and how many words the schedule wants back today, both of which were tracked and never shown. One freeze covers one missed day, not an unlimited gap.
 
-**Still outstanding.** The Japanese has not been reviewed by the owner, who is a native speaker and reviews after authoring rather than during - and that now includes Kon's eight tutorial lines at the house and every string in the garden and shop. The two dashed test controls - **Skip to next day** and **Preview Episode** - still ship in the build.
+**Still outstanding.** The two testing shortcuts are gone from the build. The Japanese has not been reviewed by the owner, who is a native speaker and reviews after authoring rather than during - and that now includes Kon's eight tutorial lines at the house and every string in the garden and shop. The two dashed test controls - **Skip to next day** and **Preview Episode** - still ship in the build.
 
 ## 1. Project summary
 
@@ -300,6 +300,32 @@ location.reload();
 This was not hypothetical: a freshly edited `lantern-map.js` was served from the browser cache while a brand-new file beside it loaded fine, and the map silently rendered without わが家 on it.
 
 ## 9. Change log and reasons
+
+### 2026-08-29 - A visual pass over the Inn and the rewards stage
+
+Went through both stages looking for what is wrong on screen rather than in the data, since visual faults have been the ones getting missed. The tool matters as much as the findings: **an audit that reports things which are fine is worse than none**, and this one had to be corrected twice before its output could be trusted.
+
+**Two ways it lied, both fixed before anything was changed on their say-so.** It read a semi-transparent gradient stop as the background, scoring dark-brown-on-cream as 1.9:1 and calling three readable things broken. And it scored emoji: 🔊 and 🦊 are painted by the font in their own colours, so CSS `color` never reaches them - it reported the speaker button as unreadable twice on that basis.
+
+**What was genuinely wrong, all of it text a learner needs:**
+
+| | measured | |
+| --- | --- | --- |
+| Map's practice button | **1.28:1** | navy on near-black |
+| `Skip to next day` / `Preview Episode` | **1.04:1** | navy on the dark bar |
+| English how-to line | **2.76:1** | sage green on cream |
+| Encounter counter | **3.25:1** | red-orange on dark brown |
+
+One cause under most of it: `--ai-indigo`, `--momiji` and `--moss` are chosen for the cream workspace, and the Inn and Entrance put a dark bar under some of the things that use them. The tokens are right; only these placements moved.
+
+**The test controls are gone rather than recoloured.** They were already the recommended next work with their blocker cleared, and being invisible is why they lasted this long. Removed from `index.html`, both listeners, ten show/hide lines and `skipToNextDay`, which nothing else called.
+
+**Two regressions caused by the fixes themselves, caught by re-running the audit after each one** - which is the argument for having it:
+
+- `Restart from Learn` carries its own cream background, so lightening ghost buttons by position wrote near-white on cream: readable before at navy, 1.07:1 after. Anything with a surface of its own now keeps the ink that suits that surface.
+- **Kon's speech bubble on the home stage was near-white text on a near-white bubble, 1.08:1** - an apparently empty bubble on the screen a returning learner lands on. That one predates today: it arrived when the home stage went dark and the bubble kept its own light background. The bubble now sets its own ink instead of inheriting the stage's.
+
+Eight screens across both stages now audit clean at desktop and at 320px: contrast, off-screen controls, touch targets, unnamed controls, broken images, clipped text. 356 tests, 0 failures. Cache `lantern-alley-v162`.
 
 ### 2026-08-29 - A half-grown tree was a seedling in the cupboard
 
@@ -2298,7 +2324,6 @@ The old single-file `lantern-alley.html` had no `<meta charset>`, so browsers de
 - **No audio on four of the five places.** 506 of the 620 spoken lines have no clip. Listening items there are read rather than heard, and on a device with no Japanese voice they are silent. This is a deliberate, recorded decision, not an oversight - see section 0.
 - **The five-second items are tighter without audio.** At the Inn the clip plays before the clock starts, so the request has already been heard. Elsewhere the learner reads it cold.
 - **The Japanese has not been reviewed.** 200 questions, five story arcs, every piece of Kon's dialogue, the eight tutorial lines at the house and every garden and shop string were authored in this project and have not been checked by a native speaker. The owner reviews after authoring. `?review=1` opens the in-app review mode, which walks all 215 items in place with the clock off and an おかしい checkbox.
-- **Two test controls still ship.** **Skip to next day** and **Preview Episode** are dashed buttons in the live build.
 - ~~The Artifact cannot carry the finished game.~~ Resolved on 2026-08-27: the Artifact is retired and the app is the product. See section 8. It was rebuilt on 2026-08-28 purely as a **link to test on a phone**, which section 2 now answers better: the dev server is reachable from a phone on the same Wi-Fi at this machine's LAN address, with no build and always showing the working tree. The artifact remains only for a phone that is not on this network, and should be deleted once the app is hosted.
 - **Tap targets in the Inn's illustrated room are small on a phone.** At 390px the stove zone is 51x18 and the broken bulb 23x23; four are under 24px at 320px. They cannot simply be enlarged - neighbouring zones are 29 to 45 px apart centre to centre, so a comfortable hit area would overlap the next zone and steal its taps. The fix is spacing them further apart in the artwork, which is a scene decision.
 - **53.9 MB of the 58.5 MB of PNG/JPG under `assets/` is unreferenced** - leftover originals from before the JPG and WebP conversions. Harmless at runtime, but it is most of the working tree, and it is already in git history so deleting it does not shrink a clone.
@@ -2318,7 +2343,7 @@ In the order that gets the most for the least:
 4. **Finish the home and garden art.** Five of the eight species are still drawn from data and six of the twenty-one furniture items still render as their vector. The whole system runs without it, so this is presentation rather than function, but it is the difference between a garden and a diagram. The requirement is in `docs/superpowers/plans/2026-08-28-home-garden-task-7-assets.md`.
 
    **Note the stage counts differ by species.** Camellia is painted in four steps matching the engine - `planted, sprout, growing, mature` - while sakura and maple are painted in five, with `sapling` and `young` in place of `growing`. `plantVisualStage` in `app.js` bridges the two: a five-step species maps the engine's `growing` onto `sapling` or `young` by how far through it is. **Anything that renders a plant must go through it**, or the missing `growing` key falls back to the bare seedling - which is what the storage card did until 2026-08-29.
-5. **Remove or flag the two test controls.** Left until last on purpose: every step above is verified through them. The objection that used to block this - that they were the only quick way back into a place - is gone: the map now names an unfinished shift and goes straight back into it.
+5. ~~Remove the two test controls.~~ Done on 2026-08-29. They were the least visible things on the screen - navy ink on the dark stage bar, 1.04:1 - which is how they survived so long.
 6. **Give the four newer places their scene art.** They render on the shared workspace today. Nothing depends on this; it is the visible half of the work. The home is now the worked example of how a place with real artwork should be put together - the picture is the stage rather than a picture on it, and the interface floats over it.
 7. **Reconcile the Inn's two entry paths** so all five places are entered the same way.
 

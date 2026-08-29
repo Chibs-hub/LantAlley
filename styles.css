@@ -1087,7 +1087,6 @@
 .inn-stage .inn-drop-zone{box-shadow:0 5px 0 var(--wood-shadow);}
 
 /* Testing aid, not part of the lesson: dashed so it reads as a tool. */
-.stage-skip-day{border-style:dashed; opacity:.75; font-size:.72rem;}
 
 /* The Inn's dialogue sits in the narrow context column of the split desktop
    layout. Side by side, the fox took about 38% of a 325px column and left the
@@ -1111,7 +1110,6 @@
 .jp-line{overflow-wrap:anywhere; word-break:normal;}
 
 /* Testing aid: visible enough to find, distinct enough not to read as lesson UI. */
-.stage-skip-day{border-style:dashed; opacity:1; font-size:.72rem; white-space:nowrap;}
 
 /* Inside the illustrated room the drop zones were solid cream cards, so the
    artwork was mostly hidden behind pale rectangles. They still need to read as
@@ -1709,3 +1707,50 @@
     margin:8px 0 0; font-size:.8rem; color:#e3c48c; opacity:.9; text-align:center;
   }
   .map-day-status[hidden]{display:none}
+
+  /* ---- Ink that was chosen for a light panel and used on a dark one ----
+     .ink-on-dark-fixes
+
+     Three tokens are set for the cream workspace: --ai-indigo on .btn-ghost,
+     --momiji on the encounter counter, --moss on the English how-to line. The
+     Inn and the Entrance put a dark bar and a dark stage under some of them,
+     and the map's detail panel is near-black. Measured before changing:
+
+       map practice button   navy on near-black       1.28:1
+       encounter counter     red-orange on brown      3.25:1
+       how-to line           sage green on cream      2.76:1
+
+     The tokens are right where they were designed to sit; only these
+     placements move.
+
+     Not every ghost button on the bar is transparent: `Restart from Learn`
+     carries its own cream background, so lightening its ink by position made
+     near-white text on cream - readable before, 1.07:1 after. Anything with a
+     surface of its own keeps the ink that suits that surface. */
+
+  .inn-stage .stage-bar .btn-ghost:not(.stage-restart),
+  .entrance-stage .stage-bar .btn-ghost:not(.stage-restart),
+  #map-detail-practice{
+    color:#f7ecd8;
+    border-color:rgba(247,215,159,.42);
+  }
+  .inn-stage .stage-bar .btn-ghost:not(.stage-restart):hover,
+  .entrance-stage .stage-bar .btn-ghost:not(.stage-restart):hover,
+  #map-detail-practice:hover{background:rgba(255,240,207,.14)}
+
+  /* The counter sits on the bar, so it takes the bar's light ink rather than
+     the momiji it uses on cream. */
+  .inn-stage .encounter-status,
+  .entrance-stage .encounter-status{color:#f3c9a5}
+
+  /* The English instruction is the one line a learner has to read to know what
+     to do, and sage green on cream was the faintest thing on the screen. */
+  .meaning-line{color:#3f6b46}
+
+  /* Kon's speech bubble is near-white and keeps its own background wherever it
+     goes, so on the dark home stage it inherited that stage's light ink and
+     wrote near-white on near-white: 1.08:1, an apparently empty bubble on the
+     one screen a returning learner lands on. The panel sets its own dark ink
+     rather than taking the stage's; the lines inside that carry their own
+     colour still win. */
+  #screen-game.home-stage #dialogue-panel{color:#2d2926}
