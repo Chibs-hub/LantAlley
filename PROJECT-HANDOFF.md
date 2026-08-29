@@ -80,6 +80,19 @@ No installation or package manager is required.
 2. Open `http://localhost:8743/index.html`, select `路地へ入る`, then open `Moonview Inn` from the map.
 3. Add `?review=1` to open the owner's Japanese review mode.
 
+**Testing on a phone, without hosting anything.** The dev server already listens on every interface, so a phone on the same Wi-Fi can reach it directly - no build, no upload, and it always shows the current working tree:
+
+```
+http://<this machine's LAN IP>:8743/index.html
+```
+
+Find the address with `Get-NetIPAddress -AddressFamily IPv4`; on 2026-08-29 it was `192.168.137.82`. Python already holds inbound firewall allows, so nothing needs opening.
+
+Two things about that address specifically:
+
+- **A service worker will not register over plain http on a LAN IP.** Browsers allow it only on `localhost` or HTTPS. The game plays normally, but install-to-home-screen and offline do not work there - test those on `localhost`, and on the real host once there is one.
+- **A VPN can break it.** If the phone cannot connect, check whether a tunnel is up on this machine; LAN routing is the usual casualty.
+
 **Seeing an old version after a change is the most common way to waste an hour here, and `Ctrl+F5` does not fix it.** There are two separate caches:
 
 - The **service worker**, which serves the app shell cache-first. It also intercepts URLs it does not know: while testing, it quietly served `index.html` in place of `lantern-alley-artifact.html`, which looked exactly like a broken build. Bump `CACHE_VERSION` in `sw.js`, or unregister it in DevTools > Application.
@@ -218,7 +231,13 @@ That last suite exists because roughly 260 assertions match the *source text* of
 
 **What the product is now.** `index.html` and its sibling files, played from disk or served over http, installable as a PWA. There is no size ceiling.
 
-`build-artifact.mjs` still works and still refuses to emit a file over 15 MB. It is now an **optional demo build**, not the delivery path. Nothing needs to be rebuilt or republished to ship a change.
+`build-artifact.mjs` still works and still refuses to emit a file over 15 MB. It is an **optional demo build**, not the delivery path. Nothing needs to be rebuilt or republished to ship a change.
+
+**Do not let its size ceiling drive decisions.** It briefly did: the build broke at 15.89 MB, and that was treated as a problem to solve rather than as a retired build refusing to hold a game that has outgrown it. The fix that came out of it - cutting oversized backgrounds - was worth doing for the app on its own terms, but the trigger was the wrong one. If it stops fitting again, that is the artifact reaching its limit, which is exactly why it was retired.
+
+**Why it still exists at all:** it is currently the only way to open the game on a phone that is not on this Wi-Fi. Section 2 covers the LAN address, which is better for everyday testing. Once the app is hosted, this file and the tests that read it should be deleted.
+
+**The order that was agreed:** keep testing locally until the game is ready, then host it. `_headers` is already written for that day - Cloudflare Pages and Netlify both read it, and it handles the stale-service-worker trap that would otherwise pin every returning learner to an old release.
 
 ### Verifying a change
 
