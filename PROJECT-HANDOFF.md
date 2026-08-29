@@ -103,7 +103,7 @@ Wallpaper is bought and hung; ownership and the active choice are stored separat
 
 **Coming back.** A half-finished shift has always been restored down to the question and the correction round, and until 2026-08-28 nothing ever said so: the map opened on a fixed default and the learner had to remember where they were. The map now opens on the place they were last in and names the unfinished shift on a button that goes straight back into it. It also shows the streak and how many words the schedule wants back today, both of which were tracked and never shown. One freeze covers one missed day, not an unlimited gap.
 
-**Still outstanding.** The two testing shortcuts are gone from the build. The Japanese has not been reviewed by the owner, who is a native speaker and reviews after authoring rather than during - and that now includes Kon's eight tutorial lines at the house and every string in the garden and shop. The two dashed test controls - **Skip to next day** and **Preview Episode** - still ship in the build.
+**Still outstanding.** The Japanese has not been reviewed by the owner, who is a native speaker and reviews after authoring rather than during - and that now includes Kon's eight tutorial lines at the house and every string in the garden and shop. The two testing shortcuts that used to ship, **Skip to next day** and **Preview Episode**, were removed on 2026-08-29.
 
 ## 1. Project summary
 
@@ -325,7 +325,18 @@ One cause under most of it: `--ai-indigo`, `--momiji` and `--moss` are chosen fo
 - `Restart from Learn` carries its own cream background, so lightening ghost buttons by position wrote near-white on cream: readable before at navy, 1.07:1 after. Anything with a surface of its own now keeps the ink that suits that surface.
 - **Kon's speech bubble on the home stage was near-white text on a near-white bubble, 1.08:1** - an apparently empty bubble on the screen a returning learner lands on. That one predates today: it arrived when the home stage went dark and the bubble kept its own light background. The bubble now sets its own ink instead of inheriting the stage's.
 
-Eight screens across both stages now audit clean at desktop and at 320px: contrast, off-screen controls, touch targets, unnamed controls, broken images, clipped text. 356 tests, 0 failures. Cache `lantern-alley-v162`.
+**Confirmed afterwards on the pushed build**, each measured directly rather than assumed fixed:
+
+| | before | after |
+| --- | --- | --- |
+| Map's practice button | 1.28:1 | **15.52:1** |
+| Kon's greeting at home | 1.08:1 | **13.32:1** |
+| Encounter counter | 3.25:1 | **9.65:1** |
+| English how-to line | 2.76:1 | **5.93:1** |
+
+Eight screens across both stages audit clean at desktop and at 320px: contrast, off-screen controls, touch targets, unnamed controls, broken images, clipped text. 356 tests, 0 failures. Cache `lantern-alley-v162`.
+
+**A warning about checking this.** The first confirmation run came back looking catastrophic - everything off-screen, plants at 3x3, cards at 10x144 - and every word of it was noise: `clientWidth` was **0** because the preview pane had collapsed. That is the third time it has bitten. Read the viewport width before believing a sudden pile of layout failures.
 
 ### 2026-08-29 - A half-grown tree was a seedling in the cupboard
 
