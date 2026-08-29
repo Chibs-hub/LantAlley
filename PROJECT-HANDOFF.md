@@ -4,27 +4,21 @@ Last updated: 2026-08-29
 
 ## 0. Current status
 
-### 2026-08-29 - Visual and cat-behavior audit repairs (implemented, browser QA remains)
+### 2026-08-29 - Cache, cat motion, and what the cat art cannot do
 
-The v156 audit found five concrete issues to repair:
+**Everything is committed. Nothing is pushed.** Three commits this session, cache version **v168**, `node --test` at **356/356**.
 
-1. Furniture needs per-item scene scale instead of one fixed 18% width.
-2. Raster wallpaper must preserve its pattern proportions instead of stretching.
-3. Placed plant and furniture pseudo-buttons need Enter/Space activation.
-4. The cat needs game-compressed realistic rhythms: longer resting/sleeping, medium grooming, short exploration/play - not literal 12-hour sleeps and not movement every 3-6 seconds.
-5. Scene changes must bring the cat through the door instead of recreating it at a random anchor; the existing `crossDoor()` path is currently unused.
+The block that used to sit here described v157 as sitting uncommitted in the working tree. That had been untrue for days. If you are reading this section, check its date against `git log` before you trust it.
 
-Implemented in the working tree without commit or push:
+**Service worker precaching no longer serves stale pictures.** `cache.addAll()` fetches through the browser's own HTTP cache. Scripts and stylesheets carry a `?v=` stamp so a `CACHE_VERSION` bump changes their URL and forces a refetch; **images carry no stamp and their URLs never change**, so `addAll` was handed whatever bytes the browser already had. Redrawn artwork was landing in the repository and nowhere else. The shell is now fetched in `cache: "reload"` mode. This had been masquerading as a code bug for at least two sessions - any picture redrawn since it was first cached was affected, not just the cat.
 
-- Furniture now uses per-item scene widths so large furnishings and small ornaments render at appropriate scales.
-- Raster wallpaper uses `object-fit: cover`, preserving its proportions.
-- Placed plants and furniture activate with Enter or Space as well as pointer input.
-- Cat dwell times are compressed for play: sleep 18-36 seconds, loaf/sit 10-22 seconds, groom 8-16 seconds, and exploration 5-11 seconds. It no longer moves every 3-6 seconds.
-- Entering the yard or room now initializes the cat at that scene's doorway through the existing `crossDoor()` path.
-- Cache version is v157.
-- `node --check app.js`, `node --check home-pet.js`, focused tests, and `node --test` logic all passed after the cache mismatch was corrected. Final focused PWA/pet run: 43/43. The earlier full run was 355/356 only because some index scripts still had v156; that defect is fixed and the PWA test now passes.
+**The cat walks at a plausible pace.** The speeds had been tuned when it was half its current size, so after the resize it crossed the yard in 22.6 seconds at a quarter of a body length per second. Now 12.9 seconds, 0.43 body lengths per second, 1.3-1.6 steps per second at a 0.30 body-length stride. Those are a real cat's walking numbers.
 
-Remaining work for the next session: visually verify v157 room, yard, wallpaper, furniture scale, keyboard pickup, and cat rhythm at desktop and mobile. Add a DOM regression test for Enter/Space pickup if practical. Do not commit or push without asking.
+**The `enter` pose is retired** and a test keeps it retired. Its four frames are drawn 79%, 69%, 51% and 53% of the cell wide, so the cat halved and grew back on every trip between yard and room. Scene entry uses the standing row, steadiest in the set at 1%.
+
+**The engawa and the window sill can sleep**, which they could not before.
+
+**Open, and the reason the next session exists:** the owner still reports the cat being cut off, and I could not reproduce it - see section 11 item 1. The cat art also has no sitting pose at all, which is not a code problem.
 
 ### Golden Rule: Learning Integrity
 
@@ -2404,15 +2398,36 @@ The old single-file `lantern-alley.html` had no `<meta charset>`, so browsers de
 
 In the order that gets the most for the least:
 
-1. **Native review of the Japanese.** Everything else is cheap to change; this is the thing only the owner can do. `generate-audio.py` hashes its input, so corrections cost only the lines that changed.
-2. ~~Decide the delivery surface.~~ Settled on 2026-08-27: the app is the product, the Artifact is retired. The audio run is no longer blocked by size.
-3. **Generate the audio** once the surface is known. `collect-spoken-lines.js` already walks every stage, so the run needs no code change. A local open TTS model (section 14) would also remove the external-service approval gate, since nothing would leave the machine.
-4. **Finish the home and garden art.** Five of the eight species are still drawn from data and six of the twenty-one furniture items still render as their vector. The whole system runs without it, so this is presentation rather than function, but it is the difference between a garden and a diagram. The requirement is in `docs/superpowers/plans/2026-08-28-home-garden-task-7-assets.md`.
+1. **The cat is reportedly still cut off, and I could not reproduce it.** Do not re-check the things below; they are measured and ruled out.
+
+   - Every frame in all four sheets keeps **at least 13px clear on all four sides** of its 192px cell.
+   - The cat's box sits **inside the scene at every anchor**, clearing the goal line by 6px at the lowest one (`interior-center`, y=83).
+   - Nothing in the scene **outranks it in the stacking order**; `.home-pet` is `z-index: 3` and the only clipping ancestors are `.home-scene` and `.frame`, both far larger than the cat.
+   - The element is **square** and `background-size` maps exactly one cell onto it, verified live in the browser.
+
+   What is still unknown is **which pose is on screen when it happens**. That is the one thing to capture next: ask for that, or add a temporary on-screen readout of `homePetState.behavior`. Without it there is nothing left to test - I spent most of a session re-measuring the sheet and the CSS, and both were correct every time.
+
+   Note the trap that wasted that session: before v168 the browser was painting **pre-repack sprite bytes**, so the art on disk and the art on screen were different files. If a report predates v168, it may describe art that no longer exists. Confirm the reporter is on v168 before investigating.
+
+2. **The cat art has no sitting pose, and cannot be fixed in code.** `walk`, `sit`, `look` and the retired `enter` are all the same standing cat; only `loaf`, `curl-sleep` and `groom` are genuinely distinct. So a cat that "sits at the door" stands there. This needs drawing, and the owner has said image generation belongs to another session.
+
+   **Spec for whoever draws it.** Sheets are a grid of square cells, currently 192x192, four columns per row. The rules the existing set breaks:
+
+   - **One pose, one scale, across all of its frames.** This is the rule `enter` broke and it is the expensive one - it cannot be corrected afterwards, because which frame shows the true size is not recoverable from the picture.
+   - **One scale across every pose too**, so the cat does not change size when it changes what it is doing. Judge this by head and body, not by the bounding box: this cat has a large plumed tail that fills the box in the compact poses, and measuring the box alone will tell you the poses are consistent when they are not, or the reverse.
+   - **A common baseline.** Every frame's feet on the same line, currently 93.2% down the cell, so the cat does not bob when the pose changes.
+   - **Clearance on all four sides**, 13px or more at 192px, so nothing touches a cell edge.
+   - **Wanted:** a true sitting pose (upright, tail curled round the feet), and a consistent entry/exit if scene transitions are wanted back.
+
+3. **Native review of the Japanese.** Everything else is cheap to change; this is the thing only the owner can do. `generate-audio.py` hashes its input, so corrections cost only the lines that changed.
+4. ~~Decide the delivery surface.~~ Settled on 2026-08-27: the app is the product, the Artifact is retired. The audio run is no longer blocked by size.
+5. **Generate the audio** once the surface is known. `collect-spoken-lines.js` already walks every stage, so the run needs no code change. A local open TTS model (section 14) would also remove the external-service approval gate, since nothing would leave the machine.
+6. **Finish the home and garden art.** Five of the eight species are still drawn from data and six of the twenty-one furniture items still render as their vector. The whole system runs without it, so this is presentation rather than function, but it is the difference between a garden and a diagram. The requirement is in `docs/superpowers/plans/2026-08-28-home-garden-task-7-assets.md`.
 
    **Note the stage counts differ by species.** Camellia is painted in four steps matching the engine - `planted, sprout, growing, mature` - while sakura and maple are painted in five, with `sapling` and `young` in place of `growing`. `plantVisualStage` in `app.js` bridges the two: a five-step species maps the engine's `growing` onto `sapling` or `young` by how far through it is. **Anything that renders a plant must go through it**, or the missing `growing` key falls back to the bare seedling - which is what the storage card did until 2026-08-29.
-5. ~~Remove the two test controls.~~ Done on 2026-08-29. They were the least visible things on the screen - navy ink on the dark stage bar, 1.04:1 - which is how they survived so long.
-6. **Give the four newer places their scene art.** They render on the shared workspace today. Nothing depends on this; it is the visible half of the work. The home is now the worked example of how a place with real artwork should be put together - the picture is the stage rather than a picture on it, and the interface floats over it.
-7. **Reconcile the Inn's two entry paths** so all five places are entered the same way.
+7. ~~Remove the two test controls.~~ Done on 2026-08-29. They were the least visible things on the screen - navy ink on the dark stage bar, 1.04:1 - which is how they survived so long.
+8. **Give the four newer places their scene art.** They render on the shared workspace today. Nothing depends on this; it is the visible half of the work. The home is now the worked example of how a place with real artwork should be put together - the picture is the stage rather than a picture on it, and the interface floats over it.
+9. **Reconcile the Inn's two entry paths** so all five places are entered the same way.
 
 ## 12. Handoff rules for the next developer or AI session
 
