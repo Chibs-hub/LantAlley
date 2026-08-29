@@ -36,6 +36,25 @@
 
   function copy(value){ return JSON.parse(JSON.stringify(value)); }
   function sceneAnchors(scene){ return (SCENES[scene] || []).map(copy); }
+
+  /* How big the cat is where it is standing.
+   *
+   * Both scenes are painted in perspective and the cat was a flat 13% of the
+   * scene everywhere, which made it a giant at the back wall and left it
+   * ignoring the depth every other object respects. Anchors run from y=45 at
+   * the back to y=88 at the front; this maps that onto the approved 6-9% band
+   * and clamps, so a position outside the authored range cannot produce an
+   * absurd size. */
+  var PET_MIN_WIDTH = 6;
+  var PET_MAX_WIDTH = 9;
+  var PET_NEAR_Y = 88;
+  var PET_FAR_Y = 45;
+
+  function widthAt(y){
+    var depth = (Number(y) - PET_FAR_Y) / (PET_NEAR_Y - PET_FAR_Y);
+    depth = Math.max(0, Math.min(1, depth));
+    return +(PET_MIN_WIDTH + (PET_MAX_WIDTH - PET_MIN_WIDTH) * depth).toFixed(2);
+  }
   function find(scene, id){ return (SCENES[scene] || []).filter(function(row){ return row.id === id; })[0] || null; }
 
   function create(scene, seed){
@@ -81,7 +100,15 @@
     var dx = target.x - next.x;
     var dy = target.y - next.y;
     var distance = Math.sqrt(dx * dx + dy * dy);
-    var travel = elapsed * 0.012;
+    /* Slower, and slowing further as it arrives.
+      *
+      * A flat 0.012 scene-percent per millisecond crossed the yard in about
+      * three seconds and stopped dead on the spot, which is what read as jumpy.
+      * Speed now falls away over the last stretch, so the cat settles onto an
+      * anchor instead of hitting it. No extra state: the distance left is the
+      * only input. */
+    var approach = Math.min(1, distance / 14);
+    var travel = elapsed * (0.0016 + 0.0044 * approach);
     if(distance <= travel || distance === 0){
       next.x = target.x;
       next.y = target.y;
@@ -94,7 +121,8 @@
     next.x += dx / distance * travel;
     next.y += dy / distance * travel;
     next.behavior = "walk";
-    next.frame = Math.floor(next.clock / 90) % 8;
+    // 90ms was eleven poses a second for a walking cat. 160 is a walk.
+    next.frame = Math.floor(next.clock / 160) % 8;
     return next;
   }
 
@@ -145,6 +173,7 @@
 
   root.LanternHomePet = {
     anchors:sceneAnchors,
+    widthAt:widthAt,
     behaviors:function(){ return Object.keys(SPRITES); },
     create:create,
     sendTo:sendTo,

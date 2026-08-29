@@ -1583,8 +1583,12 @@
      everything from the house, so anything standing in it needs to sit in that
      light rather than float above it. */
   .home-plant, .home-item{position:absolute; width:20%; cursor:pointer; line-height:0}
+  /* Width is set inline from the cat's own depth, so the flat 13% here is only
+     the fallback for a render before the pet module has spoken. It used to be
+     the actual size everywhere, which made the cat a giant against the back
+     wall while every object around it shrank with the perspective. */
   .home-pet{
-    position:absolute; z-index:3; width:13%; aspect-ratio:1;
+    position:absolute; z-index:3; width:7.5%; aspect-ratio:1;
     transform:translate(-50%,-86%); pointer-events:none; line-height:0;
     filter:drop-shadow(0 3px 4px rgba(28,16,8,.48)) saturate(.9) sepia(.08);
   }
@@ -1592,7 +1596,7 @@
     display:block; width:100%; height:100%; background-repeat:no-repeat;
     transform:scaleX(var(--pet-facing,1)); transform-origin:center bottom;
   }
-  @media (prefers-reduced-motion:reduce){.home-pet{width:12%}}
+  /* Reduced motion changes whether it moves, not how big it is. */
   /* Three small things, all of which stop a cut-out reading as pasted on.
 
      The shadow gives it contact with the ground. The warm grade pulls a

@@ -2994,7 +2994,14 @@
       + (attrs || "") + '>' + inner + '</div>';
   }
 
-  function decorSceneWidth(item){
+  /* An object's size on screen is what it is, times where it stands.
+   *
+   * This used to be the item alone, so the same low table covered the same
+   * fraction of the picture at the back wall as at the front of the room - the
+   * one thing a scene drawn in perspective cannot survive. The slot's `scale`
+   * supplies the depth; the table below stays what it always was, the object's
+   * own size. */
+  function decorSceneWidth(item, slot){
     var widths = {
       "rug-plain":26, "low-table":28, kotatsu:30, "folding-screen":32,
       "floor-cushion-navy":18, "plant-small":12, brazier:12,
@@ -3002,7 +3009,8 @@
       fan:10, mask:9, teapot:8, books:10, "cat-figure":8, daruma:8,
       "sakura-bonsai":13, "pine-bonsai":13, "sill-plant":7, "wind-chime":7
     };
-    return widths[item && item.id] || 18;
+    var base = widths[item && item.id] || 18;
+    return +(base * ((slot && slot.scale) || 1)).toFixed(2);
   }
 
   function homePetMarkup(scene){
@@ -3014,7 +3022,9 @@
       homePetIdleMs = 0;
     }
     var sprite = LanternHomePet.spriteFor(homePetState);
-    return '<div class="home-pet" aria-hidden="true" style="left:' + homePetState.x
+    var petWidth = (typeof LanternHomePet !== "undefined" && LanternHomePet.widthAt)
+      ? LanternHomePet.widthAt(homePetState.y) : 7.5;
+    return '<div class="home-pet" aria-hidden="true" style="width:' + petWidth + '%;left:' + homePetState.x
       + '%;top:' + homePetState.y + '%;--pet-facing:' + homePetState.facing + '">'
       + '<span style="background-image:url(\'' + sprite.path + '\');background-size:'
       + (sprite.columns * 100) + '% ' + (sprite.rows * 100) + '%"></span></div>';
@@ -3148,7 +3158,7 @@
         html += positioned("home-item", slot, decorArt(here, item.name),
           ' data-slot-item="' + slot.id + '" role="button" tabindex="0"'
             + ' aria-label="' + item.name + ' をかたづける"',
-          'width:' + decorSceneWidth(item) + '%');
+          'width:' + decorSceneWidth(item, slot) + '%');
       });
       if(picked){
         interior.slots.forEach(function(slot){

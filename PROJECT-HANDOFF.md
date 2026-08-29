@@ -4,30 +4,6 @@ Last updated: 2026-08-29
 
 ## 0. Current status
 
-### 2026-08-29 - Cat motion, clipping, and scene-scale repair (next session priority)
-
-The user reported that the cat is jumpy, parts are cut off during movement, and both the cat and placed objects do not fit the scene scale. Do not commit or push the current working tree until this repair is completed and verified.
-
-Verified root causes:
-
-1. `assets/home/pet/calico-walk-v1.webp` places cat pixels directly against sprite-cell edges. CSS cannot recover pixels outside a frame, so the sheet must be repacked with transparent padding.
-2. `.home-pet` in `styles.css` always uses `width:13%` (`12%` reduced motion), regardless of anchor depth. This makes the cat too large and inconsistent with the room/yard perspective.
-3. `home-pet.js` advances walking frames every 90 ms and moves at `elapsed * 0.012` scene-percent per millisecond. The fast pose changes and travel speed make the motion look jumpy.
-4. `app.js::decorSceneWidth()` scales by item only. It does not combine item size with slot depth, so foreground and background objects cannot blend consistently.
-
-Approved direction still required before implementation (the bounded design was presented, but the user has not explicitly approved it yet):
-
-- Repack all four cat sprite sheets into equal cells with transparent safety padding; preserve their current frame order and metadata.
-- Add authored pet scale per anchor or derive a clamped depth scale, approximately 6-9% scene width. Keep the paws anchored to the ground while scale changes.
-- Slow walking and use smooth continuous position interpolation; use a calmer frame cadence around 140-180 ms. Avoid CSS transitions that lag behind the state or slide after arrival.
-- Scale placed decor by both physical item size and slot depth. Keep wall/shelf/floor classes separately calibrated.
-- Write failing tests first for scale metadata, bounded cat size, travel speed, and decor depth scaling. Then implement one cause at a time.
-- Bump cache from v157 only after production changes.
-- Verify sprite edges, paws/ground contact, cat size, movement, and decor blending in yard and room at desktop and mobile. Run `node --test`, `node --check app.js`, `node --check home-pet.js`, and `git diff --check`.
-- Update this handoff after implementation. Never claim visual completion from automated tests alone.
-
-Current uncommitted work from the previous repair remains in `PROJECT-HANDOFF.md`, `app.js`, `home-pet.js`, `home-pet.test.mjs`, `index.html`, `styles.css`, and `sw.js`. It added longer cat dwell times, doorway entry, per-item decor widths, wallpaper fit, keyboard activation, and cache v157. Focused PWA/pet tests passed 43/43; the final browser visual QA was not completed.
-
 ### 2026-08-29 - Visual and cat-behavior audit repairs (implemented, browser QA remains)
 
 The v156 audit found five concrete issues to repair:
@@ -300,6 +276,22 @@ location.reload();
 This was not hypothetical: a freshly edited `lantern-map.js` was served from the browser cache while a brand-new file beside it loaded fine, and the map silently rendered without わが家 on it.
 
 ## 9. Change log and reasons
+
+### 2026-08-29 - The cat and the furniture now respect the perspective
+
+The four causes recorded as next-session priority, done. One of them was not what the note said it was.
+
+**The sprite clipping was real, and the diagnosis was not.** The note said frames "touch the sprite-cell edges". They do not - every frame in all four sheets had about 3px of clearance in a 192px cell. But the cat renders at roughly 120px, so 3px is under two device pixels, and the sheet is addressed in percentages: `background-position` lands on fractions and bleeds a sliver of the neighbouring frame along the seam. That is what looked like clipping. Each frame is now scaled to 84% of its cell and sat on a common baseline, so a walk cycle does not bob: **margins are 3px to 12px**, eight device pixels at render size, which no rounding can cross. Repacking rather than snapping positions, because the sheet will always be addressed in percentages.
+
+**The cat was a flat 13% of the scene everywhere**, which made it a giant against the back wall while every object around it shrank with the depth. `LanternHomePet.widthAt(y)` maps the anchors' range - y=45 at the back to y=88 at the front - onto the approved 6-9% band, clamped so a position outside the authored range cannot produce an absurd size. Measured in the yard: 6% at the door, 9% at the front. The rule lives in the pet module, not the renderer, so anything drawing a cat gets the same answer.
+
+**The walk was eleven poses a second crossing the yard in under two seconds, and stopping dead.** Now 160ms a frame, and speed falls away over the last stretch so it settles onto an anchor rather than hitting it - no extra state, the distance remaining is the only input. Measured on the same journey: **1.8s to 5.4s, 11.1 pose changes a second to 6.3**, still landing exactly on the anchor.
+
+**Furniture ignored where it stood.** `decorSceneWidth` took the item alone, so the same low table covered the same fraction of the picture at the back wall as at the front - the one thing a scene drawn in perspective cannot survive. Each room slot now carries a `scale` and the width is the object's own size times the depth it stands at. Verified with two identical tables: **20.16% at the back, 28% at the front.**
+
+**The floor and the wall are calibrated apart, on purpose.** Depth on a floor is real recession. A wall is a flat plane facing the viewer, so a scroll hung high is not further away, and shrinking it would read as wrong rather than deep. Shelf and sill sit on that same back plane and are treated with it.
+
+356 tests, 0 failures. Cache `lantern-alley-v163`.
 
 ### 2026-08-29 - A visual pass over the Inn and the rewards stage
 
