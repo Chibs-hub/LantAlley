@@ -27,11 +27,19 @@
     ]
   };
 
+  /* `enter` is deliberately absent.
+   *
+   * It was the scene-entry animation, and its four frames are drawn 79%, 69%,
+   * 51% and 53% of the cell wide - the cat shrank by half and grew back every
+   * time the player walked between the yard and the room. No repack can correct
+   * that, because it is one pose drawn at four different scales, and which of
+   * them is the "true" size is not recoverable from the picture. Every other
+   * row holds its width to within a few percent, so entry now uses the standing
+   * row, which is the steadiest of them at 1%. */
   var SPRITES = {
     walk: {path:"assets/home/pet/calico-walk-v1.webp", columns:8, rows:1, frames:8},
     sit: {path:"assets/home/pet/calico-transitions-v1.webp", columns:4, rows:3, frames:4, offset:0},
     stand: {path:"assets/home/pet/calico-transitions-v1.webp", columns:4, rows:3, frames:4, offset:4},
-    enter: {path:"assets/home/pet/calico-transitions-v1.webp", columns:4, rows:3, frames:4, offset:8},
     loaf: {path:"assets/home/pet/calico-idles-v1.webp", columns:4, rows:3, frames:4, offset:0},
     "curl-sleep": {path:"assets/home/pet/calico-idles-v1.webp", columns:4, rows:3, frames:4, offset:4},
     "side-sleep": {path:"assets/home/pet/calico-idles-v1.webp", columns:4, rows:3, frames:4, offset:4},
@@ -182,7 +190,7 @@
     next.anchorId = door.id;
     next.x = door.x;
     next.y = door.y;
-    next.behavior = "enter";
+    next.behavior = "sit";
     next.frame = 0;
     return next;
   }
@@ -195,7 +203,6 @@
     if(behavior === "curl-sleep" || behavior === "side-sleep") return 18000 + seed % 18000;
     if(behavior === "loaf" || behavior === "sit") return 10000 + seed % 12000;
     if(behavior === "groom") return 8000 + seed % 8000;
-    if(behavior === "enter") return 1400;
     return 5000 + seed % 6000;
   }
 

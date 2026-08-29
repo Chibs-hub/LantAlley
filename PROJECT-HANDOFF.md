@@ -277,6 +277,19 @@ This was not hypothetical: a freshly edited `lantern-map.js` was served from the
 
 ## 9. Change log and reasons
 
+### 2026-08-29 - The enter row was drawn at four different scales
+
+Retired `enter`, the scene-entry animation. Its four frames are 79%, 69%, 51% and 53% of the cell wide, so the cat halved and grew back every time the player moved between the yard and the room. This is not something a repack can correct: it is one pose drawn at four different sizes, and which one is the true size is not recoverable from the picture. Entry now uses the standing row, whose width holds to within 1% across its frames - the steadiest row in the set. A test now asserts `enter` stays retired, so it cannot quietly return.
+
+Two findings worth recording because they cost time to establish.
+
+**Bounding-box width is a bad proxy for how big this cat looks.** Every pose measures 78-79% of its cell wide, which reads as damning until you look at the frames: the cat has a large plumed tail that fills the box in the compact poses. Heads and bodies are reasonably consistent. I nearly rescaled every pose against an anatomical model on the strength of that number alone, which would have made the compact poses far too small.
+
+**I could not reproduce the reported clipping and have not claimed to fix it.** Measured: every frame in every sheet keeps at least 13px of clear space on all four sides of its 192px cell; the cat's box sits inside the scene at every anchor, clearing the goal line by 6px at the lowest one; nothing in the scene outranks it in the stacking order. If it is still visible after v168, the next thing to capture is which pose is on screen at the moment it happens - the sheets and the layout are both ruled out.
+
+**The art has no sitting pose.** `walk`, `sit`, `look` and the retired `enter` are all the same standing cat; only `loaf`, `curl-sleep` and `groom` are genuinely distinct. So a cat that "sits at the door" stands there. The `sit` name is now inaccurate rather than wrong-looking, and fixing it properly needs a drawn sitting pose, which is art work, not code.
+
+
 ### 2026-08-29 - The clipped head was a stale picture, and the walk was in slow motion
 
 **The cat's head was cut off because the browser was painting a sprite sheet from before the repack.**

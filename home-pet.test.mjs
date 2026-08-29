@@ -57,7 +57,10 @@ test("scene entry uses the door and rest periods are game-scaled", () => {
   const pet = load();
   const entering = pet.enterScene("interior", 12);
   assert.equal(entering.anchorId, "interior-door");
-  assert.equal(entering.behavior, "enter");
+  // Not "enter": that row is drawn at four different scales and was dropped.
+  assert.equal(entering.behavior, "sit");
+  assert.ok(!pet.behaviors().includes("enter"),
+    "the enter row shrank the cat by half mid-animation and must stay retired");
   assert.ok(pet.dwellMs({...entering, behavior:"curl-sleep"}) >= 18000);
   assert.ok(pet.dwellMs({...entering, behavior:"groom"}) >= 8000);
   assert.ok(pet.dwellMs({...entering, behavior:"look"}) >= 5000);
