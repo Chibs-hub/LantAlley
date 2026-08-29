@@ -233,6 +233,20 @@ This was not hypothetical: a freshly edited `lantern-map.js` was served from the
 
 ## 9. Change log and reasons
 
+### 2026-08-29 - The tutorial had stopped teaching the thing it exists for
+
+Played a first visit as a learner who has never been home, following the instructions exactly as written. Two faults, both introduced by free placement rather than by the tutorial itself.
+
+**The planting step skipped itself.** Its condition was "is anything planted in the yard?", which was a fair question when the yard started empty. A first visit now grants a pine and a maple as scenery, so the answer was yes before the learner touched anything - the tutorial jumped from taking the free seed straight to going indoors and never once taught planting, which is the whole reason that step exists. It now watches **the seed the learner was just handed**, tracked by its instance id, so the starter trees cannot answer for it.
+
+**A spot that was taken drew a swap and then refused it.** An occupied position shows ↔, and pressing it said 「その花壇にはもう植わっています。」 and did nothing - the marker promised something the code would not do. Plants now swap exactly as furniture already does: the occupant returns to storage with its growth untouched, which is the same thing tapping it directly does, so nothing can lose a plant or the work that grew it. Verified: the pine came back with its 8 points and no plant went missing.
+
+**Wording that named controls which no longer exist.** "Open the 店 tab" - there is no tab, and no `[data-tab]` element in the yard at all. Now "Press 店.", "Press 飾る, then the 座布団, then a glowing spot.", and "Press a glowing spot" rather than "a glowing bed", since there are no beds any more.
+
+Walked end to end afterwards: all eight steps fire in order, the panel closes, `homeTutorialComplete` persists, and the learner finishes with ¥0 spent, one planted camellia and one cushion.
+
+347 tests, 0 failures. Cache `lantern-alley-v153`.
+
 ### 2026-08-28 - Free placement checked end to end, and two things it got wrong
 
 Played the whole home rather than reading it. Buying, placing, moving, storing, clearing, restoring, wallpaper, both scenes, desktop and 320px.

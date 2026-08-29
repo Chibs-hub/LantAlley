@@ -20,3 +20,8 @@ Thumbs.db
 # history forever for files the game never loads - pwa.test.mjs already asserts
 # the service worker does not ship them.
 assets/home/incoming-user/
+
+# Scratch space for looking at the supplied images - contact sheets and copies
+# of the same source PNGs that assets/home/incoming-user/ already holds. 52MB
+# of it reached a commit once; it is working state, not part of the game.
+.tmp-image-audit/

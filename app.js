@@ -3298,7 +3298,7 @@
   var HOME_TUTORIAL = [
     {id:"welcome",
      jp:"コン：「おかえりなさい。ここがあなたの家と庭です。稽古で稼いだお金で、少しずつ好きなように整えていきましょう。」",
-     how:"Open the 店 tab.",
+     how:"Press 店.",
      done:function(){ return homeView === "shop"; }},
 
     {id:"claim-seed",
@@ -3307,9 +3307,18 @@
      done:function(){ return state.starterSeedClaimed === true; }},
 
     {id:"plant-seed",
-     jp:"コン：「好きな花壇に植えてください。この庭の草花は、日にちではなく稽古で育ちます。」",
-     how:"Press a glowing bed to plant it.",
-     done:function(){ return plantsInYard().length > 0; }},
+     jp:"コン：「好きなところに植えてください。この庭の草花は、日にちではなく稽古で育ちます。」",
+     how:"Press a glowing spot to plant it.",
+     /* The seed the learner was just handed, not any plant in the yard.
+      *
+      * "Is anything planted?" was true before they touched it, because a first
+      * visit already grants a pine and a maple as scenery - so the step
+      * satisfied itself and the tutorial skipped from taking the seed straight
+      * to going indoors, never once teaching the thing it exists to teach. */
+     done:function(){
+       var seed = findPlant(starterSeedInstance);
+       return !!(seed && seed.slotId);
+     }},
 
     {id:"enter-house",
      jp:"コン：「家の中も見ていきましょう。戸を押してください。」",
@@ -3318,17 +3327,17 @@
 
     {id:"claim-cushion",
      jp:"コン：「座布団を一枚どうぞ。これもお代はいりません。」",
-     how:"Open 店 and press the free 座布団.",
+     how:"Press 店, then the free 座布団.",
      done:function(){ return state.starterCushionClaimed === true; }},
 
     {id:"place-cushion",
      jp:"コン：「持ち物からえらんで、置きたいところに置いてください。」",
-     how:"Press the 座布団, then press a glowing spot.",
+     how:"Press 飾る, then the 座布団, then a glowing spot.",
      done:function(){ return decorPlacedAt(STARTER_DECOR) !== null; }},
 
     {id:"move-cushion",
      jp:"コン：「気に入らなければ、置いたものを押せば持ち物にもどせます。何度でもやり直せますよ。」",
-     how:"Press the cushion in the room to pick it up again.",
+     how:"Press the cushion in the room to put it away again.",
      done:function(){ return homeTutorialMoved; }},
 
     {id:"finish",
@@ -3337,6 +3346,9 @@
      done:function(){ return false; }}
   ];
 
+  // Which plant the free seed became, so the tutorial can tell it apart from
+  // the starter scenery that is already standing in the yard.
+  var starterSeedInstance = null;
   var homeTutorialAt = -1;      // -1 means the tutorial is not running
   var homeTutorialReplay = false;
   var homeTutorialMoved = false;
@@ -3401,6 +3413,7 @@
       state.starterSeedClaimed = true;
       saveProgress();
       if(!claim.ok) return false;          // already had one; the flag is now honest
+      starterSeedInstance = claim.instanceId;
       homeSelected = {kind:"plant", id:claim.instanceId};
       homeView = homeReturnView;
       homeDecorating = true;
@@ -3776,16 +3789,29 @@
       if(homeSelected.kind === "plant" && garden){
         var here = plantsInYard().filter(function(p){ return p.slotId === slotId; })[0];
         var existing = findPlant(homeSelected.id);
+        var working = gardenState();
+
+        /* A taken spot swaps, the way furniture already does.
+         *
+         * It was drawn as a swap - an occupied position shows ↔ - and then
+         * refused, so the marker promised something the code would not do and
+         * the tap did nothing but scold. The occupant goes back to storage with
+         * its growth untouched, which is exactly what tapping it directly does,
+         * so nothing here can lose a plant or the work that grew it. */
+        var displacedPlant = null;
+        if(here && here.id !== homeSelected.id){
+          var lifted = garden.store(working, here.id);
+          if(lifted.ok){ working = lifted.garden; displacedPlant = here; }
+        }
+
         var put = existing && existing.slotId
-          ? garden.move(gardenState(), homeSelected.id, slotId, yardSlots())
-          : garden.plant(gardenState(), homeSelected.id, slotId, yardSlots());
+          ? garden.move(working, homeSelected.id, slotId, yardSlots())
+          : garden.plant(working, homeSelected.id, slotId, yardSlots());
         if(!put.ok){
-          // A bed already taken keeps what is in it; the plan is explicit that
-          // an invalid destination must not quietly discard either plant.
+          // Nothing is committed unless the whole move succeeds, so a refusal
+          // leaves the occupant standing where it was.
           paintHome();
-          homeSay(put.reason === "occupied"
-            ? "その花壇にはもう植わっています。"
-            : "そこには植えられません。");
+          homeSay("そこには植えられません。");
           return;
         }
         state.garden = put.garden;
@@ -3793,7 +3819,9 @@
         saveProgress();
         advanceHomeTutorial();
         paintHome();
-        homeSay("植えました。稽古をすると育ちます。");
+        homeSay(displacedPlant
+          ? "「" + plantName(displacedPlant.typeId) + "」は鉢にもどしました。"
+          : "植えました。稽古をすると育ちます。");
         return;
       }
       var placed = decor.place(homeState(), homeSelected.id, slotId, homeSlots());
