@@ -562,6 +562,21 @@ Both are tested in `home-decor.test.mjs`, along with kind-matching (a scroll ref
 
 **Not yet done in the reward plan:** pets, gacha, and unlocking new material with coins. The daily-practice faucet and this sink are the two ends; what sits between them is still on paper.
 
+### 2026-08-27 - A README, and the attribution written down before it got harder
+
+Backfilled on 2026-08-29. This change shipped without an entry - the only one in the run that did - and it is the one carrying the licence questions, so leaving it unrecorded meant the reasoning existed in a commit message and nowhere a reader would look.
+
+The repo had never had a README and was about to leave this machine for the first time. It records what the project is, how to run and test it, and points here for the rest.
+
+**The attribution section is the part that mattered.** `curriculum-catalog.js` is generated from OpenJLPT data, stated upstream as CC BY-SA 4.0 and carrying Tatoeba sentences. Two things were unresolved, and were written down rather than left implicit:
+
+- The exact upstream commit was never recorded, so the catalogue cannot be traced to a version of its source. Still open; it is in section 10.
+- If the licence is share-alike, the generated catalogue is a derived work that likely inherits the obligation. **This was settled the same day** by the entry below, which verified the chain against the sources and found a real obligation nobody had noticed: the EDRDG licence asks an application for a dedicated attribution screen, not a line in a document. That screen now exists.
+
+Neither blocked private development. Both would have got harder the longer they were left, which is the whole reason for writing them at that moment rather than at publication.
+
+**No LICENCE file: all rights reserved by default.** Choosing one is the owner's decision, and the third-party obligations should be settled first.
+
 ### 2026-08-27 - The licence chain is verified, and the app now says so
 
 Section 14's list was written from memory and marked unverified. Checked against the sources instead of guessed, and the result changed what the project has to do.
