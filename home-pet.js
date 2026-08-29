@@ -12,19 +12,18 @@
    * between two anchors can leave the ground. */
   var SCENES = {
     yard: [
-      {id:"yard-door", x:50, y:59, kind:"door", behaviors:["look"]},
-      {id:"yard-shade", x:17, y:72, kind:"shade", behaviors:["loaf","curl-sleep","side-sleep"]},
-      {id:"yard-rock", x:38, y:75, kind:"rock", behaviors:["sniff","sit","look"]},
-      {id:"yard-path", x:55, y:80, kind:"path", behaviors:["sit","groom"]},
-      {id:"yard-veranda", x:76, y:64, kind:"veranda", behaviors:["loaf","groom","look"]},
-      {id:"yard-play", x:64, y:74, kind:"garden", behaviors:["play","sniff","stretch"]}
+      {id:"yard-door", x:50, y:59, kind:"door", behaviors:["sit"]},
+      {id:"yard-shade", x:17, y:72, kind:"shade", behaviors:["curl-sleep","loaf"]},
+      {id:"yard-rock", x:38, y:75, kind:"rock", behaviors:["sit","groom"]},
+      {id:"yard-path", x:55, y:80, kind:"path", behaviors:["sit","loaf"]},
+      {id:"yard-veranda", x:76, y:64, kind:"veranda", behaviors:["loaf","groom"]}
     ],
     interior: [
-      {id:"interior-door", x:50, y:74, kind:"door", behaviors:["look"]},
-      {id:"interior-cushion", x:36, y:83, kind:"furniture", behaviors:["curl-sleep","side-sleep","loaf"]},
-      {id:"interior-window", x:22, y:78, kind:"window", behaviors:["look","groom"]},
-      {id:"interior-center", x:55, y:88, kind:"tatami", behaviors:["sit","play","stretch"]},
-      {id:"interior-alcove", x:73, y:79, kind:"alcove", behaviors:["sniff","sit"]}
+      {id:"interior-door", x:50, y:74, kind:"door", behaviors:["sit"]},
+      {id:"interior-cushion", x:36, y:83, kind:"furniture", behaviors:["curl-sleep","loaf"]},
+      {id:"interior-window", x:22, y:78, kind:"window", behaviors:["sit","groom"]},
+      {id:"interior-center", x:55, y:88, kind:"tatami", behaviors:["loaf","groom"]},
+      {id:"interior-alcove", x:73, y:79, kind:"alcove", behaviors:["sit"]}
     ]
   };
 
@@ -54,8 +53,12 @@
    * the back to y=88 at the front; this maps that onto the approved 6-9% band
    * and clamps, so a position outside the authored range cannot produce an
    * absurd size. */
-  var PET_MIN_WIDTH = 6.4;
-  var PET_MAX_WIDTH = 8.6;
+  /* One stride of the eight-frame cycle, in scene-percent. Smaller means the
+   * legs work harder over the same ground. */
+  var STRIDE = 1.15;
+
+  var PET_MIN_WIDTH = 5.2;
+  var PET_MAX_WIDTH = 6.8;
   var PET_NEAR_Y = 90;
   var PET_FAR_Y = 58;
 
@@ -117,7 +120,7 @@
       * anchor instead of hitting it. No extra state: the distance left is the
       * only input. */
     var approach = Math.min(1, distance / 14);
-    var travel = elapsed * (0.0016 + 0.0044 * approach);
+    var travel = elapsed * (0.0009 + 0.0022 * approach);
     if(distance <= travel || distance === 0){
       next.x = target.x;
       next.y = target.y;
@@ -130,8 +133,15 @@
     next.x += dx / distance * travel;
     next.y += dy / distance * travel;
     next.behavior = "walk";
-    // 90ms was eleven poses a second for a walking cat. 160 is a walk.
-    next.frame = Math.floor(next.clock / 160) % 8;
+    /* The stride follows the ground, not a clock.
+     *
+     * Frames advanced on elapsed time, so the legs cycled at a fixed rate while
+     * the body moved at a variable one - and since the approach slows near an
+     * anchor, the feet kept stepping while the cat barely moved. That mismatch
+     * is what reads as sliding. Tying the frame to distance covered means one
+     * stride is always the same distance travelled, at any speed. */
+    next.walked = (next.walked || 0) + travel;
+    next.frame = Math.floor(next.walked / STRIDE) % 8;
     return next;
   }
 

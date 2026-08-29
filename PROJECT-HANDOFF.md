@@ -277,6 +277,24 @@ This was not hypothetical: a freshly edited `lantern-map.js` was served from the
 
 ## 9. Change log and reasons
 
+### 2026-08-29 - The cat: one scale, a stride that grips the ground, and less to do
+
+Four complaints, and the first was mine to answer for.
+
+**The size changed with the pose because the previous repack fitted every frame to 84% of its own cell.** A curled sleeping cat is naturally short; scaling it to fill the cell made it as tall as a standing one, so every change of pose was a change of size. The source art has the same flaw more gently - each pose was drawn to fill its frame, widths sitting between 88% and 95% whatever the cat was doing.
+
+Repacked from the originals at **one scale for every frame in every sheet**, chosen so the tallest pose fits, all standing on a common baseline. Heights now run 50.9% for a curled sleep to 77% for a doorway entrance, which is the point: the poses differ because the cat differs, not because the packing does.
+
+**The walk slid because the legs ran on a clock and the body did not.** Frames advanced on elapsed time while travel speed varies - and since the approach slows near an anchor, the feet kept stepping while the cat barely moved. The frame is now driven by distance covered, so **one stride is always 1.11% of ground** at any speed. That is the difference between walking and being dragged.
+
+**It moved too fast for the scene.** Crossing the yard is 9.1 seconds now rather than 5.4, at about 2% of the scene per second.
+
+**It had too much to do.** Eight resting behaviours across the two scenes - play, stretch, sniff, look, side-sleep among them - most of which read as noise at this size. Four remain: sit, loaf, curl-sleep, groom. The five places per scene stay, because places are not actions; a test guards that count, and the point was to shorten the list of things the cat does, not to shrink its world.
+
+**And it is smaller**, 5.2-6.8% of the scene rather than 6.4-8.6%, so it sits in the picture rather than on top of it.
+
+356 tests, 0 failures. Cache `lantern-alley-v165`.
+
 ### 2026-08-29 - The cat stops resizing, walks on the floor, and the shop stops selling drawings
 
 Four things from a screenshot of the room.
