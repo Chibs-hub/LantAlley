@@ -7,7 +7,7 @@
  * Bump CACHE_VERSION whenever any shell file changes, or returning players
  * will keep the old build.
  */
-var CACHE_VERSION = "lantern-alley-v165";
+var CACHE_VERSION = "lantern-alley-v167";
 
 // audio-index.js assigns to `self`, so the worker and the page share one list
 // of clip paths. Importing it here means new lines are cached automatically
@@ -121,9 +121,25 @@ Object.keys(self.LanternAlleyAudio || {}).forEach(function(line){
 self.addEventListener("install", function(event){
   event.waitUntil(
     caches.open(CACHE_VERSION).then(function(cache){
-      // addAll fails the whole install if any single file 404s, which is the
-      // behaviour we want: a half-cached shell breaks offline in confusing ways.
-      return cache.addAll(SHELL);
+      // Failing the whole install if any single file 404s is the behaviour we
+      // want: a half-cached shell breaks offline in confusing ways.
+      //
+      // Every request is made in "reload" mode so it goes past the browser's
+      // own HTTP cache to the network.
+      //
+      // Scripts and stylesheets carry a ?v= stamp, so bumping CACHE_VERSION
+      // changes their URL and they are refetched. Images do not carry one -
+      // their URLs never change - so a plain addAll was handed the bytes the
+      // browser already had, and a redrawn picture stayed redrawn only on
+      // disk. That is how a repacked cat kept rendering with its head clipped
+      // against the old sprite cell. Reload mode makes a version bump mean the
+      // same thing for a picture as it already meant for a script.
+      return Promise.all(SHELL.map(function(url){
+        return fetch(new Request(url, {cache: "reload"})).then(function(res){
+          if(!res || res.status !== 200) throw new Error("shell fetch failed: " + url);
+          return cache.put(url, res);
+        });
+      }));
     }).then(function(){
       return self.skipWaiting();
     })

@@ -16,13 +16,13 @@
       {id:"yard-shade", x:17, y:72, kind:"shade", behaviors:["curl-sleep","loaf"]},
       {id:"yard-rock", x:38, y:75, kind:"rock", behaviors:["sit","groom"]},
       {id:"yard-path", x:55, y:80, kind:"path", behaviors:["sit","loaf"]},
-      {id:"yard-veranda", x:76, y:64, kind:"veranda", behaviors:["loaf","groom"]}
+      {id:"yard-veranda", x:76, y:64, kind:"veranda", behaviors:["curl-sleep","loaf","groom"]}
     ],
     interior: [
       {id:"interior-door", x:50, y:74, kind:"door", behaviors:["sit"]},
-      {id:"interior-cushion", x:36, y:83, kind:"furniture", behaviors:["curl-sleep","loaf"]},
-      {id:"interior-window", x:22, y:78, kind:"window", behaviors:["sit","groom"]},
-      {id:"interior-center", x:55, y:88, kind:"tatami", behaviors:["loaf","groom"]},
+      {id:"interior-cushion", x:34, y:81, kind:"furniture", behaviors:["curl-sleep","loaf"]},
+      {id:"interior-window", x:22, y:78, kind:"window", behaviors:["curl-sleep","sit","groom"]},
+      {id:"interior-center", x:55, y:83, kind:"tatami", behaviors:["loaf","groom"]},
       {id:"interior-alcove", x:73, y:79, kind:"alcove", behaviors:["sit"]}
     ]
   };
@@ -53,14 +53,31 @@
    * the back to y=88 at the front; this maps that onto the approved 6-9% band
    * and clamps, so a position outside the authored range cannot produce an
    * absurd size. */
-  /* One stride of the eight-frame cycle, in scene-percent. Smaller means the
-   * legs work harder over the same ground. */
-  var STRIDE = 1.15;
-
-  var PET_MIN_WIDTH = 5.2;
-  var PET_MAX_WIDTH = 6.8;
-  var PET_NEAR_Y = 90;
+  /* Sized against what is already in the room rather than by eye.
+   *
+   * A floor cushion is 18% of the scene at the front slot and a low table 28%.
+   * A cat is about two thirds of a cushion, which puts it near 12% down there -
+   * and 13% flat was the size that read as a giant at the back wall, so the
+   * depth is what was missing rather than the number. It has been too big and
+   * then too small; this is the width the objects around it imply.
+   *
+   * The floor line is at y=59 in the yard and y=74 in the room, and the
+   * interface covers the scene below about y=87, so the useful band is the
+   * ground between them. */
+  var PET_MIN_WIDTH = 9.5;
+  var PET_MAX_WIDTH = 12.8;
+  var PET_NEAR_Y = 86;
   var PET_FAR_Y = 58;
+
+  /* A stride is a fraction of the cat, so a bigger cat covers more ground per
+   * step and the gait stays the same whatever size it is drawn.
+   *
+   * 0.18 of a body length per step made the legs churn: the cat was taking
+   * about 1.6 steps a second while covering only a quarter of its own length in
+   * that time, so the cycle ran ahead of the ground even though it was driven
+   * by the ground. A walking cat advances roughly a third of its length per
+   * step, which is the number here. */
+  function strideFor(y){ return widthAt(y) * 0.30; }
 
   function widthAt(y){
     var depth = (Number(y) - PET_FAR_Y) / (PET_NEAR_Y - PET_FAR_Y);
@@ -119,8 +136,17 @@
       * Speed now falls away over the last stretch, so the cat settles onto an
       * anchor instead of hitting it. No extra state: the distance left is the
       * only input. */
+    /* Paced in body lengths, not in scene-percent.
+     *
+     * The earlier speeds were picked against a much smaller cat, so when it was
+     * resized to match the furniture the same numbers became a crawl: it took
+     * 22 seconds to cross the yard, a quarter of a body length per second, and
+     * the legs cycled below one step per second to stay honest with it. A cat
+     * ambling covers around a body length a second; this is deliberately under
+     * half that, which is a slow stroll rather than the dash that was too fast
+     * before. */
     var approach = Math.min(1, distance / 14);
-    var travel = elapsed * (0.0009 + 0.0022 * approach);
+    var travel = elapsed * (0.0016 + 0.0038 * approach);
     if(distance <= travel || distance === 0){
       next.x = target.x;
       next.y = target.y;
@@ -141,7 +167,7 @@
      * is what reads as sliding. Tying the frame to distance covered means one
      * stride is always the same distance travelled, at any speed. */
     next.walked = (next.walked || 0) + travel;
-    next.frame = Math.floor(next.walked / STRIDE) % 8;
+    next.frame = Math.floor(next.walked / strideFor(next.y)) % 8;
     return next;
   }
 

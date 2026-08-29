@@ -277,6 +277,25 @@ This was not hypothetical: a freshly edited `lantern-map.js` was served from the
 
 ## 9. Change log and reasons
 
+### 2026-08-29 - The clipped head was a stale picture, and the walk was in slow motion
+
+**The cat's head was cut off because the browser was painting a sprite sheet from before the repack.**
+
+This took three wrong turns to find, and all three were wrong in the same way: I kept re-checking the thing that was already correct. The source frames were complete. The repacked sheet was complete - 25 to 84 pixels of clearance above the ears in every row that the cat actually uses. The CSS was correct: a square element, `background-size: 400% 300%` mapping one 192px cell onto it exactly, `overflow: visible`. Every measurement said the head could not be clipped, and the screenshot said it was.
+
+What none of those measurements touched was which bytes the browser had. `sw.js` precached with `cache.addAll(SHELL)`, and `addAll` fetches through the browser's own HTTP cache. Scripts and stylesheets survive that because they carry a `?v=` stamp, so bumping `CACHE_VERSION` changes their URL and forces a refetch. **Images carry no stamp - their URLs never change** - so `addAll` was handed whatever the browser already had, and a redrawn picture stayed redrawn only on disk. Every repack of the cat had been landing in the repository and nowhere else.
+
+The fix is to request each shell file in `cache: "reload"` mode, which goes past the HTTP cache to the network. A version bump now means the same thing for a picture as it already meant for a script. Verified rather than asserted: after clearing and reloading at v167, the sheet in `lantern-alley-v167` is 102124 bytes, byte-for-byte the repacked file on disk. It would previously have been the pre-repack bytes.
+
+This is worth remembering because it makes every image bug in this project look like a code bug. Any picture that has been redrawn since it was first cached was suspect, not just the cat.
+
+**The walk had become a crawl.** The speeds were tuned against a much smaller cat, so when it was resized to match the furniture the same numbers left it covering a quarter of a body length per second - 22.6 seconds to cross the yard - with the legs cycling below one step per second to stay honest with the ground. Tying frames to distance had removed the sliding, so the gait was consistent; it was consistently too slow. Speed is now 0.43 body lengths per second and the stride 0.30 of a body length, giving 1.3 to 1.6 steps per second. Those are a real cat's walking numbers, and it is still less than half the speed that was called too fast.
+
+**Two of the best sleeping spots in the house could not sleep.** The engawa and the window sill - the two sunniest places, and the two a cat would actually choose - offered only `loaf`, `sit` and `groom`, while sleeping happened in the shade and on a cushion. Both now offer `curl-sleep`.
+
+Checked and found already correct, recorded so it is not investigated again: the roaming loop advances `seed` before each journey (`app.js:3075`), so the pose chosen on arrival and the dwell time genuinely vary rather than repeating forever.
+
+
 ### 2026-08-29 - The cat: one scale, a stride that grips the ground, and less to do
 
 Four complaints, and the first was mine to answer for.
