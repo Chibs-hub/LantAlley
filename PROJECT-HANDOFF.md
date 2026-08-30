@@ -206,6 +206,14 @@ A `?bust=anything` on the page URL only reloads `index.html` itself; the scripts
 
 Japanese audio plays from pre-rendered neural-voice MP3s, so pronunciation is identical on every device. If a line has no clip the game falls back to browser speech synthesis.
 
+### Testing placement and the rewards, without earning them
+
+`http://localhost:8743/?unlockall=1` fills the cupboard: every furniture item, every wallpaper, one of every plant species at `planted` and again at `mature`, 99999 coins, tutorial marked done. Nothing is placed - the point is to test the placing. From the console it is `lanternUnlockAll()`, which returns a summary and can be called at any time.
+
+It is behind an explicit flag for the same reason `?review=1` is. The project's own rule is that a learner never advances without earning it, so a grant like this must be impossible to reach by accident and must say so on screen when it fires - a silent one is indistinguishable from a scoring bug. A test asserts a plain boot is not unlocked.
+
+Note the two ends of the growth: each species arrives twice so the `planted` and `mature` art can be placed side by side. Three species are painted (sakura, maple, camellia) and four still render as vector, so expect 6 photographs and 8 drawings among the 14 plant cards - that is correct, not a loading failure.
+
 ## 3. The central design rule
 
 **The Japanese sentence must be the only thing that tells the player what to do.**
@@ -358,6 +366,21 @@ location.reload();
 This was not hypothetical: a freshly edited `lantern-map.js` was served from the browser cache while a brand-new file beside it loaded fine, and the map silently rendered without わが家 on it.
 
 ## 9. Change log and reasons
+
+### 2026-08-30 - A door into the placement UI, and a hoisting trap behind it
+
+Added `unlockEverythingForTesting`, reachable as `?unlockall=1` or `lanternUnlockAll()`. It grants all 21 furniture items, both buyable wallpapers, and every plant species twice - once `planted`, once `mature` - leaves every one of them unplaced, and sets the wallet to 99999. Placement and the reward loop are the two things that cannot be reached by playing honestly: the last wallpaper is thousands of coins away and a mature tree is a dozen cleared shifts.
+
+It is gated the way `?review=1` is, and announces itself in the notice line. The rule in section 3 is that a learner must never advance without earning it, so a grant that could be reached by accident, or that fired silently, would be indistinguishable from a scoring bug.
+
+**The bug this shipped with, because it is the kind that hides.** The auto-run was placed with the rest of the save-restore code, about seven hundred lines in. The tables it reads - `PLANT_ART` among them - are `var`s assigned two thousand lines further down. `var` hoists the declaration and not the assignment, so `PLANT_ART` was `undefined`, the first species threw, and **the exception took the remainder of the module with it**. What that looked like from outside was the flag quietly doing nothing. It is now deferred through `setTimeout`, exactly as review mode already was a few lines below - that precedent was there and I did not follow it.
+
+**The first three tests all passed while this was broken**, because they called `lanternUnlockAll()` by hand after boot, by which time the module had finished. A fourth test now boots with the flag in `location.search` and asserts the module does not throw; `boot()` grew a `search` argument for it. Confirmed it fails against the broken form before keeping it.
+
+The test worth having is not that the unlock grants things - that is trivially true - but that **everything it grants can actually be put somewhere**: for every owned item it finds a slot of matching kind in one of the two scenes and asks the engine to place it there. An unlock that handed over an item with no slot would look like a working fixture and prove nothing.
+
+Verified in the browser at v180: 21 furniture cards indoors with their slot kinds, 14 plant cards in the yard, both shelf tabs, no broken images, nothing pre-placed.
+
 
 ### 2026-08-29 - The enter row was drawn at four different scales
 

@@ -688,6 +688,20 @@
     selectedMapKey = state.lastPlace;
   }
   state.reviewProgress = pendingReviewProgress;
+
+  /* `?unlockall=1` fills the cupboard so placement can be tested. See
+   * unlockEverythingForTesting. Console callers get the same thing by name.
+   *
+   * Deferred, exactly as review mode is a few lines below. This runs partway
+   * through the module, and the tables it reads - `PLANT_ART` among them - are
+   * `var`s assigned two thousand lines further down. The declarations hoist;
+   * the assignments do not. Calling it here directly threw on the first
+   * species and took the rest of the module down with it, which presented as
+   * the flag silently doing nothing. */
+  window.lanternUnlockAll = unlockEverythingForTesting;
+  if(/[?&]unlockall=1(&|$)/.test(window.location.search)){
+    setTimeout(unlockEverythingForTesting, 0);
+  }
   state.dailyPractice = pendingDaily.dailyPractice;
   state.streak = pendingDaily.streak;
   state.freezes = pendingDaily.freezes;
@@ -3626,6 +3640,75 @@
             + (homeShopCategory === category[0]) + '">' + category[1] + '</button>';
         }).join("") + '</div>'
       + '<div class="home-shop-grid" id="home-shelf">' + homeShopDock() + '</div></section></div>';
+  }
+
+  /* Everything in every catalogue, in storage, for testing placement.
+   *
+   * Placement and the reward loop are the two things that cannot be tested by
+   * playing: reaching the last wallpaper honestly costs thousands of coins, and
+   * a plant only reaches `mature` after a dozen cleared shifts. So this hands
+   * over the whole catalogue at once and leaves all of it unplaced, because
+   * what is being tested is the placing.
+   *
+   * Deliberately not reachable in normal play. It is behind an explicit URL
+   * flag, the same way `?review=1` is, and it announces itself in the notice
+   * line - a silent one would be indistinguishable from a scoring bug, and the
+   * project's own rule is that a learner must never advance without earning it.
+   * This is a workshop door, not a shortcut.
+   *
+   * Every species arrives twice, once at `planted` and once at `mature`, so
+   * both ends of the growth art can be placed and compared side by side. */
+  function unlockEverythingForTesting(){
+    if(typeof LanternHomeDecor === "undefined" || typeof LanternHomeGarden === "undefined"){
+      return {ok:false, reason:"catalogues not loaded"};
+    }
+    var report = {ok:true, furniture:0, wallpapers:0, plants:0, drawnOnly:[]};
+
+    // --- furniture and wallpaper: owned, and every slot left empty ----------
+    var owned = [];
+    LanternHomeDecor.catalogue().forEach(function(item){
+      owned.push(item.id);
+      report.furniture += 1;
+      var full = LanternHomeDecor.getItem(item.id);
+      if(!full || !full.image) report.drawnOnly.push(item.id);
+    });
+    LanternHomeDecor.wallpapers().forEach(function(paper){
+      if(paper.id === "wallpaper-plain") return;   // the room already is this
+      owned.push(paper.id);
+      report.wallpapers += 1;
+    });
+    state.home = {owned:owned, placed:{}};
+    state.activeWallpaper = "wallpaper-plain";
+
+    // --- one of every species at each end of its growth --------------------
+    var garden = LanternHomeGarden.emptyGarden();
+    garden.starterClaimed = true;
+    garden.starterSceneryClaimed = true;
+    LanternHomeGarden.catalogue().forEach(function(type){
+      [["planted", 0], ["mature", type.matureAt]].forEach(function(pair){
+        garden.plants.push({id:"plant-" + garden.nextInstanceId, typeId:type.id,
+          slotId:null, growthPoints:pair[1], stage:pair[0], pendingAnimation:false});
+        garden.nextInstanceId += 1;
+        report.plants += 1;
+      });
+      if(!plantHasArt(type.id)) report.drawnOnly.push(type.id);
+    });
+    state.garden = garden;
+
+    // --- and nothing in the way of reaching the placing UI -----------------
+    state.money = 99999;
+    state.homeVisited = true;
+    state.homeTutorialComplete = true;
+    state.starterSeedClaimed = true;
+    state.starterCushionClaimed = true;
+
+    saveProgress();
+    homeNotice = "テスト用: " + report.furniture + " furniture, "
+      + report.wallpapers + " wallpapers, " + report.plants + " plants unlocked";
+    if(typeof paintHome === "function" && screenGame
+       && screenGame.classList.contains("home-stage")) paintHome();
+    renderHud();
+    return report;
   }
 
   function paintHome(){

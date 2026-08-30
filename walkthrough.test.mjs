@@ -21,7 +21,7 @@ const read = (name) => readFileSync(new URL("./" + name, import.meta.url), "utf8
 /* `seed` is written before the app initialises, because it reads storage once
  * on DOMContentLoaded and then owns it. Setting it afterwards seeds nothing:
  * the first save overwrites it. */
-function boot(seed) {
+function boot(seed, search) {
   const html = read("index.html");
   const body = html.slice(html.indexOf("<body"), html.lastIndexOf("</body>"));
   const doc = new FakeDocument();
@@ -59,7 +59,7 @@ function boot(seed) {
     addEventListener() {},
     removeEventListener() {},
     navigator: { serviceWorker: undefined, language: "ja" },
-    location: { href: "http://localhost/", search: "" },
+    location: { href: "http://localhost/" + (search || ""), search: search || "" },
     fetch: () => Promise.reject(new Error("no network in tests")),
   };
   context.window = context;
@@ -715,4 +715,94 @@ test("the yard announces a plant that grew while the learner was away", async ()
   const after = gardenOf(game);
   assert.equal(after.plants[0].pendingAnimation, false,
     "the growth moment is acknowledged, so it does not replay on every visit");
+});
+
+/* The workshop door.
+ *
+ * Placement and the reward loop are the two things that cannot be reached by
+ * playing honestly inside a test: the last wallpaper costs thousands of coins
+ * and a mature tree is a dozen cleared shifts away. `lanternUnlockAll` hands
+ * the whole catalogue over at once so both can be exercised.
+ *
+ * What is checked here is not that it grants things - that is trivial - but
+ * that everything it grants can actually be put somewhere. An unlock that
+ * hands over an item with no slot of its kind would look like a working test
+ * fixture and quietly prove nothing.
+ */
+test("the unlock hands over every catalogue entry, and leaves all of it unplaced", () => {
+  const game = boot();
+  const report = game.context.window.lanternUnlockAll();
+  const decor = game.context.LanternHomeDecor;
+  const garden = game.context.LanternHomeGarden;
+
+  const saved = JSON.parse(game.storage.getItem("lanternAlley.v3"));
+  assert.equal(report.ok, true);
+
+  assert.equal(report.furniture, decor.catalogue().length,
+    "every furniture item is owned");
+  assert.equal(report.wallpapers, decor.wallpapers().length - 1,
+    "every wallpaper except the bare room is owned");
+  assert.equal(report.plants, garden.catalogue().length * 2,
+    "every species arrives twice, at both ends of its growth");
+
+  assert.deepEqual(saved.home.placed, {},
+    "nothing is placed: the point is to test the placing");
+  assert.ok(saved.garden.plants.every((p) => p.slotId === null),
+    "no plant is in the ground either");
+
+  const stages = new Set(saved.garden.plants.map((p) => p.stage));
+  assert.deepEqual([...stages].sort(), ["mature", "planted"],
+    "both ends of the growth art are available to compare");
+});
+
+test("everything the unlock grants has somewhere it can go", () => {
+  const game = boot();
+  game.context.window.lanternUnlockAll();
+  const decor = game.context.LanternHomeDecor;
+  const scenes = game.context.LanternHomeRoom.scenes();
+
+  const slots = [].concat(scenes.yard.slots || [], scenes.interior.slots || []);
+  const saved = JSON.parse(game.storage.getItem("lanternAlley.v3"));
+
+  for (const id of saved.home.owned) {
+    if (decor.isWallpaper(id)) continue;          // wallpaper hangs on the room
+    const item = decor.getItem(id);
+    assert.ok(item, id + " is owned but is in no catalogue");
+    const fits = slots.filter((slot) => slot.kind === item.kind);
+    assert.ok(fits.length > 0,
+      item.id + ' is kind "' + item.kind + '" and no slot in either scene takes it');
+    // and the engine agrees, rather than only the kinds matching
+    const placed = decor.place(saved.home, item.id, fits[0].id, slots);
+    assert.equal(placed.ok, true, item.id + " could not be placed in " + fits[0].id);
+  }
+});
+
+test("the unlock is not reachable without asking for it", () => {
+  const game = boot();
+  const saved = JSON.parse(game.storage.getItem("lanternAlley.v3") || "{}");
+  assert.notEqual(saved.money, 99999, "a plain boot must not be unlocked");
+  assert.ok(!(saved.home && saved.home.owned && saved.home.owned.length > 2),
+    "a plain boot owns at most what the tutorial gives");
+});
+
+/* The flag, not just the function.
+ *
+ * The first version of these tests called `lanternUnlockAll()` by hand after
+ * boot, which passes even when the URL flag is completely broken - and it was.
+ * The auto-run sat partway through the module, above the `var` tables it
+ * reads, so it threw on the first species and took the rest of the module with
+ * it. Everything below is what a browser actually does with the flag.
+ */
+test("the ?unlockall=1 flag unlocks on load without breaking the module", () => {
+  const game = boot(null, "?unlockall=1");
+  game.clock.advance(50);
+
+  assert.deepEqual(game.errors, [], "the module must not throw while unlocking");
+  const saved = JSON.parse(game.storage.getItem("lanternAlley.v3") || "{}");
+  assert.equal(saved.money, 99999, "the flag ran");
+  assert.ok(saved.home.owned.length > 10, "the cupboard is full");
+
+  // the tables assigned below the flag must still exist afterwards
+  assert.ok(game.context.LanternHomeDecor.getItem(saved.home.owned[0]),
+    "the catalogue survived the unlock");
 });
