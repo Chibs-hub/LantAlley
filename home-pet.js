@@ -13,17 +13,17 @@
   var SCENES = {
     yard: [
       {id:"yard-door", x:50, y:59, kind:"door", behaviors:["sit"]},
-      {id:"yard-shade", x:17, y:72, kind:"shade", behaviors:["curl-sleep","loaf"]},
-      {id:"yard-rock", x:38, y:75, kind:"rock", behaviors:["sit","groom"]},
-      {id:"yard-path", x:55, y:80, kind:"path", behaviors:["sit","loaf"]},
-      {id:"yard-veranda", x:76, y:64, kind:"veranda", behaviors:["curl-sleep","loaf","groom"]}
+      {id:"yard-shade", x:17, y:72, kind:"shade", behaviors:["side-sleep","curl-sleep","loaf"]},
+      {id:"yard-rock", x:38, y:75, kind:"rock", behaviors:["sit","groom","sniff","look"]},
+      {id:"yard-path", x:55, y:80, kind:"path", behaviors:["sniff","play","look"]},
+      {id:"yard-veranda", x:76, y:64, kind:"veranda", behaviors:["stretch","curl-sleep","loaf","groom"]}
     ],
     interior: [
       {id:"interior-door", x:50, y:74, kind:"door", behaviors:["sit"]},
-      {id:"interior-cushion", x:34, y:81, kind:"furniture", behaviors:["curl-sleep","loaf"]},
-      {id:"interior-window", x:22, y:78, kind:"window", behaviors:["curl-sleep","sit","groom"]},
-      {id:"interior-center", x:55, y:83, kind:"tatami", behaviors:["loaf","groom"]},
-      {id:"interior-alcove", x:73, y:79, kind:"alcove", behaviors:["sit"]}
+      {id:"interior-cushion", x:34, y:81, kind:"furniture", behaviors:["side-sleep","curl-sleep","loaf"]},
+      {id:"interior-window", x:22, y:78, kind:"window", behaviors:["look","curl-sleep","sit","groom"]},
+      {id:"interior-center", x:55, y:83, kind:"tatami", behaviors:["loaf","groom","stretch","play"]},
+      {id:"interior-alcove", x:73, y:79, kind:"alcove", behaviors:["sit","look","sniff"]}
     ]
   };
 
@@ -37,21 +37,29 @@
    * row holds its width to within a few percent, so entry now uses the standing
    * row, which is the steadiest of them at 1%. */
   var SPRITES = {
-    walk: {path:"assets/home/pet/calico-walk-v1.webp", columns:8, rows:1, frames:8},
-    sit: {path:"assets/home/pet/calico-transitions-v1.webp", columns:4, rows:3, frames:4, offset:0},
-    stand: {path:"assets/home/pet/calico-transitions-v1.webp", columns:4, rows:3, frames:4, offset:4},
-    loaf: {path:"assets/home/pet/calico-idles-v1.webp", columns:4, rows:3, frames:4, offset:0},
-    "curl-sleep": {path:"assets/home/pet/calico-idles-v1.webp", columns:4, rows:3, frames:4, offset:4},
-    "side-sleep": {path:"assets/home/pet/calico-idles-v1.webp", columns:4, rows:3, frames:4, offset:4},
-    groom: {path:"assets/home/pet/calico-idles-v1.webp", columns:4, rows:3, frames:4, offset:8},
-    sniff: {path:"assets/home/pet/calico-interactions-v1.webp", columns:4, rows:3, frames:4, offset:0},
-    stretch: {path:"assets/home/pet/calico-interactions-v1.webp", columns:4, rows:3, frames:4, offset:4},
-    look: {path:"assets/home/pet/calico-interactions-v1.webp", columns:4, rows:3, frames:4, offset:8},
-    play: {path:"assets/home/pet/calico-interactions-v1.webp", columns:4, rows:3, frames:4, offset:8}
+    walk: {path:"assets/home/pet/calico-walk-v3.png", columns:4, rows:1, frames:4},
+    sit: {path:"assets/home/pet/calico-sit-v1.png", columns:4, rows:1, frames:4, loop:false, frameMs:280},
+    loaf: {path:"assets/home/pet/calico-loaf-v2.png", columns:4, rows:1, frames:4, frameMs:550},
+    "curl-sleep": {path:"assets/home/pet/calico-curl-sleep-v2.png", columns:4, rows:1, frames:4, frameMs:700},
+    "side-sleep": {path:"assets/home/pet/calico-side-sleep-v1.png", columns:4, rows:1, frames:4, frameMs:700},
+    groom: {path:"assets/home/pet/calico-groom-v2.png", columns:4, rows:1, frames:4, frameMs:600},
+    sniff: {path:"assets/home/pet/calico-sniff-v2.png", columns:4, rows:1, frames:4, frameMs:350},
+    stretch: {path:"assets/home/pet/calico-stretch-v1.png", columns:4, rows:1, frames:4, loop:false, frameMs:280},
+    look: {path:"assets/home/pet/calico-look-v1.png", columns:4, rows:1, frames:4, frameMs:500},
+    play: {path:"assets/home/pet/calico-play-v1.png", columns:4, rows:1, frames:4, frameMs:350}
   };
 
   function copy(value){ return JSON.parse(JSON.stringify(value)); }
   function sceneAnchors(scene){ return (SCENES[scene] || []).map(copy); }
+
+  /* Follow the authored scene clockwise instead of teleporting between random
+   * points. Each stop has a real cat reason: shade, rock, path, veranda, door. */
+  function nextAnchor(state){
+    var anchors = SCENES[state && state.scene] || [];
+    if(anchors.length < 2) return null;
+    var index = anchors.findIndex(function(anchor){ return anchor.id === state.anchorId; });
+    return copy(anchors[(index + 1 + anchors.length) % anchors.length]);
+  }
 
   /* How big the cat is where it is standing.
    *
@@ -72,8 +80,12 @@
    * The floor line is at y=59 in the yard and y=74 in the room, and the
    * interface covers the scene below about y=87, so the useful band is the
    * ground between them. */
-  var PET_MIN_WIDTH = 9.5;
-  var PET_MAX_WIDTH = 12.8;
+  /* Calibrated against the painted doors and tatami grid in the live scene.
+   * The previous 9.5-12.8% range made the cat nearly doorway-wide. The sprite
+   * itself occupies about four fifths of its cell, so 6.8-9% keeps a readable
+   * long-haired silhouette without overpowering the architecture. */
+  var PET_MIN_WIDTH = 6.8;
+  var PET_MAX_WIDTH = 9;
   var PET_NEAR_Y = 86;
   var PET_FAR_Y = 58;
 
@@ -83,9 +95,10 @@
    * 0.18 of a body length per step made the legs churn: the cat was taking
    * about 1.6 steps a second while covering only a quarter of its own length in
    * that time, so the cycle ran ahead of the ground even though it was driven
-   * by the ground. A walking cat advances roughly a third of its length per
-   * step, which is the number here. */
-  function strideFor(y){ return widthAt(y) * 0.30; }
+   * by the ground. The production cycle now has four key poses rather than
+   * eight drawings, so each key covers half the old distance. A complete
+   * four-key cycle still advances about 0.6 body lengths. */
+  function strideFor(y){ return widthAt(y) * 0.15; }
 
   function widthAt(y){
     var depth = (Number(y) - PET_FAR_Y) / (PET_NEAR_Y - PET_FAR_Y);
@@ -115,6 +128,20 @@
     return next;
   }
 
+  function settleAt(state, anchorId){
+    var next = copy(state);
+    var target = find(next.scene, anchorId);
+    if(!target) return next;
+    next.anchorId = target.id;
+    next.targetId = null;
+    next.x = target.x;
+    next.y = target.y;
+    next.behavior = target.behaviors[next.seed % target.behaviors.length];
+    next.frame = 0;
+    next.clock = 0;
+    return next;
+  }
+
   function step(state, elapsedMs, options){
     if(!state) return null;
     var settings = options || {};
@@ -129,7 +156,10 @@
     next.clock += elapsed;
     if(!next.targetId){
       var sprite = SPRITES[next.behavior] || SPRITES.loaf;
-      next.frame = Math.floor(next.clock / 220) % Math.max(1, sprite.frames);
+      var rawFrame = Math.floor(next.clock / (sprite.frameMs || 220));
+      next.frame = sprite.loop === false
+        ? Math.min(Math.max(0, sprite.frames - 1), rawFrame)
+        : rawFrame % Math.max(1, sprite.frames);
       return next;
     }
     var target = find(next.scene, next.targetId);
@@ -154,7 +184,10 @@
      * half that, which is a slow stroll rather than the dash that was too fast
      * before. */
     var approach = Math.min(1, distance / 14);
-    var travel = elapsed * (0.0016 + 0.0038 * approach);
+    /* Never let the gait run while travel becomes visually stationary. At the
+     * nearest approach this is about half a body length per second; distance-
+     * linked frames still slow with it, and arrival ends the walk immediately. */
+    var travel = elapsed * (0.0034 + 0.002 * approach);
     if(distance <= travel || distance === 0){
       next.x = target.x;
       next.y = target.y;
@@ -175,7 +208,7 @@
      * is what reads as sliding. Tying the frame to distance covered means one
      * stride is always the same distance travelled, at any speed. */
     next.walked = (next.walked || 0) + travel;
-    next.frame = Math.floor(next.walked / strideFor(next.y)) % 8;
+    next.frame = Math.floor(next.walked / strideFor(next.y)) % SPRITES.walk.frames;
     return next;
   }
 
@@ -195,15 +228,15 @@
     return next;
   }
 
-  /* Real cats rest for long periods, but literal hours would look broken in a
-   * game. These compressed pauses preserve the rhythm without stalling play. */
+  /* Rest long enough to feel calm while the sprite breathes, but never long
+   * enough to look abandoned. */
   function dwellMs(state){
     var behavior = state && state.behavior || "loaf";
     var seed = Math.abs(Number(state && state.seed) || 1) >>> 0;
-    if(behavior === "curl-sleep" || behavior === "side-sleep") return 18000 + seed % 18000;
-    if(behavior === "loaf" || behavior === "sit") return 10000 + seed % 12000;
-    if(behavior === "groom") return 8000 + seed % 8000;
-    return 5000 + seed % 6000;
+    if(behavior === "curl-sleep" || behavior === "side-sleep") return 10000 + seed % 5001;
+    if(behavior === "loaf" || behavior === "sit") return 8000 + seed % 4001;
+    if(behavior === "groom") return 6000 + seed % 4001;
+    return 5000 + seed % 3001;
   }
 
   function enterScene(scene, seed){
@@ -225,10 +258,12 @@
 
   root.LanternHomePet = {
     anchors:sceneAnchors,
+    nextAnchor:nextAnchor,
     widthAt:widthAt,
     behaviors:function(){ return Object.keys(SPRITES); },
     create:create,
     sendTo:sendTo,
+    settleAt:settleAt,
     step:step,
     crossDoor:crossDoor,
     enterScene:enterScene,

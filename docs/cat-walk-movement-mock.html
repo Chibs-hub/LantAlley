@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Calico walk movement mock</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;display:grid;place-items:center;background:#10192b;color:#f7e8c7;font:16px system-ui}
+  main{width:min(920px,94vw);padding:28px;border:1px solid #9b6d37;border-radius:20px;background:#2a1b13}
+  h1{margin:0 0 8px;font:700 1.25rem Georgia,serif}
+  p{margin:0 0 22px;color:#d5c4aa}
+  .stage{position:relative;overflow:hidden;aspect-ratio:16/6;border-radius:14px;background:linear-gradient(#17243a 0 58%,#625842 58% 100%)}
+  .ground{position:absolute;inset:58% 0 0;background:repeating-linear-gradient(90deg,#776b4f 0 80px,#665b43 80px 84px)}
+  .cat{position:absolute;left:50%;bottom:5%;width:260px;height:190px;transform:translateX(-50%);background:url('../assets/home/pet/calico-walk-rig-mock-v2.png') 0 50%/400% auto no-repeat;animation:walk .72s steps(3,end) infinite}
+  @keyframes walk{to{background-position:100% 50%}}
+  @media(prefers-reduced-motion:reduce){.cat{animation:none}}
+</style>
+<main>
+  <h1>Calico walk cycle - movement mock</h1>
+  <p>Preview only. The green background and generated anatomy are not production assets.</p>
+  <div class="stage"><div class="ground"></div><div class="cat" aria-label="Animated calico walk mock"></div></div>
+</main>
+</html>

@@ -7,7 +7,7 @@
  * Bump CACHE_VERSION whenever any shell file changes, or returning players
  * will keep the old build.
  */
-var CACHE_VERSION = "lantern-alley-v168";
+var CACHE_VERSION = "lantern-alley-v179";
 
 // audio-index.js assigns to `self`, so the worker and the page share one list
 // of clip paths. Importing it here means new lines are cached automatically
@@ -73,10 +73,16 @@ var SHELL = [
   "./assets/home/garden/maple-sapling-v1.webp",
   "./assets/home/garden/maple-young-v1.webp",
   "./assets/home/garden/maple-mature-v1.webp",
-  "./assets/home/pet/calico-walk-v1.webp",
-  "./assets/home/pet/calico-transitions-v1.webp",
-  "./assets/home/pet/calico-idles-v1.webp",
-  "./assets/home/pet/calico-interactions-v1.webp",
+  "./assets/home/pet/calico-walk-v3.png",
+  "./assets/home/pet/calico-sit-v1.png",
+  "./assets/home/pet/calico-loaf-v2.png",
+  "./assets/home/pet/calico-curl-sleep-v2.png",
+  "./assets/home/pet/calico-sniff-v2.png",
+  "./assets/home/pet/calico-groom-v2.png",
+  "./assets/home/pet/calico-side-sleep-v1.png",
+  "./assets/home/pet/calico-stretch-v1.png",
+  "./assets/home/pet/calico-look-v1.png",
+  "./assets/home/pet/calico-play-v1.png",
   "./daily-practice.js",
   "./review-mode.js",
   "./question-renderer.js",

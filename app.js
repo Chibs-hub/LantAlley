@@ -2652,6 +2652,11 @@
     }
     screenGame.classList.remove("entrance-stage", "inn-stage");
     screenGame.classList.add("home-stage");
+    if(typeof LanternHomeGarden !== "undefined" && LanternHomeGarden.normalize){
+      var beforePlantCount = (gardenState().plants || []).length;
+      state.garden = LanternHomeGarden.normalize(gardenState());
+      if(state.garden.plants.length !== beforePlantCount) saveProgress();
+    }
     if(typeof LanternHomeGarden !== "undefined" && !gardenState().starterSceneryClaimed){
       state.garden = LanternHomeGarden.claimStarterScenery(gardenState()).garden;
       saveProgress();
@@ -2785,7 +2790,7 @@
 
   /* Stand-in art, so the whole garden is playable before it is painted.
    *
-   * Seven of the eight species have no pictures yet. Rather than hide them and
+   * Species without pictures are drawn from data. Rather than hide them and
    * ship a shop with one thing in it, they are drawn from data: a silhouette
    * per kind, a colour per species, and four sizes for the four stages. They
    * are obviously drawings, which is the point - nobody will mistake one for
@@ -2801,7 +2806,6 @@
   var PLANT_TINT = {
     "cherry-tree":     {leaf:"#5f8a52", bloom:"#e8a9bd"},
     "japanese-maple":  {leaf:"#6a8a4e", bloom:"#c4543a"},
-    "pine-tree":       {leaf:"#3f6b46", bloom:"#3f6b46"},
     "hydrangea":       {leaf:"#4f7d4a", bloom:"#7f8fc4"},
     "camellia":        {leaf:"#3f6b46", bloom:"#c4485c"},
     "iris":            {leaf:"#4f7d4a", bloom:"#7a6ab5"},
@@ -2963,7 +2967,7 @@
   // The rest of the game speaks Japanese to the learner; the engine's own
   // catalogue is in English for the tests that read it.
   var PLANT_JP = {
-    "cherry-tree":"桜", "japanese-maple":"もみじ", "pine-tree":"松",
+    "cherry-tree":"桜", "japanese-maple":"もみじ",
     "hydrangea":"あじさい", "camellia":"椿", "iris":"あやめ",
     "chrysanthemum":"菊", "lantern-flower-bed":"ほおずきの花壇"
   };
@@ -3024,7 +3028,8 @@
     var sprite = LanternHomePet.spriteFor(homePetState);
     var petWidth = (typeof LanternHomePet !== "undefined" && LanternHomePet.widthAt)
       ? LanternHomePet.widthAt(homePetState.y) : 7.5;
-    return '<div class="home-pet" aria-hidden="true" style="width:' + petWidth + '%;left:' + homePetState.x
+    return '<div class="home-pet" aria-hidden="true" data-pet-behavior="' + homePetState.behavior
+      + '" style="width:' + petWidth + '%;left:' + homePetState.x
       + '%;top:' + homePetState.y + '%;--pet-facing:' + homePetState.facing + '">'
       + '<span style="background-image:url(\'' + sprite.path + '\');background-size:'
       + (sprite.columns * 100) + '% ' + (sprite.rows * 100) + '%"></span></div>';
@@ -3048,6 +3053,7 @@
     node.style.left = homePetState.x + "%";
     node.style.top = homePetState.y + "%";
     node.style.setProperty("--pet-facing", homePetState.facing);
+    node.setAttribute("data-pet-behavior", homePetState.behavior);
     var art = node.firstElementChild;
     if(art){
       art.style.backgroundImage = "url('" + sprite.path + "')";
@@ -3069,11 +3075,14 @@
       if(homePetState && !homePetState.targetId){
         homePetIdleMs += elapsed;
         var dwell = LanternHomePet.dwellMs ? LanternHomePet.dwellMs(homePetState) : 6000;
-        if(!reduced && homePetIdleMs > dwell){
-          var anchors = LanternHomePet.anchors(homePetState.scene);
-          var choices = anchors.filter(function(anchor){ return anchor.id !== homePetState.anchorId; });
+        if(homePetIdleMs > dwell){
           homePetState.seed = (homePetState.seed * 1664525 + 1013904223) >>> 0;
-          homePetState = LanternHomePet.sendTo(homePetState, choices[homePetState.seed % choices.length].id);
+          var destination = LanternHomePet.nextAnchor
+            ? LanternHomePet.nextAnchor(homePetState)
+            : LanternHomePet.anchors(homePetState.scene).filter(function(anchor){ return anchor.id !== homePetState.anchorId; })[0];
+          if(destination) homePetState = reduced
+            ? LanternHomePet.settleAt(homePetState, destination.id)
+            : LanternHomePet.sendTo(homePetState, destination.id);
           homePetIdleMs = 0;
         }
       }
@@ -3400,7 +3409,7 @@
      /* The seed the learner was just handed, not any plant in the yard.
       *
       * "Is anything planted?" was true before they touched it, because a first
-      * visit already grants a pine and a maple as scenery - so the step
+      * visit already grants a maple as scenery - so the step
       * satisfied itself and the tutorial skipped from taking the seed straight
       * to going indoors, never once teaching the thing it exists to teach. */
      done:function(){

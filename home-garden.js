@@ -4,7 +4,6 @@
   var TYPES = [
     {id:"cherry-tree", name:"Cherry tree", kind:"tree", price:500, matureAt:12},
     {id:"japanese-maple", name:"Japanese maple", kind:"tree", price:450, matureAt:10},
-    {id:"pine-tree", name:"Pine tree", kind:"tree", price:400, matureAt:8},
     {id:"hydrangea", name:"Hydrangea", kind:"shrub", price:240, matureAt:7},
     {id:"camellia", name:"Camellia", kind:"flower", price:120, matureAt:4},
     {id:"iris", name:"Iris", kind:"flower", price:90, matureAt:2},
@@ -30,7 +29,9 @@
   function normalized(garden){
     var source = garden || {};
     return {
-      plants: ((source.plants || [])).map(copyPlant),
+      plants: ((source.plants || [])).filter(function(plant){
+        return plant.typeId !== "pine-tree";
+      }).map(copyPlant),
       usedCreditIds: (source.usedCreditIds || []).slice(),
       starterClaimed: source.starterClaimed === true,
       starterSceneryClaimed: source.starterSceneryClaimed === true,
@@ -100,7 +101,6 @@
     var next = normalized(garden);
     next.starterSceneryClaimed = true;
     [
-      {id:"starter-pine",typeId:"pine-tree",slotId:"garden-left-1"},
       {id:"starter-maple",typeId:"japanese-maple",slotId:"garden-right-1"}
     ].forEach(function(starter){
       if(next.plants.some(function(p){ return p.id === starter.id; })) return;
@@ -119,7 +119,7 @@
 
   function restoreStarterLayout(garden){
     var next = normalized(garden);
-    var targets = {"starter-pine":"garden-left-1","starter-maple":"garden-right-1"};
+    var targets = {"starter-maple":"garden-right-1"};
     Object.keys(targets).forEach(function(id){
       var plant = next.plants.filter(function(p){ return p.id === id; })[0];
       if(!plant) return;
@@ -220,6 +220,7 @@
 
   root.LanternHomeGarden = Object.freeze({
     emptyGarden:emptyGarden,
+    normalize:normalized,
     catalogue:catalogue,
     claimStarter:claimStarter,
     claimStarterScenery:claimStarterScenery,

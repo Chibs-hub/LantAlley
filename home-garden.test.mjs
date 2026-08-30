@@ -13,13 +13,13 @@ function bought(typeId = "camellia", money = 1000){
   return garden.buy(garden.emptyGarden(), money, typeId);
 }
 
-test("catalogue exposes the eight approved plant types and safe clones", () => {
+test("catalogue excludes the unfinished pine placeholder and returns safe clones", () => {
   const first = garden.catalogue();
   assert.deepEqual(Array.from(first, item => item.id), [
-    "cherry-tree", "japanese-maple", "pine-tree", "hydrangea",
+    "cherry-tree", "japanese-maple", "hydrangea",
     "camellia", "iris", "chrysanthemum", "lantern-flower-bed"
   ]);
-  assert.equal(first.length, 8);
+  assert.equal(first.length, 7);
   assert.ok(first.every(item => item.price > 0));
   first[0].price = 0;
   assert.notEqual(garden.catalogue()[0].price, 0);
@@ -61,17 +61,29 @@ test("starter claim is free and cannot duplicate a starter camellia", () => {
   assert.equal(migrated.garden.plants.length, 1);
 });
 
-test("starter yard trees are removable and restore without repurchase", () => {
+test("starter yard includes only the finished maple artwork", () => {
   const claimed = garden.claimStarterScenery(garden.emptyGarden());
   assert.equal(claimed.ok, true);
-  assert.equal(claimed.garden.plants.length, 2);
+  assert.equal(claimed.garden.plants.length, 1);
   assert.ok(claimed.garden.plants.every(p => p.stage === "mature" && p.slotId));
+  assert.equal(claimed.garden.plants[0].id, "starter-maple");
   const cleared = garden.clearPlacement(claimed.garden);
   assert.ok(cleared.plants.every(p => p.slotId === null));
   const restored = garden.restoreStarterLayout(cleared);
-  assert.equal(restored.plants.find(p => p.id === "starter-pine").slotId, "garden-left-1");
   assert.equal(restored.plants.find(p => p.id === "starter-maple").slotId, "garden-right-1");
   assert.equal(garden.claimStarterScenery(restored).ok, false);
+});
+
+test("normalization removes pine placeholders from existing saves", () => {
+  const legacy = {
+    plants:[
+      {id:"starter-pine", typeId:"pine-tree", slotId:"garden-left-1", stage:"mature"},
+      {id:"plant-2", typeId:"camellia", slotId:null, stage:"planted"}
+    ],
+    usedCreditIds:[], starterClaimed:false, starterSceneryClaimed:true, nextInstanceId:3
+  };
+  const cleaned = garden.clearPlacement(legacy);
+  assert.deepEqual(Array.from(cleaned.plants, p => p.typeId), ["camellia"]);
 });
 
 test("plant and move use valid empty garden slots without mutation", () => {
@@ -142,8 +154,7 @@ test("first-time mastery bonus adds one point and maturity caps growth", () => {
 
 const stageCases = [
   {typeId:"camellia", want:["planted", "sprout", "growing", "growing", "mature"]},
-  {typeId:"hydrangea", want:["planted", "sprout", "sprout", "sprout", "growing", "growing", "growing", "mature"]},
-  {typeId:"pine-tree", want:["planted", "sprout", "sprout", "sprout", "growing", "growing", "growing", "growing", "mature"]}
+  {typeId:"hydrangea", want:["planted", "sprout", "sprout", "sprout", "growing", "growing", "growing", "mature"]}
 ];
 
 test("flower shrub and tree stages are monotonic at every growth point", () => {

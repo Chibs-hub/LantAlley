@@ -29,6 +29,20 @@ test("the same seed creates the same safe initial pet", () => {
   assert.equal(pet.create("shop", 42), null);
 });
 
+test("cat scale follows scene depth without overpowering the architecture", () => {
+  const pet = load();
+  const far = pet.widthAt(58);
+  const near = pet.widthAt(86);
+  assert.ok(far >= 6.5 && far <= 7.2, `far cat width ${far}% is out of scale`);
+  assert.ok(near >= 8.5 && near <= 9.2, `near cat width ${near}% is out of scale`);
+  assert.ok(near > far, "the foreground cat must be larger than the background cat");
+  for(const scene of ["yard", "interior"]){
+    for(const anchor of pet.anchors(scene)){
+      assert.ok(pet.widthAt(anchor.y) <= 9.2, `${anchor.id} makes the cat too large`);
+    }
+  }
+});
+
 test("walking advances smoothly without mutating the previous state", () => {
   const pet = load();
   const start = pet.create("yard", 7);
@@ -39,6 +53,15 @@ test("walking advances smoothly without mutating the previous state", () => {
   assert.ok(next.x !== walking.x || next.y !== walking.y);
   assert.equal(next.behavior, "walk");
   assert.ok(next.frame >= 0 && next.frame < 8);
+});
+
+test("a walking pose always produces visible travel near its destination", () => {
+  const pet = load();
+  const target = pet.anchors("yard").find((anchor) => anchor.id === "yard-rock");
+  const state = pet.sendTo({...pet.create("yard", 7), x:target.x + 2, y:target.y}, target.id);
+  const next = pet.step(state, 80, {});
+  const moved = Math.hypot(next.x - state.x, next.y - state.y);
+  assert.ok(moved >= 0.24, `walking frame moved only ${moved.toFixed(3)}% of the scene`);
 });
 
 test("scene changes can occur only through the authored door", () => {
@@ -61,9 +84,15 @@ test("scene entry uses the door and rest periods are game-scaled", () => {
   assert.equal(entering.behavior, "sit");
   assert.ok(!pet.behaviors().includes("enter"),
     "the enter row shrank the cat by half mid-animation and must stay retired");
-  assert.ok(pet.dwellMs({...entering, behavior:"curl-sleep"}) >= 18000);
-  assert.ok(pet.dwellMs({...entering, behavior:"groom"}) >= 8000);
-  assert.ok(pet.dwellMs({...entering, behavior:"look"}) >= 5000);
+  assert.ok(pet.dwellMs({...entering, behavior:"curl-sleep"}) >= 8000);
+  assert.ok(pet.dwellMs({...entering, behavior:"groom"}) >= 5000);
+  assert.ok(pet.dwellMs({...entering, behavior:"look"}) >= 4000);
+  for (const behavior of ["curl-sleep", "side-sleep", "loaf", "sit", "groom", "look"]) {
+    for (const seed of [1, 9999, 4294967295]) {
+      assert.ok(pet.dwellMs({behavior, seed}) <= 15000,
+        `${behavior} can leave the cat apparently stuck for too long`);
+    }
+  }
 });
 
 test("pause and reduced motion prevent continuous movement", () => {
@@ -77,13 +106,113 @@ test("pause and reduced motion prevent continuous movement", () => {
   assert.notEqual(reduced.behavior, "walk");
 });
 
+test("reduced motion can change resting places without a walking animation", () => {
+  const pet = load();
+  const start = pet.create("yard", 3);
+  const destination = pet.nextAnchor(start);
+  const moved = pet.settleAt(start, destination.id);
+  assert.equal(moved.anchorId, destination.id);
+  assert.equal(moved.targetId, null);
+  assert.equal(moved.x, destination.x);
+  assert.equal(moved.y, destination.y);
+  assert.notEqual(moved.behavior, "walk");
+});
+
 test("sprite metadata names a sheet and a bounded frame grid", () => {
   const pet = load();
   for (const behavior of pet.behaviors()) {
     const sprite = pet.spriteFor({behavior, frame:99});
-    assert.match(sprite.path, /^assets\/home\/pet\/calico-.+-v1\.webp$/);
+    assert.match(sprite.path, /^assets\/home\/pet\/calico-.+-v\d+\.(?:webp|png)$/);
     assert.ok(sprite.columns >= 1 && sprite.rows >= 1);
     assert.ok(sprite.frame >= 0 && sprite.frame < sprite.columns * sprite.rows);
     assert.ok(fs.existsSync(new URL(sprite.path, import.meta.url)), sprite.path);
   }
+});
+
+test("walking uses the corrected alternating-leg four-key production sheet", () => {
+  const pet = load();
+  const walk = pet.spriteFor({behavior:"walk", frame:3});
+  assert.equal(walk.path, "assets/home/pet/calico-walk-v3.png");
+  assert.equal(walk.columns, 4);
+  assert.equal(walk.rows, 1);
+  assert.equal(walk.frame, 3);
+});
+
+test("four-key walk advances a pose within a quarter second at cruising speed", () => {
+  const pet = load();
+  const start = pet.create("yard", 4);
+  const walking = pet.sendTo(start, "yard-rock");
+  const advanced = pet.step(walking, 250, {});
+  assert.ok(advanced.frame >= 1, `walk held frame zero for ${advanced.frame}`);
+});
+
+test("the cat follows a purposeful route through distinct resting places", () => {
+  const pet = load();
+  for (const scene of ["yard", "interior"]) {
+    const anchors = pet.anchors(scene);
+    let state = pet.create(scene, 17);
+    const visited = new Set([state.anchorId]);
+    for (let index = 0; index < anchors.length; index += 1) {
+      const next = pet.nextAnchor(state);
+      assert.ok(next, `${scene} needs a next resting place`);
+      assert.notEqual(next.id, state.anchorId, "the cat must not choose its current spot");
+      visited.add(next.id);
+      state.anchorId = next.id;
+    }
+    assert.ok(visited.size >= 4, `${scene} route repeats too few meaningful places`);
+  }
+});
+
+test("resting poses breathe subtly and respect reduced motion", () => {
+  const app = fs.readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  const css = fs.readFileSync(new URL("./styles.css", import.meta.url), "utf8");
+  assert.match(app, /data-pet-behavior/);
+  assert.match(css, /@keyframes pet-breathe/);
+  assert.match(css, /prefers-reduced-motion:reduce[^}]*\.home-pet > span/s);
+  assert.match(app, /reduced\s*\?\s*LanternHomePet\.settleAt/);
+  assert.doesNotMatch(app, /if\(!reduced && homePetIdleMs > dwell\)/);
+});
+
+test("one-shot poses finish and hold instead of looping", () => {
+  const pet = load();
+  let state = {...pet.create("yard", 5), behavior:"sit", frame:0, clock:0};
+  state = pet.step(state, 5000, {});
+  assert.equal(state.frame, 3);
+  assert.equal(pet.spriteFor(state).path, "assets/home/pet/calico-sit-v1.png");
+  assert.ok(!pet.behaviors().includes("stand"), "unused stand transition must not ship");
+});
+
+test("distinct natural actions use distinct complete artwork", () => {
+  const pet = load();
+  const paths = ["side-sleep", "stretch", "look", "play"].map((behavior) =>
+    pet.spriteFor({behavior, frame:0}).path);
+  assert.equal(new Set(paths).size, paths.length);
+  assert.match(paths[0], /calico-side-sleep-v1\.png$/);
+  assert.match(paths[1], /calico-stretch-v1\.png$/);
+  assert.match(paths[2], /calico-look-v1\.png$/);
+  assert.match(paths[3], /calico-play-v1\.png$/);
+});
+
+test("yard and room actually offer the natural interaction poses", () => {
+  const pet = load();
+  const used = new Set([...pet.anchors("yard"), ...pet.anchors("interior")]
+    .flatMap((anchor) => anchor.behaviors));
+  for (const behavior of ["sniff", "stretch", "look", "play", "side-sleep"]) {
+    assert.ok(used.has(behavior), `${behavior} is artwork with no place in the home`);
+  }
+});
+
+test("legacy motions are normalized into separate production sheets", () => {
+  const pet = load();
+  assert.equal(pet.spriteFor({behavior:"loaf", frame:0}).path, "assets/home/pet/calico-loaf-v2.png");
+  assert.equal(pet.spriteFor({behavior:"curl-sleep", frame:0}).path, "assets/home/pet/calico-curl-sleep-v2.png");
+  assert.equal(pet.spriteFor({behavior:"sniff", frame:0}).path, "assets/home/pet/calico-sniff-v2.png");
+  assert.equal(pet.spriteFor({behavior:"groom", frame:0}).path, "assets/home/pet/calico-groom-v2.png");
+});
+
+test("grooming uses a calm 2.4 second cycle", () => {
+  const pet = load();
+  const start = {...pet.create("yard", 5), behavior:"groom", frame:0, clock:0};
+  assert.equal(pet.step(start, 599, {}).frame, 0);
+  assert.equal(pet.step(start, 600, {}).frame, 1);
 });
