@@ -22,6 +22,17 @@ test("every file the service worker pre-caches actually exists", () => {
   }
 });
 
+test("painted home time variants are not re-tinted as if they shared one sunset image", () => {
+  const css = read("styles.css");
+  for(const period of ["morning", "day", "evening", "night"]){
+    assert.match(
+      css,
+      new RegExp("\\.home-scene\\.light-" + period + " \\.home-scene-bg\\{filter:none\\}"),
+      period + " background must preserve its painted sky and lighting",
+    );
+  }
+});
+
 test("sakura and maple each ship five consistent growth-stage assets", () => {
   const app = read("app.js");
   for (const tree of ["sakura", "maple"]) {
@@ -666,4 +677,48 @@ test("the reward stage's controls meet the touch minimum on a coarse pointer", (
   // and it must stay gated, or the desktop layout grows with it
   const outside = css.replace(/@media \(pointer: coarse\)\{[\s\S]*?\n\}/g, "");
   assert.doesNotMatch(outside, /\.home-menu-button\{[^}]*min-height:44px/);
+});
+
+/* Everything that stands in a scene is graded by the hour, and by which scene.
+ *
+ * This became load-bearing when the four painted backgrounds landed. While one
+ * evening painting was filtered for every hour, an ungraded object survived,
+ * because the filter moved the object and its ground together. With a painting
+ * per hour the object is the only thing that does not change: measured at
+ * ground level the yard runs 1.99x its evening painting at midday and 0.61x at
+ * night, so an ungraded plant is half as bright as the gravel at noon.
+ *
+ * The cat needs its scene as well as its hour - at midday the room is 1.35x
+ * its evening painting and the yard 1.99x, so one value cannot sit in both.
+ */
+test("scene objects are graded for the hour, and the cat for the scene too", () => {
+  const css = read("styles.css");
+  const hours = ["morning", "day", "evening", "night"];
+
+  for (const hour of hours) {
+    assert.match(css, new RegExp("light-" + hour + " \.home-item img"),
+      "furniture has no " + hour + " grading");
+    assert.match(css, new RegExp("light-" + hour + " \.home-plant img"),
+      "plants have no " + hour + " grading");
+    for (const scene of ["home-interior-scene", "home-yard-scene"]) {
+      assert.match(css, new RegExp(scene + "\.light-" + hour + " \.home-pet"),
+        "the cat has no " + hour + " grading in " + scene);
+    }
+  }
+
+  // The yard swings far harder than the room, so its midday values must be
+  // the brighter ones. Equal values would mean someone copied one into both.
+  // Found by line and read with a regex literal. Building the pattern from a
+  // string needs backslashes that do not survive being written through a
+  // shell, and a silently non-matching regex reads here as a missing rule.
+  const bright = (selector) => {
+    const line = css.split(/\r?\n/).find((l) => l.includes(selector));
+    const m = line && line.match(/brightness\(([\d.]+)\)/);
+    return m ? Number(m[1]) : null;
+  };
+  const yardDay = bright(".home-yard-scene.light-day .home-pet");
+  const roomDay = bright(".home-interior-scene.light-day .home-pet");
+  assert.ok(yardDay && roomDay, "both midday cat rules carry a brightness");
+  assert.ok(yardDay > roomDay,
+    `the yard is the brighter painting at midday, so the cat there cannot be dimmer (yard ${yardDay}, room ${roomDay})`);
 });

@@ -25,3 +25,10 @@ assets/home/incoming-user/
 # of the same source PNGs that assets/home/incoming-user/ already holds. 52MB
 # of it reached a commit once; it is working state, not part of the game.
 .tmp-image-audit/
+
+# Art candidates: 29MB of full-size PNGs that are reviewed, then cut down into
+# the production assets under assets/home/. The game never loads them. This is
+# the third folder of its kind - 52MB reached a commit twice before and had to
+# be amended out and gc'd - so it is ignored the day it appears rather than
+# after. The README inside each dated folder records what was approved.
+assets/home/art-candidates/

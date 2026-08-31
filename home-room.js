@@ -129,15 +129,35 @@
     return cloneSlots(SLOTS);
   }
 
+  var BACKGROUNDS = {
+    yard: {
+      morning:"assets/home/exterior/open-house-yard-morning-v1.webp",
+      day:"assets/home/exterior/open-house-yard-day-v1.webp",
+      evening:"assets/home/exterior/open-house-yard-v1.webp",
+      night:"assets/home/exterior/open-house-yard-night-v1.webp"
+    },
+    interior: {
+      morning:"assets/home/interior/starter-room-morning-v1.webp",
+      day:"assets/home/interior/starter-room-day-v1.webp",
+      evening:"assets/home/interior/starter-room-v1.webp",
+      night:"assets/home/interior/starter-room-night-v1.webp"
+    }
+  };
+
+  function backgroundFor(area, period){
+    var group = BACKGROUNDS[area];
+    return group ? (group[period] || group.evening) : "";
+  }
+
   function scenes(){
     return {
       yard: {
-        background: "assets/home/exterior/open-house-yard-v1.webp",
+        background: backgroundFor("yard", "evening"),
         slots: cloneSlots(YARD_SLOTS),
         houseHotspot: {x:43, y:22, width:16, height:31, label:"家に入る"}
       },
       interior: {
-        background: "assets/home/interior/starter-room-v1.webp",
+        background: backgroundFor("interior", "evening"),
         slots: cloneSlots(SLOTS)
       }
     };
@@ -209,6 +229,7 @@
   root.LanternHomeRoom = Object.freeze({
     scenes: scenes,
     slots: slots,
+    backgroundFor: backgroundFor,
     baseRoomSvg: baseRoomSvg
   });
 })(typeof self !== "undefined" ? self : this);

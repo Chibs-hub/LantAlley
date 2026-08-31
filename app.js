@@ -3206,9 +3206,11 @@
     var byId = {};
     plantsInYard().forEach(function(p){ byId[p.slotId] = p; });
     var picking = homeSelected && homeSelected.kind === "plant";
+    var lighting = effectiveHomeLighting();
+    var background = LanternHomeRoom.backgroundFor("yard", lighting);
 
-    var html = '<div class="home-scene home-yard-scene light-' + effectiveHomeLighting() + '">'
-      + sceneLayer(yard.background, "わが家の庭") + homePetMarkup("yard") + homeSceneChrome("yard");
+    var html = '<div class="home-scene home-yard-scene light-' + lighting + '">'
+      + sceneLayer(background, "わが家の庭") + homePetMarkup("yard") + homeSceneChrome("yard");
 
     // The house is a real button, not a hot region with no name: a learner who
     // cannot see the picture still has to be able to go inside.
@@ -3264,8 +3266,10 @@
     var picked = (homeSelected && homeSelected.kind === "decor" && decor)
       ? decor.getItem(homeSelected.id) : null;
 
-    var html = '<div class="home-scene home-interior-scene light-' + effectiveHomeLighting() + '">'
-      + sceneLayer(interior.background, "わが家の部屋")
+    var lighting = effectiveHomeLighting();
+    var background = LanternHomeRoom.backgroundFor("interior", lighting);
+    var html = '<div class="home-scene home-interior-scene light-' + lighting + '">'
+      + sceneLayer(background, "わが家の部屋")
       + wallpaperLayer() + homePetMarkup("interior") + homeSceneChrome("interior");
 
     if(decor){

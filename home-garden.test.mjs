@@ -9,6 +9,30 @@ vm.runInContext(fs.readFileSync(new URL("./home-room.js", import.meta.url), "utf
 const garden = context.LanternHomeGarden;
 const slots = context.LanternHomeRoom.scenes().yard.slots;
 
+test("home backgrounds match all four automatic time periods", () => {
+  const room = context.LanternHomeRoom;
+  const expected = {
+    yard: {
+      morning:"assets/home/exterior/open-house-yard-morning-v1.webp",
+      day:"assets/home/exterior/open-house-yard-day-v1.webp",
+      evening:"assets/home/exterior/open-house-yard-v1.webp",
+      night:"assets/home/exterior/open-house-yard-night-v1.webp"
+    },
+    interior: {
+      morning:"assets/home/interior/starter-room-morning-v1.webp",
+      day:"assets/home/interior/starter-room-day-v1.webp",
+      evening:"assets/home/interior/starter-room-v1.webp",
+      night:"assets/home/interior/starter-room-night-v1.webp"
+    }
+  };
+  for(const area of Object.keys(expected)){
+    for(const period of Object.keys(expected[area])){
+      assert.equal(room.backgroundFor(area, period), expected[area][period]);
+    }
+  }
+  assert.equal(room.backgroundFor("yard", "unknown"), expected.yard.evening);
+});
+
 function bought(typeId = "camellia", money = 1000){
   return garden.buy(garden.emptyGarden(), money, typeId);
 }

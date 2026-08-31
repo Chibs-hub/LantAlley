@@ -6,6 +6,41 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-08-31 - Sunflower four-stage garden art
+
+Added a transparent, semi-realistic sunflower growth set matching the existing garden cutouts: planted soil marker, sprout, closed-bud growing plant and mature bloom. The four 512px WebP files share one source sheet, lighting, soil treatment and a measured 95.5-95.7% ground baseline so growth does not jump vertically. The art is not yet connected to the catalogue or shop.
+
+### 2026-08-31 - What the painted hours left ungraded
+
+The four painted backgrounds are a real improvement and they came with a gap, which is the ordinary cost of replacing a mechanism: the CSS filters they removed were doing a second job nobody had written down.
+
+While one evening painting was filtered for every hour, an object with no grading of its own still looked right, because the filter moved the object and its ground together. **With a painting per hour, an ungraded object is the only thing in the scene that does not change.**
+
+Measured at ground level - the tatami between y=75 and 95, the yard's gravel between y=70 and 90, rather than whole-image means, because the yard's sky inflates its average:
+
+| | morning | day | evening | night |
+| --- | --- | --- | --- | --- |
+| room floor | 1.08x | 1.35x | 1.00x | 0.53x |
+| yard ground | 1.78x | 1.99x | 1.00x | 0.61x |
+
+Against that, **plants had no per-hour rule at all** - so at noon a plant was roughly half as bright as the gravel it stood in, and at night nearly twice as bright as it. Furniture was close, its midday value 1.26 against a measured 1.35. And the cat, which is the one object that appears in both scenes, had a single set of values for two grounds that now differ by a factor of one and a half at midday.
+
+So: plants graded on the yard's numbers, the cat split into interior and yard rules, furniture's midday nudged to 1.32.
+
+**The values sit deliberately short of the measured ratios.** `brightness` multiplies and clips at white, so a literal 1.99 would blow the pale sakura blossoms out to paper; these land near the ratio raised to three quarters, which closes most of the gap and keeps the highlights. That is a judgement, and it is written next to the numbers so the next person can move it knowingly.
+
+A test now requires all three object classes to carry a rule for every hour, the cat to carry one per scene, and the yard's midday cat to be brighter than the room's - equal values being the signature of one rule copied into both. Confirmed failing with the plant rule removed.
+
+**Also: `assets/home/art-candidates/` is now ignored.** It is 29MB of full-size review PNGs. This is the third folder of its kind in this project and the previous two reached commits and had to be amended out and gc'd, so it is ignored the day it appears rather than after.
+
+### 2026-08-31 - Home skies now follow the learner's clock
+
+The yard and room used one baked evening painting for every hour. CSS could brighten that painting, but it could not turn its pink dusk sky into a blue morning or midday sky; at night it only darkened the same sunset.
+
+Morning, daytime and night paintings now accompany the existing evening painting for both the yard and the room. Each variant changes the actual sky, outdoor view, ambient light, shadows and lamp state while preserving scene dimensions and placement geometry. `LanternHomeRoom.backgroundFor()` maps the same four automatic periods to both scenes, and all six new WebP files are cached offline. The old background filters were removed because they overexposed the new daytime art and double-darkened the painted night art. Cache and URL stamps are v195.
+
+TDD added the background mapping and painted-lighting contracts before production changes. The focused checks pass 57/57, the full suite passes 389/389, and a live browser check at the current daytime period loaded the blue-sky yard and room assets without horizontal overflow.
+
 ### 2026-08-31 - Handoff facts reconciled with v187
 
 The reorganised handoff still carried four present-tense contradictions from older status blocks. It said the branch was pushed while `master` was one commit ahead of `origin/master`; repeated the old v141/342-test verification; counted the removed pine as an eighth garden species; and described the cat as fixed at `z-index:3` even though v187 uses ground-depth stacking.

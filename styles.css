@@ -1564,14 +1564,14 @@
   }
   .home-scene-bg{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block}
   .home-scene::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;transition:background .45s ease}
-  .home-scene.light-morning .home-scene-bg{filter:brightness(1.08) saturate(.88) hue-rotate(-7deg)}
-  .home-scene.light-morning::before{background:linear-gradient(120deg,rgba(255,230,183,.16),rgba(184,216,238,.08))}
-  .home-scene.light-day .home-scene-bg{filter:brightness(1.22) saturate(.82) contrast(.92)}
-  .home-scene.light-day::before{background:rgba(235,244,239,.10)}
-  .home-scene.light-evening .home-scene-bg{filter:brightness(1) saturate(1.04)}
-  .home-scene.light-evening::before{background:linear-gradient(110deg,rgba(255,174,82,.06),transparent 58%)}
-  .home-scene.light-night .home-scene-bg{filter:brightness(.64) saturate(.78) hue-rotate(8deg)}
-  .home-scene.light-night::before{background:rgba(19,39,78,.24)}
+  .home-scene.light-morning .home-scene-bg{filter:none}
+  .home-scene.light-morning::before{background:transparent}
+  .home-scene.light-day .home-scene-bg{filter:none}
+  .home-scene.light-day::before{background:transparent}
+  .home-scene.light-evening .home-scene-bg{filter:none}
+  .home-scene.light-evening::before{background:transparent}
+  .home-scene.light-night .home-scene-bg{filter:none}
+  .home-scene.light-night::before{background:transparent}
   @media (prefers-reduced-motion:reduce){.home-scene::before{transition:none}}
 
   /* Items sit on their slot's centre point, so the anchor is the middle of the
@@ -1598,10 +1598,21 @@
    * darker than the floor and at night it stayed bright on a dim one - the
    * same mismatch the furniture had, and the same reason it read as sitting on
    * the picture rather than in it. These track the item rules above. */
-  .light-morning .home-pet{filter:drop-shadow(0 3px 4px rgba(28,16,8,.42)) saturate(.90) sepia(.07) brightness(1.10) hue-rotate(-7deg)}
-  .light-day .home-pet{filter:drop-shadow(0 3px 4px rgba(28,16,8,.38)) saturate(.86) sepia(.05) brightness(1.24) contrast(.93)}
-  .light-evening .home-pet{filter:drop-shadow(0 3px 4px rgba(28,16,8,.46)) saturate(1.00) sepia(.04) brightness(1.02)}
-  .light-night .home-pet{filter:drop-shadow(0 3px 5px rgba(8,10,18,.64)) saturate(.74) sepia(.04) brightness(.58) hue-rotate(8deg)}
+  /* The cat is graded per scene as well as per hour.
+   *
+   * It is the one object that appears in both, and the two no longer share a
+   * brightness: at midday the room's tatami is 1.35x its evening painting while
+   * the yard's ground is 1.99x. One value cannot sit in both, so the yard rules
+   * follow the plants and the room rules follow the furniture. */
+  .home-interior-scene.light-morning .home-pet{filter:drop-shadow(0 3px 4px rgba(28,16,8,.42)) saturate(.90) sepia(.07) brightness(1.08) hue-rotate(-7deg)}
+  .home-interior-scene.light-day .home-pet{filter:drop-shadow(0 3px 4px rgba(28,16,8,.38)) saturate(.86) sepia(.05) brightness(1.30) contrast(.93)}
+  .home-interior-scene.light-evening .home-pet{filter:drop-shadow(0 3px 4px rgba(28,16,8,.46)) saturate(1.00) sepia(.04) brightness(1.02)}
+  .home-interior-scene.light-night .home-pet{filter:drop-shadow(0 3px 5px rgba(8,10,18,.64)) saturate(.74) sepia(.04) brightness(.56) hue-rotate(8deg)}
+
+  .home-yard-scene.light-morning .home-pet{filter:drop-shadow(0 3px 4px rgba(28,16,8,.40)) saturate(.92) sepia(.05) brightness(1.42) contrast(.95) hue-rotate(-5deg)}
+  .home-yard-scene.light-day .home-pet{filter:drop-shadow(0 3px 4px rgba(28,16,8,.36)) saturate(.90) sepia(.04) brightness(1.55) contrast(.93)}
+  .home-yard-scene.light-evening .home-pet{filter:drop-shadow(0 3px 4px rgba(28,16,8,.46)) saturate(1.00) sepia(.04) brightness(1.00)}
+  .home-yard-scene.light-night .home-pet{filter:drop-shadow(0 3px 5px rgba(8,10,18,.64)) saturate(.74) sepia(.04) brightness(.64) hue-rotate(8deg)}
 
   .home-pet > span{
     display:block; width:100%; height:100%; background-repeat:no-repeat;
@@ -1662,10 +1673,35 @@
    *
    * The numbers track the background rules a few lines above. Change one and
    * change its partner, or the objects start floating again. */
+  /* Plants are graded by the hour too, and against the yard rather than the room.
+   *
+   * They had no per-hour rule at all. That was survivable while one evening
+   * painting was filtered for every hour, because the filter moved the plants
+   * and their ground together. Now that each hour is its own painting the
+   * plants are the only thing in the yard that does not change: measured at
+   * ground level, the yard runs 1.78x the evening painting in the morning,
+   * 1.99x at midday and 0.61x at night, so an ungraded plant was half as
+   * bright as the gravel it stood in at noon and nearly twice as bright at
+   * night.
+   *
+   * The numbers are deliberately short of those ratios. `brightness` multiplies
+   * and clips at white, so applying a full 1.99 would blow the pale blossoms
+   * out to paper; these sit near the ratio raised to three quarters, which
+   * closes most of the gap while keeping the highlights. The room's own values
+   * a few lines below are measured the same way against the tatami. */
+  .light-morning .home-plant img,.light-morning .home-plant svg{
+    filter:drop-shadow(0 2px 3px rgba(25,13,6,.36)) saturate(.95) brightness(1.42) contrast(.95) hue-rotate(-5deg)}
+  .light-day .home-plant img,.light-day .home-plant svg{
+    filter:drop-shadow(0 2px 3px rgba(25,13,6,.32)) saturate(.92) brightness(1.55) contrast(.93)}
+  .light-evening .home-plant img,.light-evening .home-plant svg{
+    filter:drop-shadow(0 2px 3px rgba(25,13,6,.44)) saturate(1.02) brightness(1.00)}
+  .light-night .home-plant img,.light-night .home-plant svg{
+    filter:drop-shadow(0 2px 4px rgba(8,10,18,.60)) saturate(.74) brightness(.64) hue-rotate(8deg)}
+
   .light-morning .home-item img,.light-morning .home-item svg{
     filter:drop-shadow(0 2px 3px rgba(25,13,6,.38)) saturate(.88) sepia(.06) brightness(1.10) contrast(.96) hue-rotate(-7deg)}
   .light-day .home-item img,.light-day .home-item svg{
-    filter:drop-shadow(0 2px 3px rgba(25,13,6,.34)) saturate(.82) sepia(.04) brightness(1.26) contrast(.92)}
+    filter:drop-shadow(0 2px 3px rgba(25,13,6,.34)) saturate(.82) sepia(.04) brightness(1.32) contrast(.92)}
   .light-evening .home-item img,.light-evening .home-item svg{
     filter:drop-shadow(0 2px 3px rgba(25,13,6,.42)) saturate(1.02) sepia(.03) brightness(1.02) contrast(.99)}
   .light-night .home-item img,.light-night .home-item svg{

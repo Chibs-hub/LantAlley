@@ -20,7 +20,7 @@ Sections 1, 3, 4, 5, 6, 8, 13, 14 and 15 are reference: what the game is, how it
 
 ## 0. Current status
 
-**Code is committed through v187; these documentation corrections are currently uncommitted.** `master` is one commit ahead of `origin/master`. `node --test` passes **384/384**, all six modules pass `node --check`, and `sw.js` agrees with all 26 `index.html` stamps.
+**The working tree is based on `d059d35` and contains uncommitted v195 home-lighting work plus the pending art candidates.** `master` is one commit ahead of `origin/master`. `node --test` passes **389/389**, and `sw.js` agrees with all 26 `index.html` stamps.
 
 ### The game is finished and playable end to end
 
@@ -69,7 +69,7 @@ Both write here. If you are one of them, read the other's recent entries in [CHA
 
 Every place covers all five official item types. The four written ones - 表記, 語形成, 文の組み立て, 文章の文法 - live in each place's second episode, because a spelling cannot be heard and a sentence you assemble is one you are looking at.
 
-**Verification.** 384 automated tests pass, 0 fail. Bare `node --test` is the correct command. The service-worker cache is `lantern-alley-v187`.
+**Verification.** 389 automated tests pass, 0 fail. Bare `node --test` is the correct command. The service-worker cache is `lantern-alley-v195`.
 
 **Mastery and earnings.** The stage HUD now shows a persistent understanding gauge and wallet. Mastery is the percentage of distinct authored targets answered correctly, never attempts or speed. Correct answers pay once per question (Learn ¥10, Practice ¥15, Challenge ¥25, correction ¥10), so replay cannot farm money. Places unlock in order only when the previous place reaches 100%: Entrance, Inn, Market, Teahouse, Station, Shrine. Existing completed episodes are converted into mastered targets on load. Locked map places remain visible and explain the 100% requirement. Money now buys something: see **the house and garden** below.
 
@@ -87,7 +87,7 @@ One item to a position and one position to an item: moving something empties whe
 
 **Plants grow from finished work only** - one point when a shift is cleared past its correction round, one more if that shift introduced a word the learner did not already hold. The credit is keyed by the episode's own id, so replaying it grows nothing. A plant in storage does not grow, and the shift it sat out is not paid retroactively.
 
-**The light follows the learner's own clock** - morning, day, evening, night - and there is deliberately no picker. It changes filters and overlays only and cannot reach growth, rewards or lessons.
+**The light follows the learner's own clock** - morning, day, evening, night - and there is deliberately no picker. Yard and room now use synchronized paintings with genuinely different skies, outdoor views, ambient light, shadows and lamp states; the old sunset painting is retained only for evening. Lighting remains cosmetic and cannot reach growth, rewards or lessons.
 
 Wallpaper is bought and hung; ownership and the active choice are stored separately, so changing your mind never costs the roll already paid for.
 
@@ -362,6 +362,8 @@ Nothing in this group is a code task. Listed so a coding session does not start 
 | 7 | A **cat sitting pose**, and an entry animation if transitions are wanted back | item 4 |
 | 8 | **Scene art for four of the five places** | item 6 |
 | 9 | The **Inn room redrawn with its hotspots further apart** | item 7 |
+
+**2026-08-31 candidate art exists but is not wired.** The approved first batch is in `assets/home/art-candidates/2026-08-31/`: seamless asanoha and sakura wallpaper candidates, a room with a real tokonoma and shelf, its matching wall mask, six transparent furniture candidates, a production-grid sitting-cat candidate, and a wider Inn room. `review-board-v1.jpg` and the two placement/mask previews are for visual approval. The generated cat entry sheet is explicitly rejected because frames touch their cell boundaries. A production-ready sunflower cycle now exists in `assets/home/garden/` as planted, sprout, growing and mature 512px WebP cutouts plus `sunflower-growth-sheet-v1.png`; all four share a 95.5-95.7% ground baseline, and `sunflower-yard-placement-preview-v1.jpg` shows its intended front-yard scale, but the species is not yet wired into the catalogue or shop. Do not move any other candidate into production until its in-scene scale and blend are approved.
 
 3. **Three faults in the room painting and its wallpaper.**
 
