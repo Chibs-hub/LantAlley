@@ -10,6 +10,20 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 Added a transparent, semi-realistic sunflower growth set matching the existing garden cutouts: planted soil marker, sprout, closed-bud growing plant and mature bloom. The four 512px WebP files share one source sheet, lighting, soil treatment and a measured 95.5-95.7% ground baseline so growth does not jump vertically. The art is not yet connected to the catalogue or shop.
 
+### 2026-08-31 - The sunflower, wired in
+
+Four sunflower pictures had arrived in `assets/home/garden/` and were **referenced by nothing** - no catalogue entry, no `PLANT_ART`, no name, not pre-cached. They had also been swept into the previous commit by a `git add -A`, so the repository was carrying art the game could not reach.
+
+It is the easy kind of species to add: painted in four stages, which is exactly what the growth engine uses, so it needs none of the `growing` to `sapling` bridging that sakura and maple need. Added to the catalogue at 130 yen and `matureAt:4`, mapped in `PLANT_ART`, named ひまわり, baselines measured off the files at 94.5, 94.7, 94.7 and 95.3, and pre-cached.
+
+`sceneWidth` is 14 where the other flowers use 12. The element is square and the plant fills only 38% of its width but 92% of its height, so 14 renders a sunflower about a third taller than a camellia bush while keeping it narrower - which is what a sunflower is.
+
+**`sunflower-growth-sheet-v1.png` was a review contact sheet**, 1.2MB, sitting in the production garden folder and committed. Moved into the ignored candidates folder. Production art is what the game loads; a four-up review image is not.
+
+The species needed no other change to be sellable, which is the point of the painted-only rule added earlier the same day: `?unlockall=1` and the shop both pick it up on their own because it has pictures, and neither needed telling.
+
+The new test covers both four-stage species. It checks the four files exist, are in `PLANT_ART`, are pre-cached, have a Japanese name, and that `matureAt` is 4 - because a four-stage species declaring anything else sends the engine's `growing` step to a picture that does not exist for it, and that is a broken image at one growth step rather than an error.
+
 ### 2026-08-31 - What the painted hours left ungraded
 
 The four painted backgrounds are a real improvement and they came with a gap, which is the ordinary cost of replacing a mechanism: the CSS filters they removed were doing a second job nobody had written down.

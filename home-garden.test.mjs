@@ -41,9 +41,9 @@ test("catalogue excludes the unfinished pine placeholder and returns safe clones
   const first = garden.catalogue();
   assert.deepEqual(Array.from(first, item => item.id), [
     "cherry-tree", "japanese-maple", "hydrangea",
-    "camellia", "iris", "chrysanthemum", "lantern-flower-bed"
+    "camellia", "iris", "chrysanthemum", "lantern-flower-bed", "sunflower"
   ]);
-  assert.equal(first.length, 7);
+  assert.equal(first.length, 8);
   assert.ok(first.every(item => item.price > 0));
   first[0].price = 0;
   assert.notEqual(garden.catalogue()[0].price, 0);

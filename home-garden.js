@@ -8,7 +8,16 @@
     {id:"camellia", name:"Camellia", kind:"flower", price:120, matureAt:4, sceneWidth:12},
     {id:"iris", name:"Iris", kind:"flower", price:90, matureAt:2, sceneWidth:12},
     {id:"chrysanthemum", name:"Chrysanthemum", kind:"flower", price:110, matureAt:3, sceneWidth:12},
-    {id:"lantern-flower-bed", name:"Lantern-flower bed", kind:"shrub", price:200, matureAt:5, sceneWidth:16}
+    {id:"lantern-flower-bed", name:"Lantern-flower bed", kind:"shrub", price:200, matureAt:5, sceneWidth:16},
+    /* Painted in four stages, so `matureAt` is 4 and the engine's stages map
+     * straight onto the pictures with no bridging - the same arrangement as
+     * camellia, and the reason neither needs a `plantVisualStage` detour.
+     *
+     * `sceneWidth` is 14 rather than the 12 the other flowers use. The element
+     * is square and the plant fills only 38% of its width but 92% of its
+     * height, so 14 renders a sunflower about a third taller than a camellia
+     * bush while staying narrower than one - which is what a sunflower is. */
+    {id:"sunflower", name:"Sunflower", kind:"flower", price:130, matureAt:4, sceneWidth:14}
   ];
 
   function catalogue(){

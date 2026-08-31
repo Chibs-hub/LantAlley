@@ -2806,6 +2806,12 @@
       sprout:  "assets/home/garden/camellia-sprout-v1.webp",
       growing: "assets/home/garden/camellia-growing-v1.webp",
       mature:  "assets/home/garden/camellia-mature-v1.webp"
+    },
+    sunflower: {
+      planted: "assets/home/garden/sunflower-planted-v1.webp",
+      sprout:  "assets/home/garden/sunflower-sprout-v1.webp",
+      growing: "assets/home/garden/sunflower-growing-v1.webp",
+      mature:  "assets/home/garden/sunflower-mature-v1.webp"
     }
   };
 
@@ -2941,7 +2947,8 @@
   var PLANT_BASE = {
     camellia: {planted:77.5, sprout:82.9, growing:94.1, mature:94.2},
     "cherry-tree": {planted:95.5, sprout:95.9, sapling:93.4, young:96.1, mature:94.9},
-    "japanese-maple": {planted:95.7, sprout:95.5, sapling:95.7, young:95.7, mature:95.7}
+    "japanese-maple": {planted:95.7, sprout:95.5, sapling:95.7, young:95.7, mature:95.7},
+    sunflower: {planted:94.5, sprout:94.7, growing:94.7, mature:95.3}
   };
   var PLANT_BASE_FALLBACK = {planted:90, sprout:90, growing:92, mature:94};
 
@@ -3017,7 +3024,8 @@
   var PLANT_JP = {
     "cherry-tree":"桜", "japanese-maple":"もみじ",
     "hydrangea":"あじさい", "camellia":"椿", "iris":"あやめ",
-    "chrysanthemum":"菊", "lantern-flower-bed":"ほおずきの花壇"
+    "chrysanthemum":"菊", "lantern-flower-bed":"ほおずきの花壇",
+    "sunflower":"ひまわり"
   };
 
   var STAGE_JP = {planted:"植えたばかり", sprout:"芽", growing:"育ち中", mature:"満開"};

@@ -722,3 +722,37 @@ test("scene objects are graded for the hour, and the cat for the scene too", () 
   assert.ok(yardDay > roomDay,
     `the yard is the brighter painting at midday, so the cat there cannot be dimmer (yard ${yardDay}, room ${roomDay})`);
 });
+
+/* The four-stage species ship all four pictures, and the shop can reach them.
+ *
+ * Camellia and sunflower are painted in four steps, which is what the growth
+ * engine itself uses - so unlike sakura and maple they need no `growing` to
+ * `sapling` bridging. That makes them the easy case, and the easy case is
+ * exactly where a missing file goes unnoticed: the species still buys, still
+ * plants and still grows, and only the last stage renders as a broken image.
+ */
+test("camellia and sunflower ship all four painted stages, wired end to end", () => {
+  const app = read("app.js");
+  const worker = read("sw.js");
+  const garden = read("home-garden.js");
+
+  for (const species of ["camellia", "sunflower"]) {
+    const file = species === "camellia" ? "camellia" : "sunflower";
+    for (const stage of ["planted", "sprout", "growing", "mature"]) {
+      const path = `assets/home/garden/${file}-${stage}-v1.webp`;
+      assert.equal(existsSync(new URL("./" + path, import.meta.url)), true, `missing ${path}`);
+      assert.ok(app.includes(path), `${path} is not in PLANT_ART`);
+      assert.ok(worker.includes(path), `${path} is not pre-cached, so it breaks offline`);
+    }
+    assert.ok(garden.includes(`id:"${species}"`), `${species} is not in the garden catalogue`);
+    assert.match(app, new RegExp('"' + species + '"\s*:\s*"[^"]+"'),
+      `${species} has no Japanese name, so the shop would label it in English`);
+  }
+
+  // A four-stage species must declare matureAt 4, or the engine's `growing`
+  // step lands on a picture that does not exist for it.
+  for (const species of ["camellia", "sunflower"]) {
+    const row = garden.split(/\r?\n/).find((l) => l.includes(`id:"${species}"`));
+    assert.match(row, /matureAt:4\b/, `${species} is painted in four stages but does not mature at 4`);
+  }
+});

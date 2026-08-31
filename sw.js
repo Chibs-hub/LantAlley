@@ -7,7 +7,7 @@
  * Bump CACHE_VERSION whenever any shell file changes, or returning players
  * will keep the old build.
  */
-var CACHE_VERSION = "lantern-alley-v196";
+var CACHE_VERSION = "lantern-alley-v197";
 
 // audio-index.js assigns to `self`, so the worker and the page share one list
 // of clip paths. Importing it here means new lines are cached automatically
@@ -69,6 +69,10 @@ var SHELL = [
   "./assets/home/garden/camellia-sprout-v1.webp",
   "./assets/home/garden/camellia-growing-v1.webp",
   "./assets/home/garden/camellia-mature-v1.webp",
+  "./assets/home/garden/sunflower-planted-v1.webp",
+  "./assets/home/garden/sunflower-sprout-v1.webp",
+  "./assets/home/garden/sunflower-growing-v1.webp",
+  "./assets/home/garden/sunflower-mature-v1.webp",
   "./assets/home/garden/sakura-planted-v1.webp",
   "./assets/home/garden/sakura-sprout-v1.webp",
   "./assets/home/garden/sakura-sapling-v1.webp",
