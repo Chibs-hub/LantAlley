@@ -10,6 +10,31 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 Added a transparent, semi-realistic sunflower growth set matching the existing garden cutouts: planted soil marker, sprout, closed-bud growing plant and mature bloom. The four 512px WebP files share one source sheet, lighting, soil treatment and a measured 95.5-95.7% ground baseline so growth does not jump vertically. The art is not yet connected to the catalogue or shop.
 
+### 2026-08-31 - Furniture measured against the room's own tatami
+
+The estimate this replaces was wrong, and the way it was wrong is the useful part. It came from scanning the painting for the width of the visible floor, which returned noisy figures, and from those I concluded the furniture ran about 1.4x too large. **It was mostly too small, and unevenly.**
+
+The tatami is a proper ruler and it was there all along. Seams repeat every 15.5% of the scene's width at y=78, 18.2% at y=82 and 21.0% at y=86 - a clean perspective series, unlike the fence and stepping stones that defeated the same approach in the yard. The room is about four units across, so it is 3.5m wide if the unit is a tatami's 88cm short side and 7m if it is the 176cm long side; a one-storey house of this footprint has 3.5m rooms. Extrapolating to the front row at y=88 gives 22.4% of the scene per 88cm, near a quarter of a percent per centimetre.
+
+Against that, sized to what each picture actually shows rather than to what its name suggests:
+
+| item | was | now | the picture shows |
+| --- | --- | --- | --- |
+| 屏風 folding screen | 25 | **43** | a four-panel byobu, 170cm |
+| こたつ kotatsu | 22 | **29** | a kotatsu under its futon, 114cm |
+| 座卓 low table | 20 | 23 | a round zataku, 91cm |
+| 座布団 cushion | 12 | 14 | a zabuton, 55cm |
+| 鉢植え potted plant | 8 | 10 | a pine bonsai and pot, 39cm |
+| 置き行灯 andon | 6.5 | 8 | a floor lantern, 31cm |
+| 菊の鉢 | 8 | 9.5 | a chrysanthemum pot, 37cm |
+| 敷物 rush mat | 20 | 20 | **already right** - a round rush mat of 79cm, not a room-sized rug |
+
+`敷物` is the reason to check the picture and not the label. Read as "rug" it looked less than half the size it should be; it draws a 円座 about 80cm across, and its 20 was correct.
+
+**Two constraints found by breaking them.** The six unpainted items keep deliberately inflated widths - their vector drawings fill as little as a fifth of their view box, so sizing the element to the object's real size leaves a speck, and a test already guarded that. I shrank three of them before it caught me; they are back, with a comment saying to re-measure when their pictures arrive. And the width bound in the tests was 25, which a genuine 170cm byobu exceeds; it is 45 now, with the reason beside it.
+
+The wall items are untouched on purpose. They hang on the back plane at y=45 and the tatami series calibrates only the floor it measures; carrying it up the wall would be extrapolating past the evidence.
+
 ### 2026-08-31 - A mature tree at the back of the yard was a third the size of the house
 
 Checked both halves of the owner's report. One was already fixed, the other was real.

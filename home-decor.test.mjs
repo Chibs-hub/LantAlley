@@ -100,10 +100,10 @@ test("available reward artwork is connected to matching shop items", () => {
 
 test("placed decor carries physical size and contact-point calibration", () => {
   const expected = {
-    "floor-cushion-navy": {width:12, anchorY:82, scaleY:1, offsetY:0},
+    "floor-cushion-navy": {width:14, anchorY:82, scaleY:1, offsetY:0},
     "rug-plain": {width:20, anchorY:55, scaleY:0.58, offsetY:0},
-    "low-table": {width:20, anchorY:100, scaleY:1, offsetY:0},
-    "folding-screen": {width:25, anchorY:100, scaleY:1, offsetY:0},
+    "low-table": {width:23, anchorY:100, scaleY:1, offsetY:0},
+    "folding-screen": {width:43, anchorY:100, scaleY:1, offsetY:0},
     "scroll": {width:7, anchorY:50, scaleY:1, offsetY:0},
     "brazier": {width:14, anchorY:100, scaleY:1, offsetY:0},
     "fan": {width:9, anchorY:50, scaleY:1, offsetY:0},
@@ -121,7 +121,9 @@ test("placed decor carries physical size and contact-point calibration", () => {
   }
   for(const item of decor.catalogue()){
     const presentation = decor.presentationFor(item.id);
-    assert.ok(presentation.width >= 3 && presentation.width <= 25, `${item.id} width`);
+    // The upper bound is 45, not 25: a 170cm byobu measured against the room's
+    // own tatami comes out at 43% of the scene, and it is genuinely that wide.
+    assert.ok(presentation.width >= 3 && presentation.width <= 45, `${item.id} width`);
     assert.ok(presentation.anchorY >= 0 && presentation.anchorY <= 100, `${item.id} anchor`);
     assert.ok(presentation.scaleY > 0 && presentation.scaleY <= 1, `${item.id} vertical scale`);
     assert.ok(presentation.offsetY >= -45 && presentation.offsetY <= 10, `${item.id} vertical offset`);

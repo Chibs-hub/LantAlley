@@ -179,26 +179,54 @@
    * slot's perspective scale. anchorY is the point in the image that meets the
    * slot: 100 is the feet/base, 50 is the centre of wall art, and 0 is the top
    * hook of a hanging wind chime. */
+  /* Sizes measured against the room's own tatami, not chosen by eye.
+   *
+   * The seams in the painting repeat every 15.5% of the scene's width at
+   * y=78, 18.2% at y=82 and 21.0% at y=86 - a clean perspective series. The
+   * room is about four of those units across, which makes it 3.5m wide if the
+   * unit is a tatami's 88cm short side and 7m if it is the 176cm long side.
+   * A one-storey house of this footprint has 3.5m rooms, so the unit is the
+   * short side, and extrapolating the series to the front row at y=88 gives
+   * 22.4% of the scene per 88cm - about a quarter of a percent per centimetre.
+   *
+   * Every floor and shelf width below is that figure times what its picture
+   * actually shows, which is not always what its name suggests: `rug-plain`
+   * draws a round rush mat of about 80cm rather than a room-sized rug, so its
+   * 20 was already right and did not move. The screen and the kotatsu were
+   * the furthest out - a 170cm byobu was being drawn at the size of a 100cm
+   * one - and the teapot was twice the size of a real kyusu.
+   *
+   *
+   * Only the painted items are sized this way. The six that still render as
+   * vector stand-ins - the brazier, fan, mask, teapot, books and sill plant -
+   * keep deliberately inflated widths, because their drawings fill as little
+   * as a fifth of their view box and shrinking the element to the object's
+   * real size would leave a speck. They are not on sale either. When their
+   * pictures arrive, measure them the same way as the rest.
+   * The wall items are deliberately untouched. They hang on the back plane at
+   * y=45, and the tatami series only calibrates the floor it measures; using
+   * it up there would be extrapolating past the evidence.
+   */
   var PRESENTATION = {
-    "floor-cushion-navy": {width:12, anchorY:82},
+    "floor-cushion-navy": {width:14, anchorY:82},
     "rug-plain":          {width:20, anchorY:55, scaleY:0.58},
-    "plant-small":        {width:8, anchorY:100},
-    "low-table":          {width:20, anchorY:100},
+    "plant-small":        {width:10, anchorY:100},
+    "low-table":          {width:23, anchorY:100},
     brazier:               {width:14, anchorY:100},
-    kotatsu:               {width:22, anchorY:100},
-    "folding-screen":     {width:25, anchorY:100},
-    "floor-lantern":      {width:6.5, anchorY:100},
-    "chrysanthemum-pot":   {width:8, anchorY:100},
+    kotatsu:               {width:29, anchorY:100},
+    "folding-screen":     {width:43, anchorY:100},
+    "floor-lantern":      {width:8, anchorY:100},
+    "chrysanthemum-pot":   {width:9.5, anchorY:100},
     scroll:                {width:7, anchorY:50},
     "wall-lamp":          {width:5.5, anchorY:50},
     fan:                   {width:9, anchorY:50},
     mask:                  {width:9, anchorY:50},
     teapot:                {width:8, anchorY:100},
     books:                 {width:9, anchorY:100},
-    "cat-figure":         {width:4.5, anchorY:100},
-    daruma:                {width:4.5, anchorY:100},
-    "sakura-bonsai":      {width:7, anchorY:100},
-    "pine-bonsai":        {width:7, anchorY:100},
+    "cat-figure":         {width:5, anchorY:100},
+    daruma:                {width:4, anchorY:100},
+    "sakura-bonsai":      {width:7.5, anchorY:100},
+    "pine-bonsai":        {width:7.5, anchorY:100},
     "sill-plant":         {width:14, anchorY:100},
     "wind-chime":         {width:4, anchorY:0, offsetY:-40}
   };
