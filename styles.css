@@ -1711,6 +1711,28 @@
     filter:drop-shadow(0 2px 3px rgba(25,13,6,.42)) saturate(1.02) sepia(.03) brightness(1.02) contrast(.99)}
   .light-night .home-item img,.light-night .home-item svg{
     filter:drop-shadow(0 2px 4px rgba(8,10,18,.62)) saturate(.72) sepia(.04) brightness(.56) hue-rotate(8deg)}
+  /* A plant is seated on the ground the same way furniture is.
+   *
+   * Furniture had a contact shadow from the start and plants never did, so a
+   * tree stood on the gravel with nothing under it and the soil disc baked
+   * into its picture read as a sticker laid on top rather than as roots in the
+   * ground.
+   *
+   * It is narrow, because what touches the ground is the trunk and its root
+   * flare, not the canopy - a shadow as wide as the blossom would look like a
+   * puddle. And it sits at the plant's own ground line rather than at the foot
+   * of the box: `--plant-base` is the same figure the renderer uses to stand
+   * the plant on its slot, which differs by species and by growth stage. */
+  .home-plant::before{
+    content:"";position:absolute;z-index:0;left:32%;right:32%;height:6%;
+    bottom:calc(100% - (var(--plant-base,95) * 1%));
+    transform:translateY(50%);
+    border-radius:50%;
+    background:radial-gradient(ellipse,rgba(22,14,8,.42),rgba(22,14,8,0) 70%);
+    filter:blur(3px);pointer-events:none;
+  }
+  .home-plant img, .home-plant svg{position:relative;z-index:1}
+
   .home-item[data-item-kind="floor"]::before{
     content:"";position:absolute;z-index:0;left:20%;right:20%;bottom:-1%;height:10%;
     border-radius:50%;background:radial-gradient(ellipse,rgba(24,13,7,.48),rgba(24,13,7,0) 72%);

@@ -14,6 +14,19 @@ Added two transparent room assets matched to the existing room and small-object 
 
 Added a transparent, semi-realistic sunflower growth set matching the existing garden cutouts: planted soil marker, sprout, closed-bud growing plant and mature bloom. The four 512px WebP files share one source sheet, lighting, soil treatment and a measured 95.5-95.7% ground baseline so growth does not jump vertically. The species is connected to the garden catalogue and painted-art map.
 
+### 2026-08-31 - Plants are seated on the ground, and the path can be kept open
+
+**A plant had nothing under it.** Furniture has had a contact shadow since the day it was placed - a narrow blurred ellipse at its foot - and plants never did. So a tree stood on the gravel with no shadow at all, and the soil disc baked into its picture read as a sticker laid on top rather than as roots in the ground.
+
+Plants now get the same treatment, with two differences that matter:
+
+- **It is narrow.** What touches the ground is the trunk and its root flare, not the canopy; a shadow as wide as the blossom would look like a puddle. It spans the middle third.
+- **It sits at the plant's own ground line**, not at the foot of its box. The renderer already computes that figure to stand the plant on its slot - it differs by species and by growth stage, 94.9 for a mature cherry and 77.5 for a planted camellia - and it is now passed to the stylesheet as `--plant-base` so the shadow lands under the trunk rather than floating below the picture.
+
+**This does not remove the soil disc**, which is painted into the art. The shadow seats it, and the disc is still a disc. Repainting the cutouts with a softer ground edge is art work, and belongs with the other items in the queue.
+
+**On keeping the path open.** Nothing in the code blocks the doorway - the hotspot outranks every plant at z-index 205 - but a yard planted at every slot hides the house completely, which is a different complaint from being locked out. The arrangement that reads best is an avenue: four pairs flanking the path with nothing within 14% of the centre line, stepping from y=63 at the back to y=94 at the front. The depth scaling then does the work, 29.6% wide at the far pair and 45.4% at the near one, and the lit doorway stays visible at the end of the tunnel. This is a placement, not a rule - a learner is free to plant the middle - but it is the composition worth showing in any screenshot of the feature.
+
 ### 2026-08-31 - No two trees are the same tree
 
 Size already followed depth, through the slot's scale, so a tree at the back of the yard was smaller than one at the front. What was missing was the difference between two trees standing at the *same* depth: ten sakura were ten identical stamps of one picture, same width, same angle, same silhouette, which reads as wallpaper rather than as an orchard.

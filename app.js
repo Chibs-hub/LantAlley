@@ -3309,7 +3309,8 @@
         + 'transform-origin:50% ' + base + '%;'
         + 'z-index:' + homeDepthZ(slot.y) + ';transform:translate(-50%,-' + base + '%)'
         + ' rotate(' + vary.tilt + 'deg) scaleX(' + vary.mirror + ');'
-        + '--plant-lift-max:' + (PLANT_LIFT_CEILING[plant.typeId] || 1.6) + '"'
+        + '--plant-lift-max:' + (PLANT_LIFT_CEILING[plant.typeId] || 1.6) + ';'
+        + '--plant-base:' + base + '"'
         + ' data-plant="' + plant.id + '" role="button" tabindex="0"'
         + ' aria-label="' + plantName(plant.typeId) + ' をあつかう">'
         + plantFigure(plant.typeId, visualStage,
