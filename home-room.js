@@ -29,17 +29,53 @@
    * plane facing the viewer, so a scroll hung high is not further away and
    * shrinking it would look wrong rather than deep. Shelf and sill sit on that
    * same back plane and are treated with it. */
+  /* Every position sampled off the painting, not estimated from it.
+   *
+   * The tatami begins at y=70: scanning down the middle of the picture, the
+   * paper screens end and the mat starts at 70.1, 71.3 and 69.8 percent at
+   * x=42, 50 and 58. The two back floor positions were at y=63, seven points
+   * above that line, so anything placed there stood on the shoji rather than
+   * on the floor - which is exactly what a table floating in mid-air looks
+   * like. They are on the mat now, far enough behind the front row to keep
+   * the depth reading.
+   *
+   * The two wall positions were hanging in the doorways. Scanning across the
+   * painting at y=45 gives solid plaster from 0 to 9.6 percent and from 90.5
+   * to 100; between those, 9.6 to 23.4 is the open veranda and 76.5 to 88.9 is
+   * the doorway to the right. They were at 12 and 88 - one in each opening, so
+   * a hung scroll floated in front of the garden. They are on the outer panels
+   * now, which are the only stretches wide enough to take one.
+   *
+   * The five floor positions are spread sideways rather than stacked, because
+   * they cannot be stacked. A phone scene is about 320x180, a comfortable
+   * target is 44px, and the visible tatami runs only from y=70 to the bottom -
+   * thirty percent of the height, or 54px. Two rows inside that can never be
+   * 44px apart vertically, so every same-kind pair earns its separation on the
+   * horizontal instead: fourteen percent of the width is 44.8px, and no two
+   * floor positions are closer than that.
+   *
+   * `shelf` and `tokonoma` are a different problem, half-solved. This room has
+   * no shelf and no alcove - the names describe furniture the painting does
+   * not contain - so they were hanging on a flat wall. Small objects now rest
+   * on the tatami near the back wall instead, which is somewhere a teapot or a
+   * bonsai could actually sit. They keep their `shelf` kind so the same items
+   * still go to them. A room painted with a real tokonoma would want them
+   * moved back up.
+   *
+   * `window-sill` likewise: it sat on a wall panel. It is now on the veranda
+   * boards visible through the left opening, which is where a potted plant or
+   * a wind chime belongs in this house. */
   var SLOTS = [
-    {id:"floor-left",   x:27, y:80, scale:0.89, kind:"floor", label:"床の左"},
-    {id:"floor-right",  x:73, y:80, scale:0.89, kind:"floor", label:"床の右"},
-    {id:"floor-back-left", x:42, y:63, scale:0.72, kind:"floor", label:"床の奥左"},
-    {id:"floor-back-right", x:58, y:63, scale:0.72, kind:"floor", label:"床の奥右"},
+    {id:"floor-left",   x:22, y:80, scale:0.89, kind:"floor", label:"床の左"},
+    {id:"floor-right",  x:78, y:80, scale:0.89, kind:"floor", label:"床の右"},
+    {id:"floor-back-left", x:36, y:73, scale:0.72, kind:"floor", label:"床の奥左"},
+    {id:"floor-back-right", x:64, y:73, scale:0.72, kind:"floor", label:"床の奥右"},
     {id:"floor-front", x:50, y:88, scale:1.00, kind:"floor", label:"床の手前"},
-    {id:"wall-left",    x:12, y:45, scale:0.92, kind:"wall",  label:"壁の左"},
-    {id:"wall-right",   x:88, y:45, scale:0.92, kind:"wall",  label:"壁の右"},
-    {id:"shelf",        x:50, y:66, scale:0.78, kind:"shelf", label:"奥の段"},
-    {id:"window-sill",  x:18, y:63, scale:0.80, kind:"sill",  label:"窓辺"},
-    {id:"tokonoma", x:70, y:61, scale:0.85, kind:"shelf", label:"床の間"}
+    {id:"wall-left",    x:5,  y:45, scale:0.92, kind:"wall",  label:"壁の左"},
+    {id:"wall-right",   x:95, y:45, scale:0.92, kind:"wall",  label:"壁の右"},
+    {id:"shelf",        x:50, y:72, scale:0.78, kind:"shelf", label:"奥の段"},
+    {id:"window-sill",  x:12, y:78, scale:0.80, kind:"sill",  label:"窓辺"},
+    {id:"tokonoma", x:70, y:74, scale:0.85, kind:"shelf", label:"床の間"}
   ];
 
   /* The eight beds, measured off the painting rather than estimated from it.

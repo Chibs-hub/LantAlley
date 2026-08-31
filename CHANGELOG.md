@@ -26,6 +26,32 @@ The file had reached 2761 lines, of which this log was 2238 - 81%. It sat betwee
 
 Every fact was checked across the move rather than assumed - the tap-target measurements, the 53.9 MB of unreferenced assets, the duplicate `chrysanthemum` id, the sprite spec, the `plantVisualStage` warning, the ruled-out clipping measurements. A table of contents at the top now names which sections are worth reading on arrival and which are reference.
 
+### 2026-08-31 - Half the room's placement positions were not on anything
+
+The floating table was not a rendering fault. The position it stood on was simply not on the floor.
+
+**Measured off the painting.** Scanning down the middle of the picture, the paper screens end and the tatami begins at 70.1, 71.3 and 69.8 percent at x=42, 50 and 58 - call it y=70. Scanning across at y=45 gives solid plaster from 0 to 9.6 percent and from 90.5 to 100; between those, 9.6 to 23.4 is the open veranda and 76.5 to 88.9 is the doorway.
+
+Against those two lines, five of the ten positions were wrong:
+
+| position | was | sat on | now |
+| --- | --- | --- | --- |
+| `floor-back-left` | y=63 | the shoji screen | y=73 |
+| `floor-back-right` | y=63 | the shoji screen | y=73 |
+| `shelf` | y=66 | the shoji screen | y=72 |
+| `tokonoma` | y=61 | a flat wall | y=74 |
+| `window-sill` | (18,63) | a wall panel | (12,78), the veranda boards |
+| `wall-left` | x=12 | the open veranda | x=5 |
+| `wall-right` | x=88 | the right doorway | x=95 |
+
+Seven, in fact. The two back floor positions are what the owner saw: seven points above the floor line, so a table placed there hung in the air in front of the screens.
+
+**`shelf` and `tokonoma` are only half-solved, and the fix is honest rather than complete.** This room has no shelf and no alcove - the names describe furniture the painting does not contain, which is why they were floating on a wall in the first place. Small objects now rest on the tatami near the back wall, which is somewhere a teapot or a bonsai could actually sit. They keep their `shelf` kind so the same six items still go to them. A room painted with a real tokonoma would want them moved back up.
+
+**Moving the floor positions onto the floor broke the touch-target rule, and the fix is worth recording.** The other session's test requires same-kind targets to be 44px apart on a 320x180 phone scene. The visible tatami runs from y=70 to the bottom - thirty percent of the height, or 54px - so two rows of floor targets can *never* be 44px apart vertically inside it. The separation has to be earned horizontally instead: fourteen percent of 320 is 44.8px, and no two floor positions are now closer than that. The back row moved to x=36 and x=64 and the front row out to x=22 and x=78, which is also why the room reads wider than before.
+
+Verified by drawing every position onto the painting and looking at it, then again in the running build with all ten filled: every floor and shelf item lands at or below y=72, the two wall items on plaster, the wind chime hanging from the veranda.
+
 ### 2026-08-31 - Objects were lit differently from the room, and the wallpaper was three times life size
 
 Two separate reasons the reward stage read as cut-outs pasted onto a painting. Both measured, neither a matter of taste.
