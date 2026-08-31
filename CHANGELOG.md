@@ -6,9 +6,13 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-08-31 - Display furniture art for shelf-top objects
+
+Added two transparent room assets matched to the existing room and small-object inventory: a low kiri-wood cabinet with a broad empty top, and a staggered open kazari shelf with three usable levels. Room previews test them with the existing daruma, maneki-neko and bonsai assets. The furniture is not yet in the catalogue, and placing child objects on its surfaces still needs explicit anchor and layering logic.
+
 ### 2026-08-31 - Sunflower four-stage garden art
 
-Added a transparent, semi-realistic sunflower growth set matching the existing garden cutouts: planted soil marker, sprout, closed-bud growing plant and mature bloom. The four 512px WebP files share one source sheet, lighting, soil treatment and a measured 95.5-95.7% ground baseline so growth does not jump vertically. The art is not yet connected to the catalogue or shop.
+Added a transparent, semi-realistic sunflower growth set matching the existing garden cutouts: planted soil marker, sprout, closed-bud growing plant and mature bloom. The four 512px WebP files share one source sheet, lighting, soil treatment and a measured 95.5-95.7% ground baseline so growth does not jump vertically. The species is connected to the garden catalogue and painted-art map.
 
 ### 2026-08-31 - Ten full-grown trees, and a trap in the preview pane
 
