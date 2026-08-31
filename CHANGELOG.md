@@ -14,6 +14,21 @@ Added two transparent room assets matched to the existing room and small-object 
 
 Added a transparent, semi-realistic sunflower growth set matching the existing garden cutouts: planted soil marker, sprout, closed-bud growing plant and mature bloom. The four 512px WebP files share one source sheet, lighting, soil treatment and a measured 95.5-95.7% ground baseline so growth does not jump vertically. The species is connected to the garden catalogue and painted-art map.
 
+### 2026-08-31 - 夜桜: blossom at night is a lit subject, not a dim one
+
+The falloff added an hour earlier was physically defensible and ugly, and the owner was right to say so. It made distance mean darkness and ran the range 0.48 to 0.92, so **the front trees - the largest and most prominent things in the frame - came out the darkest in the yard.** That is backwards for the subject.
+
+What 夜桜 actually looks like: blossom glowing pale against a blue-black sky, lit from beneath by lanterns while the trunks stay dark. It is a high-contrast, *bright* subject. The photograph everyone knows is not a dim garden; it is a luminous canopy over a dark ground.
+
+So depth is carried by colour temperature instead of by brightness:
+
+- **`hue-rotate` does the real work.** Far from the lamp it swings +14 degrees toward the blue of the sky; near it, -5 toward amber. Distance reads better as a change of light than as a loss of it, and it is what the eye sees at a night hanami.
+- **`contrast` above 1 imitates the uplighting.** Blossom is the brightest thing in the picture and bark among the darkest, so pushing them apart separates canopy from trunk without needing to mask anything - 1.18 at the fence easing to 1.12 by the door, where the real lamp is already doing it.
+- **`brightness` moves only a little, 0.80 to 0.96.** Enough to read as depth, never enough to put a tree out.
+- **A warm drop-shadow used as a glow**, not a shadow: ten to twenty-four pixels of lantern-pink haze around the canopy, rising with the lamp. That halo is why photographs of yozakura look lit from within.
+
+The lamp model itself was fine and is unchanged; only what the stylesheet does with it. The lesson is worth keeping: **a physically correct falloff is not automatically the right picture.** Light on a subject like this is about what it does to colour, not only to level.
+
 ### 2026-08-31 - After dark, the house is the only light in the yard
 
 Every plant took the same night brightness regardless of where it stood, which flattens the one thing that makes a lit house at night worth looking at. By day the sun lights everything equally and distance means nothing; after dark the only source out there is the lantern over the door.

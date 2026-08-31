@@ -1706,17 +1706,37 @@
     filter:drop-shadow(0 2px 3px rgba(25,13,6,.44)) saturate(1.02)
       brightness(calc(0.94 + 0.14 * var(--plant-lamp, 0.3)))
       sepia(calc(0.05 * var(--plant-lamp, 0.3)))}
-  /* At night the falloff is the whole picture: a tree by the veranda is warm
-     and lit, one at the fence is nearly a silhouette. The range runs 0.48 to
-     0.92, and the warmth rises with it because a paper lantern is not
-     moonlight - the hue turns back toward amber as the lamp takes over from
-     the blue of the sky. */
+  /* 夜桜 - cherry blossom seen at night, which is a lit subject and not a dim
+     one. The first attempt at this made distance mean darkness and ran the
+     range 0.48 to 0.92, so the front trees - the largest and most prominent in
+     the frame - came out the darkest in the yard. That is backwards. What the
+     thing actually looks like is blossom glowing pale against a blue-black
+     sky, lit from underneath by lanterns while the trunks stay dark.
+
+     So depth is carried by colour temperature rather than by brightness:
+
+     `contrast` above 1 is what separates blossom from bark. Cherry blossom is
+     the brightest thing in the picture and the trunk among the darkest, so
+     pushing them apart imitates uplighting without needing to mask anything.
+
+     `brightness` stays high and moves only a little, 0.80 to 0.96. Enough to
+     read as depth, not enough to put a tree out.
+
+     `hue-rotate` does the real work. Far from the lamp it swings blue, toward
+     the sky; near it, back to amber. That reads as distance far better than
+     dimming does, and it is what the eye actually sees at a night hanami.
+
+     The warm drop-shadow is a glow rather than a shadow - a few pixels of
+     lantern-pink haze around the canopy, which is the halo blossom has under
+     lights and the reason photographs of it look lit from within. */
   .light-night .home-plant img,.light-night .home-plant svg{
-    filter:drop-shadow(0 2px 4px rgba(8,10,18,.60))
-      saturate(calc(0.70 + 0.22 * var(--plant-lamp, 0.3)))
-      brightness(calc(0.48 + 0.44 * var(--plant-lamp, 0.3)))
-      sepia(calc(0.16 * var(--plant-lamp, 0.3)))
-      hue-rotate(calc(8deg - 9deg * var(--plant-lamp, 0.3)))}
+    filter:drop-shadow(0 2px 4px rgba(8,10,18,.55))
+      drop-shadow(0 0 calc(10px + 14px * var(--plant-lamp, 0.3)) rgba(255,188,206,calc(0.16 + 0.26 * var(--plant-lamp, 0.3))))
+      brightness(calc(0.80 + 0.16 * var(--plant-lamp, 0.3)))
+      contrast(calc(1.18 - 0.06 * var(--plant-lamp, 0.3)))
+      saturate(calc(0.82 + 0.20 * var(--plant-lamp, 0.3)))
+      sepia(calc(0.20 * var(--plant-lamp, 0.3)))
+      hue-rotate(calc(14deg - 20deg * var(--plant-lamp, 0.3)))}
 
   .light-morning .home-item img,.light-morning .home-item svg{
     filter:drop-shadow(0 2px 3px rgba(25,13,6,.38)) saturate(.88) sepia(.06) brightness(1.10) contrast(.96) hue-rotate(-7deg)}
