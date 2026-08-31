@@ -42,7 +42,7 @@ The full list, with what each one is blocked on, is section 11.
 
 ### One open defect
 
-The owner has reported the cat's head being cut off. **It has not been reproduced.** Sprite-edge and scene-edge clipping have been measured and ruled out, but v187 added depth stacking, so nearby foreground decor may intentionally cover part of the cat. The missing evidence is the current build version, pose and nearby placement - section 11, item 7.
+The owner has reported the cat's head being cut off. **It has not been reproduced.** Sprite-edge and scene-edge clipping have been measured and ruled out, but v187 added depth stacking, so nearby foreground decor may intentionally cover part of the cat. The missing evidence is the current build version, pose and nearby placement - section 11, item 8.
 
 ### Two sessions work on this project in parallel
 
@@ -349,7 +349,29 @@ Grouped by **who can actually do it**, because most of what is left is not code 
 
 Nothing in this group is a code task. Listed so a coding session does not start one and stall.
 
-3. **The cat has no sitting pose.** `walk`, `sit`, `look` and the retired `enter` are all the same standing cat; only `loaf`, `curl-sleep` and `groom` are genuinely distinct. So a cat that "sits at the door" stands there.
+**The whole art queue, shortest first.** Each line links to the item below that carries the detail.
+
+| # | What is needed | Why |
+| --- | --- | --- |
+| 1 | A **vertically seamless** asanoha wallpaper tile | the current sheet seams on every vertical repeat - item 3a |
+| 2 | A **wall mask** for the room, or a room painted for wallpaper | the wallpaper covers ceiling and doors - item 3b |
+| 3 | The room repainted with a **real tokonoma and shelf** | those two positions name furniture the picture lacks - item 3c |
+| 4 | **6 furniture items**: 火鉢, 扇, 面, 急須, 本, 小さな鉢 | item 5 |
+| 5 | **4 species x 4-5 growth stages** (16-20 files): hydrangea, iris, chrysanthemum, lantern-flower-bed | item 5 |
+| 6 | A **raster 桜 wallpaper** | vector only, so it is off the shelf - item 5 |
+| 7 | A **cat sitting pose**, and an entry animation if transitions are wanted back | item 4 |
+| 8 | **Scene art for four of the five places** | item 6 |
+| 9 | The **Inn room redrawn with its hotspots further apart** | item 7 |
+
+3. **Three faults in the room painting and its wallpaper.**
+
+   **3a. The asanoha wallpaper does not tile vertically.** Measured on `assets/home/decor/wallpaper-asanoha-blue-v1.webp` (1024x571): the left and right edges match, at a mismatch of 21 against an interior baseline of 38, but the top and bottom edges do not - 37.8 against a baseline of 47. Since 2026-08-31 the sheet is repeated rather than stretched, so that mismatch is now **a visible seam at every vertical repeat**. It needs a tile that is seamless on both axes. Stacking the sheet with a vertical mirror of itself would also work and needs no redraw, if a seam is more objectionable than a mirror line.
+
+   **3b. The wallpaper has no wall mask.** `.home-wallpaper` is a plain rectangle over the top 70% of the scene, so it covers the ceiling, the transom and the sliding doors exactly as readily as the walls. Confining it needs either a mask cut to this painting's wall areas, or a room painted with plain walls meant to take wallpaper. No CSS fixes this.
+
+   **3c. The room has no tokonoma and no shelf.** The `shelf` and `tokonoma` positions name furniture the painting does not contain, which is why they were floating on a flat wall until 2026-08-31. Small objects now rest on the tatami near the back wall as an honest interim. A room painted with a real alcove and a shelf would let them go where they belong, and those two positions should move back up when it exists.
+
+4. **The cat has no sitting pose.** `walk`, `sit`, `look` and the retired `enter` are all the same standing cat; only `loaf`, `curl-sleep` and `groom` are genuinely distinct. So a cat that "sits at the door" stands there.
 
    **Spec for whoever draws it.** Sheets are a grid of square cells, currently 192x192, four columns per row. The rules the existing set breaks:
 
@@ -359,17 +381,17 @@ Nothing in this group is a code task. Listed so a coding session does not start 
    - **Clearance on all four sides**, 13px or more at 192px, so nothing touches a cell edge.
    - **Wanted:** a true sitting pose (upright, tail curled round the feet), and a consistent entry/exit if scene transitions are wanted back.
 
-4. **Finish the home and garden art.** Four of seven species are still drawn from data, and six of twenty-one furniture items still render as vector. The system runs without it; this is the difference between a garden and a diagram. Requirement: `docs/superpowers/plans/2026-08-28-home-garden-task-7-assets.md`.
+5. **Finish the home and garden art.** Four of seven species are still drawn from data, and six of twenty-one furniture items still render as vector. The system runs without it; this is the difference between a garden and a diagram. Requirement: `docs/superpowers/plans/2026-08-28-home-garden-task-7-assets.md`.
 
    **Stage counts differ by species, and this trips people.** Camellia is painted in four steps matching the engine - `planted, sprout, growing, mature` - while sakura and maple are painted in five, with `sapling` and `young` in place of `growing`. `plantVisualStage` in `app.js` bridges the two. **Anything that renders a plant must go through it**, or the missing `growing` key falls back to a bare seedling - which is exactly what the storage card did until 2026-08-29.
 
-5. **Give the four newer places their scene art.** They render on the shared workspace today. Nothing depends on this; it is the visible half of the work. The home is the worked example of how a place with real artwork is put together - the picture is the stage rather than a picture on it, and the interface floats over it.
+6. **Give the four newer places their scene art.** They render on the shared workspace today. Nothing depends on this; it is the visible half of the work. The home is the worked example of how a place with real artwork is put together - the picture is the stage rather than a picture on it, and the interface floats over it.
 
-6. **Re-space the Inn's room hotspots** so its tap targets can be enlarged - see section 10.
+7. **Re-space the Inn's room hotspots** so its tap targets can be enlarged - see section 10.
 
 ### C. Code work
 
-7. **The reported cat clipping, which has never been reproduced.** Do not re-check the items below; they are measured and ruled out.
+8. **The reported cat clipping, which has never been reproduced.** Do not re-check the items below; they are measured and ruled out.
 
    - Every frame in all ten production behavior sheets keeps **at least 13px clear on all four sides** of its 192px cell.
    - The cat's box sits **inside the scene at every anchor**, clearing the goal line by 6px at the lowest.
@@ -381,7 +403,7 @@ Nothing in this group is a code task. Listed so a coding session does not start 
 
    **The trap that cost a whole session:** before v168 the browser painted pre-repack sprite bytes, so the art on disk and the art on screen were different files. A report predating v168 may describe art that no longer exists. **Confirm the reporter's build version before investigating.**
 
-8. **Reconcile the Inn's two entry paths** so all five places are entered the same way - see section 10.
+9. **Reconcile the Inn's two entry paths** so all five places are entered the same way - see section 10.
 
 ### D. Settled - do not redo
 
