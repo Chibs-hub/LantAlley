@@ -1784,3 +1784,36 @@
      rather than taking the stage's; the lines inside that carry their own
      colour still win. */
   #screen-game.home-stage #dialogue-panel{color:#2d2926}
+
+/* Touch targets on the reward stage.
+ *
+ * The placement targets were raised to 44px, but the chrome around them was
+ * missed: at 375px the two menu buttons were 35px tall, the overflow items 33,
+ * the scene-back link 32, the shop's category tabs 35, and the audio button
+ * 33x29 - under on both axes. Every one of them is an ordinary button in a
+ * flow layout, so unlike the Inn's illustrated hotspots they can simply be
+ * made bigger; nothing here is positioned against a painting.
+ *
+ * Gated on a coarse pointer so the desktop layout keeps its proportions. The
+ * buttons grow by min-height rather than padding, so a control that already
+ * clears 44px is untouched. */
+@media (pointer: coarse){
+  .home-menu-button,
+  .home-yard-more button,
+  .home-scene-back,
+  .home-shop-chrome button,
+  .home-howto,
+  .home-tab{
+    min-height:44px;
+  }
+  .home-yard-more summary{
+    width:44px;
+    height:44px;
+  }
+  /* Not reward-stage-only: the dialogue's audio button is shared by every
+     stage, and it was the smallest control in the app. */
+  #speak-btn{
+    min-width:44px;
+    min-height:44px;
+  }
+}

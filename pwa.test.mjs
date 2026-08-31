@@ -634,3 +634,36 @@ test("every painted plant stage has its own measured baseline", () => {
       id + ": every stage carries the same baseline, which is a guess rather than a measurement");
   }
 });
+
+/* The reward stage's own buttons have to be tappable too.
+ *
+ * The placement targets were raised to 44px and the chrome around them was
+ * left behind: at 375px the menu buttons were 35px tall, the overflow items
+ * 33, the scene-back link 32, the shop tabs 35, and the dialogue's audio
+ * button 33x29 - under the minimum on both axes. All of them are ordinary
+ * buttons in a flow layout, so unlike the Inn's illustrated hotspots they
+ * could simply be made bigger.
+ *
+ * Gated on a coarse pointer, which is why this checks the rule lives inside
+ * such a block: applying it unconditionally would inflate the desktop layout,
+ * where a mouse does not need 44px.
+ */
+test("the reward stage's controls meet the touch minimum on a coarse pointer", () => {
+  const css = read("styles.css");
+  const blocks = [...css.matchAll(/@media \(pointer: coarse\)\{([\s\S]*?)\n\}/g)].map((m) => m[1]);
+  assert.ok(blocks.length, "expected a coarse-pointer block");
+  const coarse = blocks.join("\n");
+
+  for (const selector of [".home-menu-button", ".home-yard-more button", ".home-scene-back",
+                          ".home-shop-chrome button", ".home-howto", ".home-tab",
+                          ".home-yard-more summary", "#speak-btn"]) {
+    assert.ok(coarse.includes(selector), selector + " is not raised for touch");
+  }
+  // the rule itself, not just the selectors
+  assert.match(coarse, /min-height:44px/);
+  assert.match(coarse, /width:44px/);
+
+  // and it must stay gated, or the desktop layout grows with it
+  const outside = css.replace(/@media \(pointer: coarse\)\{[\s\S]*?\n\}/g, "");
+  assert.doesNotMatch(outside, /\.home-menu-button\{[^}]*min-height:44px/);
+});

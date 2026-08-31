@@ -26,6 +26,18 @@ The file had reached 2761 lines, of which this log was 2238 - 81%. It sat betwee
 
 Every fact was checked across the move rather than assumed - the tap-target measurements, the 53.9 MB of unreferenced assets, the duplicate `chrysanthemum` id, the sprite spec, the `plantVisualStage` warning, the ruled-out clipping measurements. A table of contents at the top now names which sections are worth reading on arrival and which are reference.
 
+### 2026-08-31 - The reward stage's own buttons were too small to tap
+
+The placement targets were raised to 44px; the chrome around them was not. At 375px the two menu buttons were 35px tall, the overflow items 33, the scene-back link 32, the shop's category tabs 35, `使いかた` 32, and the dialogue's audio button 33x29 - under the minimum on both axes. Seven of the nine controls on the yard failed, and the audit that found the targets had only been looking at the targets.
+
+Unlike the Inn's illustrated hotspots, which cannot be enlarged because neighbouring zones are 29 to 45px apart and a bigger hit area would steal the next one's taps, **every one of these is an ordinary button in a flow layout**. Nothing is positioned against a painting, so they can simply be made bigger.
+
+Raised to 44px inside `@media (pointer: coarse)`, by `min-height` so a control that already clears it is untouched. The gate matters: applying it unconditionally would inflate the desktop layout, where a mouse does not need 44px. Verified both ways - at 375px all nine controls now pass with no horizontal scroll, and on desktop the same buttons still measure 35, 32, 32 and 29px, unchanged.
+
+`#speak-btn` is not reward-stage-only; it lives in the dialogue panel on every stage and was the smallest control in the app. Fixing it here fixes it everywhere.
+
+The test asserts the selectors are inside a coarse-pointer block and that the rule does not also apply outside one, so a later "simplification" that ungates it fails rather than silently changing every screen.
+
 ### 2026-08-31 - Placed every item in both catalogues, and measured the plant baselines properly
 
 Placed all 21 furniture items and all 15 plant instances through the real render path - writing saves and reloading rather than clicking - and measured each one against what it claims. **The placement system came through clean.** Every furniture item's declared anchor lands on its slot's ground line to within 0.1%, rendered widths match `presentationFor(id).width * slot.scale` exactly, depth stacking follows ground Y in every case, and nothing rendered broken, off-scene or wrongly sized. The wind chime's -40% is its declared hook offset, not drift.
