@@ -4,115 +4,13 @@ Last updated: 2026-08-31
 
 ## 0. Current status
 
-### 2026-08-30 - Reward placement scale and reachability repair
+**Everything is committed. Nothing is pushed yet.** Cache version **v187**, `node --test` at **384/384**, all six modules pass `node --check`, and `sw.js` agrees with all 26 `index.html` stamps.
 
-The room control dock no longer overlaps the scene: at 1280x720 the old negative margin covered three of five floor placement targets. Every furniture item now has its own physical scene width and image contact point, replacing the single arbitrary sizing table and shared `translateY(-70%)`. Floor objects align by their feet/base, wall art by its centre, and the wind chime by its hook. Room objects receive time-aware colour grading plus floor contact shadows. Garden species also carry individual scene widths; sakura, maple and camellia no longer share one 22% base width. Placement targets render above scene overlays. A 390x844 browser check then found same-kind 44px targets overlapping each other; the two rear floor anchors and tokonoma anchor were separated by their full rectangular hit areas so every target remains independently reachable down to a 320x180 scene. Cache is **v183**.
+This section describes the present. It is not a log - the dated entries that had accumulated here have been moved to section 9, where the change log lives. That is the rule in section 12, and this is the second time the section has had to be emptied: an entry written here is true for a day and then quietly wrong, and a reader has no way to tell which. **Check the date against `git log` before trusting anything in section 0.**
 
-Regression tests cover the decor presentation metadata, per-species garden widths, non-overlapping control layout, and minimum mobile target separation. Live v183 checks at 1280x720 and 390x844 confirmed every floor target is fully inside the scene, clear of the dock, and non-overlapping. The resized/graded table and separately scaled sakura, maple and camellia were visually checked in their production backgrounds. The full suite passes **377/377**; JavaScript syntax and diff checks pass with only line-ending notices. Changes are uncommitted and unpushed.
+Two sessions have been working on this project in parallel. Both write here, so if you are one of them, read the other's entries in section 9 before starting.
 
-### 2026-08-30 - Unfinished full-size pine removed
-
-The yard's `松` used generated placeholder art; the only finished pine asset is the separate small `pine-bonsai-v1.webp` interior decoration. Removed `pine-tree` from the garden catalogue and starter scenery, and added save normalization so existing placeholder pines disappear without affecting other plants. The finished pine bonsai remains available. Starter scenery now contains only the painted maple. Cache is **v179**.
-
-The full suite passes **369/369**; JavaScript syntax and diff checks pass with only line-ending notices. Changes remain uncommitted and unpushed.
-
-### 2026-08-30 - Grooming repaired and all production sprite sizes normalized
-
-The old grooming row was not clipped at the file boundary, but two frames covered the face with the paw, which read as a missing head at game scale. It was replaced by `calico-groom-v2.png`, where ears and head silhouette remain visible through a clear rest/lick/wipe/lower sequence. Playback was slowed from 400ms to 600ms per frame: 2.4 seconds per cycle.
-
-Alpha-bound measurement found the older loaf/curl/sniff sheets occupied only 148-152px while newly generated sheets used a 166px production envelope. Those rows were separated and normalized into `calico-loaf-v2.png`, `calico-curl-sleep-v2.png`, and `calico-sniff-v2.png`; all current behavior sheets now use the same 166px maximum envelope, 13px minimum edge clearance, and common y=178 baseline. Old combined idle/interaction sheets were removed from production and offline precache. Cache is **v178**.
-
-Post-build measurement verified every production sheet is exactly 768x192 RGBA, every occupied frame has at least 13px clearance on all relevant edges, and each sheet's maximum silhouette is exactly 166px. The full suite passes **368/368**; JavaScript syntax and diff checks pass with only line-ending notices. Changes remain uncommitted and unpushed.
-
-### 2026-08-30 - All remaining cat motions corrected
-
-Replaced the looping sit transition and duplicated/mismatched action rows with five independent 768x192 RGBA sheets: `calico-sit-v1.png`, `calico-side-sleep-v1.png`, `calico-stretch-v1.png`, `calico-look-v1.png`, and `calico-play-v1.png`. Sit and stretch are one-shot actions that hold their final frame; side-sleep, look, and play loop at behavior-specific natural speeds. The unused stand mapping and cropped transition sheet were removed from production.
-
-All natural actions now have meaningful anchors: shade/cushion for side sleep, veranda/tatami for stretching, rock/path/alcove for sniffing and looking, and path/tatami for play. The packer now detects four separated subjects instead of assuming quarter boundaries, preventing neighboring cat fragments from leaking into frames. Cache is **v177**.
-
-Live yard verification confirmed sit reaches frame 4 once and holds for 11 seconds, then walking advances through the corrected v3 frames and reaches the next rest pose without clipping or browser errors. All five new sheets were visually inspected after transparent repacking. The full suite passes **366/366**; JavaScript syntax and diff checks pass with only line-ending notices. Changes remain uncommitted and unpushed.
-
-### 2026-08-30 - New alternating-leg walk sprite integrated
-
-Generated and integrated `assets/home/pet/calico-walk-v3.png`. It is a 768x192 RGBA sheet with four 192px cells, a common paw baseline at y=178, 13-18px horizontal clearance, fixed head/torso/tail scale, alternating front-leg reach/pass phases, opposing rear-leg phases, and a small tail counterbalance. The source was generated on chroma green because built-in transparent output baked a checkerboard; `research/repack-cat-walk.ps1` now removes chroma before measuring and packing frames. Production walk metadata and offline precache use v3. Cache is **v176**.
-
-Live yard verification loaded v3, observed frames 0, 1, and 2 while the cat visibly advanced from x=533 to x=453 over two seconds, and recorded no browser errors. The full suite passes **363/363**; JavaScript syntax and diff checks pass with only line-ending notices. Changes remain uncommitted and unpushed.
-
-### 2026-08-30 - Walking now guarantees visible travel; walk art reviewed
-
-Near-destination speed had fallen to 0.171% of the scene per 80ms while the walk pose remained active. Minimum travel is now 0.272% per 80ms, about half a body length per second, and arrival still stops the gait immediately. A regression test enforces visible travel whenever walking is shown. Cache is **v175**.
-
-Artwork review confirmed the owner's report: `calico-walk-v2.png` keeps the forward front leg in nearly the same extension across all four cells. The rear legs change only modestly and the tail is almost fixed. Timing cannot repair this; the next art mock needs alternating front-leg contact/passing poses, opposing rear-leg motion, and slight tail counterbalance while preserving the existing fixed body scale and baseline. The production sprite was not replaced during this review. The full suite passes **363/363**; JavaScript syntax and diff checks pass with only line-ending notices. Changes remain uncommitted and unpushed.
-
-### 2026-08-30 - Fixed permanent single-anchor cat state
-
-Root cause: `prefers-reduced-motion` disabled both animation and destination changes, leaving the cat at one anchor forever. Reduced-motion mode now avoids walking animation but changes the cat directly to the next authored resting place after its dwell. Normal mode still walks there. A regression test verifies that reduced mode changes position without entering the walk behavior. Cache is **v174**. The full suite passes **362/362**; JavaScript syntax and diff checks pass with only line-ending notices. Changes remain uncommitted and unpushed.
-
-### 2026-08-30 - Natural cat rest and purposeful movement
-
-The temporary fixed 12-second cap was replaced with designed behavior. The cat follows each scene's authored route through meaningful resting places instead of selecting random anchors. Sleep lasts 10-15 seconds with subtle breathing, loaf/sit 8-12 seconds, groom 6-10 seconds, and active idles 5-8 seconds. Reduced-motion mode disables breathing. Production markup exposes the current behavior for styling, and tests cover route diversity, timing bounds, idle motion, and reduced motion. Cache is **v173**.
-
-Live verification followed the cat for 18 seconds in both the yard and room. In each scene it animated while resting, walked smoothly to the next authored spot, then entered a breathing sleep pose. No browser errors were recorded. The full suite passes **361/361**; JavaScript syntax and diff checks pass with only line-ending notices. Changes remain uncommitted and unpushed.
-
-### 2026-08-30 - Cat no longer appears stuck between walks
-
-The movement loop was active, but sleep poses could hold one anchor for 18-36 seconds. Rest timing is now capped at 12 seconds: sleep 8-12 seconds, loaf/sit 6-9 seconds, groom 5-7.5 seconds, and other idles 4-6 seconds. A regression test checks all behaviors and representative seeds. Cache is **v172**. Changes remain uncommitted and unpushed.
-
-### 2026-08-29 - Consistent four-key cat walk integrated
-
-The owner approved the four-key walk mock. Production now uses `assets/home/pet/calico-walk-v2.png`: a 768x192 RGBA sheet with four exact 192px cells, one shared paw baseline, one anatomical scale, and at least 13px cell clearance. The approved transparent extraction was deterministically repacked by `research/repack-cat-walk.ps1`; saturated red/yellow/magenta extraction spill is removed without rescaling individual frames.
-
-`home-pet.js` now maps walking to four keys and derives frame changes from distance travelled. Because the old cycle had eight drawings, distance per key was halved to 0.15 body lengths; a regression test requires a new pose within 250ms at cruising speed. Offline delivery includes the new PNG and cache is **v171**.
-
-Focused pet/PWA verification passed 45/45 before the final cadence adjustment; the final pet suite passes 10/10. A live v170 yard walk confirmed the production PNG, exact `400% 100%` cell mapping, clean dark-background edges, stable scale and no clipping. The final v171 full suite passes **359/359**, both edited JavaScript files pass syntax checks, and `git diff --check` reports only line-ending notices. A v171 yard check confirmed clean idle rendering; cadence is covered by the new distance-based regression because the live pet entered a long sleep before another walk. Changes remain uncommitted and unpushed.
-
-### 2026-08-29 - Consistent-scale cat walk mock awaiting approval
-
-Generated an eight-pose side-view walk mock using the existing calico only as an identity/style reference. The mock keeps a substantially steadier head, torso, leg and tail scale, a common paw baseline, and a continuous contact/passing gait. It is preview-only and has not replaced any game asset.
-
-Generated previews:
-
-- `C:\Users\user\.codex\generated_images\01a020cd-35ac-78b3-a97a-0dfccd9024a0\exec-e129fac7-d5a6-4a12-956f-db272aa5fcdf.png`
-- `C:\Users\user\.codex\generated_images\01a020cd-35ac-78b3-a97a-0dfccd9024a0\exec-b3a030e6-6eb6-4d2b-8dab-0ce6b6233fb8.png`
-
-Both outputs are 1942x809 RGB and bake the checker/white background into opaque pixels despite requesting transparency. Do not integrate them directly. After the owner approves the body proportions and gait, create the production sheet by extracting/repacking the approved poses into equal 192px RGBA cells with a common 93.2% baseline and at least 13px transparent clearance. Then validate alpha, dimensions, frame bounds and animation in the live scene before replacing `calico-walk-v1.webp`.
-
-Two additional gait revisions were generated with explicit contact/passing phases and a chroma-green background:
-
-- `C:\Users\user\.codex\generated_images\01a020cd-35ac-78b3-a97a-0dfccd9024a0\exec-c12b4308-7db4-46a2-a8f7-0e98b0020488.png`
-- `C:\Users\user\.codex\generated_images\01a020cd-35ac-78b3-a97a-0dfccd9024a0\exec-3c35abe5-6fb2-4a83-865a-82cda0f11410.png`
-
-The last revision keeps head and torso scale consistent, but prompt-only generation still morphs rear paws between frames and leaves the tail nearly rigid. Do not integrate it. A natural production cycle now needs a rigged/deterministic workflow: lock one approved cat body, separate legs and tail into controlled layers, author the eight poses against fixed anatomical landmarks, then rasterize and pack. Repeating whole-sheet image generation is not expected to solve the remaining temporal consistency problem.
-
-The next iteration reduced the cycle to four mechanically distinct key poses, which substantially improved anatomical consistency and equal cell placement:
-
-- Sheet mock: `assets/home/pet/calico-walk-rig-mock-v2.png`
-- Animated review page: `docs/cat-walk-movement-mock.html`
-- Source generation: `C:\Users\user\.codex\generated_images\01a020cd-35ac-78b3-a97a-0dfccd9024a0\exec-330e0f56-017a-493f-af66-7868b70eff84.png`
-
-The review page cycles the four keys at 0.72 seconds and is preview-only. Body, head, tail volume and baseline are markedly steadier than the eight-frame generations. The magenta background is intentionally opaque for inspection and must be extracted to real alpha before production. Do not replace the current game sheet until the owner approves this moving mock.
-
-### 2026-08-29 - Cat scale corrected against the live architecture
-
-The v168 cat was not losing pixels in the current sprite sheets, but browser QA showed the remaining visual defect: at 9.5-12.8% of scene width it was nearly as wide as the house doorway and too large against the room architecture. The depth range is now 6.8-9%, retaining perspective while keeping the long-haired silhouette readable. A new regression test checks the far and near bounds plus every authored anchor.
-
-Cache is **v169**. Live browser checks of the yard and room showed complete ears, tail and paws during standing and walking frames, with the cat now fitting the door, tatami and cushion scale. The existing decor combines physical item width with each slot's perspective scale; the starter cushion remains aligned to its floor anchor and was not changed. `node --test` passes **357/357**; `node --check home-pet.js`, `node --check app.js`, and `git diff --check` pass (line-ending notices only). These changes are uncommitted and unpushed.
-
-### 2026-08-29 - Cache, cat motion, and what the cat art cannot do
-
-**Everything is committed. Nothing is pushed.** Three commits this session, cache version **v168**, `node --test` at **356/356**.
-
-The block that used to sit here described v157 as sitting uncommitted in the working tree. That had been untrue for days. If you are reading this section, check its date against `git log` before you trust it.
-
-**Service worker precaching no longer serves stale pictures.** `cache.addAll()` fetches through the browser's own HTTP cache. Scripts and stylesheets carry a `?v=` stamp so a `CACHE_VERSION` bump changes their URL and forces a refetch; **images carry no stamp and their URLs never change**, so `addAll` was handed whatever bytes the browser already had. Redrawn artwork was landing in the repository and nowhere else. The shell is now fetched in `cache: "reload"` mode. This had been masquerading as a code bug for at least two sessions - any picture redrawn since it was first cached was affected, not just the cat.
-
-**The cat walks at a plausible pace.** The speeds had been tuned when it was half its current size, so after the resize it crossed the yard in 22.6 seconds at a quarter of a body length per second. Now 12.9 seconds, 0.43 body lengths per second, 1.3-1.6 steps per second at a 0.30 body-length stride. Those are a real cat's walking numbers.
-
-**The `enter` pose is retired** and a test keeps it retired. Its four frames are drawn 79%, 69%, 51% and 53% of the cell wide, so the cat halved and grew back on every trip between yard and room. Scene entry uses the standing row, steadiest in the set at 1%.
-
-**The engawa and the window sill can sleep**, which they could not before.
-
-**Open, and the reason the next session exists:** the owner still reports the cat being cut off, and I could not reproduce it - see section 11 item 1. The cat art also has no sitting pose at all, which is not a code problem.
+Known and unresolved, carried forward: the owner has reported the cat being cut off and it has not been reproduced - see section 11 item 1 for the four things already ruled out and the one fact still missing. The cat art has no true sitting pose, which is drawing work rather than code.
 
 ### Golden Rule: Learning Integrity
 
@@ -373,6 +271,79 @@ This was not hypothetical: a freshly edited `lantern-map.js` was served from the
 
 ## 9. Change log and reasons
 
+### 2026-08-31 - Where the v184-v187 work was written down
+
+The newest status block described v183 and 377 tests while the working tree was at **v187 and 384**. I concluded the difference was undocumented. **That was wrong, and the correction is the useful part**: it had been written up in full, as a `## 2026-08-31` section appended to the very bottom of the file, below section 15. It is now a normal entry in this log, immediately below.
+
+It was missed because a `##` heading is a section, not an entry. The file had grown a seventeenth section whose name was a date, sitting past the build log where nothing looks, and `grep "^## "` on the section list is exactly how a reader orients in a file this size. An entry that arrives as a section is invisible in the place people check and disruptive in the place they don't.
+
+So the substantive point is narrower than it first appeared, and worth keeping only as this: **section 0 said v183 while the tree said v187**. The log was fine; the status block was four versions stale within a day of being written, which is what section 0 always does and why it now holds no dated entries at all.
+
+### 2026-08-31 - Decor-aware cat routing and depth (v187)
+
+- Fixed the cat crossing through tables, furniture, trees, shrubs, and flowers.
+- `home-pet.js` now rejects occupied resting points and straight routes that intersect placed-object footprints.
+- Added reserved center-path yard anchors and back-tatami room anchors so the cat still moves in densely decorated scenes.
+- `app.js` derives blockers from the learner's current room and garden placements. Rugs and cushions remain passable cat surfaces.
+- Cat, decor, and plants now use their ground Y position for scene-depth stacking. Furniture in front correctly hides the cat's lower body instead of the cat drawing through table legs.
+- Verified in build v187 with five occupied room floor positions and a 12-plant yard including mature sakura and maple. The cat walked in both scenes without crossing the placed objects.
+- Added routing regression tests, including dense-layout and newly displaced-cat cases.
+- No commit or push was made.
+
+### 2026-08-30 - Reward placement scale and reachability repair
+
+The room control dock no longer overlaps the scene: at 1280x720 the old negative margin covered three of five floor placement targets. Every furniture item now has its own physical scene width and image contact point, replacing the single arbitrary sizing table and shared `translateY(-70%)`. Floor objects align by their feet/base, wall art by its centre, and the wind chime by its hook. Room objects receive time-aware colour grading plus floor contact shadows. Garden species also carry individual scene widths; sakura, maple and camellia no longer share one 22% base width. Placement targets render above scene overlays. A 390x844 browser check then found same-kind 44px targets overlapping each other; the two rear floor anchors and tokonoma anchor were separated by their full rectangular hit areas so every target remains independently reachable down to a 320x180 scene. Cache is **v183**.
+
+Regression tests cover the decor presentation metadata, per-species garden widths, non-overlapping control layout, and minimum mobile target separation. Live v183 checks at 1280x720 and 390x844 confirmed every floor target is fully inside the scene, clear of the dock, and non-overlapping. The resized/graded table and separately scaled sakura, maple and camellia were visually checked in their production backgrounds. The full suite passes **377/377**; JavaScript syntax and diff checks pass with only line-ending notices. Changes are uncommitted and unpushed.
+
+### 2026-08-30 - Unfinished full-size pine removed
+
+The yard's `松` used generated placeholder art; the only finished pine asset is the separate small `pine-bonsai-v1.webp` interior decoration. Removed `pine-tree` from the garden catalogue and starter scenery, and added save normalization so existing placeholder pines disappear without affecting other plants. The finished pine bonsai remains available. Starter scenery now contains only the painted maple. Cache is **v179**.
+
+The full suite passes **369/369**; JavaScript syntax and diff checks pass with only line-ending notices. Changes remain uncommitted and unpushed.
+
+### 2026-08-30 - Grooming repaired and all production sprite sizes normalized
+
+The old grooming row was not clipped at the file boundary, but two frames covered the face with the paw, which read as a missing head at game scale. It was replaced by `calico-groom-v2.png`, where ears and head silhouette remain visible through a clear rest/lick/wipe/lower sequence. Playback was slowed from 400ms to 600ms per frame: 2.4 seconds per cycle.
+
+Alpha-bound measurement found the older loaf/curl/sniff sheets occupied only 148-152px while newly generated sheets used a 166px production envelope. Those rows were separated and normalized into `calico-loaf-v2.png`, `calico-curl-sleep-v2.png`, and `calico-sniff-v2.png`; all current behavior sheets now use the same 166px maximum envelope, 13px minimum edge clearance, and common y=178 baseline. Old combined idle/interaction sheets were removed from production and offline precache. Cache is **v178**.
+
+Post-build measurement verified every production sheet is exactly 768x192 RGBA, every occupied frame has at least 13px clearance on all relevant edges, and each sheet's maximum silhouette is exactly 166px. The full suite passes **368/368**; JavaScript syntax and diff checks pass with only line-ending notices. Changes remain uncommitted and unpushed.
+
+### 2026-08-30 - All remaining cat motions corrected
+
+Replaced the looping sit transition and duplicated/mismatched action rows with five independent 768x192 RGBA sheets: `calico-sit-v1.png`, `calico-side-sleep-v1.png`, `calico-stretch-v1.png`, `calico-look-v1.png`, and `calico-play-v1.png`. Sit and stretch are one-shot actions that hold their final frame; side-sleep, look, and play loop at behavior-specific natural speeds. The unused stand mapping and cropped transition sheet were removed from production.
+
+All natural actions now have meaningful anchors: shade/cushion for side sleep, veranda/tatami for stretching, rock/path/alcove for sniffing and looking, and path/tatami for play. The packer now detects four separated subjects instead of assuming quarter boundaries, preventing neighboring cat fragments from leaking into frames. Cache is **v177**.
+
+Live yard verification confirmed sit reaches frame 4 once and holds for 11 seconds, then walking advances through the corrected v3 frames and reaches the next rest pose without clipping or browser errors. All five new sheets were visually inspected after transparent repacking. The full suite passes **366/366**; JavaScript syntax and diff checks pass with only line-ending notices. Changes remain uncommitted and unpushed.
+
+### 2026-08-30 - New alternating-leg walk sprite integrated
+
+Generated and integrated `assets/home/pet/calico-walk-v3.png`. It is a 768x192 RGBA sheet with four 192px cells, a common paw baseline at y=178, 13-18px horizontal clearance, fixed head/torso/tail scale, alternating front-leg reach/pass phases, opposing rear-leg phases, and a small tail counterbalance. The source was generated on chroma green because built-in transparent output baked a checkerboard; `research/repack-cat-walk.ps1` now removes chroma before measuring and packing frames. Production walk metadata and offline precache use v3. Cache is **v176**.
+
+Live yard verification loaded v3, observed frames 0, 1, and 2 while the cat visibly advanced from x=533 to x=453 over two seconds, and recorded no browser errors. The full suite passes **363/363**; JavaScript syntax and diff checks pass with only line-ending notices. Changes remain uncommitted and unpushed.
+
+### 2026-08-30 - Walking now guarantees visible travel; walk art reviewed
+
+Near-destination speed had fallen to 0.171% of the scene per 80ms while the walk pose remained active. Minimum travel is now 0.272% per 80ms, about half a body length per second, and arrival still stops the gait immediately. A regression test enforces visible travel whenever walking is shown. Cache is **v175**.
+
+Artwork review confirmed the owner's report: `calico-walk-v2.png` keeps the forward front leg in nearly the same extension across all four cells. The rear legs change only modestly and the tail is almost fixed. Timing cannot repair this; the next art mock needs alternating front-leg contact/passing poses, opposing rear-leg motion, and slight tail counterbalance while preserving the existing fixed body scale and baseline. The production sprite was not replaced during this review. The full suite passes **363/363**; JavaScript syntax and diff checks pass with only line-ending notices. Changes remain uncommitted and unpushed.
+
+### 2026-08-30 - Fixed permanent single-anchor cat state
+
+Root cause: `prefers-reduced-motion` disabled both animation and destination changes, leaving the cat at one anchor forever. Reduced-motion mode now avoids walking animation but changes the cat directly to the next authored resting place after its dwell. Normal mode still walks there. A regression test verifies that reduced mode changes position without entering the walk behavior. Cache is **v174**. The full suite passes **362/362**; JavaScript syntax and diff checks pass with only line-ending notices. Changes remain uncommitted and unpushed.
+
+### 2026-08-30 - Natural cat rest and purposeful movement
+
+The temporary fixed 12-second cap was replaced with designed behavior. The cat follows each scene's authored route through meaningful resting places instead of selecting random anchors. Sleep lasts 10-15 seconds with subtle breathing, loaf/sit 8-12 seconds, groom 6-10 seconds, and active idles 5-8 seconds. Reduced-motion mode disables breathing. Production markup exposes the current behavior for styling, and tests cover route diversity, timing bounds, idle motion, and reduced motion. Cache is **v173**.
+
+Live verification followed the cat for 18 seconds in both the yard and room. In each scene it animated while resting, walked smoothly to the next authored spot, then entered a breathing sleep pose. No browser errors were recorded. The full suite passes **361/361**; JavaScript syntax and diff checks pass with only line-ending notices. Changes remain uncommitted and unpushed.
+
+### 2026-08-30 - Cat no longer appears stuck between walks
+
+The movement loop was active, but sleep poses could hold one anchor for 18-36 seconds. Rest timing is now capped at 12 seconds: sleep 8-12 seconds, loaf/sit 6-9 seconds, groom 5-7.5 seconds, and other idles 4-6 seconds. A regression test checks all behaviors and representative seeds. Cache is **v172**. Changes remain uncommitted and unpushed.
+
 ### 2026-08-30 - A door into the placement UI, and a hoisting trap behind it
 
 Added `unlockEverythingForTesting`, reachable as `?unlockall=1` or `lanternUnlockAll()`. It grants all 21 furniture items, both buyable wallpapers, and every plant species twice - once `planted`, once `mature` - leaves every one of them unplaced, and sets the wallet to 99999. Placement and the reward loop are the two things that cannot be reached by playing honestly: the last wallpaper is thousands of coins away and a mature tree is a dozen cleared shifts.
@@ -387,6 +358,46 @@ The test worth having is not that the unlock grants things - that is trivially t
 
 Verified in the browser at v180: 21 furniture cards indoors with their slot kinds, 14 plant cards in the yard, both shelf tabs, no broken images, nothing pre-placed.
 
+
+### 2026-08-29 - Consistent four-key cat walk integrated
+
+The owner approved the four-key walk mock. Production now uses `assets/home/pet/calico-walk-v2.png`: a 768x192 RGBA sheet with four exact 192px cells, one shared paw baseline, one anatomical scale, and at least 13px cell clearance. The approved transparent extraction was deterministically repacked by `research/repack-cat-walk.ps1`; saturated red/yellow/magenta extraction spill is removed without rescaling individual frames.
+
+`home-pet.js` now maps walking to four keys and derives frame changes from distance travelled. Because the old cycle had eight drawings, distance per key was halved to 0.15 body lengths; a regression test requires a new pose within 250ms at cruising speed. Offline delivery includes the new PNG and cache is **v171**.
+
+Focused pet/PWA verification passed 45/45 before the final cadence adjustment; the final pet suite passes 10/10. A live v170 yard walk confirmed the production PNG, exact `400% 100%` cell mapping, clean dark-background edges, stable scale and no clipping. The final v171 full suite passes **359/359**, both edited JavaScript files pass syntax checks, and `git diff --check` reports only line-ending notices. A v171 yard check confirmed clean idle rendering; cadence is covered by the new distance-based regression because the live pet entered a long sleep before another walk. Changes remain uncommitted and unpushed.
+
+### 2026-08-29 - Consistent-scale cat walk mock awaiting approval
+
+Generated an eight-pose side-view walk mock using the existing calico only as an identity/style reference. The mock keeps a substantially steadier head, torso, leg and tail scale, a common paw baseline, and a continuous contact/passing gait. It is preview-only and has not replaced any game asset.
+
+Generated previews:
+
+- `C:\Users\user\.codex\generated_images\01a020cd-35ac-78b3-a97a-0dfccd9024a0\exec-e129fac7-d5a6-4a12-956f-db272aa5fcdf.png`
+- `C:\Users\user\.codex\generated_images\01a020cd-35ac-78b3-a97a-0dfccd9024a0\exec-b3a030e6-6eb6-4d2b-8dab-0ce6b6233fb8.png`
+
+Both outputs are 1942x809 RGB and bake the checker/white background into opaque pixels despite requesting transparency. Do not integrate them directly. After the owner approves the body proportions and gait, create the production sheet by extracting/repacking the approved poses into equal 192px RGBA cells with a common 93.2% baseline and at least 13px transparent clearance. Then validate alpha, dimensions, frame bounds and animation in the live scene before replacing `calico-walk-v1.webp`.
+
+Two additional gait revisions were generated with explicit contact/passing phases and a chroma-green background:
+
+- `C:\Users\user\.codex\generated_images\01a020cd-35ac-78b3-a97a-0dfccd9024a0\exec-c12b4308-7db4-46a2-a8f7-0e98b0020488.png`
+- `C:\Users\user\.codex\generated_images\01a020cd-35ac-78b3-a97a-0dfccd9024a0\exec-3c35abe5-6fb2-4a83-865a-82cda0f11410.png`
+
+The last revision keeps head and torso scale consistent, but prompt-only generation still morphs rear paws between frames and leaves the tail nearly rigid. Do not integrate it. A natural production cycle now needs a rigged/deterministic workflow: lock one approved cat body, separate legs and tail into controlled layers, author the eight poses against fixed anatomical landmarks, then rasterize and pack. Repeating whole-sheet image generation is not expected to solve the remaining temporal consistency problem.
+
+The next iteration reduced the cycle to four mechanically distinct key poses, which substantially improved anatomical consistency and equal cell placement:
+
+- Sheet mock: `assets/home/pet/calico-walk-rig-mock-v2.png`
+- Animated review page: `docs/cat-walk-movement-mock.html`
+- Source generation: `C:\Users\user\.codex\generated_images\01a020cd-35ac-78b3-a97a-0dfccd9024a0\exec-330e0f56-017a-493f-af66-7868b70eff84.png`
+
+The review page cycles the four keys at 0.72 seconds and is preview-only. Body, head, tail volume and baseline are markedly steadier than the eight-frame generations. The magenta background is intentionally opaque for inspection and must be extracted to real alpha before production. Do not replace the current game sheet until the owner approves this moving mock.
+
+### 2026-08-29 - Cat scale corrected against the live architecture
+
+The v168 cat was not losing pixels in the current sprite sheets, but browser QA showed the remaining visual defect: at 9.5-12.8% of scene width it was nearly as wide as the house doorway and too large against the room architecture. The depth range is now 6.8-9%, retaining perspective while keeping the long-haired silhouette readable. A new regression test checks the far and near bounds plus every authored anchor.
+
+Cache is **v169**. Live browser checks of the yard and room showed complete ears, tail and paws during standing and walking frames, with the cat now fitting the door, tatami and cushion scale. The existing decor combines physical item width with each slot's perspective scale; the starter cushion remains aligned to its floor anchor and was not changed. `node --test` passes **357/357**; `node --check home-pet.js`, `node --check app.js`, and `git diff --check` pass (line-ending notices only). These changes are uncommitted and unpushed.
 
 ### 2026-08-29 - The enter row was drawn at four different scales
 
@@ -2573,7 +2584,11 @@ In the order that gets the most for the least:
 - **Prefer a test that renders over a test that matches source text.** `walkthrough.test.mjs` exists because a source-text suite passed while the game crashed.
 - **Check that a catalog id exists before using it as a target.** Eleven invented ids reached a draft in one sitting.
 - **Keep this file current.** On every change, update the affected sections *and* add an entry stating the reason, not just the edit.
-- **New change-log entries go at the top of section 9, not at the top of the file.** Four entries have already collected above section 0, where a reader meets history before they meet the status. Sections 0, 6, 10 and 11 describe the present tense and go stale silently: if a change makes one of them untrue, fixing it is part of the change.
+- **New change-log entries go at the top of section 9, as `###` headings.** Not at the top of the file, not at the bottom, and not inside section 0. All three have now happened, more than once each: four entries collected above section 0 where a reader meets history before status; three were appended past section 15; nine accumulated inside section 0; and one arrived as a `## 2026-08-31` heading, which made it a seventeenth *section* named after a date, invisible to the `grep "^## "` that is how anyone orients in a file this long.
+
+  The test is simple: **a `##` heading is a section of the document, a `###` under section 9 is an entry in the log.** If your change note creates a new `##`, it is in the wrong place.
+
+- **Sections 0, 6, 10 and 11 describe the present tense and go stale silently**, so if a change makes one of them untrue, fixing it is part of the change. Section 0 in particular is not a log: it held a status four cache versions out of date within a day of being written, and has had to be emptied twice.
 - Remember that editing the local file does not update the desktop shortcut. See section 8.
 - Do not claim full N2 coverage. The project covers its own named vocabulary catalog.
 
@@ -2744,13 +2759,3 @@ Written by the session that built the first three tasks of the home-and-garden p
 - Cache and local asset references are version 185. Full regression passes 380/380; JavaScript syntax and `git diff --check` pass. Browser verification at 1280x720 and 390x844 found no console warnings/errors or horizontal overflow. All five mobile floor targets remain 44x44 px, inside the scene, and separately reachable.
 - No commit or push was performed.
 
-## 2026-08-31 - Decor-aware cat routing and depth (v187)
-
-- Fixed the cat crossing through tables, furniture, trees, shrubs, and flowers.
-- `home-pet.js` now rejects occupied resting points and straight routes that intersect placed-object footprints.
-- Added reserved center-path yard anchors and back-tatami room anchors so the cat still moves in densely decorated scenes.
-- `app.js` derives blockers from the learner's current room and garden placements. Rugs and cushions remain passable cat surfaces.
-- Cat, decor, and plants now use their ground Y position for scene-depth stacking. Furniture in front correctly hides the cat's lower body instead of the cat drawing through table legs.
-- Verified in build v187 with five occupied room floor positions and a 12-plant yard including mature sakura and maple. The cat walked in both scenes without crossing the placed objects.
-- Added routing regression tests, including dense-layout and newly displaced-cat cases.
-- No commit or push was made.
