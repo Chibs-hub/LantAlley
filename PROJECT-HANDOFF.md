@@ -148,6 +148,8 @@ Japanese audio plays from pre-rendered neural-voice MP3s, so pronunciation is id
 
 ### Testing placement and the rewards, without earning them
 
+`http://localhost:8743/?unlockall=1&trees=10` adds ten full-grown trees to storage on top of everything else, alternating the two painted species, all unplanted. Use it when judging a yard: a tree only reads against the house at full size, and one of them is not enough to tell.
+
 `http://localhost:8743/?unlockall=1` fills the cupboard: every furniture item, every wallpaper, one of every plant species at `planted` and again at `mature`, 99999 coins, tutorial marked done. Nothing is placed - the point is to test the placing. From the console it is `lanternUnlockAll()`, which returns a summary and can be called at any time.
 
 It is behind an explicit flag for the same reason `?review=1` is. The project's own rule is that a learner never advances without earning it, so a grant like this must be impossible to reach by accident and must say so on screen when it fires - a silent one is indistinguishable from a scoring bug. A test asserts a plain boot is not unlocked.

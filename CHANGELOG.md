@@ -14,6 +14,14 @@ Added two transparent room assets matched to the existing room and small-object 
 
 Added a transparent, semi-realistic sunflower growth set matching the existing garden cutouts: planted soil marker, sprout, closed-bud growing plant and mature bloom. The four 512px WebP files share one source sheet, lighting, soil treatment and a measured 95.5-95.7% ground baseline so growth does not jump vertically. The species is connected to the garden catalogue and painted-art map.
 
+### 2026-08-31 - A stack of grown trees to plant by hand
+
+`?unlockall=1&trees=10` now adds that many mature trees to storage, alternating cherry and maple, all unplanted so the placing is what is being tested. They are added rather than substituted, so the planted-and-mature pair of every species is still there to compare against.
+
+The reason for a flag rather than a console snippet: one of each species at each end of its growth shows the art, but it is no use for judging a yard. **A tree only reads against the house once it is full size and there are several of them**, and re-pasting a snippet after every reload is exactly the friction that stops that check happening. Capped at 40.
+
+Tested both ways - with the flag ten arrive, without it they do not - because a testing door that silently grants nothing wastes the session it was meant to save. That has happened once already in this project, when the unlock threw during load and looked like it was doing nothing.
+
 ### 2026-08-31 - Ten full-grown trees, and a trap in the preview pane
 
 Filled the yard with nine mature cherries and maples across every depth, to see the new sizes under load.

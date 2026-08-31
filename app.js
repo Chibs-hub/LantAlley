@@ -707,7 +707,9 @@
    * the flag silently doing nothing. */
   window.lanternUnlockAll = unlockEverythingForTesting;
   if(/[?&]unlockall=1(&|$)/.test(window.location.search)){
-    setTimeout(unlockEverythingForTesting, 0);
+    var treeCount = /[?&]trees=(\d+)/.exec(window.location.search);
+    var unlockOptions = {matureTrees: treeCount ? Number(treeCount[1]) : 0};
+    setTimeout(function(){ unlockEverythingForTesting(unlockOptions); }, 0);
   }
   state.dailyPractice = pendingDaily.dailyPractice;
   state.streak = pendingDaily.streak;
@@ -3806,11 +3808,12 @@
    *
    * Every species arrives twice, once at `planted` and once at `mature`, so
    * both ends of the growth art can be placed and compared side by side. */
-  function unlockEverythingForTesting(){
+  function unlockEverythingForTesting(options){
     if(typeof LanternHomeDecor === "undefined" || typeof LanternHomeGarden === "undefined"){
       return {ok:false, reason:"catalogues not loaded"};
     }
-    var report = {ok:true, furniture:0, wallpapers:0, plants:0, skippedUnpainted:[]};
+    var settings = options || {};
+    var report = {ok:true, furniture:0, wallpapers:0, plants:0, matureTrees:0, skippedUnpainted:[]};
 
     // --- furniture and wallpaper: owned, and every slot left empty ----------
     /* Only things that have been painted.
@@ -3847,6 +3850,30 @@
         report.plants += 1;
       });
     });
+
+    /* A stack of grown trees to plant by hand.
+     *
+     * The pair above gives one of each species at each end of its growth,
+     * which shows the art but is no use for judging a yard: a tree only reads
+     * against the house once it is full size and there are several of them.
+     * `?trees=10` puts that many mature ones in storage, alternating the two
+     * painted species, all unplanted so the placing is the thing being tested.
+     *
+     * They are added rather than substituted, so the growth-stage pair is
+     * still there to compare against. */
+    var wanted = Math.max(0, Math.min(40, Number(settings.matureTrees) || 0));
+    var painted = LanternHomeGarden.catalogue().filter(function(type){
+      return plantHasArt(type.id) && type.kind === "tree";
+    });
+    if(wanted && painted.length){
+      for(var t = 0; t < wanted; t += 1){
+        var type = painted[t % painted.length];
+        garden.plants.push({id:"plant-" + garden.nextInstanceId, typeId:type.id,
+          slotId:null, growthPoints:type.matureAt, stage:"mature", pendingAnimation:false});
+        garden.nextInstanceId += 1;
+        report.matureTrees += 1;
+      }
+    }
     state.garden = garden;
 
     // --- and nothing in the way of reaching the placing UI -----------------
@@ -3858,7 +3885,8 @@
 
     saveProgress();
     homeNotice = "テスト用: " + report.furniture + " furniture, "
-      + report.wallpapers + " wallpapers, " + report.plants + " plants unlocked";
+      + report.wallpapers + " wallpapers, " + report.plants + " plants"
+      + (report.matureTrees ? ", " + report.matureTrees + " grown trees" : "") + " unlocked";
     if(typeof paintHome === "function" && screenGame
        && screenGame.classList.contains("home-stage")) paintHome();
     renderHud();

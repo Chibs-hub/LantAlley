@@ -859,3 +859,40 @@ test("the shop's wallpaper shelf offers only wallpaper that has a picture", () =
     assert.ok(!offered.includes(id), id + " has no picture but is still sold");
   }
 });
+
+/* A stack of grown trees to plant by hand.
+ *
+ * One of each species at each end of its growth shows the art, but it is no
+ * use for judging a yard: a tree only reads against the house once it is full
+ * size and there are several of them to place. This is the flag for that, and
+ * it is checked because a testing door that silently grants nothing wastes the
+ * session it was meant to save.
+ */
+test("?trees=N stocks that many full-grown trees, all unplanted", () => {
+  const game = boot(null, "?unlockall=1&trees=10");
+  game.clock.advance(50);
+
+  const saved = JSON.parse(game.storage.getItem("lanternAlley.v3") || "{}");
+  const plants = saved.garden.plants;
+  const grownTrees = plants.filter((p) => p.stage === "mature"
+    && ["cherry-tree", "japanese-maple"].includes(p.typeId));
+
+  assert.ok(grownTrees.length >= 10, `expected at least 10 grown trees, got ${grownTrees.length}`);
+  assert.ok(grownTrees.every((p) => p.slotId === null),
+    "they arrive in storage: the planting is what is being tested");
+
+  // both painted species, so the yard can be judged with a mix
+  assert.equal(new Set(grownTrees.map((p) => p.typeId)).size, 2,
+    "the two painted tree species should alternate");
+
+  // and the growth-stage pair survives alongside them, for comparison
+  assert.ok(plants.some((p) => p.stage === "planted"),
+    "the seedling of each species is still there to compare against");
+
+  // without the flag, no stack
+  const plain = boot(null, "?unlockall=1");
+  plain.clock.advance(50);
+  const plainPlants = JSON.parse(plain.storage.getItem("lanternAlley.v3")).garden.plants;
+  assert.ok(plainPlants.filter((p) => p.stage === "mature").length < grownTrees.length,
+    "the stack only appears when asked for");
+});
