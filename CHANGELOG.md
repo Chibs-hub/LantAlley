@@ -10,6 +10,20 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 Added a transparent, semi-realistic sunflower growth set matching the existing garden cutouts: planted soil marker, sprout, closed-bud growing plant and mature bloom. The four 512px WebP files share one source sheet, lighting, soil treatment and a measured 95.5-95.7% ground baseline so growth does not jump vertically. The art is not yet connected to the catalogue or shop.
 
+### 2026-08-31 - Ten full-grown trees, and a trap in the preview pane
+
+Filled the yard with nine mature cherries and maples across every depth, to see the new sizes under load.
+
+**The sizes hold.** Against the house's eaves the trees run 1.63x at the back row to 2.57x at the front, which sounds alarming until you measure the house rather than its eaves: the ground line is at y=54 and the ridge at about y=8, so the building is 46% of the scene tall and not 29%. Against the whole house the trees are 1.02x to 1.63x, which is what a mature cherry beside a single-storey house looks like. The eaves are simply lower than the roof.
+
+**The house stays reachable when the yard is full.** With ten trees hiding the building entirely, the door hotspot is still 145x158 pixels and still on top - z-index 205 against the plants' highest 114 - and `elementFromPoint` at its centre returns the hotspot itself. A learner who plants an orchard can still get indoors.
+
+**The cat appeared frozen, and that is the preview pane, not the game.** Twelve samples over seventeen seconds showed no movement at all: same position, same pose. The routing was the obvious suspect, and it is innocent - called directly with the same nine blockers, `nextAnchor` returns a reachable anchor immediately.
+
+The actual cause: **`requestAnimationFrame` never fires in this pane.** Not throttled - never called once in forty-five seconds, with `document.hidden` false and the tab fronted. The pet loop is driven entirely by rAF, so it cannot tick here at all.
+
+This belongs beside the other two environment traps. The pane collapses to zero width, which makes pixel measurements meaningless; the service worker used to serve stale images, which made redrawn art look unchanged; and **rAF does not run, which makes every animation look frozen**. Anything time-driven has to be tested by calling the module directly, as the routing check above did. Earlier in the session the cat appeared at different spots between screenshots - that was full page reloads seeding it at a new anchor, not motion.
+
 ### 2026-08-31 - Hung objects lie on the wall, and each plant gets the light it can take
 
 **A picture drawn face-on does not lie on a receding wall.** The two side walls converge, and the scroll and the lantern were drawn square, so they read as pinned to the air in front of the plaster rather than hung on it.
