@@ -164,6 +164,43 @@
        + '</g>'}
   ];
 
+  /* Physical presentation in the painted room.
+   *
+   * A single percentage made a teapot, a cushion and a table behave like the
+   * same-size cut-out. Width is the item's full-size footprint before the
+   * slot's perspective scale. anchorY is the point in the image that meets the
+   * slot: 100 is the feet/base, 50 is the centre of wall art, and 0 is the top
+   * hook of a hanging wind chime. */
+  var PRESENTATION = {
+    "floor-cushion-navy": {width:12, anchorY:82},
+    "rug-plain":          {width:20, anchorY:55, scaleY:0.58},
+    "plant-small":        {width:8, anchorY:100},
+    "low-table":          {width:20, anchorY:100},
+    brazier:               {width:14, anchorY:100},
+    kotatsu:               {width:22, anchorY:100},
+    "folding-screen":     {width:25, anchorY:100},
+    "floor-lantern":      {width:6.5, anchorY:100},
+    chrysanthemum:         {width:8, anchorY:100},
+    scroll:                {width:7, anchorY:50},
+    "wall-lamp":          {width:5.5, anchorY:50},
+    fan:                   {width:9, anchorY:50},
+    mask:                  {width:9, anchorY:50},
+    teapot:                {width:8, anchorY:100},
+    books:                 {width:9, anchorY:100},
+    "cat-figure":         {width:4.5, anchorY:100},
+    daruma:                {width:4.5, anchorY:100},
+    "sakura-bonsai":      {width:7, anchorY:100},
+    "pine-bonsai":        {width:7, anchorY:100},
+    "sill-plant":         {width:14, anchorY:100},
+    "wind-chime":         {width:4, anchorY:0, offsetY:-40}
+  };
+
+  function presentationFor(id){
+    var row = PRESENTATION[id] || {width:10, anchorY:100};
+    return {width:row.width, anchorY:row.anchorY,
+            scaleY:row.scaleY || 1, offsetY:row.offsetY || 0};
+  }
+
   /* Five petals around a centre. Written once rather than five times per
    * blossom, because the pattern needs several and they must match. */
   function blossom(cx, cy, r){
@@ -339,6 +376,7 @@
     buyWallpaper: buyWallpaper,
     isWallpaper: isWallpaper,
     categories: categories,
+    presentationFor: presentationFor,
     getItem: getItem,
     svgFor: svgFor,
     owns: owns,

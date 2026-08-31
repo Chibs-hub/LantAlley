@@ -2830,11 +2830,6 @@
   // How tall each stage stands, as a fraction of the mature plant.
   var STAGE_SCALE = {planted:0.28, sprout:0.45, growing:0.72, mature:1};
 
-  /* A plant's width in the front row, as a percentage of the scene. Every bed
-   * takes a fraction of this from its own `scale`, so one number sets the
-   * whole garden's sense of size. */
-  var PLANT_WIDTH = 22;
-
   function placeholderPlant(typeId, stage){
     var tint = PLANT_TINT[typeId] || {leaf:"#4f7d4a", bloom:"#c4485c"};
     var type = (typeof LanternHomeGarden !== "undefined")
@@ -3020,15 +3015,59 @@
    * supplies the depth; the table below stays what it always was, the object's
    * own size. */
   function decorSceneWidth(item, slot){
-    var widths = {
-      "rug-plain":26, "low-table":28, kotatsu:30, "folding-screen":32,
-      "floor-cushion-navy":18, "plant-small":12, brazier:12,
-      "floor-lantern":10, chrysanthemum:12, scroll:12, "wall-lamp":9,
-      fan:10, mask:9, teapot:8, books:10, "cat-figure":8, daruma:8,
-      "sakura-bonsai":13, "pine-bonsai":13, "sill-plant":7, "wind-chime":7
-    };
-    var base = widths[item && item.id] || 18;
+    var presentation = LanternHomeDecor.presentationFor(item && item.id);
+    var base = presentation.width;
     return +(base * ((slot && slot.scale) || 1)).toFixed(2);
+  }
+
+  function decorSceneAnchor(item){
+    return LanternHomeDecor.presentationFor(item && item.id).anchorY;
+  }
+
+  function decorSceneTop(item, slot){
+    return +((slot.y || 0) + LanternHomeDecor.presentationFor(item && item.id).offsetY).toFixed(2);
+  }
+
+  function decorSceneScaleY(item){
+    return LanternHomeDecor.presentationFor(item && item.id).scaleY;
+  }
+
+  function homeDepthZ(y){
+    return 20 + Math.round(Number(y) || 0);
+  }
+
+  /* Block ground footprints, not whole cut-outs. Rugs and cushions remain
+   * usable cat surfaces; standing furniture, pots, shrubs and trees do not. */
+  function homePetBlockers(scene){
+    if(scene === "interior"){
+      var placed = homeState().placed || {};
+      var passable = {"rug-plain":true, "floor-cushion-navy":true};
+      return homeSlots().reduce(function(out, slot){
+        var id = placed[slot.id];
+        var item = id && LanternHomeDecor.getItem(id);
+        if(!item || item.kind !== "floor" || passable[id]) return out;
+        var width = decorSceneWidth(item, slot);
+        out.push({x:slot.x, y:slot.y - Math.min(2.5, width * .12),
+          rx:Math.max(3.5, width * .62), ry:Math.max(2.8, width * .3)});
+        return out;
+      }, []);
+    }
+    if(scene === "yard"){
+      var slots = {};
+      yardSlots().forEach(function(slot){ slots[slot.id] = slot; });
+      var types = {};
+      LanternHomeGarden.catalogue().forEach(function(type){ types[type.id] = type; });
+      return plantsInYard().reduce(function(out, plant){
+        var slot = slots[plant.slotId];
+        var type = types[plant.typeId];
+        if(!slot || !type) return out;
+        var width = (type.sceneWidth || 12) * (slot.scale || 1);
+        out.push({x:slot.x, y:slot.y - Math.min(2, width * .1),
+          rx:Math.max(2.8, width * .45), ry:Math.max(2.4, width * .2)});
+        return out;
+      }, []);
+    }
+    return [];
   }
 
   function homePetMarkup(scene){
@@ -3039,12 +3078,18 @@
         : LanternHomePet.create(scene, Date.now());
       homePetIdleMs = 0;
     }
+    var blockers = homePetBlockers(scene);
+    if(LanternHomePet.pointIsClear && !LanternHomePet.pointIsClear(homePetState, blockers)){
+      var safe = LanternHomePet.safeAnchor(homePetState, blockers);
+      if(safe) homePetState = LanternHomePet.settleAt(homePetState, safe.id);
+    }
     var sprite = LanternHomePet.spriteFor(homePetState);
     var petWidth = (typeof LanternHomePet !== "undefined" && LanternHomePet.widthAt)
       ? LanternHomePet.widthAt(homePetState.y) : 7.5;
     return '<div class="home-pet" aria-hidden="true" data-pet-behavior="' + homePetState.behavior
       + '" style="width:' + petWidth + '%;left:' + homePetState.x
-      + '%;top:' + homePetState.y + '%;--pet-facing:' + homePetState.facing + '">'
+      + '%;top:' + homePetState.y + '%;z-index:' + homeDepthZ(homePetState.y)
+      + ';--pet-facing:' + homePetState.facing + '">'
       + '<span style="background-image:url(\'' + sprite.path + '\');background-size:'
       + (sprite.columns * 100) + '% ' + (sprite.rows * 100) + '%"></span></div>';
   }
@@ -3066,6 +3111,7 @@
     if(LanternHomePet.widthAt) node.style.width = LanternHomePet.widthAt(homePetState.y) + "%";
     node.style.left = homePetState.x + "%";
     node.style.top = homePetState.y + "%";
+    node.style.zIndex = homeDepthZ(homePetState.y);
     node.style.setProperty("--pet-facing", homePetState.facing);
     node.setAttribute("data-pet-behavior", homePetState.behavior);
     var art = node.firstElementChild;
@@ -3092,7 +3138,7 @@
         if(homePetIdleMs > dwell){
           homePetState.seed = (homePetState.seed * 1664525 + 1013904223) >>> 0;
           var destination = LanternHomePet.nextAnchor
-            ? LanternHomePet.nextAnchor(homePetState)
+            ? LanternHomePet.nextAnchor(homePetState, homePetBlockers(homePetState.scene))
             : LanternHomePet.anchors(homePetState.scene).filter(function(anchor){ return anchor.id !== homePetState.anchorId; })[0];
           if(destination) homePetState = reduced
             ? LanternHomePet.settleAt(homePetState, destination.id)
@@ -3140,10 +3186,13 @@
       /* Sized against its own bed, not against the scene. A camellia in the
        * back row is a third the size of the same camellia at the front,
        * because that is what the painting does with everything else in it. */
-      var width = (PLANT_WIDTH * (slot.scale || 1)).toFixed(2);
+      var type = LanternHomeGarden.catalogue().filter(function(row){
+        return row.id === plant.typeId;
+      })[0];
+      var width = (((type && type.sceneWidth) || 12) * (slot.scale || 1)).toFixed(2);
       html += '<div class="home-plant' + (plant.pendingAnimation ? " is-growing" : "") + '"'
         + ' style="left:' + slot.x + '%;top:' + slot.y + '%;width:' + width + '%;'
-        + 'transform:translate(-50%,-' + base + '%)"'
+        + 'z-index:' + homeDepthZ(slot.y) + ';transform:translate(-50%,-' + base + '%)"'
         + ' data-plant="' + plant.id + '" role="button" tabindex="0"'
         + ' aria-label="' + plantName(plant.typeId) + ' をあつかう">'
         + plantFigure(plant.typeId, visualStage,
@@ -3185,10 +3234,14 @@
         var here = home.placed[slot.id];
         if(!here) return;
         var item = decor.getItem(here) || {name:""};
-        html += positioned("home-item", slot, decorArt(here, item.name),
+        var placedSlot = {x:slot.x, y:decorSceneTop(item, slot)};
+        html += positioned("home-item", placedSlot, decorArt(here, item.name),
           ' data-slot-item="' + slot.id + '" role="button" tabindex="0"'
+            + ' data-item-kind="' + (item.kind || "") + '"'
             + ' aria-label="' + item.name + ' をかたづける"',
-          'width:' + decorSceneWidth(item, slot) + '%');
+          'width:' + decorSceneWidth(item, slot) + '%;z-index:' + homeDepthZ(slot.y)
+            + ';transform:translate(-50%,-'
+            + decorSceneAnchor(item) + '%) scaleY(' + decorSceneScaleY(item) + ')');
       });
       if(picked){
         interior.slots.forEach(function(slot){

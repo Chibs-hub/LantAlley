@@ -61,6 +61,18 @@ test("starter claim is free and cannot duplicate a starter camellia", () => {
   assert.equal(migrated.garden.plants.length, 1);
 });
 
+test("garden species use individual scene widths instead of one global size", () => {
+  const widths = Object.fromEntries(garden.catalogue().map(item => [item.id, item.sceneWidth]));
+  assert.equal(widths["cherry-tree"], 22);
+  assert.equal(widths["japanese-maple"], 20);
+  assert.equal(widths.hydrangea, 14);
+  assert.equal(widths.camellia, 12);
+  assert.equal(widths.iris, 12);
+  assert.equal(widths.chrysanthemum, 12);
+  assert.equal(widths["lantern-flower-bed"], 16);
+  assert.ok(Object.values(widths).every(width => width >= 12 && width <= 22));
+});
+
 test("starter yard includes only the finished maple artwork", () => {
   const claimed = garden.claimStarterScenery(garden.emptyGarden());
   assert.equal(claimed.ok, true);

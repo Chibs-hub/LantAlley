@@ -438,6 +438,16 @@ test("placed room sprites keep a visible box inside legacy answer styles", () =>
   assert.match(css, /\.answer-workspace \.inn-room-illustrated \.inn-drop-zone:has\(\.inn-placed-object\)\{[^}]*min-height:44px/);
 });
 
+test("home placement controls do not cover the scene targets", () => {
+  const css = read("styles.css");
+  const controls = css.match(/\.home-scene-controls\{([^}]*)\}/);
+  const targets = [...css.matchAll(/\.home-target\{([^}]*)\}/g)].map(match => match[1]);
+  assert.ok(controls && targets.length);
+  assert.match(controls[1], /margin:0 auto/);
+  assert.doesNotMatch(controls[1], /margin:-/);
+  assert.ok(targets.some(block => /z-index:2[0-9]{2}/.test(block)));
+});
+
 test("a dragged room object remains visible above every answer surface", () => {
   const css = read("styles.css");
   assert.match(css, /\.inn-object\.dragging\{[^}]*position:fixed[^}]*z-index:[1-9][0-9]{2,}/);

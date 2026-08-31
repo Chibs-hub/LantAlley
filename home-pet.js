@@ -16,14 +16,23 @@
       {id:"yard-shade", x:17, y:72, kind:"shade", behaviors:["side-sleep","curl-sleep","loaf"]},
       {id:"yard-rock", x:38, y:75, kind:"rock", behaviors:["sit","groom","sniff","look"]},
       {id:"yard-path", x:55, y:80, kind:"path", behaviors:["sniff","play","look"]},
-      {id:"yard-veranda", x:76, y:64, kind:"veranda", behaviors:["stretch","curl-sleep","loaf","groom"]}
+      {id:"yard-veranda", x:76, y:64, kind:"veranda", behaviors:["stretch","curl-sleep","loaf","groom"]},
+      /* No garden slot touches the centre path. These quiet fallback stops
+       * keep the cat mobile when the learner fills every bed. */
+      {id:"yard-lane-back", x:50, y:68, kind:"path", behaviors:["look","sniff"]},
+      {id:"yard-lane-mid", x:50, y:76, kind:"path", behaviors:["sniff","groom"]},
+      {id:"yard-lane-front", x:50, y:87, kind:"path", behaviors:["look","stretch"]}
     ],
     interior: [
       {id:"interior-door", x:50, y:74, kind:"door", behaviors:["sit"]},
       {id:"interior-cushion", x:34, y:81, kind:"furniture", behaviors:["side-sleep","curl-sleep","loaf"]},
       {id:"interior-window", x:22, y:78, kind:"window", behaviors:["look","curl-sleep","sit","groom"]},
       {id:"interior-center", x:55, y:83, kind:"tatami", behaviors:["loaf","groom","stretch","play"]},
-      {id:"interior-alcove", x:73, y:79, kind:"alcove", behaviors:["sit","look","sniff"]}
+      {id:"interior-alcove", x:73, y:79, kind:"alcove", behaviors:["sit","look","sniff"]},
+      /* The back tatami strip is not a decor target, so it remains traversable
+       * even when all five floor positions are occupied. */
+      {id:"interior-lane-left", x:40, y:72, kind:"tatami", behaviors:["look","sit"]},
+      {id:"interior-lane-right", x:60, y:72, kind:"tatami", behaviors:["look","groom"]}
     ]
   };
 
@@ -54,11 +63,57 @@
 
   /* Follow the authored scene clockwise instead of teleporting between random
    * points. Each stop has a real cat reason: shade, rock, path, veranda, door. */
-  function nextAnchor(state){
+  function pointIsClear(point, blockers){
+    return !(blockers || []).some(function(blocker){
+      var rx = Math.max(.1, Number(blocker.rx) || 0);
+      var ry = Math.max(.1, Number(blocker.ry) || 0);
+      var dx = (Number(point.x) - Number(blocker.x)) / rx;
+      var dy = (Number(point.y) - Number(blocker.y)) / ry;
+      return dx * dx + dy * dy <= 1;
+    });
+  }
+
+  /* Test the cat's ground path, not its square sprite box. In each obstacle's
+   * normalized ellipse, a blocked route is simply a line segment that comes
+   * within one radius of the origin. */
+  function routeIsClear(from, to, blockers){
+    return (blockers || []).every(function(blocker){
+      var rx = Math.max(.1, Number(blocker.rx) || 0);
+      var ry = Math.max(.1, Number(blocker.ry) || 0);
+      var ax = (Number(from.x) - Number(blocker.x)) / rx;
+      var ay = (Number(from.y) - Number(blocker.y)) / ry;
+      var bx = (Number(to.x) - Number(blocker.x)) / rx;
+      var by = (Number(to.y) - Number(blocker.y)) / ry;
+      var dx = bx - ax;
+      var dy = by - ay;
+      var length2 = dx * dx + dy * dy;
+      var t = length2 ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / length2)) : 0;
+      var px = ax + dx * t;
+      var py = ay + dy * t;
+      return px * px + py * py > 1;
+    });
+  }
+
+  function nextAnchor(state, blockers){
     var anchors = SCENES[state && state.scene] || [];
     if(anchors.length < 2) return null;
     var index = anchors.findIndex(function(anchor){ return anchor.id === state.anchorId; });
-    return copy(anchors[(index + 1 + anchors.length) % anchors.length]);
+    for(var offset = 1; offset < anchors.length; offset++){
+      var candidate = anchors[(index + offset + anchors.length) % anchors.length];
+      if(pointIsClear(candidate, blockers) && routeIsClear(state, candidate, blockers)) return copy(candidate);
+    }
+    return null;
+  }
+
+  function safeAnchor(state, blockers){
+    var anchors = (SCENES[state && state.scene] || []).filter(function(anchor){
+      return pointIsClear(anchor, blockers);
+    });
+    if(!anchors.length) return null;
+    anchors.sort(function(a, b){
+      return Math.hypot(a.x - state.x, a.y - state.y) - Math.hypot(b.x - state.x, b.y - state.y);
+    });
+    return copy(anchors[0]);
   }
 
   /* How big the cat is where it is standing.
@@ -259,6 +314,9 @@
   root.LanternHomePet = {
     anchors:sceneAnchors,
     nextAnchor:nextAnchor,
+    pointIsClear:pointIsClear,
+    routeIsClear:routeIsClear,
+    safeAnchor:safeAnchor,
     widthAt:widthAt,
     behaviors:function(){ return Object.keys(SPRITES); },
     create:create,

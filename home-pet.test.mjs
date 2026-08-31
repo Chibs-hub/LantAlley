@@ -163,6 +163,48 @@ test("the cat follows a purposeful route through distinct resting places", () =>
   }
 });
 
+test("occupied furniture and trees are excluded from the cat route", () => {
+  const pet = load();
+  const state = {...pet.create("interior", 1), anchorId:"interior-window", x:22, y:78};
+  const table = {x:55, y:83, rx:5, ry:4};
+  const destination = pet.nextAnchor(state, [table]);
+  assert.ok(destination, "another clear resting place should remain");
+  assert.notEqual(destination.id, "interior-center");
+  assert.equal(pet.routeIsClear(state, destination, [table]), true);
+
+  const yard = {...pet.create("yard", 1), anchorId:"yard-rock", x:38, y:75};
+  const tree = {x:47, y:77.5, rx:4, ry:3};
+  const yardDestination = pet.nextAnchor(yard, [tree]);
+  assert.ok(yardDestination);
+  assert.equal(pet.routeIsClear(yard, yardDestination, [tree]), true);
+});
+
+test("a cat displaced by newly placed decor chooses a clear anchor", () => {
+  const pet = load();
+  const state = {...pet.create("interior", 1), anchorId:"interior-center", x:55, y:83};
+  const blockers = [{x:55, y:83, rx:12, ry:7}];
+  const safe = pet.safeAnchor(state, blockers);
+  assert.ok(safe);
+  assert.notEqual(safe.id, "interior-center");
+  assert.equal(pet.pointIsClear(safe, blockers), true);
+});
+
+test("dense decoration fails safely instead of routing through an object", () => {
+  const pet = load();
+  const state = pet.create("yard", 2);
+  const blockers = pet.anchors("yard").map((anchor) => ({x:anchor.x, y:anchor.y, rx:8, ry:6}));
+  assert.equal(pet.nextAnchor(state, blockers), null);
+  assert.equal(pet.safeAnchor(state, blockers), null);
+});
+
+test("the live home supplies placed furniture and plants to pet routing", () => {
+  const app = fs.readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  assert.match(app, /function homePetBlockers\(scene\)/);
+  assert.match(app, /LanternHomePet\.nextAnchor\(homePetState,\s*homePetBlockers\(homePetState\.scene\)\)/);
+  assert.match(app, /LanternHomePet\.safeAnchor\(homePetState, blockers\)/);
+  assert.match(app, /z-index:' \+ homeDepthZ/);
+});
+
 test("resting poses breathe subtly and respect reduced motion", () => {
   const app = fs.readFileSync(new URL("./app.js", import.meta.url), "utf8");
   const css = fs.readFileSync(new URL("./styles.css", import.meta.url), "utf8");

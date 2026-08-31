@@ -1,8 +1,14 @@
 # Lantern Alley Project Handoff
 
-Last updated: 2026-08-30
+Last updated: 2026-08-31
 
 ## 0. Current status
+
+### 2026-08-30 - Reward placement scale and reachability repair
+
+The room control dock no longer overlaps the scene: at 1280x720 the old negative margin covered three of five floor placement targets. Every furniture item now has its own physical scene width and image contact point, replacing the single arbitrary sizing table and shared `translateY(-70%)`. Floor objects align by their feet/base, wall art by its centre, and the wind chime by its hook. Room objects receive time-aware colour grading plus floor contact shadows. Garden species also carry individual scene widths; sakura, maple and camellia no longer share one 22% base width. Placement targets render above scene overlays. A 390x844 browser check then found same-kind 44px targets overlapping each other; the two rear floor anchors and tokonoma anchor were separated by their full rectangular hit areas so every target remains independently reachable down to a 320x180 scene. Cache is **v183**.
+
+Regression tests cover the decor presentation metadata, per-species garden widths, non-overlapping control layout, and minimum mobile target separation. Live v183 checks at 1280x720 and 390x844 confirmed every floor target is fully inside the scene, clear of the dock, and non-overlapping. The resized/graded table and separately scaled sakura, maple and camellia were visually checked in their production backgrounds. The full suite passes **377/377**; JavaScript syntax and diff checks pass with only line-ending notices. Changes are uncommitted and unpushed.
 
 ### 2026-08-30 - Unfinished full-size pine removed
 
@@ -2723,3 +2729,28 @@ Written by the session that built the first three tasks of the home-and-garden p
 - The home menu now uses the same dark translucent material as the scene's top bar, spans the scene width, and attaches to its bottom edge instead of floating as a narrow dialog.
 - Yard reset actions moved from the permanent menu into a compact `•••` overflow control. The tutorial panel attaches directly below the scene composition; the frame remains content-sized so it does not create an empty internal floor on tall windows.
 - Cache and shell queries are version 148. The overflow behavior test was observed failing first and then passed. Full regression passes 347/347 and the rebuilt artifact is 14.34 MB. Browser QA at the reported 1114x947 viewport measured the menu bottom and scene bottom within 0.4 px, the tutorial starting at the same edge, no horizontal overflow, and no console warnings or errors.
+
+### 2026-08-30 - User working preference
+
+- Keep reasoning effort at the maximum available level. Recover efficiency through concise output, batched tool calls, reused evidence, and avoiding repeated checks - never by reducing analysis quality, care, or verification.
+- This preference follows a Codex desktop crash that consumed about 40% of the user's usage before the active reward-size audit produced its requested result.
+
+### 2026-08-30 - Reward scale and placement audit completed
+
+- Root cause: reward widths controlled the full image or SVG box, but several fallback drawings occupy only 20-67% of that box. This made the brazier, fan, mask, teapot, books, and sill plant visibly tiny even when their CSS widths looked reasonable.
+- Added per-item width, vertical anchor, vertical scale, and vertical offset calibration. The rug is flattened into the floor plane, the wind chime hangs from the opening, and padded vector rewards now have useful visible size.
+- Moved the window slot into the visible left opening and moved the tokonoma slot to the back-floor side alcove so small objects no longer float on wall panels.
+- Mature sakura and maple now read as trees rather than bonsai. Hydrangea, iris, chrysanthemum, and the lantern-flower bed received species-appropriate scene widths. Their simple vector art remains temporary, but its scale is now coherent.
+- Cache and local asset references are version 185. Full regression passes 380/380; JavaScript syntax and `git diff --check` pass. Browser verification at 1280x720 and 390x844 found no console warnings/errors or horizontal overflow. All five mobile floor targets remain 44x44 px, inside the scene, and separately reachable.
+- No commit or push was performed.
+
+## 2026-08-31 - Decor-aware cat routing and depth (v187)
+
+- Fixed the cat crossing through tables, furniture, trees, shrubs, and flowers.
+- `home-pet.js` now rejects occupied resting points and straight routes that intersect placed-object footprints.
+- Added reserved center-path yard anchors and back-tatami room anchors so the cat still moves in densely decorated scenes.
+- `app.js` derives blockers from the learner's current room and garden placements. Rugs and cushions remain passable cat surfaces.
+- Cat, decor, and plants now use their ground Y position for scene-depth stacking. Furniture in front correctly hides the cat's lower body instead of the cat drawing through table legs.
+- Verified in build v187 with five occupied room floor positions and a 12-plant yard including mature sakura and maple. The cat walked in both scenes without crossing the placed objects.
+- Added routing regression tests, including dense-layout and newly displaced-cat cases.
+- No commit or push was made.

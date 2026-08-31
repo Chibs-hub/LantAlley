@@ -60,6 +60,19 @@ test("every catalogue item can actually go somewhere in the room", () => {
   }
 });
 
+test("same-kind room targets remain separately reachable on a narrow scene", () => {
+  const scene = {width:320, height:180};
+  for(let a = 0; a < slots.length; a += 1){
+    for(let b = a + 1; b < slots.length; b += 1){
+      if(slots[a].kind !== slots[b].kind) continue;
+      const dx = (slots[a].x - slots[b].x) * scene.width / 100;
+      const dy = (slots[a].y - slots[b].y) * scene.height / 100;
+      assert.ok(Math.abs(dx) >= 44 || Math.abs(dy) >= 44,
+        `${slots[a].id} overlaps ${slots[b].id} at mobile width (${Math.abs(dx).toFixed(1)}x${Math.abs(dy).toFixed(1)}px apart)`);
+    }
+  }
+});
+
 test("available reward artwork is connected to matching shop items", () => {
   const expected = {
     "rug-plain":"rug-plain-v1.webp",
@@ -83,6 +96,57 @@ test("available reward artwork is connected to matching shop items", () => {
   }
   assert.equal(decor.getWallpaper("wallpaper-asanoha")?.image,
     "assets/home/decor/wallpaper-asanoha-blue-v1.webp");
+});
+
+test("placed decor carries physical size and contact-point calibration", () => {
+  const expected = {
+    "floor-cushion-navy": {width:12, anchorY:82, scaleY:1, offsetY:0},
+    "rug-plain": {width:20, anchorY:55, scaleY:0.58, offsetY:0},
+    "low-table": {width:20, anchorY:100, scaleY:1, offsetY:0},
+    "folding-screen": {width:25, anchorY:100, scaleY:1, offsetY:0},
+    "scroll": {width:7, anchorY:50, scaleY:1, offsetY:0},
+    "brazier": {width:14, anchorY:100, scaleY:1, offsetY:0},
+    "fan": {width:9, anchorY:50, scaleY:1, offsetY:0},
+    "mask": {width:9, anchorY:50, scaleY:1, offsetY:0},
+    "teapot": {width:8, anchorY:100, scaleY:1, offsetY:0},
+    "books": {width:9, anchorY:100, scaleY:1, offsetY:0},
+    "sill-plant": {width:14, anchorY:100, scaleY:1, offsetY:0},
+    "wind-chime": {width:4, anchorY:0, scaleY:1, offsetY:-40}
+  };
+  for(const [id, want] of Object.entries(expected)){
+    const got = decor.presentationFor(id);
+    for(const key of Object.keys(want)){
+      assert.equal(got[key], want[key], `${id} ${key}`);
+    }
+  }
+  for(const item of decor.catalogue()){
+    const presentation = decor.presentationFor(item.id);
+    assert.ok(presentation.width >= 3 && presentation.width <= 25, `${item.id} width`);
+    assert.ok(presentation.anchorY >= 0 && presentation.anchorY <= 100, `${item.id} anchor`);
+    assert.ok(presentation.scaleY > 0 && presentation.scaleY <= 1, `${item.id} vertical scale`);
+    assert.ok(presentation.offsetY >= -45 && presentation.offsetY <= 10, `${item.id} vertical offset`);
+  }
+});
+
+test("vector fallback rewards compensate for unused view-box space", () => {
+  const visibleFill = {brazier:0.50, fan:0.67, mask:0.43, teapot:0.47, books:0.38, "sill-plant":0.20};
+  const minimumVisibleWidth = {brazier:7, fan:6, mask:3.8, teapot:3.7, books:3.4, "sill-plant":2.8};
+  for(const [id, fill] of Object.entries(visibleFill)){
+    const visibleWidth = decor.presentationFor(id).width * fill;
+    assert.ok(visibleWidth >= minimumVisibleWidth[id], `${id} remains visibly undersized`);
+  }
+});
+
+test("tokonoma shelf rewards meet the back floor instead of floating on the wall", () => {
+  const tokonoma = slots.find(slot => slot.id === "tokonoma");
+  assert.ok(tokonoma.x >= 65, "tokonoma should be in the side alcove");
+  assert.ok(tokonoma.y >= 55, "tokonoma shelf items should meet the floor line");
+});
+
+test("window rewards use the visible left opening instead of floating on a wall panel", () => {
+  const sill = slots.find(slot => slot.id === "window-sill");
+  assert.ok(sill.x <= 22, "window reward should align with the left opening");
+  assert.ok(sill.y >= 60, "potted reward should meet the opening floor line");
 });
 
 test("prices span a range, so there is always something just out of reach", () => {

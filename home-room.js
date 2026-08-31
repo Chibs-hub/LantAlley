@@ -32,14 +32,14 @@
   var SLOTS = [
     {id:"floor-left",   x:27, y:80, scale:0.89, kind:"floor", label:"床の左"},
     {id:"floor-right",  x:73, y:80, scale:0.89, kind:"floor", label:"床の右"},
-    {id:"floor-back-left", x:32, y:68, scale:0.72, kind:"floor", label:"床の奥左"},
-    {id:"floor-back-right", x:68, y:68, scale:0.72, kind:"floor", label:"床の奥右"},
+    {id:"floor-back-left", x:42, y:63, scale:0.72, kind:"floor", label:"床の奥左"},
+    {id:"floor-back-right", x:58, y:63, scale:0.72, kind:"floor", label:"床の奥右"},
     {id:"floor-front", x:50, y:88, scale:1.00, kind:"floor", label:"床の手前"},
     {id:"wall-left",    x:12, y:45, scale:0.92, kind:"wall",  label:"壁の左"},
     {id:"wall-right",   x:88, y:45, scale:0.92, kind:"wall",  label:"壁の右"},
     {id:"shelf",        x:50, y:66, scale:0.78, kind:"shelf", label:"奥の段"},
-    {id:"window-sill",  x:34, y:60, scale:0.80, kind:"sill",  label:"窓辺"},
-    {id:"tokonoma", x:50, y:51, scale:0.85, kind:"shelf", label:"床の間"}
+    {id:"window-sill",  x:18, y:63, scale:0.80, kind:"sill",  label:"窓辺"},
+    {id:"tokonoma", x:70, y:61, scale:0.85, kind:"shelf", label:"床の間"}
   ];
 
   /* The eight beds, measured off the painting rather than estimated from it.

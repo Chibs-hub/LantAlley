@@ -2,18 +2,19 @@
   "use strict";
 
   var TYPES = [
-    {id:"cherry-tree", name:"Cherry tree", kind:"tree", price:500, matureAt:12},
-    {id:"japanese-maple", name:"Japanese maple", kind:"tree", price:450, matureAt:10},
-    {id:"hydrangea", name:"Hydrangea", kind:"shrub", price:240, matureAt:7},
-    {id:"camellia", name:"Camellia", kind:"flower", price:120, matureAt:4},
-    {id:"iris", name:"Iris", kind:"flower", price:90, matureAt:2},
-    {id:"chrysanthemum", name:"Chrysanthemum", kind:"flower", price:110, matureAt:3},
-    {id:"lantern-flower-bed", name:"Lantern-flower bed", kind:"shrub", price:200, matureAt:5}
+    {id:"cherry-tree", name:"Cherry tree", kind:"tree", price:500, matureAt:12, sceneWidth:22},
+    {id:"japanese-maple", name:"Japanese maple", kind:"tree", price:450, matureAt:10, sceneWidth:20},
+    {id:"hydrangea", name:"Hydrangea", kind:"shrub", price:240, matureAt:7, sceneWidth:14},
+    {id:"camellia", name:"Camellia", kind:"flower", price:120, matureAt:4, sceneWidth:12},
+    {id:"iris", name:"Iris", kind:"flower", price:90, matureAt:2, sceneWidth:12},
+    {id:"chrysanthemum", name:"Chrysanthemum", kind:"flower", price:110, matureAt:3, sceneWidth:12},
+    {id:"lantern-flower-bed", name:"Lantern-flower bed", kind:"shrub", price:200, matureAt:5, sceneWidth:16}
   ];
 
   function catalogue(){
     return TYPES.map(function(type){
-      return {id:type.id, name:type.name, kind:type.kind, price:type.price, matureAt:type.matureAt};
+      return {id:type.id, name:type.name, kind:type.kind, price:type.price,
+              matureAt:type.matureAt, sceneWidth:type.sceneWidth};
     });
   }
 
