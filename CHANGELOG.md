@@ -26,6 +26,29 @@ The file had reached 2761 lines, of which this log was 2238 - 81%. It sat betwee
 
 Every fact was checked across the move rather than assumed - the tap-target measurements, the 53.9 MB of unreferenced assets, the duplicate `chrysanthemum` id, the sprite spec, the `plantVisualStage` warning, the ruled-out clipping measurements. A table of contents at the top now names which sections are worth reading on arrival and which are reference.
 
+### 2026-08-31 - Objects were lit differently from the room, and the wallpaper was three times life size
+
+Two separate reasons the reward stage read as cut-outs pasted onto a painting. Both measured, neither a matter of taste.
+
+**Every object was lit differently from the room it stood in.** The background carries a per-hour filter and the objects carry their own, and the two had drifted apart:
+
+| hour | background | objects |
+| --- | --- | --- |
+| morning | brightness 1.08 | 0.98 |
+| day | **1.22** | **1.02** |
+| evening | 1.00 | *no rule at all* |
+| night | 0.64 | 0.65 |
+
+At midday every object sat a fifth darker than the floor it stood on, and from late afternoon onwards the objects went entirely ungraded. The cat had it worse: one fixed filter for all four hours.
+
+There is a second half to it. `.home-scene::before` washes the picture with the hour's colour - a pale lift by day, a 24% blue at night - and it sits at `z-index: 1` while objects sit at 65 to 108. **The wash paints underneath them and never reaches them.** Rather than restack the scene, each object's filter now carries an equivalent of that wash. The filters track the background rules directly above them in the file, and the comment says so: change one and change its partner.
+
+**The wallpaper was one sheet stretched across the whole room.** `wallpaperSvg` returned a bare `<img>` and the CSS gave it `object-fit: cover`, so the file - a sheet of about thirteen asanoha motifs - was scaled to fill a band 100% wide and 70% tall. Thirteen motifs spanning a 3.6m wall puts each one near 28cm, about three times life size, and covering stretched the sheet's proportions to the band's aspect as well. It now repeats at a third of the wall's width: roughly 38 motifs across, a motif near 9cm, and the sheet's own aspect preserved. The vector patterns were always tiled properly through `patternUnits="userSpaceOnUse"`; only the raster path was wrong, which is why the fault arrived with the painted wallpaper rather than with the feature.
+
+**Not fixed, and it needs a decision rather than code:** the wallpaper is a plain rectangle over the top 70% of the scene, so it covers the ceiling, the transom and the sliding doors as readily as the walls. Confining it to the wall surfaces needs a mask drawn against this particular painting, which is art direction, not CSS.
+
+**Also measured, and left alone deliberately:** the visible floor at the front of the room is only about 51% of the scene's width, and item widths are expressed as a percentage of the scene rather than of the floor. A kotatsu at 22% therefore covers roughly a third of the floor, implying about 1.1m for an object that is nearer 0.8m - so the furniture runs perhaps 1.4x large. The floor-width measurement is noisy enough that I would not rescale twenty-one items on it, and "correct" here is an art-direction call.
+
 ### 2026-08-31 - One id for one thing, and nothing on sale that has not been drawn
 
 **`chrysanthemum` was two different objects.** A garden species in `home-garden.js` and the 菊の鉢 floor item in `home-decor.js`. Nothing broke, because plants live in `garden.plants` and furniture in `home.owned` and the two were never resolved together - but a lookup that did not know which catalogue an id came from would have found the wrong object silently, which is the kind of bug that is cheap now and expensive later. The furniture is now `chrysanthemum-pot`, which is what its picture has always been called.

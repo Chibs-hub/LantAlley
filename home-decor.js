@@ -239,7 +239,17 @@
   function wallpaperSvg(id){
     var paper = getWallpaper(id);
     if(paper && paper.image){
-      return '<img class="home-wallpaper-art" src="' + paper.image + '" alt="">';
+      /* Tiled, not stretched.
+       *
+       * The file is a sheet of about thirteen motifs, and it was being drawn
+       * as a single <img> scaled to fill the whole wall - so those thirteen
+       * motifs spanned the room and each one came out around 28cm across,
+       * roughly three times life size. Repeating the sheet at a third of the
+       * wall's width puts the motif near 9cm, which is what asanoha actually
+       * is, and repeating also keeps the sheet's own proportions instead of
+       * stretching them to the band's aspect. */
+      return '<div class="home-wallpaper-art is-raster" style="background-image:url('
+        + paper.image + ')"></div>';
     }
     if(!paper || !paper.pattern) return "";
     var tile = paper.tile || 56;

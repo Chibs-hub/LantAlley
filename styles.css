@@ -1592,6 +1592,17 @@
     transform:translate(-50%,-86%); pointer-events:none; line-height:0;
     filter:drop-shadow(0 3px 4px rgba(28,16,8,.48)) saturate(.9) sepia(.08);
   }
+  /* The cat is lit by the hour too.
+   *
+   * It carried one fixed filter for every time of day, so at midday it was
+   * darker than the floor and at night it stayed bright on a dim one - the
+   * same mismatch the furniture had, and the same reason it read as sitting on
+   * the picture rather than in it. These track the item rules above. */
+  .light-morning .home-pet{filter:drop-shadow(0 3px 4px rgba(28,16,8,.42)) saturate(.90) sepia(.07) brightness(1.10) hue-rotate(-7deg)}
+  .light-day .home-pet{filter:drop-shadow(0 3px 4px rgba(28,16,8,.38)) saturate(.86) sepia(.05) brightness(1.24) contrast(.93)}
+  .light-evening .home-pet{filter:drop-shadow(0 3px 4px rgba(28,16,8,.46)) saturate(1.00) sepia(.04) brightness(1.02)}
+  .light-night .home-pet{filter:drop-shadow(0 3px 5px rgba(8,10,18,.64)) saturate(.74) sepia(.04) brightness(.58) hue-rotate(8deg)}
+
   .home-pet > span{
     display:block; width:100%; height:100%; background-repeat:no-repeat;
     transform:scaleX(var(--pet-facing,1)); transform-origin:center bottom;
@@ -1633,9 +1644,32 @@
     position:relative;z-index:1;opacity:.97;
     filter:drop-shadow(0 2px 3px rgba(25,13,6,.48)) saturate(.84) sepia(.10) brightness(.92) contrast(.96);
   }
-  .light-morning .home-item img,.light-morning .home-item svg{filter:drop-shadow(0 2px 3px rgba(25,13,6,.38)) saturate(.82) sepia(.08) brightness(.98) contrast(.95)}
-  .light-day .home-item img,.light-day .home-item svg{filter:drop-shadow(0 2px 3px rgba(25,13,6,.34)) saturate(.80) sepia(.05) brightness(1.02) contrast(.93)}
-  .light-night .home-item img,.light-night .home-item svg{filter:drop-shadow(0 2px 4px rgba(8,10,18,.62)) saturate(.68) sepia(.05) brightness(.65) hue-rotate(7deg)}
+  /* Each object is lit like the room it stands in.
+   *
+   * The scene gets two things the objects were not getting. First the
+   * background's own filter, which at midday is brightness(1.22) while the
+   * objects were on 1.02 - a fifth darker than the floor they sit on, which is
+   * what makes a correctly placed object still read as pasted on. Morning was
+   * out by a tenth, night by a little, and evening had no rule at all, so the
+   * objects went ungraded from late afternoon onwards.
+   *
+   * Second, `.home-scene::before` washes the whole picture with the hour's
+   * colour, and it sits at z-index 1 while objects sit at 65 to 108 - so the
+   * wash paints under them and never reaches them. Rather than restack the
+   * scene, each object's own filter carries an equivalent of that wash: a
+   * touch more brightness where the wash is pale, and a real drop at night
+   * where it is a 24% blue.
+   *
+   * The numbers track the background rules a few lines above. Change one and
+   * change its partner, or the objects start floating again. */
+  .light-morning .home-item img,.light-morning .home-item svg{
+    filter:drop-shadow(0 2px 3px rgba(25,13,6,.38)) saturate(.88) sepia(.06) brightness(1.10) contrast(.96) hue-rotate(-7deg)}
+  .light-day .home-item img,.light-day .home-item svg{
+    filter:drop-shadow(0 2px 3px rgba(25,13,6,.34)) saturate(.82) sepia(.04) brightness(1.26) contrast(.92)}
+  .light-evening .home-item img,.light-evening .home-item svg{
+    filter:drop-shadow(0 2px 3px rgba(25,13,6,.42)) saturate(1.02) sepia(.03) brightness(1.02) contrast(.99)}
+  .light-night .home-item img,.light-night .home-item svg{
+    filter:drop-shadow(0 2px 4px rgba(8,10,18,.62)) saturate(.72) sepia(.04) brightness(.56) hue-rotate(8deg)}
   .home-item[data-item-kind="floor"]::before{
     content:"";position:absolute;z-index:0;left:20%;right:20%;bottom:-1%;height:10%;
     border-radius:50%;background:radial-gradient(ellipse,rgba(24,13,7,.48),rgba(24,13,7,0) 72%);
@@ -1723,7 +1757,10 @@
     pointer-events:none; mix-blend-mode:multiply; opacity:.55;
   }
   .home-wallpaper-art{width:100%; height:100%; display:block}
-  img.home-wallpaper-art{object-fit:cover}
+  /* A third of the wall per repeat. See wallpaperSvg in home-decor.js: the
+     sheet holds about thirteen motifs, so this lands them near life size
+     instead of one sheet stretched across the whole room. */
+  .home-wallpaper-art.is-raster{background-repeat:repeat; background-size:34% auto}
   .home-swatch{
     display:block; width:100%; height:52px; overflow:hidden; border-radius:6px;
     background:#e8dabd;
