@@ -46,14 +46,24 @@
    * a hung scroll floated in front of the garden. They are on the outer panels
    * now, which are the only stretches wide enough to take one.
    *
-   * The wall positions moved inward, from 5 and 95 to 34 and 66.
+   * The wall positions are the outer strips, hung high: (5,32) and (95,32).
    *
-   * Every wall in this painting carries an ink landscape, so a hung scroll
-   * always overlaps something - that is the room-with-a-tokonoma item in the
-   * art queue, not something a coordinate can solve. But the panels flanking
-   * the shoji are measurably the quietest of them, 20 against 28 by standard
-   * deviation, and they are where a scroll would actually hang. The outer
-   * strips are also the ones that read as being on the doors.
+   * Getting here took two wrong moves, and the second undid the first. They
+   * began at y=45 on those outer strips, which read as being on the sliding
+   * doors; I moved them inward to 34 and 66 on the assumption that the outer
+   * strips were the problem. They were not.
+   *
+   * Scanning each panel downward rather than across settles it. The outer
+   * strips are plain plaster from y=20 to y=45 - a standard deviation of 1.3
+   * to 2.3, which is featureless - and the ink landscape is a dado band that
+   * begins at y=45. The inner panels are the shoji surrounds and never fall
+   * below 6. So the outer strips were the right wall all along and **the
+   * height was the fault**: at y=45 a scroll sat exactly on the top edge of
+   * the painted band, next to a door, which is what made it read as hung on
+   * one. Raised to y=32, in the middle of provably blank plaster.
+   *
+   * A scroll still belongs in a tokonoma, and this room has none. That is the
+   * art-queue item; this is the best position the painting actually offers.
    *
    * `eave` is a new kind, for the one object that hangs from something rather
    * than resting on it. A wind chime under the veranda beam is the whole point
@@ -84,8 +94,8 @@
     {id:"floor-back-left", x:36, y:73, scale:0.72, kind:"floor", label:"床の奥左"},
     {id:"floor-back-right", x:64, y:73, scale:0.72, kind:"floor", label:"床の奥右"},
     {id:"floor-front", x:50, y:88, scale:1.00, kind:"floor", label:"床の手前"},
-    {id:"wall-left",    x:34, y:45, scale:0.92, kind:"wall",  label:"壁の左"},
-    {id:"wall-right",   x:66, y:45, scale:0.92, kind:"wall",  label:"壁の右"},
+    {id:"wall-left",    x:5,  y:32, scale:0.92, kind:"wall",  label:"壁の左"},
+    {id:"wall-right",   x:95, y:32, scale:0.92, kind:"wall",  label:"壁の右"},
     {id:"eave", x:15, y:30, scale:0.80, kind:"eave", label:"軒下"},
     {id:"shelf",        x:50, y:72, scale:0.78, kind:"shelf", label:"奥の段"},
     {id:"window-sill",  x:12, y:78, scale:0.80, kind:"sill",  label:"窓辺"},

@@ -10,6 +10,23 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 Added a transparent, semi-realistic sunflower growth set matching the existing garden cutouts: planted soil marker, sprout, closed-bud growing plant and mature bloom. The four 512px WebP files share one source sheet, lighting, soil treatment and a measured 95.5-95.7% ground baseline so growth does not jump vertically. The art is not yet connected to the catalogue or shop.
 
+### 2026-08-31 - The wall was right, the height was wrong
+
+掛け行灯 was still reading as hung on a sliding door after the previous fix, and the owner was right. The fix before this one moved both wall positions the wrong way, on an assumption I had not tested.
+
+**Scanning across the painting says which columns are wall. Scanning down says which part of a wall is blank**, and only the second question mattered:
+
+| panel | y 20-45% | y 45-55% |
+| --- | --- | --- |
+| outer strips, 0-10% and 90-100% | stddev **1.3 to 2.3** - featureless plaster | the ink dado begins |
+| inner panels, 29-39% and 61-71% | stddev 6 to 10 - shoji surrounds | painted |
+
+So the outer strips were the right wall from the start. **The height was the fault**: at y=45 a hung object sat exactly on the top edge of the painted dado, immediately beside a door, which is what made it read as being on one. Moving inward to 34 and 66 put it on the shoji surrounds instead - a worse place, chosen because I had measured busyness across a horizontal band rather than down the wall.
+
+Both are back on the outer strips at y=32, in the middle of provably blank plaster: a standard deviation under 2 over a quarter of the picture's height.
+
+The lesson is narrow and worth keeping: **a wall is not uniform, and a horizontal scan cannot see that.** The first measurement asked which columns were wall and got a true answer to a question that did not decide anything.
+
 ### 2026-08-31 - Writing down what each object is, before deciding where it goes
 
 Asked to define every object first and then place it, which turned out to be the right order: doing it found a fault that had survived every audit so far.
