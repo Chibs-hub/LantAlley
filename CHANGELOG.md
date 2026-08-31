@@ -14,6 +14,22 @@ Added two transparent room assets matched to the existing room and small-object 
 
 Added a transparent, semi-realistic sunflower growth set matching the existing garden cutouts: planted soil marker, sprout, closed-bud growing plant and mature bloom. The four 512px WebP files share one source sheet, lighting, soil treatment and a measured 95.5-95.7% ground baseline so growth does not jump vertically. The species is connected to the garden catalogue and painted-art map.
 
+### 2026-08-31 - No two trees are the same tree
+
+Size already followed depth, through the slot's scale, so a tree at the back of the yard was smaller than one at the front. What was missing was the difference between two trees standing at the *same* depth: ten sakura were ten identical stamps of one picture, same width, same angle, same silhouette, which reads as wallpaper rather than as an orchard.
+
+Three variations, each derived from the plant's own id so a tree keeps its shape across reloads and across being picked up and put back:
+
+- **a lean of up to 3.5 degrees**, pivoting on the trunk where it meets the ground rather than the middle of the picture, so a leaning tree still stands where it was planted;
+- **a mirror**, which costs nothing and breaks the repeated silhouette;
+- **a tenth either way on the size**, because trees of an age still differ.
+
+All three are deliberately small. Past about four degrees a trunk stops looking like it grew that way and starts looking like it is falling over, and the test holds that ceiling.
+
+Planted back to front across all eight depths, the yard now reads the way a cherry garden is usually photographed: a canopy closing overhead, the stone path running out from under it, and the trunks staggered rather than ranked. Measured on the result - eight trees, seven distinct widths, six mirrored, seven leaning.
+
+The test checks both halves, because either alone is useless: the same id must always give the same tree, and different ids must not all give the same one.
+
 ### 2026-08-31 - A stack of grown trees to plant by hand
 
 `?unlockall=1&trees=10` now adds that many mature trees to storage, alternating cherry and maple, all unplanted so the placing is what is being tested. They are added rather than substituted, so the planted-and-mature pair of every species is still there to compare against.

@@ -2965,6 +2965,40 @@
    * blew the cherry blossom out completely, which is what "the sakura lighting
    * is too bright" looks like. The scene rules ask for the lift the ground
    * wants; this caps it at what each picture can survive. */
+  /* No two trees in a garden are the same tree.
+   *
+   * Size already follows depth, through the slot's scale, so a tree planted at
+   * the back is smaller than one at the front. What was missing is that ten
+   * sakura were ten identical stamps of one picture - same width, same lean,
+   * same silhouette - which reads as wallpaper rather than as an orchard.
+   *
+   * Three variations, all small, and all derived from the plant's own id so a
+   * tree does not change shape when the page reloads or when it is moved:
+   *
+   *   a lean of up to 3.5 degrees, pivoting on the trunk where it meets the
+   *   ground, because a tree that grew in weather is not a plumb line;
+   *   a mirror, which costs nothing and breaks the repeated silhouette; and
+   *   a tenth either way on the size, because trees of an age still differ.
+   *
+   * Deliberately subtle. Past about 4 degrees the trunks stop looking like
+   * they grew and start looking like they are falling over. */
+  function plantVariation(plantId){
+    var h = 2166136261;
+    var text = String(plantId || "");
+    for(var i = 0; i < text.length; i += 1){
+      h ^= text.charCodeAt(i);
+      h = (h * 16777619) >>> 0;
+    }
+    var a = (h & 255) / 255;              // three independent draws from one hash
+    var b = ((h >> 8) & 255) / 255;
+    var c = ((h >> 16) & 255) / 255;
+    return {
+      tilt: +((a * 7 - 3.5)).toFixed(2),
+      mirror: b < 0.5 ? -1 : 1,
+      size: +(0.90 + c * 0.20).toFixed(3)
+    };
+  }
+
   var PLANT_LIFT_CEILING = {
     "cherry-tree": 1.07,
     "japanese-maple": 1.53,
@@ -3266,10 +3300,15 @@
       var type = LanternHomeGarden.catalogue().filter(function(row){
         return row.id === plant.typeId;
       })[0];
-      var width = (((type && type.sceneWidth) || 12) * (slot.scale || 1)).toFixed(2);
+      var vary = plantVariation(plant.id);
+      var width = (((type && type.sceneWidth) || 12) * (slot.scale || 1) * vary.size).toFixed(2);
       html += '<div class="home-plant' + (plant.pendingAnimation ? " is-growing" : "") + '"'
         + ' style="left:' + slot.x + '%;top:' + slot.y + '%;width:' + width + '%;'
-        + 'z-index:' + homeDepthZ(slot.y) + ';transform:translate(-50%,-' + base + '%);'
+        /* The pivot is the trunk at the ground, not the middle of the picture,
+         * so a leaning tree still stands where it was planted. */
+        + 'transform-origin:50% ' + base + '%;'
+        + 'z-index:' + homeDepthZ(slot.y) + ';transform:translate(-50%,-' + base + '%)'
+        + ' rotate(' + vary.tilt + 'deg) scaleX(' + vary.mirror + ');'
         + '--plant-lift-max:' + (PLANT_LIFT_CEILING[plant.typeId] || 1.6) + '"'
         + ' data-plant="' + plant.id + '" role="button" tabindex="0"'
         + ' aria-label="' + plantName(plant.typeId) + ' をあつかう">'

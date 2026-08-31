@@ -896,3 +896,42 @@ test("?trees=N stocks that many full-grown trees, all unplanted", () => {
   assert.ok(plainPlants.filter((p) => p.stage === "mature").length < grownTrees.length,
     "the stack only appears when asked for");
 });
+
+/* An orchard is not one tree stamped ten times.
+ *
+ * Depth already varies a plant's size through its slot. What this covers is
+ * the variation between two plants standing at the same depth: without it,
+ * ten sakura are ten identical silhouettes at identical angles, which reads as
+ * wallpaper. It must also be stable - a tree that changes shape when the page
+ * reloads, or when it is picked up and put back, is worse than no variation.
+ */
+test("plants of the same species differ from each other, and stay themselves", () => {
+  const game = boot(null, "?unlockall=1&trees=10");
+  game.clock.advance(50);
+  const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  const context = { self: {} };
+  vm.createContext(context);
+  vm.runInContext(app.slice(app.indexOf("function plantVariation"),
+    app.indexOf("var PLANT_LIFT_CEILING")) + "\nself.v = plantVariation;", context);
+  const vary = context.self.v;
+
+  const ids = ["plant-1", "plant-2", "plant-3", "plant-4", "plant-5", "plant-6"];
+  const shapes = ids.map(vary);
+
+  // stable: the same id always gives the same tree
+  for (const id of ids) {
+    assert.deepEqual(vary(id), vary(id), id + " changes shape between calls");
+  }
+
+  // and different: not every tree leans the same way or faces the same way
+  assert.ok(new Set(shapes.map((s) => s.tilt)).size > 1, "every plant leans identically");
+  assert.ok(new Set(shapes.map((s) => s.mirror)).size > 1, "every plant faces the same way");
+  assert.ok(new Set(shapes.map((s) => s.size)).size > 1, "every plant is the same size");
+
+  // subtle: past about 4 degrees a trunk stops growing and starts falling over
+  for (const s of shapes) {
+    assert.ok(Math.abs(s.tilt) <= 3.5, `a lean of ${s.tilt} degrees is a falling tree`);
+    assert.ok(s.size >= 0.9 && s.size <= 1.1, `a size of ${s.size} is not a variation`);
+    assert.ok(s.mirror === 1 || s.mirror === -1, "mirror is a flip, not a scale");
+  }
+});
