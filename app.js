@@ -2952,6 +2952,24 @@
    *
    * Re-measure when any of this art is redrawn: the value is the alpha
    * bounding box's bottom edge as a percentage of the canvas height. */
+  /* How far each species can be brightened before it turns to paper.
+   *
+   * `brightness` multiplies and clips at white, so a lift that suits one plant
+   * flattens another. Measured as the multiplier at which the brightest 5% of
+   * a species' mature art reaches 255: the sakura's pale blossoms already sit
+   * at 237 and take only 1.07, while the camellia's dark leaves take 1.77.
+   *
+   * A single day-time lift of 1.55 was therefore correct for the camellia and
+   * blew the cherry blossom out completely, which is what "the sakura lighting
+   * is too bright" looks like. The scene rules ask for the lift the ground
+   * wants; this caps it at what each picture can survive. */
+  var PLANT_LIFT_CEILING = {
+    "cherry-tree": 1.07,
+    "japanese-maple": 1.53,
+    camellia: 1.77,
+    sunflower: 1.22
+  };
+
   var PLANT_BASE = {
     camellia: {planted:77.5, sprout:82.9, growing:94.1, mature:94.2},
     "cherry-tree": {planted:95.5, sprout:95.9, sapling:93.4, young:96.1, mature:94.9},
@@ -3249,7 +3267,8 @@
       var width = (((type && type.sceneWidth) || 12) * (slot.scale || 1)).toFixed(2);
       html += '<div class="home-plant' + (plant.pendingAnimation ? " is-growing" : "") + '"'
         + ' style="left:' + slot.x + '%;top:' + slot.y + '%;width:' + width + '%;'
-        + 'z-index:' + homeDepthZ(slot.y) + ';transform:translate(-50%,-' + base + '%)"'
+        + 'z-index:' + homeDepthZ(slot.y) + ';transform:translate(-50%,-' + base + '%);'
+        + '--plant-lift-max:' + (PLANT_LIFT_CEILING[plant.typeId] || 1.6) + '"'
         + ' data-plant="' + plant.id + '" role="button" tabindex="0"'
         + ' aria-label="' + plantName(plant.typeId) + ' をあつかう">'
         + plantFigure(plant.typeId, visualStage,
@@ -3300,7 +3319,12 @@
             + ' aria-label="' + item.name + ' をかたづける"',
           'width:' + decorSceneWidth(item, slot) + '%;z-index:' + homeDepthZ(slot.y)
             + ';transform:translate(-50%,-'
-            + decorSceneAnchor(item) + '%) scaleY(' + decorSceneScaleY(item) + ')');
+            + decorSceneAnchor(item) + '%) scaleY(' + decorSceneScaleY(item) + ')'
+            /* A thing hung on a receding wall lies on that wall. The angle is
+             * the slot's, because it is a property of the wall rather than of
+             * the object: the same scroll is square on the back wall and
+             * slanted on a side one. */
+            + (slot.skew ? ' skewY(' + slot.skew + 'deg)' : ''));
       });
       if(picked){
         interior.slots.forEach(function(slot){

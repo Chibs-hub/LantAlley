@@ -10,6 +10,27 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 Added a transparent, semi-realistic sunflower growth set matching the existing garden cutouts: planted soil marker, sprout, closed-bud growing plant and mature bloom. The four 512px WebP files share one source sheet, lighting, soil treatment and a measured 95.5-95.7% ground baseline so growth does not jump vertically. The art is not yet connected to the catalogue or shop.
 
+### 2026-08-31 - Hung objects lie on the wall, and each plant gets the light it can take
+
+**A picture drawn face-on does not lie on a receding wall.** The two side walls converge, and the scroll and the lantern were drawn square, so they read as pinned to the air in front of the plaster rather than hung on it.
+
+Measuring the ceiling beams gives a clean symmetric pair - **+31.1 degrees on the left, -31.1 on the right** - and that is the wrong number to use. Every horizontal on a wall runs to the same vanishing point, so a line's slope depends on how far it sits from the horizon; the beams are near the ceiling. Carrying their convergence down to the hanging height of y=32 gives **12.8 degrees**, and at y=45 it would be 3.6. That is also why the same object looked worse the higher it hung.
+
+The wall positions now carry a `skew`, applied as `skewY` by the renderer, because the angle belongs to the wall and not to the object - the same scroll is square on the back wall and slanted on a side one. The posts take none: a pillar is a column facing the viewer, not a plane running away from one.
+
+**It silently did nothing at first.** `cloneSlots` lists the fields it copies, and `skew` was not among them, so the renderer read `undefined` from a copy that never carried it and simply omitted the term. Nothing failed; the transform came out one component short. The clone now carries it and says why.
+
+**The sakura was too bright because one lift served every plant.** `brightness` multiplies and clips at white, and the species differ enormously in how much they can take. Measured as the multiplier at which the brightest 5% of a species' mature art reaches 255:
+
+| species | clips at |
+| --- | --- |
+| cherry | **1.07** - its blossoms already sit at 237 |
+| sunflower | 1.22 |
+| maple | 1.53 |
+| camellia | 1.77 |
+
+The day rule asked for 1.55, which suits the camellia and turns cherry blossom to paper. Each plant now carries its own ceiling as a custom property and the scene rule asks for `min(1.55, ceiling)` - so the camellia still gets the lift the ground wants, and the cherry gets the little it can survive. The cherry needs less anyway: pale blossom is bright to begin with, which is exactly why it had no headroom.
+
 ### 2026-08-31 - One ruler per scene, and the greeting panel removed
 
 Objects and background did not agree because **one band sized the cat for both scenes, and the two are not the same size.** Each picture has a ruler in it:

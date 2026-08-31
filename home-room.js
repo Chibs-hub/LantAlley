@@ -46,6 +46,22 @@
    * a hung scroll floated in front of the garden. They are on the outer panels
    * now, which are the only stretches wide enough to take one.
    *
+   * `skew` is the angle of the wall the object is hung on.
+   *
+   * The two side walls recede, and a picture drawn face-on does not lie on a
+   * receding plane - it reads as pinned to the air in front of it, which is
+   * what a scroll at a weird angle looks like. Measuring the ceiling beams
+   * gives a clean symmetric pair, +31.1 degrees on the left and -31.1 on the
+   * right, but that is the slope at the ceiling and it is not the number to
+   * use: every horizontal on a wall runs to the same vanishing point, so the
+   * slope depends on how far the line sits from the horizon. Carrying the
+   * beams' convergence down to the hanging height of y=32 gives 12.8 degrees.
+   * At y=45 it would be 3.6, which is why the same object looks wronger the
+   * higher it is hung.
+   *
+   * The posts take no skew. A pillar is a column facing the viewer, not a
+   * plane running away from one, and a lantern hung on it stays square.
+   *
    * `post` is separate from `wall` because a 掛け行灯 hangs on a pillar, not on
    * plaster. Looking at the upper band of the painting rather than measuring
    * it: the dark structural posts stand at 24-27% and 73.5-76.5%, with plain
@@ -103,8 +119,8 @@
     {id:"floor-back-left", x:36, y:73, scale:0.72, kind:"floor", label:"床の奥左"},
     {id:"floor-back-right", x:64, y:73, scale:0.72, kind:"floor", label:"床の奥右"},
     {id:"floor-front", x:50, y:88, scale:1.00, kind:"floor", label:"床の手前"},
-    {id:"wall-left",    x:5,  y:32, scale:0.92, kind:"wall",  label:"壁の左"},
-    {id:"wall-right",   x:95, y:32, scale:0.92, kind:"wall",  label:"壁の右"},
+    {id:"wall-left",    x:5,  y:32, scale:0.92, skew:12.8,  kind:"wall",  label:"壁の左"},
+    {id:"wall-right",   x:95, y:32, scale:0.92, skew:-12.8, kind:"wall",  label:"壁の右"},
     {id:"post-left",    x:25, y:32, scale:0.88, kind:"post",  label:"柱の左"},
     {id:"post-right",   x:75, y:32, scale:0.88, kind:"post",  label:"柱の右"},
     {id:"eave", x:15, y:30, scale:0.80, kind:"eave", label:"軒下"},
@@ -174,10 +190,16 @@
     {id:"garden-free-24",x:90,y:93,scale:1.00,kind:"garden",label:"庭 24"}
   ];
 
+  /* The clone lists its fields, so a new one has to be added here too.
+   *
+   * `skew` was added to the wall positions and silently did not arrive: the
+   * renderer read `slot.skew` from a copy that never carried it, so the angle
+   * was always undefined and every scroll stayed square. Nothing failed - the
+   * transform simply omitted a term. */
   function cloneSlots(source){
     return source.map(function(slot){
       return {id:slot.id, x:slot.x, y:slot.y, scale:slot.scale || 1,
-              kind:slot.kind, label:slot.label};
+              skew:slot.skew || 0, kind:slot.kind, label:slot.label};
     });
   }
 

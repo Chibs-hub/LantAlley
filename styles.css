@@ -1690,9 +1690,14 @@
    * closes most of the gap while keeping the highlights. The room's own values
    * a few lines below are measured the same way against the tatami. */
   .light-morning .home-plant img,.light-morning .home-plant svg{
-    filter:drop-shadow(0 2px 3px rgba(25,13,6,.36)) saturate(.95) brightness(1.42) contrast(.95) hue-rotate(-5deg)}
+    filter:drop-shadow(0 2px 3px rgba(25,13,6,.36)) saturate(.95)
+      brightness(min(1.42, var(--plant-lift-max,1.6))) contrast(.95) hue-rotate(-5deg)}
+  /* The lift the ground asks for, capped at what the picture can take.
+     See PLANT_LIFT_CEILING in app.js: the sakura's blossoms clip at 1.07 and
+     the camellia's leaves not until 1.77, so one number cannot serve both. */
   .light-day .home-plant img,.light-day .home-plant svg{
-    filter:drop-shadow(0 2px 3px rgba(25,13,6,.32)) saturate(.92) brightness(1.55) contrast(.93)}
+    filter:drop-shadow(0 2px 3px rgba(25,13,6,.32)) saturate(.92)
+      brightness(min(1.55, var(--plant-lift-max,1.6))) contrast(.93)}
   .light-evening .home-plant img,.light-evening .home-plant svg{
     filter:drop-shadow(0 2px 3px rgba(25,13,6,.44)) saturate(1.02) brightness(1.00)}
   .light-night .home-plant img,.light-night .home-plant svg{
