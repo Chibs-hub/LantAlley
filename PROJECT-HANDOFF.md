@@ -14,13 +14,13 @@ A browser game that teaches JLPT N2 Japanese. Vanilla JS, CSS and HTML, no build
 | **How do I run and test it?** | Sections 2 and 7 |
 | **How am I expected to work?** | Section 12 |
 | **What is this file not allowed to become?** | Section 12, and see [CHANGELOG.md](CHANGELOG.md) |
-| **Why is this code like this?** | [CHANGELOG.md](CHANGELOG.md) - 151 entries, newest first |
+| **Why is this code like this?** | [CHANGELOG.md](CHANGELOG.md) - 153 entries, newest first |
 
 Sections 1, 3, 4, 5, 6, 8, 13, 14 and 15 are reference: what the game is, how it is designed, where the files are, how it ships, and what data it draws on.
 
 ## 0. Current status
 
-**Committed and pushed.** Cache **v187**, `node --test` **384/384**, all six modules pass `node --check`, `sw.js` agrees with all 26 `index.html` stamps.
+**Code is committed through v187; these documentation corrections are currently uncommitted.** `master` is one commit ahead of `origin/master`. `node --test` passes **384/384**, all six modules pass `node --check`, and `sw.js` agrees with all 26 `index.html` stamps.
 
 ### The game is finished and playable end to end
 
@@ -36,13 +36,13 @@ Three things, and **none of them are code**:
 
 1. **The Japanese has never been reviewed by a native speaker.** 215 items. Only the owner can do this. `?review=1`.
 2. **Most of the audio does not exist.** 506 of 620 spoken lines have no clip.
-3. **Most of the art does not exist.** Five of eight plant species and six of twenty-one furniture items render as vector stand-ins; four of five places have no scene art; the cat has no true sitting pose.
+3. **Most of the art does not exist.** Four of seven plant species and six of twenty-one furniture items render as vector stand-ins; four of five places have no scene art; the cat has no true sitting pose.
 
 The full list, with what each one is blocked on, is section 11.
 
 ### One open defect
 
-The owner has reported the cat's head being cut off. **It has not been reproduced**, and four separate causes have been measured and ruled out - section 11, item 1. The one fact still missing is which pose is on screen when it happens.
+The owner has reported the cat's head being cut off. **It has not been reproduced.** Sprite-edge and scene-edge clipping have been measured and ruled out, but v187 added depth stacking, so nearby foreground decor may intentionally cover part of the cat. The missing evidence is the current build version, pose and nearby placement - section 11, item 7.
 
 ### Two sessions work on this project in parallel
 
@@ -69,7 +69,7 @@ Both write here. If you are one of them, read the other's recent entries in [CHA
 
 Every place covers all five official item types. The four written ones - 表記, 語形成, 文の組み立て, 文章の文法 - live in each place's second episode, because a spelling cannot be heard and a sentence you assemble is one you are looking at.
 
-**Verification.** 342 automated tests pass, 0 fail. Bare `node --test` is the correct command. The service-worker cache is `lantern-alley-v141`.
+**Verification.** 384 automated tests pass, 0 fail. Bare `node --test` is the correct command. The service-worker cache is `lantern-alley-v187`.
 
 **Mastery and earnings.** The stage HUD now shows a persistent understanding gauge and wallet. Mastery is the percentage of distinct authored targets answered correctly, never attempts or speed. Correct answers pay once per question (Learn ¥10, Practice ¥15, Challenge ¥25, correction ¥10), so replay cannot farm money. Places unlock in order only when the previous place reaches 100%: Entrance, Inn, Market, Teahouse, Station, Shrine. Existing completed episodes are converted into mastered targets on load. Locked map places remain visible and explain the 100% requirement. Money now buys something: see **the house and garden** below.
 
@@ -79,7 +79,7 @@ Normal Inn word-choice questions no longer repeat the room inventory description
 
 **The house and garden.** `わが家` sits in the middle of the map and is never locked - coins may decide what goes inside it, but nothing about understanding decides whether a learner can go home. It opens on an illustrated yard; the house leads to an interior. Kon's first visit hands over a free camellia seed and a free cushion and makes the learner plant, place and move something once, advancing on the action rather than on a Next button; `使いかた` replays the explanation without handing anything out twice.
 
-**Placement is free, not slotted.** The yard began as eight painted beds and the room as six named corners; both were replaced by a dense grid of invisible positions over neutral backgrounds - 24 in the yard, keeping the original eight ids so existing saves do not lose their plants. The house, fence, path, room architecture and tokonoma are fixed scenery. Everything else - the starter pine and maple included - can be moved or put away.
+**Placement is free, not slotted.** The yard began as eight painted beds and the room as six named corners; both were replaced by a dense grid of invisible positions over neutral backgrounds - 24 in the yard, keeping the original eight ids so existing saves do not lose their plants. The house, fence, path, room architecture and tokonoma are fixed scenery. Everything else - including the starter maple - can be moved or put away.
 
 One item to a position and one position to an item: moving something empties where it came from, and placing into an occupied spot swaps and says which item went back. Each position carries a `scale`, so a plant at the back of the yard is smaller than the same plant at the front, because the painting has perspective and a fixed size ignored it.
 
@@ -93,7 +93,7 @@ Wallpaper is bought and hung; ownership and the active choice are stored separat
 
 **A cosmetic cat lives here.** One long-haired calico moves between authored anchors in the yard and the room, follows the learner between the two, and does nothing else: `pointer-events:none`, absent from the shop, still under reduced motion, paused in a hidden tab. It cannot touch lessons, money, growth or placement, and that separation is the point of it.
 
-**What the reward system still owes.** Sakura, maple and camellia are painted; the other five species are not. Fifteen of the twenty-one furniture items are illustrated; 火鉢, 扇, 面, 急須, 本 and 小さな鉢 are not. **The shop sells only what has been painted** - an unfinished drawing is honest while a learner watches something they own grow, and dishonest on a price tag. Anything already bought keeps rendering from its vector, so no existing save loses an object. Adding the art is what puts an item back on the shelf. Switching a species to painted art is one block in `PLANT_ART`; the remaining requirement is `docs/superpowers/plans/2026-08-28-home-garden-task-7-assets.md`.
+**What the reward system still owes.** Sakura, maple and camellia are painted; the other four species are not. Fifteen of the twenty-one furniture items are illustrated; 火鉢, 扇, 面, 急須, 本 and 小さな鉢 are not. **The shop sells only what has been painted** - an unfinished drawing is honest while a learner watches something they own grow, and dishonest on a price tag. Anything already bought keeps rendering from its vector, so no existing save loses an object. Adding the art is what puts an item back on the shelf. Switching a species to painted art is one block in `PLANT_ART`; the remaining requirement is `docs/superpowers/plans/2026-08-28-home-garden-task-7-assets.md`.
 
 **The one open decision.** Audio has not been generated for the four newer places. The course speaks 620 lines; 114 have clips. Inlining the remaining 506 would take the artifact to roughly 31 MB against a hard 16 MB limit, so on 2026-08-27 the owner chose to skip the audio run for now and to drop the Artifact as the delivery surface later, so that the finished game can ship with its voice. Nothing has been sent to Microsoft Edge TTS.
 
@@ -307,7 +307,7 @@ This was not hypothetical: a freshly edited `lantern-map.js` was served from the
 
 ## 9. Change log and reasons
 
-**Moved to [CHANGELOG.md](CHANGELOG.md)** on 2026-08-31 - 151 entries, unchanged. It was 81% of this file, so anyone reading top to bottom met two thousand lines of history before reaching section 11, which is the part that says what to do next.
+**Moved to [CHANGELOG.md](CHANGELOG.md)** on 2026-08-31 - initially 151 entries, with new entries added at the top. It was 81% of this file, so anyone reading top to bottom met two thousand lines of history before reaching section 11, which is the part that says what to do next.
 
 Read it when something looks wrong before you change it: most of the odd-looking decisions here are load-bearing, and the entry usually says what broke last time. New entries go at the top of that file, as `###` headings.
 
@@ -319,7 +319,7 @@ Split by whether anyone intends to change them. Nothing here is a surprise; all 
 
 - **No audio on four of the five places.** 506 of the 620 spoken lines have no clip. Listening items there are read rather than heard, and on a device with no Japanese voice they are silent. A recorded decision, not an oversight.
 - **The five-second items are tighter without audio.** At the Inn the clip plays before the clock starts, so the request has already been heard. Elsewhere the learner reads it cold. This is a direct consequence of the line above.
-- **Three of eight plant species are painted** - sakura, maple, camellia - and six of twenty-one furniture items still render as vector. Deliberate: the garden ships playable on stand-ins rather than waiting for art.
+- **Three of seven plant species are painted** - sakura, maple, camellia - and six of twenty-one furniture items still render as vector. Deliberate: the garden ships playable on stand-ins rather than waiting for art.
 - **No grammar or kanji catalog is approved**, so the project may claim coverage only of its named vocabulary catalog. Candidate sources are in section 14; KANJIDIC2's licence is now verified.
 
 ### Defects recorded but not fixed
@@ -327,6 +327,7 @@ Split by whether anyone intends to change them. Nothing here is a surprise; all 
 - **Tap targets in the Inn's illustrated room are small on a phone.** At 390px the stove zone is 51x18 and the broken bulb 23x23; four are under 24px at 320px. They cannot simply be enlarged - neighbouring zones are 29 to 45px apart centre to centre, so a comfortable hit area would overlap the next zone and steal its taps. **The fix is spacing them further apart in the artwork**, which is a scene decision, not a CSS one.
 - **The Inn is entered through its old three-day stage**, while the four newer places drop straight into their first episode. The two entry paths differ by history rather than by design.
 - **`chrysanthemum` is an id in two different catalogues**: a plant species in `home-garden.js` and the 菊の鉢 floor item in `home-decor.js`. Nothing breaks today, because plants live in `garden.plants` and furniture in `home.owned` and the two are never looked up together - both can be bought and held at once, which is what a learner would expect. It is recorded because **the next thing that resolves an id without knowing which catalogue it came from will find the wrong object, and that failure would be silent.**
+- **`assets/home/pet/calico-walk-v2.png` is superseded by v3** and is neither referenced by `home-pet.js` nor precached by `sw.js`. Ten sheets are in production; eleven are on disk.
 - **53.9 MB of the 58.5 MB of PNG/JPG under `assets/` is unreferenced** - leftover originals from before the JPG and WebP conversions. Harmless at runtime, but it is most of the working tree, and it is already in git history, so deleting it does not shrink a clone.
 - **Catalog provenance is incomplete.** The exact OpenJLPT commit used for the local copies was not recorded. The licence chain itself is verified and recorded in `NOTICE.md`; only the version is missing.
 
@@ -358,7 +359,7 @@ Nothing in this group is a code task. Listed so a coding session does not start 
    - **Clearance on all four sides**, 13px or more at 192px, so nothing touches a cell edge.
    - **Wanted:** a true sitting pose (upright, tail curled round the feet), and a consistent entry/exit if scene transitions are wanted back.
 
-4. **Finish the home and garden art.** Five of eight species are still drawn from data, six of twenty-one furniture items still render as vector. The system runs without it; this is the difference between a garden and a diagram. Requirement: `docs/superpowers/plans/2026-08-28-home-garden-task-7-assets.md`.
+4. **Finish the home and garden art.** Four of seven species are still drawn from data, and six of twenty-one furniture items still render as vector. The system runs without it; this is the difference between a garden and a diagram. Requirement: `docs/superpowers/plans/2026-08-28-home-garden-task-7-assets.md`.
 
    **Stage counts differ by species, and this trips people.** Camellia is painted in four steps matching the engine - `planted, sprout, growing, mature` - while sakura and maple are painted in five, with `sapling` and `young` in place of `growing`. `plantVisualStage` in `app.js` bridges the two. **Anything that renders a plant must go through it**, or the missing `growing` key falls back to a bare seedling - which is exactly what the storage card did until 2026-08-29.
 
@@ -370,13 +371,13 @@ Nothing in this group is a code task. Listed so a coding session does not start 
 
 7. **The reported cat clipping, which has never been reproduced.** Do not re-check the items below; they are measured and ruled out.
 
-   - Every frame in all four sheets keeps **at least 13px clear on all four sides** of its 192px cell.
+   - Every frame in all ten production behavior sheets keeps **at least 13px clear on all four sides** of its 192px cell.
    - The cat's box sits **inside the scene at every anchor**, clearing the goal line by 6px at the lowest.
-   - Nothing in the scene **outranks it in the stacking order**; `.home-pet` is `z-index: 3` and the only clipping ancestors are `.home-scene` and `.frame`, both far larger than the cat.
+   - V187 uses ground-depth stacking: foreground furniture or plants may intentionally outrank the cat and hide its lower body. This is occlusion, not sprite clipping, but a screenshot must include nearby placements so the two can be distinguished. The only clipping ancestors remain `.home-scene` and `.frame`, both far larger than the cat.
    - The element is **square** and `background-size` maps exactly one cell onto it, verified live in the browser.
    - Browser verification of the v169 cat sampled standing, idle and walking frames with complete ears, tail and paws, and its oversized scene scale was corrected from 9.5-12.8% to 6.8-9%.
 
-   **What is still unknown is which pose is on screen when it happens.** That is the one thing to capture: ask for a screenshot taken on the current build, or add a temporary on-screen readout of `homePetState.behavior`. Without it there is nothing left to test.
+   **What is still unknown is the current build, pose and nearby placement when it happens.** Capture all three: ask for a screenshot from the current build with surrounding decor visible, or add a temporary on-screen readout of `homePetState.behavior`. Without that evidence there is nothing specific left to test.
 
    **The trap that cost a whole session:** before v168 the browser painted pre-repack sprite bytes, so the art on disk and the art on screen were different files. A report predating v168 may describe art that no longer exists. **Confirm the reporter's build version before investigating.**
 
@@ -590,4 +591,3 @@ Written by the session that built the first three tasks of the home-and-garden p
 - Mature sakura and maple now read as trees rather than bonsai. Hydrangea, iris, chrysanthemum, and the lantern-flower bed received species-appropriate scene widths. Their simple vector art remains temporary, but its scale is now coherent.
 - Cache and local asset references are version 185. Full regression passes 380/380; JavaScript syntax and `git diff --check` pass. Browser verification at 1280x720 and 390x844 found no console warnings/errors or horizontal overflow. All five mobile floor targets remain 44x44 px, inside the scene, and separately reachable.
 - No commit or push was performed.
-

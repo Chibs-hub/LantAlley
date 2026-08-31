@@ -6,6 +6,12 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-08-31 - Handoff facts reconciled with v187
+
+The reorganised handoff still carried four present-tense contradictions from older status blocks. It said the branch was pushed while `master` was one commit ahead of `origin/master`; repeated the old v141/342-test verification; counted the removed pine as an eighth garden species; and described the cat as fixed at `z-index:3` even though v187 uses ground-depth stacking.
+
+The status now records the actual branch state, cache v187 and 384/384 tests. Plant art is consistently counted as three painted and four stand-ins across seven current species. The clipping investigation now separates measured sprite and scene clipping from intentional foreground occlusion and asks for the current build, pose and nearby placement in one screenshot.
+
 ### 2026-08-31 - The handoff reorganised around what is done and what is left
 
 The file had reached 2761 lines, of which this log was 2238 - 81%. It sat between the reference sections and section 11, so anyone reading top to bottom met a hundred and fifty change-log entries before reaching the part that says what to do next. Nothing was wrong with the content; the order made the useful parts unreachable.
@@ -2256,4 +2262,3 @@ The old single-file `lantern-alley.html` had no `<meta charset>`, so browsers de
 ### 2026-08-20 - Okurigana corrections
 
 `引受る` corrected to `引き受ける` and `代る` to `代わる` throughout. The old spellings were inconsistent with the game's own example sentences. This also fixed a silent bug: the Practice fill-in-blank stem map never matched, so that word's prompt was never actually blanked.
-
