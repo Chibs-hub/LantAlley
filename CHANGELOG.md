@@ -10,6 +10,23 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 Added a transparent, semi-realistic sunflower growth set matching the existing garden cutouts: planted soil marker, sprout, closed-bud growing plant and mature bloom. The four 512px WebP files share one source sheet, lighting, soil treatment and a measured 95.5-95.7% ground baseline so growth does not jump vertically. The art is not yet connected to the catalogue or shop.
 
+### 2026-08-31 - One ruler per scene, and the greeting panel removed
+
+Objects and background did not agree because **one band sized the cat for both scenes, and the two are not the same size.** Each picture has a ruler in it:
+
+- **The room**: tatami seams repeat every 88cm, putting the front row at 22.4% of the scene. 0.2541% per centimetre.
+- **The yard**: the entrance doorway measures 7.00% of the scene wide at three separate heights, and a Japanese entrance is about 90cm. Corrected to the front row by the slot scales, 0.0946% per centimetre.
+
+The sprite fills 86% of its square cell, so a 46cm cat wants a 53cm element: **13.5% of the room, 5.0% of the yard.** The old band of 6.8 to 9.0 split the difference and was wrong in both directions at once - a 95cm cat outdoors and a 35cm one indoors. That is the whole of "either one is too big or too small".
+
+The same ruler resized the garden. A mature cherry was 233cm and a mature maple 211cm - saplings, level with the eaves they stood beside rather than clear of them. 444cm and 381cm now.
+
+**Comparing a plant to the house by their shares of the picture is what hid this**, and it is worth writing down: the tree stands nearer the viewer than the house does, so it wins that comparison while being smaller in metres. Two passes were spent adjusting slot scales on that faulty comparison before measuring at a known depth settled it. A ruler at a known depth, or nothing.
+
+**掛け行灯 got its own placement kind.** A lantern hangs on a pillar, not on plaster; the posts are at 25% and 75%, plain to see in the upper band of the painting. `wall` now means flat wall - scroll, fan, mask - and `post` means the structural pillar.
+
+**The greeting panel is gone from the house.** It said "おかえりなさい" on every visit, told the learner nothing the picture does not, and cost about a hundred pixels of speech panel above the scene - on a phone, the difference between seeing the yard and seeing the roof of it. The mechanism was already there and already used during the tutorial, with a comment making exactly this argument; this stops making an exception once the tutorial is done. Kon still speaks when there is something to say.
+
 ### 2026-08-31 - The wall was right, the height was wrong
 
 掛け行灯 was still reading as hung on a sliding door after the previous fix, and the owner was right. The fix before this one moved both wall positions the wrong way, on an assumption I had not tested.

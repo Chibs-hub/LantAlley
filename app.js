@@ -2706,11 +2706,19 @@
       renderHud();
       return;
     }
-    $("dialogue-shell").classList.remove("is-silent");
-
-    var line = "コン：「おかえりなさい。ゆっくりしていってください。」";
-    if(dialogueFlow) dialogueFlow.start(line, false);
-    else $("jp-line").textContent = line;
+    /* The house stays silent after the tutorial as well.
+     *
+     * It used to greet the learner with "おかえりなさい" on every visit. The
+     * line said nothing the picture does not - you can see you are home - and
+     * it cost about a hundred pixels of speech panel above the scene, which on
+     * a phone is the difference between seeing the yard and seeing the roof of
+     * it. The same reasoning already applied during the tutorial a few lines
+     * above; this simply stops making an exception once that is finished.
+     *
+     * Kon still speaks here when there is something to say: the tutorial, and
+     * the notice line when a plant has grown while the learner was away. */
+    $("jp-line").textContent = "";
+    $("dialogue-shell").classList.add("is-silent");
 
     paintHome();
     renderHud();
