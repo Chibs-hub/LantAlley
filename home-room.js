@@ -91,31 +91,50 @@
    * of the scene tall and the front ones 12.0%, so a plant drawn the same size
    * in all eight towers nearly three times out of the back beds and onto the
    * gravel. These are the bed heights as a fraction of the nearest row. */
+  /* The depth falloff is compressed, because it was shrinking the back of the
+   * yard harder than the painting does.
+   *
+   * Measured against the house: its ground line is at y=54 and its eaves at
+   * about y=25, so the building stands 29% of the scene tall. A mature cherry
+   * is 22% of the scene wide on a square canvas, which makes it 39% tall at
+   * the front row - 1.35x the house, right for a cherry - but the old 0.42 at
+   * the back row brought it to 16%, barely half the house it was standing
+   * against. A tree planted at the veranda is only a few metres further away
+   * than the veranda; it should not be a third the size.
+   *
+   * The range is now 0.62 to 1.00 rather than 0.42 to 1.00, so a mature cherry
+   * reads between 0.83x and 1.35x the house across the whole yard. The falloff
+   * still exists - the back row is visibly further away - it just no longer
+   * outruns the perspective it is meant to imitate. The exact figure is a
+   * judgement about how far the garden may crowd the house, so it is one
+   * number to move if it wants to be bolder or shyer.
+   *
+   */
   var YARD_SLOTS = [
-    {id:"garden-left-1",x:25,y:58,scale:.42,kind:"garden",label:"庭の左奥 1"},
-    {id:"garden-left-2",x:34,y:63,scale:.50,kind:"garden",label:"庭の左奥 2"},
-    {id:"garden-left-3",x:21,y:72,scale:.64,kind:"garden",label:"庭の左中 1"},
-    {id:"garden-left-4",x:35,y:77,scale:.73,kind:"garden",label:"庭の左中 2"},
-    {id:"garden-right-1",x:75,y:58,scale:.42,kind:"garden",label:"庭の右奥 1"},
-    {id:"garden-right-2",x:66,y:63,scale:.50,kind:"garden",label:"庭の右奥 2"},
-    {id:"garden-right-3",x:79,y:72,scale:.64,kind:"garden",label:"庭の右中 1"},
-    {id:"garden-right-4",x:65,y:77,scale:.73,kind:"garden",label:"庭の右中 2"},
-    {id:"garden-free-09",x:15,y:61,scale:.48,kind:"garden",label:"庭 9"},
-    {id:"garden-free-10",x:43,y:60,scale:.46,kind:"garden",label:"庭 10"},
-    {id:"garden-free-11",x:57,y:60,scale:.46,kind:"garden",label:"庭 11"},
-    {id:"garden-free-12",x:85,y:61,scale:.48,kind:"garden",label:"庭 12"},
-    {id:"garden-free-13",x:12,y:78,scale:.72,kind:"garden",label:"庭 13"},
-    {id:"garden-free-14",x:28,y:84,scale:.82,kind:"garden",label:"庭 14"},
-    {id:"garden-free-15",x:41,y:82,scale:.80,kind:"garden",label:"庭 15"},
-    {id:"garden-free-16",x:59,y:82,scale:.80,kind:"garden",label:"庭 16"},
-    {id:"garden-free-17",x:72,y:84,scale:.82,kind:"garden",label:"庭 17"},
-    {id:"garden-free-18",x:88,y:78,scale:.72,kind:"garden",label:"庭 18"},
-    {id:"garden-free-19",x:10,y:93,scale:1,kind:"garden",label:"庭 19"},
-    {id:"garden-free-20",x:25,y:94,scale:1,kind:"garden",label:"庭 20"},
-    {id:"garden-free-21",x:40,y:94,scale:1,kind:"garden",label:"庭 21"},
-    {id:"garden-free-22",x:60,y:94,scale:1,kind:"garden",label:"庭 22"},
-    {id:"garden-free-23",x:75,y:94,scale:1,kind:"garden",label:"庭 23"},
-    {id:"garden-free-24",x:90,y:93,scale:1,kind:"garden",label:"庭 24"}
+    {id:"garden-left-1",x:25,y:58,scale:.62,kind:"garden",label:"庭の左奥 1"},
+    {id:"garden-left-2",x:34,y:63,scale:.67,kind:"garden",label:"庭の左奥 2"},
+    {id:"garden-left-3",x:21,y:72,scale:.76,kind:"garden",label:"庭の左中 1"},
+    {id:"garden-left-4",x:35,y:77,scale:.82,kind:"garden",label:"庭の左中 2"},
+    {id:"garden-right-1",x:75,y:58,scale:.62,kind:"garden",label:"庭の右奥 1"},
+    {id:"garden-right-2",x:66,y:63,scale:.67,kind:"garden",label:"庭の右奥 2"},
+    {id:"garden-right-3",x:79,y:72,scale:.76,kind:"garden",label:"庭の右中 1"},
+    {id:"garden-right-4",x:65,y:77,scale:.82,kind:"garden",label:"庭の右中 2"},
+    {id:"garden-free-09",x:15,y:61,scale:.66,kind:"garden",label:"庭 9"},
+    {id:"garden-free-10",x:43,y:60,scale:.65,kind:"garden",label:"庭 10"},
+    {id:"garden-free-11",x:57,y:60,scale:.65,kind:"garden",label:"庭 11"},
+    {id:"garden-free-12",x:85,y:61,scale:.66,kind:"garden",label:"庭 12"},
+    {id:"garden-free-13",x:12,y:78,scale:.82,kind:"garden",label:"庭 13"},
+    {id:"garden-free-14",x:28,y:84,scale:.88,kind:"garden",label:"庭 14"},
+    {id:"garden-free-15",x:41,y:82,scale:.87,kind:"garden",label:"庭 15"},
+    {id:"garden-free-16",x:59,y:82,scale:.87,kind:"garden",label:"庭 16"},
+    {id:"garden-free-17",x:72,y:84,scale:.88,kind:"garden",label:"庭 17"},
+    {id:"garden-free-18",x:88,y:78,scale:.82,kind:"garden",label:"庭 18"},
+    {id:"garden-free-19",x:10,y:93,scale:1.00,kind:"garden",label:"庭 19"},
+    {id:"garden-free-20",x:25,y:94,scale:1.00,kind:"garden",label:"庭 20"},
+    {id:"garden-free-21",x:40,y:94,scale:1.00,kind:"garden",label:"庭 21"},
+    {id:"garden-free-22",x:60,y:94,scale:1.00,kind:"garden",label:"庭 22"},
+    {id:"garden-free-23",x:75,y:94,scale:1.00,kind:"garden",label:"庭 23"},
+    {id:"garden-free-24",x:90,y:93,scale:1.00,kind:"garden",label:"庭 24"}
   ];
 
   function cloneSlots(source){

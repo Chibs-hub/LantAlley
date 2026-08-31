@@ -10,6 +10,28 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 Added a transparent, semi-realistic sunflower growth set matching the existing garden cutouts: planted soil marker, sprout, closed-bud growing plant and mature bloom. The four 512px WebP files share one source sheet, lighting, soil treatment and a measured 95.5-95.7% ground baseline so growth does not jump vertically. The art is not yet connected to the catalogue or shop.
 
+### 2026-08-31 - A mature tree at the back of the yard was a third the size of the house
+
+Checked both halves of the owner's report. One was already fixed, the other was real.
+
+**Floating objects: the yard was never the problem.** Drawing all 24 yard positions onto the painting puts every one of them on gravel or moss. The floating was the room's, and it was fixed on 2026-08-31 when seven of its ten positions turned out to be on the shoji screens, on flat wall, or in the doorways. The yard needed nothing.
+
+**Tree size against the house: confirmed, and it was the depth falloff rather than the art.** Using the building as the ruler - its ground line at y=54 and its eaves at about y=25, so 29% of the scene tall - a mature cherry measured:
+
+| position | scale | height | against the house |
+| --- | --- | --- | --- |
+| back row | 0.42 | 16.4% | **0.57x** |
+| middle | 0.72 | 28.2% | 0.97x |
+| front row | 1.00 | 39.1% | 1.35x |
+
+The front row was right; a cherry taller than the eaves is a cherry. The back row was barely half the height of the building it stood against, and a tree planted at the veranda is only a few metres further away than the veranda. The falloff was 2.4x across a yard a few metres deep, which is steeper than the painting's own perspective.
+
+Attempts to derive that perspective from the painting failed honestly and are recorded so nobody repeats them: the fence scan caught foliage above the rail, and sampling stepping-stone widths across single rows returned 2.4% to 7.7% with no trend, because a row cuts each stone at a random chord. The house is the only reliable ruler in the picture.
+
+The 24 scales are remapped from a 0.42-1.00 range to 0.62-1.00, so a mature cherry now reads between 0.84x and 1.35x the house across the whole yard. The falloff still exists and the back row still reads as further away; it simply no longer outruns the perspective it imitates. **The figure is a judgement about how far the garden may crowd the house**, so the comment says which single number to move.
+
+Still open and unchanged, because both are art rather than code: the wallpaper covers ceiling and doors for want of a mask, and room furniture runs about 1.4x large because item widths are a percentage of the scene rather than of the floor.
+
 ### 2026-08-31 - The sunflower, wired in
 
 Four sunflower pictures had arrived in `assets/home/garden/` and were **referenced by nothing** - no catalogue entry, no `PLANT_ART`, no name, not pre-cached. They had also been swept into the previous commit by a `git add -A`, so the repository was carrying art the game could not reach.
