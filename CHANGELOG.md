@@ -10,6 +10,22 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 Added a transparent, semi-realistic sunflower growth set matching the existing garden cutouts: planted soil marker, sprout, closed-bud growing plant and mature bloom. The four 512px WebP files share one source sheet, lighting, soil treatment and a measured 95.5-95.7% ground baseline so growth does not jump vertically. The art is not yet connected to the catalogue or shop.
 
+### 2026-08-31 - Writing down what each object is, before deciding where it goes
+
+Asked to define every object first and then place it, which turned out to be the right order: doing it found a fault that had survived every audit so far.
+
+**The definitions were nearly all correct. One was not.** Checking all 21 items against what the object actually is, twenty matched their catalogued `kind`. The exception: **風鈴 was filed as `sill` furniture**, so a wind chime stood on the veranda boards like a plant pot, held up by a -40 offset that lifted it clear of a surface it should never have been resting on. A wind chime hangs. That is the whole of what a wind chime does.
+
+`eave` is now a fifth kind, with a position under the veranda beam at (15,30), and the chime is anchored by its top with no offset - the anchor is the hook. A test now holds the table of what belongs where, so the next object added has to say which of the five surfaces it sits on, and a mismatch fails rather than waiting to be spotted in a screenshot.
+
+**掛け軸 was on the doors.** The wall positions were at x=5 and x=95, which are the outer strips - and at a glance they read as the sliding doors beside them. Measured for busyness, every wall in this painting carries an ink landscape, so a scroll always overlaps something; but the panels flanking the shoji are the quietest of them, 20 against 28 by standard deviation, and they are where a scroll would actually hang. Moved to 34 and 66. **The real fix is the room-with-a-tokonoma already in the art queue** - a scroll belongs in an alcove, and no coordinate substitutes for one.
+
+**A full-grown cherry is now at least as tall as the house, wherever it is planted.** The back row was at 0.84x after the previous pass; the range is now 0.74 to 1.00 rather than 0.62 to 1.00, so a mature cherry reads 1.00x to 1.35x the house across the whole yard.
+
+Checked and left alone: the kotatsu at 114cm, the zabuton at 55cm and the cat at about 30cm are each right against the tatami, and right against each other - the cat is 58% of the cushion's width, which is what a cat beside a zabuton looks like. Also confirmed the four room paintings share their geometry exactly - same seams at 11, 30, 49, 69 and 88 percent, same wall runs - so measurements taken on the evening picture hold for all four.
+
+Still open, and both art: the shelf objects rest on the tatami because the room has no shelf, and the wall objects overlap murals because every wall has one.
+
 ### 2026-08-31 - Furniture measured against the room's own tatami
 
 The estimate this replaces was wrong, and the way it was wrong is the useful part. It came from scanning the painting for the width of the visible floor, which returned noisy figures, and from those I concluded the furniture ran about 1.4x too large. **It was mostly too small, and unevenly.**

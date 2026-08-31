@@ -46,6 +46,19 @@
    * a hung scroll floated in front of the garden. They are on the outer panels
    * now, which are the only stretches wide enough to take one.
    *
+   * The wall positions moved inward, from 5 and 95 to 34 and 66.
+   *
+   * Every wall in this painting carries an ink landscape, so a hung scroll
+   * always overlaps something - that is the room-with-a-tokonoma item in the
+   * art queue, not something a coordinate can solve. But the panels flanking
+   * the shoji are measurably the quietest of them, 20 against 28 by standard
+   * deviation, and they are where a scroll would actually hang. The outer
+   * strips are also the ones that read as being on the doors.
+   *
+   * `eave` is a new kind, for the one object that hangs from something rather
+   * than resting on it. A wind chime under the veranda beam is the whole point
+   * of a wind chime; it was filed as `sill` furniture and sat on the boards.
+   *
    * The five floor positions are spread sideways rather than stacked, because
    * they cannot be stacked. A phone scene is about 320x180, a comfortable
    * target is 44px, and the visible tatami runs only from y=70 to the bottom -
@@ -71,8 +84,9 @@
     {id:"floor-back-left", x:36, y:73, scale:0.72, kind:"floor", label:"床の奥左"},
     {id:"floor-back-right", x:64, y:73, scale:0.72, kind:"floor", label:"床の奥右"},
     {id:"floor-front", x:50, y:88, scale:1.00, kind:"floor", label:"床の手前"},
-    {id:"wall-left",    x:5,  y:45, scale:0.92, kind:"wall",  label:"壁の左"},
-    {id:"wall-right",   x:95, y:45, scale:0.92, kind:"wall",  label:"壁の右"},
+    {id:"wall-left",    x:34, y:45, scale:0.92, kind:"wall",  label:"壁の左"},
+    {id:"wall-right",   x:66, y:45, scale:0.92, kind:"wall",  label:"壁の右"},
+    {id:"eave", x:15, y:30, scale:0.80, kind:"eave", label:"軒下"},
     {id:"shelf",        x:50, y:72, scale:0.78, kind:"shelf", label:"奥の段"},
     {id:"window-sill",  x:12, y:78, scale:0.80, kind:"sill",  label:"窓辺"},
     {id:"tokonoma", x:70, y:74, scale:0.85, kind:"shelf", label:"床の間"}
@@ -102,8 +116,10 @@
    * against. A tree planted at the veranda is only a few metres further away
    * than the veranda; it should not be a third the size.
    *
-   * The range is now 0.62 to 1.00 rather than 0.42 to 1.00, so a mature cherry
-   * reads between 0.83x and 1.35x the house across the whole yard. The falloff
+   * The range is now 0.74 to 1.00, having gone 0.42 to 0.62 on the way, so a
+   * mature cherry reads between 1.00x and 1.35x the house. The floor of that
+   * range is deliberate: a full-grown cherry should be at least as tall as the
+   * house it stands beside, wherever in the yard it is planted. The falloff
    * still exists - the back row is visibly further away - it just no longer
    * outruns the perspective it is meant to imitate. The exact figure is a
    * judgement about how far the garden may crowd the house, so it is one
@@ -111,24 +127,24 @@
    *
    */
   var YARD_SLOTS = [
-    {id:"garden-left-1",x:25,y:58,scale:.62,kind:"garden",label:"庭の左奥 1"},
-    {id:"garden-left-2",x:34,y:63,scale:.67,kind:"garden",label:"庭の左奥 2"},
-    {id:"garden-left-3",x:21,y:72,scale:.76,kind:"garden",label:"庭の左中 1"},
-    {id:"garden-left-4",x:35,y:77,scale:.82,kind:"garden",label:"庭の左中 2"},
-    {id:"garden-right-1",x:75,y:58,scale:.62,kind:"garden",label:"庭の右奥 1"},
-    {id:"garden-right-2",x:66,y:63,scale:.67,kind:"garden",label:"庭の右奥 2"},
-    {id:"garden-right-3",x:79,y:72,scale:.76,kind:"garden",label:"庭の右中 1"},
-    {id:"garden-right-4",x:65,y:77,scale:.82,kind:"garden",label:"庭の右中 2"},
-    {id:"garden-free-09",x:15,y:61,scale:.66,kind:"garden",label:"庭 9"},
-    {id:"garden-free-10",x:43,y:60,scale:.65,kind:"garden",label:"庭 10"},
-    {id:"garden-free-11",x:57,y:60,scale:.65,kind:"garden",label:"庭 11"},
-    {id:"garden-free-12",x:85,y:61,scale:.66,kind:"garden",label:"庭 12"},
-    {id:"garden-free-13",x:12,y:78,scale:.82,kind:"garden",label:"庭 13"},
-    {id:"garden-free-14",x:28,y:84,scale:.88,kind:"garden",label:"庭 14"},
-    {id:"garden-free-15",x:41,y:82,scale:.87,kind:"garden",label:"庭 15"},
-    {id:"garden-free-16",x:59,y:82,scale:.87,kind:"garden",label:"庭 16"},
-    {id:"garden-free-17",x:72,y:84,scale:.88,kind:"garden",label:"庭 17"},
-    {id:"garden-free-18",x:88,y:78,scale:.82,kind:"garden",label:"庭 18"},
+    {id:"garden-left-1",x:25,y:58,scale:.74,kind:"garden",label:"庭の左奥 1"},
+    {id:"garden-left-2",x:34,y:63,scale:.77,kind:"garden",label:"庭の左奥 2"},
+    {id:"garden-left-3",x:21,y:72,scale:.84,kind:"garden",label:"庭の左中 1"},
+    {id:"garden-left-4",x:35,y:77,scale:.88,kind:"garden",label:"庭の左中 2"},
+    {id:"garden-right-1",x:75,y:58,scale:.74,kind:"garden",label:"庭の右奥 1"},
+    {id:"garden-right-2",x:66,y:63,scale:.77,kind:"garden",label:"庭の右奥 2"},
+    {id:"garden-right-3",x:79,y:72,scale:.84,kind:"garden",label:"庭の右中 1"},
+    {id:"garden-right-4",x:65,y:77,scale:.88,kind:"garden",label:"庭の右中 2"},
+    {id:"garden-free-09",x:15,y:61,scale:.77,kind:"garden",label:"庭 9"},
+    {id:"garden-free-10",x:43,y:60,scale:.76,kind:"garden",label:"庭 10"},
+    {id:"garden-free-11",x:57,y:60,scale:.76,kind:"garden",label:"庭 11"},
+    {id:"garden-free-12",x:85,y:61,scale:.77,kind:"garden",label:"庭 12"},
+    {id:"garden-free-13",x:12,y:78,scale:.88,kind:"garden",label:"庭 13"},
+    {id:"garden-free-14",x:28,y:84,scale:.92,kind:"garden",label:"庭 14"},
+    {id:"garden-free-15",x:41,y:82,scale:.91,kind:"garden",label:"庭 15"},
+    {id:"garden-free-16",x:59,y:82,scale:.91,kind:"garden",label:"庭 16"},
+    {id:"garden-free-17",x:72,y:84,scale:.92,kind:"garden",label:"庭 17"},
+    {id:"garden-free-18",x:88,y:78,scale:.88,kind:"garden",label:"庭 18"},
     {id:"garden-free-19",x:10,y:93,scale:1.00,kind:"garden",label:"庭 19"},
     {id:"garden-free-20",x:25,y:94,scale:1.00,kind:"garden",label:"庭 20"},
     {id:"garden-free-21",x:40,y:94,scale:1.00,kind:"garden",label:"庭 21"},

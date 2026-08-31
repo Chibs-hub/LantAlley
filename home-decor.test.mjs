@@ -111,7 +111,10 @@ test("placed decor carries physical size and contact-point calibration", () => {
     "teapot": {width:8, anchorY:100, scaleY:1, offsetY:0},
     "books": {width:9, anchorY:100, scaleY:1, offsetY:0},
     "sill-plant": {width:14, anchorY:100, scaleY:1, offsetY:0},
-    "wind-chime": {width:4, anchorY:0, scaleY:1, offsetY:-40}
+    // A wind chime hangs from its hook, so its anchor is the top of the picture
+    // and there is nothing to offset it from. The -40 was lifting it off a
+    // windowsill it should never have been standing on.
+    "wind-chime": {width:4, anchorY:0, scaleY:1, offsetY:0}
   };
   for(const [id, want] of Object.entries(expected)){
     const got = decor.presentationFor(id);
@@ -244,4 +247,54 @@ test("buy and place never mutate the home they were handed", () => {
   decor.place(home, "rug-plain", "floor-right", slots);
   decor.remove(home, "floor-left");
   assert.deepEqual(home, {owned: ["rug-plain"], placed: {"floor-left": "rug-plain"}});
+});
+
+/* Every object's placement is declared, and matches what the object is.
+ *
+ * This table is the definition the catalogue is checked against, rather than
+ * a restatement of it. A wind chime spent this long filed as `sill` furniture
+ * and therefore stood on the veranda boards like a plant pot - which is not a
+ * thing a wind chime does. Writing down what each object IS makes that kind of
+ * mistake visible instead of leaving it to be noticed in a screenshot.
+ *
+ * Adding an item means adding it here too, and saying which of the five
+ * surfaces it belongs on.
+ */
+test("every object declares the surface it actually belongs on", () => {
+  const belongs = {
+    // rests on the tatami
+    "floor-cushion-navy": "floor", "rug-plain": "floor", "plant-small": "floor",
+    "low-table": "floor", "brazier": "floor", "kotatsu": "floor",
+    "folding-screen": "floor", "floor-lantern": "floor", "chrysanthemum-pot": "floor",
+    // hangs flat against a wall
+    "scroll": "wall", "wall-lamp": "wall", "fan": "wall", "mask": "wall",
+    // rests on a raised surface rather than the floor
+    "teapot": "shelf", "books": "shelf", "cat-figure": "shelf",
+    "daruma": "shelf", "sakura-bonsai": "shelf", "pine-bonsai": "shelf",
+    // stands on the veranda boards
+    "sill-plant": "sill",
+    // hangs from a beam, resting on nothing
+    "wind-chime": "eave",
+  };
+
+  const catalogue = decor.catalogue();
+  for (const item of catalogue) {
+    assert.ok(belongs[item.id], item.id + " has no declared surface in this table");
+    assert.equal(item.kind, belongs[item.id],
+      item.id + " is catalogued as " + item.kind + " but belongs on " + belongs[item.id]);
+  }
+  assert.equal(Object.keys(belongs).length, catalogue.length,
+    "the table lists an item the catalogue does not have");
+
+  // and every surface an object claims must exist somewhere in the room
+  const roomSlots = room.scenes().interior.slots;
+  for (const kind of new Set(Object.values(belongs))) {
+    assert.ok(roomSlots.some((s) => s.kind === kind),
+      "objects belong on '" + kind + "' but the room has no such position");
+  }
+
+  // a hanging object is anchored by its top, because that is where the hook is
+  const chime = decor.presentationFor("wind-chime");
+  assert.equal(chime.anchorY, 0, "a hanging object is anchored at its top");
+  assert.equal(chime.offsetY, 0, "a hanging object needs no offset from a surface");
 });

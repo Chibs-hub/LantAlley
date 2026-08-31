@@ -128,7 +128,7 @@
     {id:"sill-plant", name:"小さな鉢", kind:"sill", price:60, category:"窓辺",
      svg:'<rect x="-10" y="0" width="20" height="16" rx="3" fill="#9c6b4a" stroke="#6b4530" stroke-width="2"/>'
        + '<path d="M0 0 q-12 -12 -6 -20 q8 4 6 20 M0 0 q12 -12 6 -20 q-8 4 -6 20" fill="#4f7d4a"/>'},
-    {id:"wind-chime", name:"風鈴", kind:"sill", price:150, category:"窓辺",
+    {id:"wind-chime", name:"風鈴", kind:"eave", price:150, category:"窓辺",
      image:"assets/home/decor/wind-chime-blue-v1.webp",
      svg:'<path d="M-12 -6 q0 -14 12 -14 q12 0 12 14 q0 6 -12 6 q-12 0 -12 -6 Z" fill="#bcd7e0" stroke="#6a90a0" stroke-width="3" opacity="0.9"/>'
        + '<line x1="0" y1="0" x2="0" y2="16" stroke="#6a90a0" stroke-width="2"/>'
@@ -228,7 +228,7 @@
     "sakura-bonsai":      {width:7.5, anchorY:100},
     "pine-bonsai":        {width:7.5, anchorY:100},
     "sill-plant":         {width:14, anchorY:100},
-    "wind-chime":         {width:4, anchorY:0, offsetY:-40}
+    "wind-chime":         {width:4, anchorY:0, offsetY:0}
   };
 
   function presentationFor(id){
