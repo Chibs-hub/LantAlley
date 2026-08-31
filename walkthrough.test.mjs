@@ -729,7 +729,7 @@ test("the yard announces a plant that grew while the learner was away", async ()
  * hands over an item with no slot of its kind would look like a working test
  * fixture and quietly prove nothing.
  */
-test("the unlock hands over every catalogue entry, and leaves all of it unplaced", () => {
+test("the unlock hands over every painted item, and leaves all of it unplaced", () => {
   const game = boot();
   const report = game.context.window.lanternUnlockAll();
   const decor = game.context.LanternHomeDecor;
@@ -738,12 +738,25 @@ test("the unlock hands over every catalogue entry, and leaves all of it unplaced
   const saved = JSON.parse(game.storage.getItem("lanternAlley.v3"));
   assert.equal(report.ok, true);
 
-  assert.equal(report.furniture, decor.catalogue().length,
-    "every furniture item is owned");
-  assert.equal(report.wallpapers, decor.wallpapers().length - 1,
-    "every wallpaper except the bare room is owned");
-  assert.equal(report.plants, garden.catalogue().length * 2,
-    "every species arrives twice, at both ends of its growth");
+  /* Painted only, matching the shop.
+   *
+   * It used to grant the whole catalogue, which filled the test room with a
+   * mix of finished pictures and green geometry and made it hard to judge what
+   * the reward actually looks like. The counts are derived rather than
+   * hard-coded, so painting one more item does not break this. */
+  const paintedDecor = decor.catalogue().filter((i) => decor.getItem(i.id).image);
+  const paintedPaper = decor.wallpapers()
+    .filter((w) => w.id !== "wallpaper-plain" && decor.getWallpaper(w.id).image);
+  assert.equal(report.furniture, paintedDecor.length, "every painted item is owned");
+  assert.ok(paintedDecor.length < decor.catalogue().length,
+    "some items are still unpainted, so this test is actually excluding something");
+  assert.equal(report.wallpapers, paintedPaper.length,
+    "only wallpaper with a picture is owned");
+  assert.equal(report.plants % 2, 0, "each granted species arrives twice");
+  assert.ok(report.plants / 2 < garden.catalogue().length,
+    "unpainted species are left out");
+  assert.ok(report.skippedUnpainted.length > 0,
+    "the report says what it withheld and why");
 
   assert.deepEqual(saved.home.placed, {},
     "nothing is placed: the point is to test the placing");
@@ -805,4 +818,44 @@ test("the ?unlockall=1 flag unlocks on load without breaking the module", () => 
   // the tables assigned below the flag must still exist afterwards
   assert.ok(game.context.LanternHomeDecor.getItem(saved.home.owned[0]),
     "the catalogue survived the unlock");
+});
+
+/* The shop sells only what has been painted - wallpaper included.
+ *
+ * Furniture and plants were gated on having a picture from the start, and
+ * wallpaper was not, so the vector 桜 pattern sat on the shelf with a price on
+ * it. The rule is one rule: an unfinished drawing is honest while a learner
+ * watches something they already own, and dishonest on a price tag. 無地 is
+ * exempt because it is the bare room rather than a product.
+ */
+test("the shop's wallpaper shelf offers only wallpaper that has a picture", () => {
+  const game = boot(plantedCamelliaSave());
+  enterHome(game);
+  game.doc.querySelectorAll("[data-home-shop]")[0].click();
+  game.clock.advance(50);
+
+  const tab = game.doc.querySelectorAll("[data-shop-category]")
+    .find((b) => b.getAttribute("data-shop-category") === "wallpaper");
+  assert.ok(tab, "the shop has a wallpaper category");
+  tab.click();
+  game.clock.advance(50);
+
+  const decor = game.context.LanternHomeDecor;
+  const offered = game.doc.querySelectorAll("[data-buy-wallpaper]")
+    .map((b) => b.getAttribute("data-buy-wallpaper"));
+  assert.ok(offered.length >= 1, "the shelf is not empty");
+
+  for (const id of offered) {
+    if (id === "wallpaper-plain") continue;           // the bare room, not a product
+    assert.ok(decor.getWallpaper(id).image, id + " is on sale but has no picture");
+  }
+
+  const unpainted = decor.wallpapers()
+    .filter((w) => w.id !== "wallpaper-plain" && !decor.getWallpaper(w.id).image)
+    .map((w) => w.id);
+  assert.ok(unpainted.length > 0,
+    "expected at least one unpainted wallpaper, or this test proves nothing");
+  for (const id of unpainted) {
+    assert.ok(!offered.includes(id), id + " has no picture but is still sold");
+  }
 });

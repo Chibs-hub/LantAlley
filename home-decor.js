@@ -64,7 +64,15 @@
     {id:"floor-lantern", name:"置き行灯", kind:"floor", price:180, category:"床",
      image:"assets/home/decor/floor-lantern-v1.webp",
      svg:'<rect x="-20" y="-36" width="40" height="70" rx="3" fill="#f1cf82" stroke="#3b2a1b" stroke-width="5"/><path d="M-20 -12 H20 M-20 12 H20" stroke="#3b2a1b" stroke-width="3"/>'},
-    {id:"chrysanthemum", name:"菊の鉢", kind:"floor", price:140, category:"床",
+    /* `chrysanthemum-pot`, not `chrysanthemum`.
+     *
+     * The plain name belongs to the garden species in home-garden.js, and both
+     * catalogues held it. Nothing broke, because plants live in garden.plants
+     * and furniture in home.owned and the two were never resolved together -
+     * but the next lookup that did not know which catalogue an id came from
+     * would have found the wrong object, and silently. The picture has always
+     * been chrysanthemum-pot-v1.webp, so the id now matches the asset. */
+    {id:"chrysanthemum-pot", name:"菊の鉢", kind:"floor", price:140, category:"床",
      image:"assets/home/decor/chrysanthemum-pot-v1.webp",
      svg:'<ellipse cx="0" cy="18" rx="28" ry="9" fill="#79553b"/><path d="M-24 15 L-18 -12 L18 -12 L24 15 Z" fill="#9b704c"/><circle cx="0" cy="-24" r="22" fill="#cf9d3c"/>'},
 
@@ -180,7 +188,7 @@
     kotatsu:               {width:22, anchorY:100},
     "folding-screen":     {width:25, anchorY:100},
     "floor-lantern":      {width:6.5, anchorY:100},
-    chrysanthemum:         {width:8, anchorY:100},
+    "chrysanthemum-pot":   {width:8, anchorY:100},
     scroll:                {width:7, anchorY:50},
     "wall-lamp":          {width:5.5, anchorY:50},
     fan:                   {width:9, anchorY:50},

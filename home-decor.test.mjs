@@ -86,7 +86,7 @@ test("available reward artwork is connected to matching shop items", () => {
     daruma:"daruma-red-v1.webp",
     "folding-screen":"folding-screen-cranes-v1.webp",
     "floor-lantern":"floor-lantern-v1.webp",
-    chrysanthemum:"chrysanthemum-pot-v1.webp",
+    "chrysanthemum-pot":"chrysanthemum-pot-v1.webp",
     "sakura-bonsai":"sakura-bonsai-v1.webp",
     "pine-bonsai":"pine-bonsai-v1.webp"
   };

@@ -674,7 +674,14 @@
   state.money = pendingMoney;
   state.paidAnswers = pendingPaidAnswers;
   state.masteredByStage = pendingMasteredByStage;
-  state.home = pendingHome;
+  /* One id used to mean two different things.
+   *
+   * `chrysanthemum` was both a garden species and the 菊の鉢 floor item. The
+   * furniture has been renamed to `chrysanthemum-pot`; a save written before
+   * that still calls it by the old name. The rewrite is unambiguous because
+   * furniture only ever appears in `home`, and plants only in `garden`, so an
+   * id found here can only be the pot. */
+  state.home = migrateHomeIds(pendingHome);
   state.homeVisited = pendingHomeVisited;
   state.houseTier = pendingHouseTier;
   state.homeTutorialComplete = pendingHomeTutorialComplete;
@@ -2946,6 +2953,27 @@
     return rows[stage] || rows.mature || 92;
   }
 
+  function migrateHomeIds(home){
+    /* The table lives inside the function on purpose.
+     *
+     * This runs during the save restore, about seven hundred lines in, while a
+     * `var` beside `homeState` is assigned two thousand lines below that. The
+     * declaration hoists and the assignment does not, so the table read as
+     * undefined and the first id threw. That is the second time this file has
+     * caught me the same way; a literal in scope cannot be mistimed. */
+    var renames = {chrysanthemum:"chrysanthemum-pot"};
+    var source = home || {owned:[], placed:{}};
+    var rename = function(id){ return renames[id] || id; };
+    var placed = {};
+    Object.keys(source.placed || {}).forEach(function(slotId){
+      placed[slotId] = rename(source.placed[slotId]);
+    });
+    var owned = (source.owned || []).map(rename).filter(function(id, i, all){
+      return all.indexOf(id) === i;   // a save holding both names collapses to one
+    });
+    return {owned:owned, placed:placed};
+  }
+
   function homeState(){
     if(!state.home) state.home = {owned:[], placed:{}};
     if(!state.home.owned) state.home.owned = [];
@@ -3659,6 +3687,11 @@
     return !!(item && item.image);
   }
 
+  function wallpaperHasArt(paperId){
+    var paper = LanternHomeDecor.getWallpaper(paperId);
+    return !!(paper && paper.image);
+  }
+
   function homeShopDock(){
     var money = state.money || 0;
     var html = tutorialGiftCard();
@@ -3670,6 +3703,13 @@
       });
     }else if(homeShopCategory === "wallpaper"){
       LanternHomeDecor.wallpapers().forEach(function(paper){
+        /* Wallpaper was the one shelf still selling a drawing.
+         *
+         * Furniture and plants were already gated on having a picture, and the
+         * rule is the same for all three: an unfinished drawing is honest while
+         * a learner watches something they own, and dishonest on a price tag.
+         * 無地 stays, because it is the bare room rather than a product. */
+        if(paper.id !== "wallpaper-plain" && !wallpaperHasArt(paper.id)) return;
         var owned = LanternHomeDecor.ownsWallpaper(homeState(), paper.id);
         var swatch = paper.hasPattern
           ? '<span class="home-swatch">' + LanternHomeDecor.wallpaperSvg(paper.id) + '</span>'
@@ -3726,18 +3766,24 @@
     if(typeof LanternHomeDecor === "undefined" || typeof LanternHomeGarden === "undefined"){
       return {ok:false, reason:"catalogues not loaded"};
     }
-    var report = {ok:true, furniture:0, wallpapers:0, plants:0, drawnOnly:[]};
+    var report = {ok:true, furniture:0, wallpapers:0, plants:0, skippedUnpainted:[]};
 
     // --- furniture and wallpaper: owned, and every slot left empty ----------
+    /* Only things that have been painted.
+     *
+     * This used to hand over the whole catalogue including the vector
+     * stand-ins, which made the test room a mix of finished art and green
+     * geometry and made it hard to judge what the reward actually looks like.
+     * The shop already refuses to sell a drawing; the unlock now matches it. */
     var owned = [];
     LanternHomeDecor.catalogue().forEach(function(item){
+      if(!shopHasArtFor(item.id)){ report.skippedUnpainted.push(item.id); return; }
       owned.push(item.id);
       report.furniture += 1;
-      var full = LanternHomeDecor.getItem(item.id);
-      if(!full || !full.image) report.drawnOnly.push(item.id);
     });
     LanternHomeDecor.wallpapers().forEach(function(paper){
       if(paper.id === "wallpaper-plain") return;   // the room already is this
+      if(!wallpaperHasArt(paper.id)){ report.skippedUnpainted.push(paper.id); return; }
       owned.push(paper.id);
       report.wallpapers += 1;
     });
@@ -3749,13 +3795,13 @@
     garden.starterClaimed = true;
     garden.starterSceneryClaimed = true;
     LanternHomeGarden.catalogue().forEach(function(type){
+      if(!plantHasArt(type.id)){ report.skippedUnpainted.push(type.id); return; }
       [["planted", 0], ["mature", type.matureAt]].forEach(function(pair){
         garden.plants.push({id:"plant-" + garden.nextInstanceId, typeId:type.id,
           slotId:null, growthPoints:pair[1], stage:pair[0], pendingAnimation:false});
         garden.nextInstanceId += 1;
         report.plants += 1;
       });
-      if(!plantHasArt(type.id)) report.drawnOnly.push(type.id);
     });
     state.garden = garden;
 

@@ -26,6 +26,20 @@ The file had reached 2761 lines, of which this log was 2238 - 81%. It sat betwee
 
 Every fact was checked across the move rather than assumed - the tap-target measurements, the 53.9 MB of unreferenced assets, the duplicate `chrysanthemum` id, the sprite spec, the `plantVisualStage` warning, the ruled-out clipping measurements. A table of contents at the top now names which sections are worth reading on arrival and which are reference.
 
+### 2026-08-31 - One id for one thing, and nothing on sale that has not been drawn
+
+**`chrysanthemum` was two different objects.** A garden species in `home-garden.js` and the 菊の鉢 floor item in `home-decor.js`. Nothing broke, because plants live in `garden.plants` and furniture in `home.owned` and the two were never resolved together - but a lookup that did not know which catalogue an id came from would have found the wrong object silently, which is the kind of bug that is cheap now and expensive later. The furniture is now `chrysanthemum-pot`, which is what its picture has always been called.
+
+Saves written under the old name are rewritten on load. The rewrite is unambiguous in exactly the way the collision was not: an id sitting in `home` can only ever be the pot, because plants are never stored there. Verified against a seeded save holding the old id in both `owned` and `placed` - both come back renamed and the item renders its real picture.
+
+**The wallpaper shelf was still selling a drawing.** Furniture and plants were gated on having a picture from the start; wallpaper never was, so the vector 桜 pattern sat on the shelf with ¥240 on it. One rule for all three now: an unfinished drawing is honest while a learner looks at something they already own, and dishonest on a price tag. 無地 is exempt because it is the bare room rather than a product. The shelf now offers 無地 and 麻の葉 only.
+
+**`?unlockall=1` grants only painted goods**, matching the shop. It used to hand over the whole catalogue, which filled the test room with a mix of finished art and green geometry and made it hard to judge what the reward actually looks like. Now 15 of 21 furniture items, 1 wallpaper, and 3 of 7 species at both ends of their growth - 6 plant instances rather than 14. The report names what it withheld rather than dropping it silently.
+
+**I made the same hoisting mistake I had written up two entries earlier.** The rename table went in as a `var` beside `homeState`, two thousand lines below the save restore that reads it; the declaration hoists, the assignment does not, and the first id threw. Writing the trap down did not stop me walking into it. The table is now a literal inside the function, where it cannot be mistimed - a fix that removes the possibility rather than the instance.
+
+Both tests were confirmed to fail against the unfixed code before being kept. The counts in them are derived from the catalogues rather than hard-coded, so painting one more item does not break the suite.
+
 ### 2026-08-31 - The reward stage's own buttons were too small to tap
 
 The placement targets were raised to 44px; the chrome around them was not. At 375px the two menu buttons were 35px tall, the overflow items 33, the scene-back link 32, the shop's category tabs 35, `使いかた` 32, and the dialogue's audio button 33x29 - under the minimum on both axes. Seven of the nine controls on the yard failed, and the audit that found the targets had only been looking at the targets.
