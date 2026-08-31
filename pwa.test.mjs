@@ -587,3 +587,50 @@ test("the raw supplied source images are not shipped", () => {
   assert.ok(!sw.includes("incoming-user"),
     "sw.js pre-caches the raw source images");
 });
+
+/* Every painted stage needs its own measured baseline.
+ *
+ * The baseline says how far down the picture the plant's foot is, and the
+ * renderer uses it to stand the plant on its slot. Sakura and maple carried a
+ * flat 96.5 for all five stages - one guess repeated - while the art actually
+ * lands between 93.4 and 96.1. A baseline higher than the art lifts the plant
+ * off the ground.
+ *
+ * This cannot check the numbers against the pictures without a WebP decoder,
+ * so it checks the shape instead: a species with painted art has a baseline
+ * for every stage that art defines, and the values are not all identical,
+ * which is the signature of the guess rather than a measurement.
+ */
+test("every painted plant stage has its own measured baseline", () => {
+  const src = readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  // Bounded to the object itself. Slicing as far as PLANT_BASE swept up the
+  // placeholder-drawing code that sits between them, and its shape keys - one
+  // of which is "leaf" - parsed as growth stages.
+  const artStart = src.indexOf("var PLANT_ART = {");
+  const artBlock = src.slice(artStart, src.indexOf("\n  };", artStart));
+  const baseBlock = src.slice(src.indexOf("var PLANT_BASE = {"), src.indexOf("PLANT_BASE_FALLBACK"));
+
+  // The quotes are optional in the source - camellia needs none, the hyphenated
+  // ids do - so the id pattern has to allow both or camellia goes uncounted.
+  const species = [...artBlock.matchAll(/"?([a-z-]+)"?:\s*\{([^}]*)\}/g)].map(([, id, body]) => ({
+    id, stages: [...body.matchAll(/(\w+):\s*"/g)].map((m) => m[1]),
+  }));
+  assert.ok(species.length >= 3, "expected the painted species to be found");
+
+  for (const { id, stages } of species) {
+    // Found by line rather than by a built regex: the id contains a hyphen and
+    // the surrounding quotes are optional, and escaping that inside a string
+    // is how this test first shipped broken.
+    const line = baseBlock
+      .split(/\r?\n/)
+      .find((l) => l.trimStart().startsWith(id + ":") || l.trimStart().startsWith('"' + id + '":'));
+    assert.ok(line, id + " has painted art but no baseline row");
+    const values = [...line.matchAll(/(\w+):\s*([\d.]+)/g)].map(([, s, v]) => [s, Number(v)]);
+    const named = new Map(values);
+    for (const stage of stages) {
+      assert.ok(named.has(stage), id + " has art for " + stage + " but no baseline for it");
+    }
+    assert.ok(new Set(values.map(([, v]) => v)).size > 1,
+      id + ": every stage carries the same baseline, which is a guess rather than a measurement");
+  }
+});

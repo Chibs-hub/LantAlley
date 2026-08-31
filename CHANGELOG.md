@@ -26,6 +26,24 @@ The file had reached 2761 lines, of which this log was 2238 - 81%. It sat betwee
 
 Every fact was checked across the move rather than assumed - the tap-target measurements, the 53.9 MB of unreferenced assets, the duplicate `chrysanthemum` id, the sprite spec, the `plantVisualStage` warning, the ruled-out clipping measurements. A table of contents at the top now names which sections are worth reading on arrival and which are reference.
 
+### 2026-08-31 - Placed every item in both catalogues, and measured the plant baselines properly
+
+Placed all 21 furniture items and all 15 plant instances through the real render path - writing saves and reloading rather than clicking - and measured each one against what it claims. **The placement system came through clean.** Every furniture item's declared anchor lands on its slot's ground line to within 0.1%, rendered widths match `presentationFor(id).width * slot.scale` exactly, depth stacking follows ground Y in every case, and nothing rendered broken, off-scene or wrongly sized. The wind chime's -40% is its declared hook offset, not drift.
+
+**What was wrong was the plant baseline table.** `PLANT_BASE` said 96.5 for all five sakura stages and all five maple stages - one guess repeated ten times. Measured from the alpha bounding boxes, the art lands between 93.4 and 96.1, with sakura's `sapling` the outlier at 93.4. A baseline higher than the art lifts the plant's visible foot above its slot, so it floats: about 5px for a sapling on a 510px scene. All ten values are now measured. Camellia's four were already measured and were right to within 0.3, which is what made the flat rows next to them look like data rather than a placeholder.
+
+A test now asserts every painted stage has a baseline and that a species' values are not all identical, since **identical values across every stage is the signature of the guess**. It cannot compare numbers to pictures - that needs a WebP decoder Node does not have - so it checks the shape that distinguishes a measurement from a placeholder. Confirmed it fails against the old flat table before keeping it.
+
+Three things that cost time and are worth not repeating:
+
+**The preview pane was collapsed, and every pixel measurement was meaningless.** The first pass reported all ten items as "rendered 3x2px" - the scene itself was 30px wide. The percentages were fine throughout; only the absolute checks were nonsense. This is the fourth time this trap has been hit. Set the viewport before measuring anything in pixels.
+
+**Bounding-box drift is the wrong probe for placement.** Measuring the element's bottom against the slot line makes correctly placed items look wrong, because an item's contact point is `anchorY` percent down the element, not its bottom - a rug's is 55, a wall scroll's 50, a wind chime's 0. The right check reads the item's declared anchor and asks whether *that point* lands on the slot.
+
+**The test that catches this shipped broken twice**, both times from escaping. A `\s` written through a shell heredoc arrived as `\s`, which inside a JavaScript string is a plain `s`, so the regex silently matched nothing; then a `"\n"` became a real newline inside a string literal. Both were fixed by removing the escaping rather than by getting it right: split on a regex literal, and match lines with `startsWith`.
+
+Recorded as expected, not defects: filling adjacent yard slots produces heavy overlap - 15 overlapping pairs, worst 69% - because the slots are a dense grid meant to offer choice, not to be filled at once. And the unpainted species still draw as domes and circles, which is the recorded stand-in behaviour. The cat rendered complete in the sit pose throughout, ears and tail intact - one more data point against the clipping report.
+
 ### 2026-08-31 - Where the v184-v187 work was written down
 
 The newest status block described v183 and 377 tests while the working tree was at **v187 and 384**. I concluded the difference was undocumented. **That was wrong, and the correction is the useful part**: it had been written up in full, as a `## 2026-08-31` section appended to the very bottom of the file, below section 15. It is now a normal entry in this log, immediately below.

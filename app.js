@@ -2920,10 +2920,21 @@
    *
    * Task 7 generates the remaining species; each one needs its own row, or
    * consistent baselines at generation time so this table can go away. */
+  /* Measured from the pictures, not estimated.
+   *
+   * Sakura and maple carried a flat 96.5 for all five stages, which was a
+   * guess: their art actually lands between 93.4 and 96.1, and sakura's
+   * sapling is the outlier at 93.4. A baseline that reads higher than the art
+   * puts the plant's visible foot above the slot line, so the plant floats -
+   * about 5px for a sapling on a 510px scene. Camellia's numbers were already
+   * measured and were correct to within 0.3.
+   *
+   * Re-measure when any of this art is redrawn: the value is the alpha
+   * bounding box's bottom edge as a percentage of the canvas height. */
   var PLANT_BASE = {
-    camellia: {planted:77.4, sprout:82.7, growing:94.0, mature:94.5},
-    "cherry-tree": {planted:96.5, sprout:96.5, sapling:96.5, young:96.5, mature:96.5},
-    "japanese-maple": {planted:96.5, sprout:96.5, sapling:96.5, young:96.5, mature:96.5}
+    camellia: {planted:77.5, sprout:82.9, growing:94.1, mature:94.2},
+    "cherry-tree": {planted:95.5, sprout:95.9, sapling:93.4, young:96.1, mature:94.9},
+    "japanese-maple": {planted:95.7, sprout:95.5, sapling:95.7, young:95.7, mature:95.7}
   };
   var PLANT_BASE_FALLBACK = {planted:90, sprout:90, growing:92, mature:94};
 
