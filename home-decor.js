@@ -83,7 +83,7 @@
        + '<rect x="-24" y="-50" width="48" height="8" rx="3" fill="#6b4530"/>'
        + '<rect x="-24" y="42" width="48" height="8" rx="3" fill="#6b4530"/>'
        + '<path d="M-6 -26 L6 -26 M0 -26 L0 6 M-8 6 L8 18" stroke="#3a2a1a" stroke-width="3" fill="none"/>'},
-    {id:"wall-lamp", name:"掛け行灯", kind:"wall", price:220, category:"壁",
+    {id:"wall-lamp", name:"掛け行灯", kind:"post", price:220, category:"壁",
      image:"assets/home/decor/paper-lantern-red-v1.webp",
      svg:'<circle cx="0" cy="0" r="46" fill="#ffd489" opacity="0.18"/>'
        + '<rect x="-18" y="-22" width="36" height="44" rx="8" fill="#f3c568" stroke="#9c6b2f" stroke-width="3"/>'

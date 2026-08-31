@@ -153,12 +153,40 @@
    * by the ground. The production cycle now has four key poses rather than
    * eight drawings, so each key covers half the old distance. A complete
    * four-key cycle still advances about 0.6 body lengths. */
-  function strideFor(y){ return widthAt(y) * 0.15; }
+  function strideFor(y, scene){ return widthAt(y, scene) * 0.15; }
 
-  function widthAt(y){
-    var depth = (Number(y) - PET_FAR_Y) / (PET_NEAR_Y - PET_FAR_Y);
+  /* How wide the cat is drawn, measured in each scene rather than guessed once.
+   *
+   * One band served both scenes, and the two are not the same size. Each has a
+   * ruler in its own picture:
+   *
+   *   The room's tatami seams repeat every 15.5% of the scene at y=78, 18.2%
+   *   at y=82 and 21.0% at y=86 - one mat's 88cm short side - which puts the
+   *   front row at 22.4% per 88cm.
+   *
+   *   The yard's entrance doorway measures 7.00% of the scene wide at three
+   *   different heights, and a doorway is about 90cm. Corrected to the front
+   *   row by the slot scales, that is 0.0946% per centimetre.
+   *
+   * The sprite fills 86% of its square cell, so a cat of about 46cm nose to
+   * rump wants an element near 53cm. Against those two rulers that is 13.5% of
+   * the room but only 5.0% of the yard - the yard is simply a wider space. The
+   * single old band of 6.8 to 9.0 split the difference and was therefore wrong
+   * in both: it drew a 95cm cat outdoors and a 35cm one indoors.
+   *
+   * The floors differ too. The room's tatami starts at y=70; the yard's gravel
+   * at y=58. */
+  var CAT_BODY_CM = 53;
+  var SCENE_SCALE = {
+    interior: {farY:70, nearY:88, farWidth:6.60, nearWidth:13.50},
+    yard:     {farY:58, nearY:94, farWidth:3.70, nearWidth:5.00}
+  };
+
+  function widthAt(y, scene){
+    var s = SCENE_SCALE[scene] || SCENE_SCALE.yard;
+    var depth = (Number(y) - s.farY) / (s.nearY - s.farY);
     depth = Math.max(0, Math.min(1, depth));
-    return +(PET_MIN_WIDTH + (PET_MAX_WIDTH - PET_MIN_WIDTH) * depth).toFixed(2);
+    return +(s.farWidth + (s.nearWidth - s.farWidth) * depth).toFixed(2);
   }
   function find(scene, id){ return (SCENES[scene] || []).filter(function(row){ return row.id === id; })[0] || null; }
 
@@ -263,7 +291,7 @@
      * is what reads as sliding. Tying the frame to distance covered means one
      * stride is always the same distance travelled, at any speed. */
     next.walked = (next.walked || 0) + travel;
-    next.frame = Math.floor(next.walked / strideFor(next.y)) % SPRITES.walk.frames;
+    next.frame = Math.floor(next.walked / strideFor(next.y, next.scene)) % SPRITES.walk.frames;
     return next;
   }
 

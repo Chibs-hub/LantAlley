@@ -87,14 +87,29 @@ test("starter claim is free and cannot duplicate a starter camellia", () => {
 
 test("garden species use individual scene widths instead of one global size", () => {
   const widths = Object.fromEntries(garden.catalogue().map(item => [item.id, item.sceneWidth]));
-  assert.equal(widths["cherry-tree"], 22);
-  assert.equal(widths["japanese-maple"], 20);
-  assert.equal(widths.hydrangea, 14);
-  assert.equal(widths.camellia, 12);
-  assert.equal(widths.iris, 12);
-  assert.equal(widths.chrysanthemum, 12);
-  assert.equal(widths["lantern-flower-bed"], 16);
-  assert.ok(Object.values(widths).every(width => width >= 12 && width <= 22));
+  /* The numbers come from the yard's own doorway: it is 7.00% of the scene
+   * wide at three different heights, a Japanese entrance is about 90cm, and
+   * correcting to the front row by the slot scales gives 0.0946% per cm.
+   * Each width below is that figure times what the plant actually is, so the
+   * test states the plant's real size and lets the arithmetic check itself. */
+  const PCT_PER_CM = 0.0946;
+  const realSize = {
+    "cherry-tree": 444, "japanese-maple": 381, hydrangea: 148, camellia: 190,
+    iris: 85, chrysanthemum: 106, "lantern-flower-bed": 159, sunflower: 169,
+  };
+  for (const [id, cm] of Object.entries(realSize)) {
+    const implied = widths[id] / PCT_PER_CM;
+    assert.ok(Math.abs(implied - cm) < 12,
+      `${id} is drawn at ${widths[id]}%, which is ${Math.round(implied)}cm, not ${cm}cm`);
+  }
+
+  // A mature cherry must out-top the house it stands beside. The eaves measure
+  // 210cm against the same doorway, and a tree level with them is not mature.
+  assert.ok(widths["cherry-tree"] / PCT_PER_CM > 210 * 1.7,
+    "a full-grown cherry should stand well clear of the eaves");
+  assert.ok(widths["cherry-tree"] > widths["japanese-maple"],
+    "the cherry is the larger of the two trees");
+  assert.ok(Math.min(...Object.values(widths)) >= 8, "no species is a speck");
 });
 
 test("starter yard includes only the finished maple artwork", () => {

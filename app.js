@@ -3132,7 +3132,7 @@
     }
     var sprite = LanternHomePet.spriteFor(homePetState);
     var petWidth = (typeof LanternHomePet !== "undefined" && LanternHomePet.widthAt)
-      ? LanternHomePet.widthAt(homePetState.y) : 7.5;
+      ? LanternHomePet.widthAt(homePetState.y, homePetState.scene) : 7.5;
     return '<div class="home-pet" aria-hidden="true" data-pet-behavior="' + homePetState.behavior
       + '" style="width:' + petWidth + '%;left:' + homePetState.x
       + '%;top:' + homePetState.y + '%;z-index:' + homeDepthZ(homePetState.y)
@@ -3155,7 +3155,7 @@
      * whatever size it had when it set off and then jumped to the right one at
      * the next interaction. That snap is what read as the size changing on its
      * own: the rule was right and it was being applied at the wrong moments. */
-    if(LanternHomePet.widthAt) node.style.width = LanternHomePet.widthAt(homePetState.y) + "%";
+    if(LanternHomePet.widthAt) node.style.width = LanternHomePet.widthAt(homePetState.y, homePetState.scene) + "%";
     node.style.left = homePetState.x + "%";
     node.style.top = homePetState.y + "%";
     node.style.zIndex = homeDepthZ(homePetState.y);

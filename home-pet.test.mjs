@@ -31,16 +31,36 @@ test("the same seed creates the same safe initial pet", () => {
 
 test("cat scale follows scene depth without overpowering the architecture", () => {
   const pet = load();
-  const far = pet.widthAt(58);
-  const near = pet.widthAt(86);
-  assert.ok(far >= 6.5 && far <= 7.2, `far cat width ${far}% is out of scale`);
-  assert.ok(near >= 8.5 && near <= 9.2, `near cat width ${near}% is out of scale`);
-  assert.ok(near > far, "the foreground cat must be larger than the background cat");
-  for(const scene of ["yard", "interior"]){
-    for(const anchor of pet.anchors(scene)){
-      assert.ok(pet.widthAt(anchor.y) <= 9.2, `${anchor.id} makes the cat too large`);
-    }
+  /* The cat is measured in each scene, because the two are not the same size.
+   *
+   * The room's ruler is its tatami: seams every 88cm put the front row at
+   * 22.4% of the scene, so 0.2541% per cm. The yard's is its doorway: 7.00%
+   * wide for about 90cm, corrected to the front row at 0.0946% per cm. The
+   * sprite fills 86% of its square cell, so a 46cm cat wants a 53cm element.
+   *
+   * One band used to serve both and was wrong in each - a 95cm cat outdoors
+   * and a 35cm one indoors. */
+  const PCT_PER_CM = {interior: 0.2541, yard: 0.0946};
+  const ELEMENT_CM = 53;
+
+  for (const scene of ["interior", "yard"]) {
+    const anchors = pet.anchors(scene);
+    const nearest = Math.max(...anchors.map((a) => a.y));
+    const implied = pet.widthAt(nearest, scene) / PCT_PER_CM[scene];
+    assert.ok(Math.abs(implied - ELEMENT_CM) < 14,
+      `in the ${scene} the nearest cat is ${Math.round(implied)}cm, not about ${ELEMENT_CM}cm`);
+
+    const far = pet.widthAt(Math.min(...anchors.map((a) => a.y)), scene);
+    assert.ok(pet.widthAt(nearest, scene) > far,
+      `the foreground cat must be larger than the background one in the ${scene}`);
   }
+
+  // The same depth in the two scenes must not give the same width: the room is
+  // a small space and the yard a large one, and that is the whole point.
+  assert.notEqual(pet.widthAt(80, "interior"), pet.widthAt(80, "yard"),
+    "the cat is being sized without regard to which scene it is standing in");
+  assert.ok(pet.widthAt(88, "interior") > pet.widthAt(88, "yard") * 2,
+    "a cat indoors fills far more of the picture than the same cat outdoors");
 });
 
 test("walking advances smoothly without mutating the previous state", () => {

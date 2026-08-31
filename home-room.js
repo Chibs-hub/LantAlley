@@ -46,6 +46,15 @@
    * a hung scroll floated in front of the garden. They are on the outer panels
    * now, which are the only stretches wide enough to take one.
    *
+   * `post` is separate from `wall` because a 掛け行灯 hangs on a pillar, not on
+   * plaster. Looking at the upper band of the painting rather than measuring
+   * it: the dark structural posts stand at 24-27% and 73.5-76.5%, with plain
+   * plaster outside them and shoji between. A lantern on the plaster read as
+   * being on the sliding door beside it, which is what the owner kept seeing.
+   * A scroll, a fan and a mask still want flat wall; only the lantern wants
+   * the post. The lamp is a little wider than the pillar and overhangs it,
+   * which is what a hung lantern does.
+   *
    * The wall positions are the outer strips, hung high: (5,32) and (95,32).
    *
    * Getting here took two wrong moves, and the second undid the first. They
@@ -96,6 +105,8 @@
     {id:"floor-front", x:50, y:88, scale:1.00, kind:"floor", label:"床の手前"},
     {id:"wall-left",    x:5,  y:32, scale:0.92, kind:"wall",  label:"壁の左"},
     {id:"wall-right",   x:95, y:32, scale:0.92, kind:"wall",  label:"壁の右"},
+    {id:"post-left",    x:25, y:32, scale:0.88, kind:"post",  label:"柱の左"},
+    {id:"post-right",   x:75, y:32, scale:0.88, kind:"post",  label:"柱の右"},
     {id:"eave", x:15, y:30, scale:0.80, kind:"eave", label:"軒下"},
     {id:"shelf",        x:50, y:72, scale:0.78, kind:"shelf", label:"奥の段"},
     {id:"window-sill",  x:12, y:78, scale:0.80, kind:"sill",  label:"窓辺"},

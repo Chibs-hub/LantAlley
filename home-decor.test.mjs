@@ -267,7 +267,9 @@ test("every object declares the surface it actually belongs on", () => {
     "low-table": "floor", "brazier": "floor", "kotatsu": "floor",
     "folding-screen": "floor", "floor-lantern": "floor", "chrysanthemum-pot": "floor",
     // hangs flat against a wall
-    "scroll": "wall", "wall-lamp": "wall", "fan": "wall", "mask": "wall",
+    "scroll": "wall", "fan": "wall", "mask": "wall",
+    // hangs on a structural post rather than on flat plaster
+    "wall-lamp": "post",
     // rests on a raised surface rather than the floor
     "teapot": "shelf", "books": "shelf", "cat-figure": "shelf",
     "daruma": "shelf", "sakura-bonsai": "shelf", "pine-bonsai": "shelf",

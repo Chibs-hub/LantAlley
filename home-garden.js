@@ -1,14 +1,30 @@
 (function(root){
   "use strict";
 
+  /* Sizes measured against the yard's own doorway.
+   *
+   * The entrance is 7.00% of the scene wide at three different heights, and a
+   * Japanese entrance doorway is about 90cm; corrected to the front row by the
+   * slot scales that gives 0.0946% of the scene per centimetre. Every
+   * `sceneWidth` below is that figure times what the plant actually is.
+   *
+   * The two trees were the ones badly out. A "mature" cherry was drawn at
+   * 233cm and a mature maple at 211cm - saplings, shorter than the eaves they
+   * stood beside. They are 444cm and 381cm now, which is what makes a
+   * full-grown cherry taller than the house rather than level with it.
+   *
+   * Comparing a plant to the house by their shares of the picture is what hid
+   * this: the tree sits nearer the viewer than the house does, so it wins that
+   * comparison while being smaller in metres. Only a ruler at a known depth
+   * settles it. */
   var TYPES = [
-    {id:"cherry-tree", name:"Cherry tree", kind:"tree", price:500, matureAt:12, sceneWidth:22},
-    {id:"japanese-maple", name:"Japanese maple", kind:"tree", price:450, matureAt:10, sceneWidth:20},
+    {id:"cherry-tree", name:"Cherry tree", kind:"tree", price:500, matureAt:12, sceneWidth:42},
+    {id:"japanese-maple", name:"Japanese maple", kind:"tree", price:450, matureAt:10, sceneWidth:36},
     {id:"hydrangea", name:"Hydrangea", kind:"shrub", price:240, matureAt:7, sceneWidth:14},
-    {id:"camellia", name:"Camellia", kind:"flower", price:120, matureAt:4, sceneWidth:12},
-    {id:"iris", name:"Iris", kind:"flower", price:90, matureAt:2, sceneWidth:12},
-    {id:"chrysanthemum", name:"Chrysanthemum", kind:"flower", price:110, matureAt:3, sceneWidth:12},
-    {id:"lantern-flower-bed", name:"Lantern-flower bed", kind:"shrub", price:200, matureAt:5, sceneWidth:16},
+    {id:"camellia", name:"Camellia", kind:"flower", price:120, matureAt:4, sceneWidth:18},
+    {id:"iris", name:"Iris", kind:"flower", price:90, matureAt:2, sceneWidth:8},
+    {id:"chrysanthemum", name:"Chrysanthemum", kind:"flower", price:110, matureAt:3, sceneWidth:10},
+    {id:"lantern-flower-bed", name:"Lantern-flower bed", kind:"shrub", price:200, matureAt:5, sceneWidth:15},
     /* Painted in four stages, so `matureAt` is 4 and the engine's stages map
      * straight onto the pictures with no bridging - the same arrangement as
      * camellia, and the reason neither needs a `plantVisualStage` detour.
@@ -17,7 +33,7 @@
      * is square and the plant fills only 38% of its width but 92% of its
      * height, so 14 renders a sunflower about a third taller than a camellia
      * bush while staying narrower than one - which is what a sunflower is. */
-    {id:"sunflower", name:"Sunflower", kind:"flower", price:130, matureAt:4, sceneWidth:14}
+    {id:"sunflower", name:"Sunflower", kind:"flower", price:130, matureAt:4, sceneWidth:16}
   ];
 
   function catalogue(){
