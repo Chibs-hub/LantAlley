@@ -1698,10 +1698,25 @@
   .light-day .home-plant img,.light-day .home-plant svg{
     filter:drop-shadow(0 2px 3px rgba(25,13,6,.32)) saturate(.92)
       brightness(min(1.55, var(--plant-lift-max,1.6))) contrast(.93)}
+  /* After the sun goes, the house lamp is the only light in the yard, so a
+     plant's distance from the doorway starts to matter. `--plant-lamp` is 1 at
+     the door and 0 at the far corners - see plantLampProximity in app.js.
+     At dusk the sky still does most of the work, so the lamp only tips it. */
   .light-evening .home-plant img,.light-evening .home-plant svg{
-    filter:drop-shadow(0 2px 3px rgba(25,13,6,.44)) saturate(1.02) brightness(1.00)}
+    filter:drop-shadow(0 2px 3px rgba(25,13,6,.44)) saturate(1.02)
+      brightness(calc(0.94 + 0.14 * var(--plant-lamp, 0.3)))
+      sepia(calc(0.05 * var(--plant-lamp, 0.3)))}
+  /* At night the falloff is the whole picture: a tree by the veranda is warm
+     and lit, one at the fence is nearly a silhouette. The range runs 0.48 to
+     0.92, and the warmth rises with it because a paper lantern is not
+     moonlight - the hue turns back toward amber as the lamp takes over from
+     the blue of the sky. */
   .light-night .home-plant img,.light-night .home-plant svg{
-    filter:drop-shadow(0 2px 4px rgba(8,10,18,.60)) saturate(.74) brightness(.64) hue-rotate(8deg)}
+    filter:drop-shadow(0 2px 4px rgba(8,10,18,.60))
+      saturate(calc(0.70 + 0.22 * var(--plant-lamp, 0.3)))
+      brightness(calc(0.48 + 0.44 * var(--plant-lamp, 0.3)))
+      sepia(calc(0.16 * var(--plant-lamp, 0.3)))
+      hue-rotate(calc(8deg - 9deg * var(--plant-lamp, 0.3)))}
 
   .light-morning .home-item img,.light-morning .home-item svg{
     filter:drop-shadow(0 2px 3px rgba(25,13,6,.38)) saturate(.88) sepia(.06) brightness(1.10) contrast(.96) hue-rotate(-7deg)}

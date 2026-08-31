@@ -2965,6 +2965,29 @@
    * blew the cherry blossom out completely, which is what "the sakura lighting
    * is too bright" looks like. The scene rules ask for the lift the ground
    * wants; this caps it at what each picture can survive. */
+  /* How much of the house's lamp reaches a spot in the yard.
+   *
+   * By day the sun lights everything equally and distance means nothing. After
+   * dark the only light out here is the lantern over the door, so a tree by the
+   * veranda should be warm and lit and one at the fence should be nearly a
+   * silhouette. A single night brightness for every plant flattens exactly the
+   * thing that makes a lit house at night worth looking at.
+   *
+   * The lamp is at the doorway, x=50 and y=56 in scene coordinates - the yard's
+   * gravel starts at 58 and the entrance sits just behind it. Returns 1 at the
+   * door falling to 0 at the far corners; 55 is the distance from the doorway
+   * to the corner of the yard, which is as far from the light as anything gets.
+   *
+   * Depth and width count equally here on purpose. It is a lamp, not a
+   * spotlight down the path: a tree at the fence beside the house is about as
+   * far from it as one halfway down the middle. */
+  function plantLampProximity(slot){
+    var dx = (Number(slot && slot.x) || 50) - 50;
+    var dy = (Number(slot && slot.y) || 56) - 56;
+    var d = Math.sqrt(dx * dx + dy * dy);
+    return +(Math.max(0, 1 - d / 55)).toFixed(3);
+  }
+
   /* No two trees in a garden are the same tree.
    *
    * Size already follows depth, through the slot's scale, so a tree planted at
@@ -3310,7 +3333,8 @@
         + 'z-index:' + homeDepthZ(slot.y) + ';transform:translate(-50%,-' + base + '%)'
         + ' rotate(' + vary.tilt + 'deg) scaleX(' + vary.mirror + ');'
         + '--plant-lift-max:' + (PLANT_LIFT_CEILING[plant.typeId] || 1.6) + ';'
-        + '--plant-base:' + base + '"'
+        + '--plant-base:' + base + ';'
+        + '--plant-lamp:' + plantLampProximity(slot) + '"'
         + ' data-plant="' + plant.id + '" role="button" tabindex="0"'
         + ' aria-label="' + plantName(plant.typeId) + ' をあつかう">'
         + plantFigure(plant.typeId, visualStage,

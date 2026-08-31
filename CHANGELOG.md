@@ -14,6 +14,28 @@ Added two transparent room assets matched to the existing room and small-object 
 
 Added a transparent, semi-realistic sunflower growth set matching the existing garden cutouts: planted soil marker, sprout, closed-bud growing plant and mature bloom. The four 512px WebP files share one source sheet, lighting, soil treatment and a measured 95.5-95.7% ground baseline so growth does not jump vertically. The species is connected to the garden catalogue and painted-art map.
 
+### 2026-08-31 - After dark, the house is the only light in the yard
+
+Every plant took the same night brightness regardless of where it stood, which flattens the one thing that makes a lit house at night worth looking at. By day the sun lights everything equally and distance means nothing; after dark the only source out there is the lantern over the door.
+
+`plantLampProximity` returns how much of that lamp reaches a spot: 1 at the doorway, falling to 0 at the far corners, normalised by 55 - the distance from the door to the corner of the yard, which is as far from the light as anything gets. The lamp sits at x=50, y=56, just behind where the gravel starts.
+
+**Depth and width count equally, on purpose.** It is a lamp over a door, not a spotlight down the path, so a tree at the fence beside the house is about as lit as one halfway down the middle. The test pins that, because treating it as a corridor of light would be the obvious wrong implementation.
+
+The stylesheet decides how each hour responds to it:
+
+| position | lamp | night brightness |
+| --- | --- | --- |
+| at the door | 0.96 | 0.90 |
+| back pair | 0.68 | 0.78 |
+| mid yard | 0.40 | 0.66 |
+| front corner | 0.17 | 0.56 |
+| far corner | 0.01 | 0.48 |
+
+Warmth rises with it too, and the hue turns back toward amber as the lamp takes over from the blue of the sky - a paper lantern is not moonlight. At dusk the sky still does most of the work, so the lamp only tips it: 0.94 to 1.08 rather than 0.48 to 0.92.
+
+Day and morning are deliberately untouched. Sunlight does not fall off across a yard this size, and making it appear to would be worse than leaving it flat.
+
 ### 2026-08-31 - Plants are seated on the ground, and the path can be kept open
 
 **A plant had nothing under it.** Furniture has had a contact shadow since the day it was placed - a narrow blurred ellipse at its foot - and plants never did. So a tree stood on the gravel with no shadow at all, and the soil disc baked into its picture read as a sticker laid on top rather than as roots in the ground.

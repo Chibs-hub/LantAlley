@@ -935,3 +935,52 @@ test("plants of the same species differ from each other, and stay themselves", (
     assert.ok(s.mirror === 1 || s.mirror === -1, "mirror is a flip, not a scale");
   }
 });
+
+/* After dark the house lamp is the only light in the yard.
+ *
+ * By day the sun lights everything equally and distance means nothing, so this
+ * only governs evening and night. A single night brightness for every plant
+ * flattens the one thing that makes a lit house at night worth looking at: a
+ * tree by the veranda should be warm and lit, one at the fence nearly a
+ * silhouette.
+ */
+test("the yard's night lighting falls off with distance from the doorway", () => {
+  const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  const context = { self: {}, Math };
+  vm.createContext(context);
+  vm.runInContext(app.slice(app.indexOf("function plantLampProximity"),
+    app.indexOf("/* No two trees in a garden")) + "\nself.p = plantLampProximity;", context);
+  const lamp = context.self.p;
+
+  const atDoor = lamp({ x: 50, y: 58 });
+  const midYard = lamp({ x: 21, y: 72 });
+  const farCorner = lamp({ x: 10, y: 93 });
+
+  assert.ok(atDoor > 0.9, `at the door the lamp should be near full, got ${atDoor}`);
+  assert.ok(farCorner < 0.1, `at the far corner it should be near nothing, got ${farCorner}`);
+  assert.ok(atDoor > midYard && midYard > farCorner, "the falloff must be monotonic");
+
+  // it is a lamp over a door, not a spotlight down the path: a tree at the
+  // fence beside the house is about as lit as one halfway down the middle
+  const besideHouse = lamp({ x: 12, y: 61 });
+  const downThePath = lamp({ x: 50, y: 82 });
+  assert.ok(Math.abs(besideHouse - downThePath) < 0.25,
+    "width and depth should count roughly alike for a doorway lamp");
+
+  // and nothing outside 0..1, since the stylesheet multiplies by it
+  for (const y of [56, 70, 94]) {
+    for (const x of [0, 50, 100]) {
+      const v = lamp({ x, y });
+      assert.ok(v >= 0 && v <= 1, `lamp reach ${v} at ${x},${y} is out of range`);
+    }
+  }
+
+  // the stylesheet must actually use it, in both dark hours and neither light one
+  const css = readFileSync(new URL("./styles.css", import.meta.url), "utf8");
+  for (const hour of ["evening", "night"]) {
+    const rule = css.split(/\r?\n/).findIndex((l) => l.includes(`light-${hour} .home-plant img`));
+    assert.ok(rule > -1, `no ${hour} plant rule`);
+    const block = css.split(/\r?\n/).slice(rule, rule + 7).join("\n");
+    assert.match(block, /--plant-lamp/, `${hour} ignores the lamp`);
+  }
+});
