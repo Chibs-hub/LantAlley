@@ -3015,10 +3015,16 @@
     var a = (h & 255) / 255;              // three independent draws from one hash
     var b = ((h >> 8) & 255) / 255;
     var c = ((h >> 16) & 255) / 255;
+    var e = ((h >> 24) & 255) / 255;
     return {
       tilt: +((a * 7 - 3.5)).toFixed(2),
       mirror: b < 0.5 ? -1 : 1,
-      size: +(0.90 + c * 0.20).toFixed(3)
+      size: +(0.90 + c * 0.20).toFixed(3),
+      /* Two trees the same distance from the lamp still do not catch it alike:
+       * one stands where a branch shades it, another where the light runs
+       * clear. Without this the lighting is a pure function of position and a
+       * row of trees at one depth lights up as a single flat band. */
+      lampBias: +((e * 0.24 - 0.12)).toFixed(3)
     };
   }
 
@@ -3334,7 +3340,8 @@
         + ' rotate(' + vary.tilt + 'deg) scaleX(' + vary.mirror + ');'
         + '--plant-lift-max:' + (PLANT_LIFT_CEILING[plant.typeId] || 1.6) + ';'
         + '--plant-base:' + base + ';'
-        + '--plant-lamp:' + plantLampProximity(slot) + '"'
+        + '--plant-lamp:' + Math.max(0, Math.min(1,
+            plantLampProximity(slot) + vary.lampBias)).toFixed(3) + '"'
         + ' data-plant="' + plant.id + '" role="button" tabindex="0"'
         + ' aria-label="' + plantName(plant.typeId) + ' をあつかう">'
         + plantFigure(plant.typeId, visualStage,

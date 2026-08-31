@@ -14,6 +14,18 @@ Added two transparent room assets matched to the existing room and small-object 
 
 Added a transparent, semi-realistic sunflower growth set matching the existing garden cutouts: planted soil marker, sprout, closed-bud growing plant and mature bloom. The four 512px WebP files share one source sheet, lighting, soil treatment and a measured 95.5-95.7% ground baseline so growth does not jump vertically. The species is connected to the garden catalogue and painted-art map.
 
+### 2026-08-31 - Widening the night range again, and hazing the soil disc
+
+Two notes on the yozakura pass, both from the owner looking at it.
+
+**The trees had come out equally lit.** Correcting the previous over-darkening had gone too far the other way: the range narrowed to 0.80-0.96, which is barely a difference across a whole yard. It is 0.68 to 1.02 now, with the hue swing widened to match - 20 degrees toward the sky at the fence against -7 toward amber at the door. Wide enough to read, and the brightness never falls where it would put a tree out.
+
+**Distance alone still made a flat band.** Lighting was a pure function of position, so every tree at one depth lit identically and a row read as one lamp-lit stripe. `plantVariation` now yields a fourth value, a bias of plus or minus 0.12 on how much lamp a plant catches, from the same hash as its lean and mirror. Two trees the same distance out now differ by about 0.08 in brightness - one stands where a branch shades it, another where the light runs clear.
+
+**The soil disc is hazed into the ground.** Every plant cutout carries its own patch of earth with a hard edge and a warm brown that does not belong on grey gravel, and the contact shadow added earlier could not help: **a shadow underneath cannot hide an edge drawn on top of it.** So there is now a second ellipse *above* the picture, transparent through the middle so the roots stay visible and tinted toward the ground at its rim, which dissolves the outline instead of letting it stop. The tint follows the hour, since the ground it has to match does - grey by day, blue-black at night.
+
+That is a mitigation and not a fix. Repainting the cutouts with a soft ground edge is still the right answer and is still in the art queue; this makes the seam survivable until then.
+
 ### 2026-08-31 - 夜桜: blossom at night is a lit subject, not a dim one
 
 The falloff added an hour earlier was physically defensible and ugly, and the owner was right to say so. It made distance mean darkness and ran the range 0.48 to 0.92, so **the front trees - the largest and most prominent things in the frame - came out the darkest in the yard.** That is backwards for the subject.

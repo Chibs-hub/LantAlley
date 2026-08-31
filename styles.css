@@ -1732,11 +1732,11 @@
   .light-night .home-plant img,.light-night .home-plant svg{
     filter:drop-shadow(0 2px 4px rgba(8,10,18,.55))
       drop-shadow(0 0 calc(10px + 14px * var(--plant-lamp, 0.3)) rgba(255,188,206,calc(0.16 + 0.26 * var(--plant-lamp, 0.3))))
-      brightness(calc(0.80 + 0.16 * var(--plant-lamp, 0.3)))
-      contrast(calc(1.18 - 0.06 * var(--plant-lamp, 0.3)))
-      saturate(calc(0.82 + 0.20 * var(--plant-lamp, 0.3)))
-      sepia(calc(0.20 * var(--plant-lamp, 0.3)))
-      hue-rotate(calc(14deg - 20deg * var(--plant-lamp, 0.3)))}
+      brightness(calc(0.68 + 0.34 * var(--plant-lamp, 0.3)))
+      contrast(calc(1.22 - 0.10 * var(--plant-lamp, 0.3)))
+      saturate(calc(0.74 + 0.30 * var(--plant-lamp, 0.3)))
+      sepia(calc(0.22 * var(--plant-lamp, 0.3)))
+      hue-rotate(calc(20deg - 27deg * var(--plant-lamp, 0.3)))}
 
   .light-morning .home-item img,.light-morning .home-item svg{
     filter:drop-shadow(0 2px 3px rgba(25,13,6,.38)) saturate(.88) sepia(.06) brightness(1.10) contrast(.96) hue-rotate(-7deg)}
@@ -1767,6 +1767,34 @@
     filter:blur(3px);pointer-events:none;
   }
   .home-plant img, .home-plant svg{position:relative;z-index:1}
+
+  /* The painted soil disc, hazed into whatever ground it is standing on.
+   *
+   * Every plant cutout carries its own patch of earth, and that patch has a
+   * hard edge and a warm brown that does not belong on grey gravel - it reads
+   * as a sticker laid on the yard. Repainting the cutouts is the real fix and
+   * is in the art queue; this makes the seam survivable in the meantime.
+   *
+   * A soft ellipse over the base, transparent in the middle so the roots stay
+   * visible, tinted toward the ground at its rim so the disc's outline
+   * dissolves instead of stopping. It sits above the picture rather than below
+   * it, which is the whole point - a shadow underneath cannot hide an edge
+   * drawn on top of it.
+   *
+   * The tint follows the hour, because the ground it has to match does. */
+  .home-plant::after{
+    content:"";position:absolute;z-index:2;left:19%;right:19%;height:13%;
+    bottom:calc(100% - (var(--plant-base,95) * 1%));
+    transform:translateY(50%);
+    border-radius:50%;pointer-events:none;
+    background:radial-gradient(ellipse at 50% 50%,
+      rgba(0,0,0,0) 34%, var(--ground-haze, rgba(150,148,138,.30)) 100%);
+  }
+  .light-morning .home-plant{--ground-haze:rgba(156,150,132,.34)}
+  .light-day .home-plant{--ground-haze:rgba(163,159,146,.38)}
+  .light-evening .home-plant{--ground-haze:rgba(120,104,86,.36)}
+  .light-night .home-plant{--ground-haze:rgba(28,34,56,.46)}
+
 
   .home-item[data-item-kind="floor"]::before{
     content:"";position:absolute;z-index:0;left:20%;right:20%;bottom:-1%;height:10%;
