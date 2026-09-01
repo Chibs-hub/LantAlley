@@ -6,6 +6,22 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-01 - Starter items are in stock immediately
+
+The first home visit now grants the unplanted camellia and unplaced navy cushion directly to their respective inventories. The tutorial opens the decoration inventory and teaches placement; it no longer sends a new learner to an empty shop to claim either gift. Cache is v218.
+
+### 2026-09-01 - First home visit now starts with gifts, not finished decoration
+
+Removed the automatic mature maple from a first home visit. The tutorial now opens on an empty yard, displays the free camellia with its planted-stage artwork, and adds it to storage with no slot so the learner chooses where it grows. Normalization removes only the retired `starter-maple` id from saves that already received it; purchased maples keep their own instance ids and remain untouched.
+
+The indoor flow was checked separately. The free navy cushion is added to storage but remains unplaced until the learner selects a room target. Live browser checks found zero placed plants before taking the seed, zero placed furniture before taking the cushion, the planted camellia image on the gift card, and the cushion still in storage after claiming it. Cache is v217, the artifact is 11.87 MB, and the full suite passes 399/399.
+
+### 2026-09-01 - Entrance re-entry and action instructions repaired
+
+The v215 workspace cleanup was too broad: clearing `#scene` on every `enterLocation` call also erased the Entrance artwork when that same location refreshed, leaving only the completed dialogue and result controls. The cleanup now runs only when leaving the home, which is the only stage that leaves a complete scene behind. A clean browser run confirmed that finishing the Entrance and selecting Moonview Inn opens the Inn introduction rather than the blank completed-Entrance screen.
+
+The Entrance instruction was also an absolutely positioned sibling laid over the action cards, so its second line could be covered. It now occupies a real first row inside the action grid, with Wave, Bow and Clap in a separate second row. Measured browser geometry shows a 7px gap between the instruction and cards. Cache is v216, the rebuilt artifact is 11.87 MB, and the full suite passes 397/397.
+
 ### 2026-09-01 - Approved kimono characters are now production art
 
 Replaced both Entrance character sheets with matte, hand-painted kimono artwork derived from the approved natural-style mock. Each 1200x600 RGBA WebP contains idle, bow, wave and clap in four exact 300x600 cells with a stable body scale, baseline and transparent clearance. The man wears an indigo kimono with charcoal haori; the woman wears a burgundy floral kimono. Character selection, live action rendering, CSS previews and the offline shell now use the new v2 sheets; the cache is v214. Desktop and 390x844 browser checks confirmed both characters and both bow animations render without clipping or console errors. The standalone Entrance-and-Inn demo now omits unreachable PWA-only home artwork during inlining, reducing it from 19.78 MB to 11.87 MB. The full suite passes 395/395.

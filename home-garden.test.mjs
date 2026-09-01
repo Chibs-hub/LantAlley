@@ -112,17 +112,16 @@ test("garden species use individual scene widths instead of one global size", ()
   assert.ok(Math.min(...Object.values(widths)) >= 8, "no species is a speck");
 });
 
-test("starter yard includes only the finished maple artwork", () => {
-  const claimed = garden.claimStarterScenery(garden.emptyGarden());
-  assert.equal(claimed.ok, true);
-  assert.equal(claimed.garden.plants.length, 1);
-  assert.ok(claimed.garden.plants.every(p => p.stage === "mature" && p.slotId));
-  assert.equal(claimed.garden.plants[0].id, "starter-maple");
-  const cleared = garden.clearPlacement(claimed.garden);
-  assert.ok(cleared.plants.every(p => p.slotId === null));
-  const restored = garden.restoreStarterLayout(cleared);
-  assert.equal(restored.plants.find(p => p.id === "starter-maple").slotId, "garden-right-1");
-  assert.equal(garden.claimStarterScenery(restored).ok, false);
+test("normalization removes the retired automatic maple but keeps purchased maples", () => {
+  const cleaned = garden.normalize({
+    plants: [
+      {id:"starter-maple", typeId:"japanese-maple", slotId:"garden-right-1", stage:"mature"},
+      {id:"plant-2", typeId:"japanese-maple", slotId:null, stage:"planted"},
+    ],
+    usedCreditIds:[], starterClaimed:false, starterSceneryClaimed:true, nextInstanceId:3,
+  });
+
+  assert.deepEqual(Array.from(cleaned.plants, p => p.id), ["plant-2"]);
 });
 
 test("normalization removes pine placeholders from existing saves", () => {

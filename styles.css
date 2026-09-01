@@ -454,11 +454,11 @@
   .entrance-stage .player-figure{width:170px;height:340px}
   .entrance-stage .player-caption{color:#f1dfbd}
   .entrance-stage #scene > .avatar.avatar-animated{position:absolute;width:170px;height:220px;left:61%;bottom:150px;z-index:3;filter:drop-shadow(0 10px 8px rgba(0,0,0,.42))}
-  .entrance-control-help{position:absolute;right:22px;bottom:117px;z-index:6;width:calc(43% - 32px);padding:0;text-align:center;background:transparent;color:#fff0cf;opacity:0;visibility:hidden;transform:translateY(5px);transition:opacity .18s ease,transform .18s cubic-bezier(.22,1,.36,1),visibility 0s linear .18s}
+  .entrance-control-help{grid-column:1/-1;position:static;z-index:auto;width:auto;padding:0 4px 1px;text-align:center;background:transparent;color:#fff0cf}
   .entrance-control-help strong{display:block;color:#f2c87d;font-size:.61rem;letter-spacing:.12em;text-transform:uppercase}
   .entrance-control-help span{display:block;margin-top:2px;font-size:.67rem;line-height:1.3}
-  .entrance-stage .entrance-action-grid{position:absolute;right:12px;bottom:12px;z-index:5;display:grid;width:43%;min-height:132px;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;padding:31px 8px 8px;border:2px solid #8c562d;border-radius:12px;background:linear-gradient(180deg,rgba(92,49,25,.96),rgba(48,25,16,.97));box-shadow:inset 0 0 0 2px rgba(244,202,128,.18),0 8px 22px rgba(0,0,0,.42);opacity:0;visibility:hidden;transform:translateY(7px);transition:opacity .18s ease,transform .18s cubic-bezier(.22,1,.36,1),visibility 0s linear .18s}
-  .entrance-stage #scene.entrance-actions-visible .entrance-control-help,.entrance-stage #scene.entrance-actions-visible .entrance-action-grid{opacity:1;visibility:visible;transform:translateY(0);transition-delay:0s}
+  .entrance-stage .entrance-action-grid{position:absolute;right:12px;bottom:12px;z-index:5;display:grid;width:43%;min-height:132px;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:auto minmax(0,1fr);gap:7px;padding:8px;border:2px solid #8c562d;border-radius:12px;background:linear-gradient(180deg,rgba(92,49,25,.96),rgba(48,25,16,.97));box-shadow:inset 0 0 0 2px rgba(244,202,128,.18),0 8px 22px rgba(0,0,0,.42);opacity:0;visibility:hidden;transform:translateY(7px);transition:opacity .18s ease,transform .18s cubic-bezier(.22,1,.36,1),visibility 0s linear .18s}
+  .entrance-stage #scene.entrance-actions-visible .entrance-action-grid{opacity:1;visibility:visible;transform:translateY(0);transition-delay:0s}
   /* #scene fills the whole grid row, so .next-row lands below the stage and
      out of the viewport. Once the tutorial is answered the action dock has
      done its job, so the continue button takes that slot. */
@@ -513,8 +513,7 @@
     .entrance-stage .player-figure{width:112px;height:224px}
     .entrance-stage #scene > .avatar.avatar-animated{width:112px;height:145px;left:65%;bottom:302px}
     .entrance-stage .entrance-action-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
-    .entrance-stage .entrance-action-grid{right:8px;bottom:8px;width:calc(100% - 16px);min-height:145px;padding:42px 6px 6px}
-    .entrance-control-help{right:15px;bottom:116px;width:calc(100% - 30px)}
+    .entrance-stage .entrance-action-grid{right:8px;bottom:8px;width:calc(100% - 16px);min-height:145px;padding:7px 6px 6px}
     .entrance-stage .hotspot{min-height:76px;font-size:.7rem}
     .entrance-action-art{width:35px;height:64px}
   }

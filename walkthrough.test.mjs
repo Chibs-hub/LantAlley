@@ -639,6 +639,58 @@ function plantedCamelliaSave(extra) {
   }, extra || {});
 }
 
+function freshHomeSave() {
+  return plantedCamelliaSave({
+    money: 0,
+    homeTutorialComplete: false,
+    starterSeedClaimed: false,
+    starterCushionClaimed: false,
+    homeVisited: false,
+    home: { owned: [], placed: {} },
+    garden: {
+      plants: [], usedCreditIds: [], starterClaimed: false,
+      starterSceneryClaimed: false, nextInstanceId: 1,
+    },
+  });
+}
+
+test("first home visit starts with an unplanted seed in garden stock", () => {
+  const game = boot(freshHomeSave());
+  enterHome(game);
+
+  const plants = gardenOf(game).plants;
+  assert.equal(plants.length, 1);
+  assert.equal(plants[0].typeId, "camellia");
+  assert.equal(plants[0].stage, "planted");
+  assert.equal(plants[0].slotId, null, "the learner chooses where to plant it");
+
+  game.doc.querySelectorAll("[data-home-decorate]")[0].click();
+  const stock = game.doc.querySelectorAll("[data-pick-plant]")[0];
+  assert.ok(stock, "the free camellia seed is already in garden stock");
+  const image = stock.querySelector("img");
+  assert.match(image.getAttribute("src"), /camellia-planted-gravel-v2\.webp$/,
+    "stock must show the planted stage, not a mature bush");
+});
+
+test("first home visit starts with an unplaced cushion in indoor stock", () => {
+  const game = boot(freshHomeSave());
+  enterHome(game);
+  let saved = JSON.parse(game.storage.getItem("lanternAlley.v3"));
+  assert.deepEqual(saved.home.owned, ["floor-cushion-navy"]);
+  assert.deepEqual(saved.home.placed, {});
+  assert.equal(saved.starterCushionClaimed, true);
+
+  game.doc.querySelectorAll("[data-home-decorate]")[0].click();
+  game.doc.querySelectorAll("[data-pick-plant]")[0].click();
+  game.doc.querySelectorAll(".home-target")[0].click();
+  game.doc.querySelectorAll("[data-enter-house]")[0].click();
+  game.doc.querySelectorAll("[data-home-decorate]")[0].click();
+  assert.ok(game.doc.querySelectorAll('[data-pick="floor-cushion-navy"]')[0],
+    "the cushion is waiting in indoor stock");
+  saved = JSON.parse(game.storage.getItem("lanternAlley.v3"));
+  assert.deepEqual(saved.home.placed, {}, "the learner chooses where to place it");
+});
+
 test("finishing a shift grows the garden, and replaying it does not", async () => {
   const game = boot(plantedCamelliaSave());
   await enterTheInn(game);
@@ -1011,6 +1063,13 @@ test("leaving a location clears the workspace the last one drew", () => {
   assert.match(body, /\$\("scene"\)\.innerHTML = ""/,
     "enterLocation must empty #scene, or a stage that renders only into the "
     + "dialogue panel inherits whatever the last one left there");
+
+  /* And only when leaving the home. Clearing on every call broke re-entry:
+   * some paths come back through enterLocation to refresh a location they are
+   * already in - the Entrance does it on completion - and emptying the
+   * workspace under them left the stage blank but for its dialogue panel. */
+  assert.match(body, /state\.currentKey === "home" && key !== "home"/,
+    "the clear must be guarded to leaving the home, or re-entering a location blanks it");
 
   // it has to happen before the new location renders, not after
   const clearAt = body.indexOf('$("scene").innerHTML = ""');

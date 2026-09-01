@@ -205,7 +205,14 @@ test("entrance separates large scene characters from the bottom dialogue dock", 
   assert.match(html, /\.entrance-stage \.game-layout:has\(#scene\.entrance-actions-visible\) \.learning-context\{margin-bottom:162px\}/);
   assert.match(html, /\.entrance-stage \.duo-stage\{left:35%;bottom:302px\}/);
   assert.match(html, /\.entrance-stage #scene > \.avatar\.avatar-animated\{width:112px;height:145px;left:65%;bottom:302px\}/);
-  assert.match(html, /\.entrance-stage \.entrance-action-grid\{right:8px;bottom:8px;width:calc\(100% - 16px\);min-height:145px;padding:42px 6px 6px\}/);
+  assert.match(html, /\.entrance-stage \.entrance-action-grid\{right:8px;bottom:8px;width:calc\(100% - 16px\);min-height:145px;padding:7px 6px 6px\}/);
+});
+
+test("entrance instructions occupy their own row above the action cards", () => {
+  assert.match(html, /if\(how\) wrap\.appendChild\(how\);\s*loc\.options\.forEach/);
+  assert.match(html, /\.entrance-control-help\{grid-column:1\/-1;position:static/);
+  assert.match(html, /\.entrance-stage \.entrance-action-grid\{[^}]*grid-template-rows:auto minmax\(0,1fr\)/);
+  assert.doesNotMatch(html, /\.entrance-control-help\{[^}]*bottom:/);
 });
 
 test("entrance reserves only a compact header row and keeps speech readable", () => {

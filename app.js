@@ -2488,10 +2488,15 @@
      * left `家に入る`, `飾る`, `店` and a second `Lantern Alley` live and
      * clickable on top of the new stage.
      *
-     * Clearing here rather than in each stage is the point: this is the one
-     * place every location passes through, and the next stage that renders
-     * only into the dialogue panel would otherwise inherit the same fault. */
-    $("scene").innerHTML = "";
+     * Only when leaving the home, though, and that qualifier matters. Clearing
+     * on every call broke re-entry: some paths come back through here to
+     * refresh a location they are already in - the Entrance does it on
+     * completion - and emptying the workspace under them left the stage blank
+     * with only its dialogue panel showing. So this clears what the home drew
+     * and nothing else. */
+    if(state.currentKey === "home" && key !== "home"){
+      $("scene").innerHTML = "";
+    }
     if(loc.key !== "home"){
       state.lastPlace = loc.key;
       saveProgress();
@@ -2695,10 +2700,7 @@
       state.garden = LanternHomeGarden.normalize(gardenState());
       if(state.garden.plants.length !== beforePlantCount) saveProgress();
     }
-    if(typeof LanternHomeGarden !== "undefined" && !gardenState().starterSceneryClaimed){
-      state.garden = LanternHomeGarden.claimStarterScenery(gardenState()).garden;
-      saveProgress();
-    }
+    if(!state.homeTutorialComplete) grantHomeStarterStock();
     $("stage-phase-row").style.display = "none";
     $("encounter-status").style.display = "none";
     $("hint-btn").style.display = "none";
@@ -3457,11 +3459,6 @@
   function homeDock(){
     var money = state.money || 0;
     var html = "";
-    // While a gift is on offer the dock shows only the gift, so the one thing
-    // the learner is being asked to press is the only thing there.
-    var step = tutorialStep();
-    if(step && !homeTutorialReplay && (step.id === "claim-seed" || step.id === "claim-cushion")) return "";
-
     if(homeTab === "garden"){
       var waiting = plantsInStorage();
       if(!(gardenState().plants || []).length){
@@ -3613,7 +3610,8 @@
    *
    * A learner arriving at an empty yard with a wallet and no explanation will
    * read it as scenery. The tutorial exists to make them do each thing once:
-   * take a seed, plant it, go inside, take a cushion, place it, move it. After
+   * plant the seed already in stock, go inside, place the cushion already in
+   * stock, and move it. After
    * that the house explains itself.
    *
    * Two rules shape the whole thing.
@@ -3622,11 +3620,8 @@
    * clicked through teaches nothing, and this one is short enough that doing
    * the step is faster than reading about it.
    *
-   * Replaying it gives nothing away twice. 「使いかた」 walks the same script
-   * with the claim steps already satisfied, so a learner can re-read the
-   * explanation without farming free plants. The claim functions check current
-   * ownership as well as the flags, so even a corrupted save cannot mint a
-   * second camellia.
+   * Replaying it gives nothing away twice. The first entry grants both starter
+   * items directly to storage; 「使いかた」 only walks through using them.
    *
    * Kon speaks Japanese because he always has. The one English line is the
    * mechanical instruction - which thing to press - kept separate from the
@@ -3638,23 +3633,14 @@
   var HOME_TUTORIAL = [
     {id:"welcome",
      jp:"コン：「おかえりなさい。ここがあなたの家と庭です。稽古で稼いだお金で、少しずつ好きなように整えていきましょう。」",
-     how:"Press 店.",
-     done:function(){ return homeView === "shop"; }},
-
-    {id:"claim-seed",
-     jp:"コン：「まずは椿の苗を一つどうぞ。お代はいりません。」",
-     how:"Press the free 椿 seed to take it.",
-     done:function(){ return state.starterSeedClaimed === true; }},
+     how:"Press 飾る to open your items.",
+     done:function(){ return homeDecorating; }},
 
     {id:"plant-seed",
-     jp:"コン：「好きなところに植えてください。この庭の草花は、日にちではなく稽古で育ちます。」",
-     how:"Press a glowing spot to plant it.",
-     /* The seed the learner was just handed, not any plant in the yard.
-      *
-      * "Is anything planted?" was true before they touched it, because a first
-      * visit already grants a maple as scenery - so the step
-      * satisfied itself and the tutorial skipped from taking the seed straight
-      * to going indoors, never once teaching the thing it exists to teach. */
+     jp:"コン：「椿の苗を持ち物に入れておきました。好きなところに植えてください。この庭の草花は、日にちではなく稽古で育ちます。」",
+     how:"Press the 椿 seed, then a glowing spot.",
+     /* The seed the learner was just handed, not any plant already saved in
+      * the yard. An older planted item must not skip this tutorial action. */
      done:function(){
        var seed = findPlant(starterSeedInstance);
        return !!(seed && seed.slotId);
@@ -3665,13 +3651,8 @@
      how:"Press the door to go inside.",
      done:function(){ return homeView === "interior"; }},
 
-    {id:"claim-cushion",
-     jp:"コン：「座布団を一枚どうぞ。これもお代はいりません。」",
-     how:"Press 店, then the free 座布団.",
-     done:function(){ return state.starterCushionClaimed === true; }},
-
     {id:"place-cushion",
-     jp:"コン：「持ち物からえらんで、置きたいところに置いてください。」",
+     jp:"コン：「座布団も持ち物に入れておきました。置きたいところに置いてください。」",
      how:"Press 飾る, then the 座布団, then a glowing spot.",
      done:function(){ return decorPlacedAt(STARTER_DECOR) !== null; }},
 
@@ -3708,6 +3689,37 @@
     return found;
   }
 
+  function grantHomeStarterStock(){
+    var changed = false;
+    if(!state.starterSeedClaimed && typeof LanternHomeGarden !== "undefined"){
+      var claim = LanternHomeGarden.claimStarter(gardenState());
+      state.garden = claim.garden;
+      state.starterSeedClaimed = true;
+      var seed = claim.instanceId ? findPlant(claim.instanceId) : null;
+      if(!seed){
+        seed = (gardenState().plants || []).filter(function(plant){
+          return plant.typeId === STARTER_PLANT;
+        })[0] || null;
+      }
+      starterSeedInstance = seed ? seed.id : null;
+      changed = true;
+    }else if(!starterSeedInstance){
+      var storedSeed = (gardenState().plants || []).filter(function(plant){
+        return plant.typeId === STARTER_PLANT;
+      })[0];
+      starterSeedInstance = storedSeed ? storedSeed.id : null;
+    }
+
+    if(!state.starterCushionClaimed){
+      state.starterCushionClaimed = true;
+      if(!LanternHomeDecor.owns(homeState(), STARTER_DECOR)){
+        state.home = {owned:homeState().owned.concat([STARTER_DECOR]), placed:homeState().placed};
+      }
+      changed = true;
+    }
+    if(changed) saveProgress();
+  }
+
   function startHomeTutorial(replay){
     homeTutorialReplay = !!replay;
     homeTutorialMoved = false;
@@ -3718,9 +3730,8 @@
     paintHome();
   }
 
-  /* Called after every home action. Steps whose work is already done - which is
-   * every claim step on a replay - fall through silently, so the script reads
-   * the same either way without handing anything out again. */
+  /* Called after every home action. Completed steps fall through silently, so
+   * replaying the explanation never hands out the starter items again. */
   function advanceHomeTutorial(){
     if(!tutorialRunning()) return;
     var guard = 0;
@@ -3794,23 +3805,6 @@
       + '</div>';
   }
 
-  /* The free items only appear while the step that gives them is on screen, so
-   * the shop does not carry a permanent "free" shelf to be re-checked later. */
-  function tutorialGiftCard(){
-    var step = tutorialStep();
-    if(!step || homeTutorialReplay) return "";
-    if(step.id === "claim-seed" && homeView === "shop"){
-      return dockCard(plantFigure(STARTER_PLANT, "mature", ""),
-        PLANT_JP[STARTER_PLANT], "ただ", 'data-claim="plant"', " is-gift");
-    }
-    if(step.id === "claim-cushion" && homeView === "shop"){
-      return dockCard(decorCardArt(STARTER_DECOR),
-        (LanternHomeDecor.getItem(STARTER_DECOR) || {name:""}).name, "ただ",
-        'data-claim="decor"', " is-gift");
-    }
-    return "";
-  }
-
   /* The shop sells only what has been painted.
    *
    * A drawn stand-in is honest while a learner watches something they already
@@ -3831,7 +3825,7 @@
 
   function homeShopDock(){
     var money = state.money || 0;
-    var html = tutorialGiftCard();
+    var html = "";
     if(homeShopCategory === "plants" && typeof LanternHomeGarden !== "undefined"){
       LanternHomeGarden.catalogue().forEach(function(type){
         if(!plantHasArt(type.id)) return;
@@ -4094,6 +4088,7 @@
       homeDecorating = !homeDecorating;
       homeSelected = null;
       homeTab = homeView === "yard" ? "garden" : "storage";
+      advanceHomeTutorial();
       paintHome();
       return;
     }
@@ -4954,11 +4949,11 @@
         var how = document.createElement("div");
         how.className = "inn-control-help entrance-control-help";
         how.innerHTML = '<strong>How to interact</strong><span>' + LanternAlleyLogic.getHowToInteract() + '</span>';
-        scene.appendChild(how);
       }
 
       var wrap = document.createElement("div");
       wrap.className = "hotspots entrance-action-grid";
+      if(how) wrap.appendChild(how);
       loc.options.forEach(function(opt){
         var btn = document.createElement("button");
         btn.className = "hotspot";

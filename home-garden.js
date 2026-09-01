@@ -56,7 +56,7 @@
     var source = garden || {};
     return {
       plants: ((source.plants || [])).filter(function(plant){
-        return plant.typeId !== "pine-tree";
+        return plant.typeId !== "pine-tree" && plant.id !== "starter-maple";
       }).map(copyPlant),
       usedCreditIds: (source.usedCreditIds || []).slice(),
       starterClaimed: source.starterClaimed === true,

@@ -20,7 +20,11 @@ Sections 1, 3, 4, 5, 6, 8, 13, 14 and 15 are reference: what the game is, how it
 
 ## 0. Current status
 
-**The current production baseline includes v214 character and gravel-integrated plant art.** `node --test` passes **395/395**, `sw.js` agrees with all 26 `index.html` stamps, and the rebuilt standalone Entrance-and-Inn demo is 11.87 MB.
+**The current production baseline is v218.** It includes the kimono characters, gravel-integrated plant art, guarded home-scene cleanup, a non-overlapping Entrance action dock, and corrected first-home starter stock. `node --test` passes **399/399**, `sw.js` agrees with all 26 `index.html` stamps, and the standalone Entrance-and-Inn demo is 11.87 MB.
+
+The latest browser check completed the Entrance and selected Moonview Inn from the map in a clean session. The Inn introduction rendered normally, with no blank completed-Entrance screen. The Entrance action instruction now has its own grid row and a measured 7px gap above the three cards.
+
+The first home visit now starts with an empty yard but non-empty stock. The free camellia is immediately in garden inventory and stays unplanted until the learner chooses a slot. The free cushion is immediately in indoor inventory and likewise stays unplaced. The tutorial teaches placement directly instead of sending the learner to the shop to claim either item. Saves containing the retired automatic `starter-maple` remove that special id during normalization; purchased maples are preserved.
 
 ### The game is finished and playable end to end
 
