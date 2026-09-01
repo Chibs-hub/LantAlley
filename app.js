@@ -62,8 +62,8 @@
   var KON_PHOTO_SRC = "assets/kon/kon-idle.webp";
 
   var PLAYER_ACTION_SPRITES = {
-    man:"assets/entrance/player-actions-v1.webp",
-    woman:"assets/entrance/player-actions-woman-v1.webp"
+    man:"assets/entrance/player-actions-kimono-man-v2.webp",
+    woman:"assets/entrance/player-actions-kimono-woman-v2.webp"
   };
   function playerActionSprite(){
     return PLAYER_ACTION_SPRITES[state.playerCharacter] || PLAYER_ACTION_SPRITES.man;

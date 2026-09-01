@@ -6,6 +6,10 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-01 - Approved kimono characters are now production art
+
+Replaced both Entrance character sheets with matte, hand-painted kimono artwork derived from the approved natural-style mock. Each 1200x600 RGBA WebP contains idle, bow, wave and clap in four exact 300x600 cells with a stable body scale, baseline and transparent clearance. The man wears an indigo kimono with charcoal haori; the woman wears a burgundy floral kimono. Character selection, live action rendering, CSS previews and the offline shell now use the new v2 sheets; the cache is v214. Desktop and 390x844 browser checks confirmed both characters and both bow animations render without clipping or console errors. The standalone Entrance-and-Inn demo now omits unreachable PWA-only home artwork during inlining, reducing it from 19.78 MB to 11.87 MB. The full suite passes 395/395.
+
 ### 2026-09-01 - Every painted growth stage now belongs in the gravel yard
 
 Replaced all 18 sakura, maple, camellia and sunflower growth cutouts with transparent gravel-integrated v2 artwork. Planted stages use a seed or marker; sprouts remain small; later stages grow progressively without changing the scene-scale contract. Roots and planting pockets now meet pale yard gravel instead of sitting on raised brown soil discs. The old CSS ground-haze overlay was removed because it would double-cover the new artwork. Measured each stage's alpha baseline, updated `PLANT_ART`, pre-cached every new file, and bumped the offline shell to v212. A four-species in-yard QA board confirms the progression and ground contact; the full suite passes 395/395.

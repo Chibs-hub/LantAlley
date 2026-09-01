@@ -264,7 +264,7 @@ test("a new or unconfirmed learner must choose a character and the chosen pose r
   const saved = JSON.parse(game.storage.getItem("lanternAlley.v3"));
   assert.equal(saved.playerCharacter, "woman");
   assert.equal(saved.characterSelected, true);
-  assert.match(game.$("player-figure").getAttribute("style"), /player-actions-woman-v1\.webp/);
+  assert.match(game.$("player-figure").getAttribute("style"), /player-actions-kimono-woman-v2\.webp/);
 });
 
 test("the entrance runs to its end and always leaves something to click", () => {

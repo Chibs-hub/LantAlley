@@ -146,8 +146,8 @@
   .character-option{display:flex;flex-direction:column;align-items:center;min-height:290px;padding:6px;border:2px solid rgba(219,157,86,.72);border-radius:14px;background:rgba(24,18,18,.38);color:#fff0cf;font:800 1rem 'Zen Maru Gothic',sans-serif;cursor:pointer;box-shadow:0 5px 0 rgba(25,14,10,.72);transition:transform .16s ease,border-color .16s ease,background .16s ease}
   .character-option:hover,.character-option:focus-visible{transform:translateY(-3px);border-color:#ffd27a;background:rgba(82,45,27,.68);outline:3px solid #f2ad55;outline-offset:2px}
   .character-preview{display:block;width:min(150px,100%);aspect-ratio:1/2;margin:auto auto 3px;background-repeat:no-repeat;background-size:400% 100%;background-position:0 center;filter:drop-shadow(0 8px 5px rgba(0,0,0,.38))}
-  .character-preview-man{background-image:url("assets/entrance/player-actions-v1.webp")}
-  .character-preview-woman{background-image:url("assets/entrance/player-actions-woman-v1.webp")}
+  .character-preview-man{background-image:url("assets/entrance/player-actions-kimono-man-v2.webp")}
+  .character-preview-woman{background-image:url("assets/entrance/player-actions-kimono-woman-v2.webp")}
   @media(max-width:560px){.character-scene{padding:8px}.character-panel{padding:10px}.character-guide{gap:7px}.character-guide img{width:54px;height:54px}.character-options{gap:7px}.character-option{min-height:232px;padding:4px}.character-preview{width:108px}}
   [hidden]{display:none !important}
 

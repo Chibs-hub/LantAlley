@@ -116,6 +116,10 @@ for (const name of scripts) {
 const images = [...html.matchAll(/["']((?:assets\/[^"']+|[\w.-]+\.ico))["']/g)]
   .map((match) => match[1])
   .filter((item, index, all) => all.indexOf(item) === index)
+  // The standalone file is intentionally the Entrance plus Inn Episode 1
+  // demo. Home decoration is available only in the installable PWA, and its
+  // many room, garden and pet variants would exceed the artifact host limit.
+  .filter((item) => !item.startsWith("assets/home/"))
   // Not every "assets/..." string in the source is a file. The garden builds
   // its image URL from the literal "assets/home/garden/", and handing a
   // directory to readFileSync throws EISDIR and takes the whole build with it.

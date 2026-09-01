@@ -255,7 +255,7 @@ test("the illustrated Entrance scene and learner poses are available offline", (
 
   for (const asset of [
     "assets/entrance/wooden-gate-v1.webp",
-    "assets/entrance/player-actions-v1.webp",
+    "assets/entrance/player-actions-kimono-man-v2.webp",
   ]) {
     assert.ok(sw.includes('"./' + asset + '"'), "sw.js does not pre-cache " + asset);
   }
@@ -263,8 +263,10 @@ test("the illustrated Entrance scene and learner poses are available offline", (
 
 test("the offline build owns both player choices and the Inn scene set", () => {
   const worker = readFileSync(new URL("./sw.js", import.meta.url), "utf8");
+  const app = read("app.js");
+  const styles = read("styles.css");
   const assets = [
-    "assets/entrance/player-actions-woman-v1.webp",
+    "assets/entrance/player-actions-kimono-woman-v2.webp",
     "assets/inn/scenes/guest-room.jpg",
     "assets/inn/scenes/lobby.jpg",
     "assets/inn/scenes/kitchen.jpg",
@@ -274,6 +276,15 @@ test("the offline build owns both player choices and the Inn scene set", () => {
     "assets/inn/scenes/courtyard.jpg",
   ];
   for (const asset of assets) assert.match(worker, new RegExp(asset.replaceAll("/", "\\/")));
+  for (const asset of [
+    "assets/entrance/player-actions-kimono-man-v2.webp",
+    "assets/entrance/player-actions-kimono-woman-v2.webp",
+  ]) {
+    assert.ok(app.includes(asset), `${asset} is not used for Entrance actions`);
+    assert.ok(styles.includes(asset), `${asset} is not used by character selection`);
+  }
+  assert.equal(app.includes("player-actions-v1.webp"), false, "the old man sheet is still active");
+  assert.equal(app.includes("player-actions-woman-v1.webp"), false, "the old woman sheet is still active");
 });
 
 test("the self-contained artifact embeds the selectable alley map", () => {
