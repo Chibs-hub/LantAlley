@@ -1,6 +1,6 @@
 # Lantern Alley Project Handoff
 
-Last updated: 2026-08-31
+Last updated: 2026-09-01
 
 A browser game that teaches JLPT N2 Japanese. Vanilla JS, CSS and HTML, no build step, no framework, offline-capable.
 
@@ -20,7 +20,7 @@ Sections 1, 3, 4, 5, 6, 8, 13, 14 and 15 are reference: what the game is, how it
 
 ## 0. Current status
 
-**The working tree is based on `d059d35` and contains uncommitted v195 home-lighting work plus the pending art candidates.** `master` is one commit ahead of `origin/master`. `node --test` passes **389/389**, and `sw.js` agrees with all 26 `index.html` stamps.
+**The working tree is based on `9682783` and contains uncommitted v212 gravel-integrated plant art and documentation updates.** `master` is three commits ahead of `origin/master`. `node --test` passes **395/395**, and `sw.js` agrees with all 26 `index.html` stamps.
 
 ### The game is finished and playable end to end
 
@@ -36,7 +36,7 @@ Three things, and **none of them are code**:
 
 1. **The Japanese has never been reviewed by a native speaker.** 215 items. Only the owner can do this. `?review=1`.
 2. **Most of the audio does not exist.** 506 of 620 spoken lines have no clip.
-3. **Most of the art does not exist.** Four of seven plant species and six of twenty-one furniture items render as vector stand-ins; four of five places have no scene art; the cat has no true sitting pose.
+3. **Most of the art does not exist.** Four of eight plant species and six of twenty-one furniture items render as vector stand-ins; four of five places have no scene art; the cat has no true sitting pose.
 
 The full list, with what each one is blocked on, is section 11.
 
@@ -69,7 +69,7 @@ Both write here. If you are one of them, read the other's recent entries in [CHA
 
 Every place covers all five official item types. The four written ones - 表記, 語形成, 文の組み立て, 文章の文法 - live in each place's second episode, because a spelling cannot be heard and a sentence you assemble is one you are looking at.
 
-**Verification.** 389 automated tests pass, 0 fail. Bare `node --test` is the correct command. The service-worker cache is `lantern-alley-v195`.
+**Verification.** 395 automated tests pass, 0 fail. Bare `node --test` is the correct command. The service-worker cache is `lantern-alley-v212`.
 
 **Mastery and earnings.** The stage HUD now shows a persistent understanding gauge and wallet. Mastery is the percentage of distinct authored targets answered correctly, never attempts or speed. Correct answers pay once per question (Learn ¥10, Practice ¥15, Challenge ¥25, correction ¥10), so replay cannot farm money. Places unlock in order only when the previous place reaches 100%: Entrance, Inn, Market, Teahouse, Station, Shrine. Existing completed episodes are converted into mastered targets on load. Locked map places remain visible and explain the 100% requirement. Money now buys something: see **the house and garden** below.
 
@@ -93,7 +93,7 @@ Wallpaper is bought and hung; ownership and the active choice are stored separat
 
 **A cosmetic cat lives here.** One long-haired calico moves between authored anchors in the yard and the room, follows the learner between the two, and does nothing else: `pointer-events:none`, absent from the shop, still under reduced motion, paused in a hidden tab. It cannot touch lessons, money, growth or placement, and that separation is the point of it.
 
-**What the reward system still owes.** Sakura, maple and camellia are painted; the other four species are not. Fifteen of the twenty-one furniture items are illustrated; 火鉢, 扇, 面, 急須, 本 and 小さな鉢 are not. **The shop sells only what has been painted** - an unfinished drawing is honest while a learner watches something they own grow, and dishonest on a price tag. Anything already bought keeps rendering from its vector, so no existing save loses an object. Adding the art is what puts an item back on the shelf. Switching a species to painted art is one block in `PLANT_ART`; the remaining requirement is `docs/superpowers/plans/2026-08-28-home-garden-task-7-assets.md`.
+**What the reward system still owes.** Sakura, maple, camellia and sunflower are painted; hydrangea, iris, chrysanthemum and lantern-flower-bed still use vector stand-ins. Fifteen of the twenty-one furniture items are illustrated; 火鉢, 扇, 面, 急須, 本 and 小さな鉢 are not. **The shop sells only what has been painted** - an unfinished drawing is honest while a learner watches something they own grow, and dishonest on a price tag. Anything already bought keeps rendering from its vector, so no existing save loses an object. Adding the art is what puts an item back on the shelf. Switching a species to painted art is one block in `PLANT_ART`; the remaining requirement is `docs/superpowers/plans/2026-08-28-home-garden-task-7-assets.md`.
 
 **The one open decision.** Audio has not been generated for the four newer places. The course speaks 620 lines; 114 have clips. Inlining the remaining 506 would take the artifact to roughly 31 MB against a hard 16 MB limit, so on 2026-08-27 the owner chose to skip the audio run for now and to drop the Artifact as the delivery surface later, so that the finished game can ship with its voice. Nothing has been sent to Microsoft Edge TTS.
 
@@ -154,7 +154,7 @@ Japanese audio plays from pre-rendered neural-voice MP3s, so pronunciation is id
 
 It is behind an explicit flag for the same reason `?review=1` is. The project's own rule is that a learner never advances without earning it, so a grant like this must be impossible to reach by accident and must say so on screen when it fires - a silent one is indistinguishable from a scoring bug. A test asserts a plain boot is not unlocked.
 
-Note the two ends of the growth: each species arrives twice so the `planted` and `mature` art can be placed side by side. Three species are painted (sakura, maple, camellia) and four still render as vector, so expect 6 photographs and 8 drawings among the 14 plant cards - that is correct, not a loading failure.
+Note the two ends of the growth: each species arrives twice so the `planted` and `mature` art can be placed side by side. Four species are painted (sakura, maple, camellia, sunflower) and four still render as vector, so expect 8 painted cards and 8 drawings among the 16 plant cards - that is correct, not a loading failure.
 
 ## 3. The central design rule
 
@@ -321,7 +321,7 @@ Split by whether anyone intends to change them. Nothing here is a surprise; all 
 
 - **No audio on four of the five places.** 506 of the 620 spoken lines have no clip. Listening items there are read rather than heard, and on a device with no Japanese voice they are silent. A recorded decision, not an oversight.
 - **The five-second items are tighter without audio.** At the Inn the clip plays before the clock starts, so the request has already been heard. Elsewhere the learner reads it cold. This is a direct consequence of the line above.
-- **Three of seven plant species are painted** - sakura, maple, camellia - and six of twenty-one furniture items still render as vector. Deliberate: the garden ships playable on stand-ins rather than waiting for art.
+- **Four of eight plant species are painted** - sakura, maple, camellia, sunflower - and six of twenty-one furniture items still render as vector. Deliberate: the garden ships playable on stand-ins rather than waiting for art.
 - **No grammar or kanji catalog is approved**, so the project may claim coverage only of its named vocabulary catalog. Candidate sources are in section 14; KANJIDIC2's licence is now verified.
 
 ### Defects recorded but not fixed
@@ -365,7 +365,9 @@ Nothing in this group is a code task. Listed so a coding session does not start 
 | 8 | **Scene art for four of the five places** | item 6 |
 | 9 | The **Inn room redrawn with its hotspots further apart** | item 7 |
 
-**2026-08-31 candidate art exists but is not wired.** The approved first batch is in `assets/home/art-candidates/2026-08-31/`: seamless asanoha and sakura wallpaper candidates, a room with a real tokonoma and shelf, its matching wall mask, six transparent furniture candidates, a production-grid sitting-cat candidate, and a wider Inn room. `review-board-v1.jpg` and the two placement/mask previews are for visual approval. The generated cat entry sheet is explicitly rejected because frames touch their cell boundaries. A production-ready sunflower cycle now exists in `assets/home/garden/` as planted, sprout, growing and mature 512px WebP cutouts plus `sunflower-growth-sheet-v1.png`; all four share a 95.5-95.7% ground baseline, `sunflower-yard-placement-preview-v1.jpg` shows its intended front-yard scale, and the species is already connected to the garden catalogue and `PLANT_ART`. Two transparent room display pieces now exist in `assets/home/decor/`: `display-cabinet-kiri-v1.webp` for a broad top surface and `display-shelf-staggered-v1.webp` for three display levels. Their room previews are in the candidate folder. The shelves are not yet wired into the decor catalogue, and shelf-top child-object anchors still need implementation. Do not move any other candidate into production until its in-scene scale and blend are approved.
+**2026-08-31 candidate art exists but is not wired.** The approved first batch is in `assets/home/art-candidates/2026-08-31/`: seamless asanoha and sakura wallpaper candidates, a room with a real tokonoma and shelf, its matching wall mask, six transparent furniture candidates, a production-grid sitting-cat candidate, and a wider Inn room. `review-board-v1.jpg` and the two placement/mask previews are for visual approval. The generated cat entry sheet is explicitly rejected because frames touch their cell boundaries. `player-characters-natural-style-mock-v2.png` is the current transparent standing-pose direction mock: it reduces the glossy AI-anime look with flatter gouache texture and individual facial structure, gives both characters slightly larger but restrained eyes, and replaces the man's hoodie with an indigo kimono and charcoal haori coordinated with the woman's burgundy kimono. It is not an action sheet and is not wired; v1 remains for comparison. Two transparent room display pieces now exist in `assets/home/decor/`: `display-cabinet-kiri-v1.webp` for a broad top surface and `display-shelf-staggered-v1.webp` for three display levels. Their room previews are in the candidate folder. The shelves are not yet wired into the decor catalogue, and shelf-top child-object anchors still need implementation. Do not move any other candidate into production until its in-scene scale and blend are approved.
+
+**2026-09-01 gravel plant art is production.** All 18 painted stages for sakura, maple, camellia and sunflower now use `*-gravel-v2.webp` assets in `assets/home/garden/`. Planted, sprout and later growth stages preserve visible progression; every root or seed pocket meets pale gravel rather than a raised brown mound. `gravel-growth-all-stages-preview-v2.jpg` checks relative stage size, and `gravel-growth-yard-qa-v2.jpg` checks all 18 against the actual day yard. The old CSS soil-disc haze is removed. `PLANT_ART`, measured `PLANT_BASE` values and the v212 offline cache are wired and covered by tests.
 
 3. **Three faults in the room painting and its wallpaper.**
 
@@ -385,7 +387,7 @@ Nothing in this group is a code task. Listed so a coding session does not start 
    - **Clearance on all four sides**, 13px or more at 192px, so nothing touches a cell edge.
    - **Wanted:** a true sitting pose (upright, tail curled round the feet), and a consistent entry/exit if scene transitions are wanted back.
 
-5. **Finish the home and garden art.** Four of seven species are still drawn from data, and six of twenty-one furniture items still render as vector. The system runs without it; this is the difference between a garden and a diagram. Requirement: `docs/superpowers/plans/2026-08-28-home-garden-task-7-assets.md`.
+5. **Finish the home and garden art.** Four of eight species are still drawn from data, and six of twenty-one furniture items still render as vector. The system runs without it; this is the difference between a garden and a diagram. Requirement: `docs/superpowers/plans/2026-08-28-home-garden-task-7-assets.md`.
 
    **Stage counts differ by species, and this trips people.** Camellia is painted in four steps matching the engine - `planted, sprout, growing, mature` - while sakura and maple are painted in five, with `sapling` and `young` in place of `growing`. `plantVisualStage` in `app.js` bridges the two. **Anything that renders a plant must go through it**, or the missing `growing` key falls back to a bare seedling - which is exactly what the storage card did until 2026-08-29.
 

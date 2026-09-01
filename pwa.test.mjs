@@ -37,7 +37,7 @@ test("sakura and maple each ship five consistent growth-stage assets", () => {
   const app = read("app.js");
   for (const tree of ["sakura", "maple"]) {
     for (const stage of ["planted", "sprout", "sapling", "young", "mature"]) {
-      const path = `assets/home/garden/${tree}-${stage}-v1.webp`;
+      const path = `assets/home/garden/${tree}-${stage}-gravel-v2.webp`;
       assert.equal(existsSync(new URL("./" + path, import.meta.url)), true, path);
       assert.ok(app.includes(path), `${path} is not mapped by the app`);
     }
@@ -711,16 +711,41 @@ test("scene objects are graded for the hour, and the cat for the scene too", () 
   // Found by line and read with a regex literal. Building the pattern from a
   // string needs backslashes that do not survive being written through a
   // shell, and a silently non-matching regex reads here as a missing rule.
-  const bright = (selector) => {
-    const line = css.split(/\r?\n/).find((l) => l.includes(selector));
-    const m = line && line.match(/brightness\(([\d.]+)\)/);
+  /* The cat's midday brightness is capped by its own fur, not by the ground.
+   *
+   * The yard is the brighter painting, so the cat there should be the brighter
+   * of the two - but only just. The calico's white clips between 1.05x and
+   * 1.16x across the production sheets, so asking for the 1.55x the gravel
+   * wants blows the markings off it. Daylight is carried instead by a contrast
+   * below 1, which lifts the dark fur without moving the white. */
+  const rule = (selector) => {
+    const lines = css.split(/\r?\n/);
+    const at = lines.findIndex((l) => l.includes(selector));
+    return at < 0 ? null : lines.slice(at, at + 8).join("\n");
+  };
+  const valueIn = (block, fn) => {
+    const m = block && block.match(new RegExp(fn + "\\(([\\d.]+)\\)"));
     return m ? Number(m[1]) : null;
   };
-  const yardDay = bright(".home-yard-scene.light-day .home-pet");
-  const roomDay = bright(".home-interior-scene.light-day .home-pet");
+  const yardDayRule = rule(".home-yard-scene.light-day .home-pet");
+  const roomDayRule = rule(".home-interior-scene.light-day .home-pet");
+  const yardDay = valueIn(yardDayRule, "brightness");
+  const roomDay = valueIn(roomDayRule, "brightness");
   assert.ok(yardDay && roomDay, "both midday cat rules carry a brightness");
   assert.ok(yardDay > roomDay,
     `the yard is the brighter painting at midday, so the cat there cannot be dimmer (yard ${yardDay}, room ${roomDay})`);
+  for (const [where, value] of [["yard", yardDay], ["room", roomDay]]) {
+    assert.ok(value <= 1.2,
+      `${where} midday cat brightness ${value} clips the white fur, which measures out at 1.05 to 1.16`);
+  }
+  for (const [where, block] of [["yard", yardDayRule], ["room", roomDayRule]]) {
+    assert.ok(valueIn(block, "contrast") < 1,
+      `${where} daylight must be carried by a contrast below 1, since brightness cannot go there`);
+  }
+
+  // and after dark the yard cat takes the doorway lamp, as the plants do
+  assert.match(rule(".home-yard-scene.light-night .home-pet"), /--pet-lamp/,
+    "the cat ignores the lamp at night while every plant beside it responds to it");
 });
 
 /* The four-stage species ship all four pictures, and the shop can reach them.
@@ -735,11 +760,12 @@ test("camellia and sunflower ship all four painted stages, wired end to end", ()
   const app = read("app.js");
   const worker = read("sw.js");
   const garden = read("home-garden.js");
+  const styles = read("styles.css");
 
   for (const species of ["camellia", "sunflower"]) {
     const file = species === "camellia" ? "camellia" : "sunflower";
     for (const stage of ["planted", "sprout", "growing", "mature"]) {
-      const path = `assets/home/garden/${file}-${stage}-v1.webp`;
+      const path = `assets/home/garden/${file}-${stage}-gravel-v2.webp`;
       assert.equal(existsSync(new URL("./" + path, import.meta.url)), true, `missing ${path}`);
       assert.ok(app.includes(path), `${path} is not in PLANT_ART`);
       assert.ok(worker.includes(path), `${path} is not pre-cached, so it breaks offline`);
@@ -755,4 +781,6 @@ test("camellia and sunflower ship all four painted stages, wired end to end", ()
     const row = garden.split(/\r?\n/).find((l) => l.includes(`id:"${species}"`));
     assert.match(row, /matureAt:4\b/, `${species} is painted in four stages but does not mature at 4`);
   }
+  assert.equal(styles.includes(".home-plant::after"), false,
+    "gravel-integrated plant art should not be covered by the old soil-disc haze");
 });

@@ -2798,30 +2798,30 @@
    * without is drawn. Adding a species is one block. */
   var PLANT_ART = {
     "cherry-tree": {
-      planted: "assets/home/garden/sakura-planted-v1.webp",
-      sprout:  "assets/home/garden/sakura-sprout-v1.webp",
-      sapling: "assets/home/garden/sakura-sapling-v1.webp",
-      young:   "assets/home/garden/sakura-young-v1.webp",
-      mature:  "assets/home/garden/sakura-mature-v1.webp"
+      planted: "assets/home/garden/sakura-planted-gravel-v2.webp",
+      sprout:  "assets/home/garden/sakura-sprout-gravel-v2.webp",
+      sapling: "assets/home/garden/sakura-sapling-gravel-v2.webp",
+      young:   "assets/home/garden/sakura-young-gravel-v2.webp",
+      mature:  "assets/home/garden/sakura-mature-gravel-v2.webp"
     },
     "japanese-maple": {
-      planted: "assets/home/garden/maple-planted-v1.webp",
-      sprout:  "assets/home/garden/maple-sprout-v1.webp",
-      sapling: "assets/home/garden/maple-sapling-v1.webp",
-      young:   "assets/home/garden/maple-young-v1.webp",
-      mature:  "assets/home/garden/maple-mature-v1.webp"
+      planted: "assets/home/garden/maple-planted-gravel-v2.webp",
+      sprout:  "assets/home/garden/maple-sprout-gravel-v2.webp",
+      sapling: "assets/home/garden/maple-sapling-gravel-v2.webp",
+      young:   "assets/home/garden/maple-young-gravel-v2.webp",
+      mature:  "assets/home/garden/maple-mature-gravel-v2.webp"
     },
     camellia: {
-      planted: "assets/home/garden/camellia-planted-v1.webp",
-      sprout:  "assets/home/garden/camellia-sprout-v1.webp",
-      growing: "assets/home/garden/camellia-growing-v1.webp",
-      mature:  "assets/home/garden/camellia-mature-v1.webp"
+      planted: "assets/home/garden/camellia-planted-gravel-v2.webp",
+      sprout:  "assets/home/garden/camellia-sprout-gravel-v2.webp",
+      growing: "assets/home/garden/camellia-growing-gravel-v2.webp",
+      mature:  "assets/home/garden/camellia-mature-gravel-v2.webp"
     },
     sunflower: {
-      planted: "assets/home/garden/sunflower-planted-v1.webp",
-      sprout:  "assets/home/garden/sunflower-sprout-v1.webp",
-      growing: "assets/home/garden/sunflower-growing-v1.webp",
-      mature:  "assets/home/garden/sunflower-mature-v1.webp"
+      planted: "assets/home/garden/sunflower-planted-gravel-v2.webp",
+      sprout:  "assets/home/garden/sunflower-sprout-gravel-v2.webp",
+      growing: "assets/home/garden/sunflower-growing-gravel-v2.webp",
+      mature:  "assets/home/garden/sunflower-mature-gravel-v2.webp"
     }
   };
 
@@ -3036,10 +3036,10 @@
   };
 
   var PLANT_BASE = {
-    camellia: {planted:77.5, sprout:82.9, growing:94.1, mature:94.2},
-    "cherry-tree": {planted:95.5, sprout:95.9, sapling:93.4, young:96.1, mature:94.9},
-    "japanese-maple": {planted:95.7, sprout:95.5, sapling:95.7, young:95.7, mature:95.7},
-    sunflower: {planted:94.5, sprout:94.7, growing:94.7, mature:95.3}
+    camellia: {planted:95.3, sprout:92.8, growing:91.2, mature:93.2},
+    "cherry-tree": {planted:95.3, sprout:94.3, sapling:92.6, young:94.1, mature:92.2},
+    "japanese-maple": {planted:95.3, sprout:93.0, sapling:95.3, young:93.8, mature:94.1},
+    sunflower: {planted:95.3, sprout:92.8, growing:95.3, mature:95.3}
   };
   var PLANT_BASE_FALLBACK = {planted:90, sprout:90, growing:92, mature:94};
 
@@ -3226,7 +3226,9 @@
       ? LanternHomePet.widthAt(homePetState.y, homePetState.scene) : 7.5;
     return '<div class="home-pet" aria-hidden="true" data-pet-behavior="' + homePetState.behavior
       + '" style="width:' + petWidth + '%;left:' + homePetState.x
-      + '%;top:' + homePetState.y + '%;z-index:' + homeDepthZ(homePetState.y)
+      + '%;top:' + homePetState.y + '%;--pet-lamp:'
+      + (homePetState.scene === 'yard' ? plantLampProximity(homePetState) : 1)
+      + ';z-index:' + homeDepthZ(homePetState.y)
       + ';--pet-facing:' + homePetState.facing + '">'
       + '<span style="background-image:url(\'' + sprite.path + '\');background-size:'
       + (sprite.columns * 100) + '% ' + (sprite.rows * 100) + '%"></span></div>';
@@ -3251,6 +3253,9 @@
     node.style.top = homePetState.y + "%";
     node.style.zIndex = homeDepthZ(homePetState.y);
     node.style.setProperty("--pet-facing", homePetState.facing);
+    /* The cat moves, so its distance from the doorway lamp changes with it. */
+    node.style.setProperty("--pet-lamp",
+      homePetState.scene === "yard" ? plantLampProximity(homePetState) : 1);
     node.setAttribute("data-pet-behavior", homePetState.behavior);
     var art = node.firstElementChild;
     if(art){

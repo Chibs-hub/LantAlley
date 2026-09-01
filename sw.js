@@ -7,7 +7,7 @@
  * Bump CACHE_VERSION whenever any shell file changes, or returning players
  * will keep the old build.
  */
-var CACHE_VERSION = "lantern-alley-v211";
+var CACHE_VERSION = "lantern-alley-v213";
 
 // audio-index.js assigns to `self`, so the worker and the page share one list
 // of clip paths. Importing it here means new lines are cached automatically
@@ -65,24 +65,24 @@ var SHELL = [
   "./assets/home/decor/sakura-bonsai-v1.webp",
   "./assets/home/decor/pine-bonsai-v1.webp",
   "./assets/home/decor/wallpaper-asanoha-blue-v1.webp",
-  "./assets/home/garden/camellia-planted-v1.webp",
-  "./assets/home/garden/camellia-sprout-v1.webp",
-  "./assets/home/garden/camellia-growing-v1.webp",
-  "./assets/home/garden/camellia-mature-v1.webp",
-  "./assets/home/garden/sunflower-planted-v1.webp",
-  "./assets/home/garden/sunflower-sprout-v1.webp",
-  "./assets/home/garden/sunflower-growing-v1.webp",
-  "./assets/home/garden/sunflower-mature-v1.webp",
-  "./assets/home/garden/sakura-planted-v1.webp",
-  "./assets/home/garden/sakura-sprout-v1.webp",
-  "./assets/home/garden/sakura-sapling-v1.webp",
-  "./assets/home/garden/sakura-young-v1.webp",
-  "./assets/home/garden/sakura-mature-v1.webp",
-  "./assets/home/garden/maple-planted-v1.webp",
-  "./assets/home/garden/maple-sprout-v1.webp",
-  "./assets/home/garden/maple-sapling-v1.webp",
-  "./assets/home/garden/maple-young-v1.webp",
-  "./assets/home/garden/maple-mature-v1.webp",
+  "./assets/home/garden/camellia-planted-gravel-v2.webp",
+  "./assets/home/garden/camellia-sprout-gravel-v2.webp",
+  "./assets/home/garden/camellia-growing-gravel-v2.webp",
+  "./assets/home/garden/camellia-mature-gravel-v2.webp",
+  "./assets/home/garden/sunflower-planted-gravel-v2.webp",
+  "./assets/home/garden/sunflower-sprout-gravel-v2.webp",
+  "./assets/home/garden/sunflower-growing-gravel-v2.webp",
+  "./assets/home/garden/sunflower-mature-gravel-v2.webp",
+  "./assets/home/garden/sakura-planted-gravel-v2.webp",
+  "./assets/home/garden/sakura-sprout-gravel-v2.webp",
+  "./assets/home/garden/sakura-sapling-gravel-v2.webp",
+  "./assets/home/garden/sakura-young-gravel-v2.webp",
+  "./assets/home/garden/sakura-mature-gravel-v2.webp",
+  "./assets/home/garden/maple-planted-gravel-v2.webp",
+  "./assets/home/garden/maple-sprout-gravel-v2.webp",
+  "./assets/home/garden/maple-sapling-gravel-v2.webp",
+  "./assets/home/garden/maple-young-gravel-v2.webp",
+  "./assets/home/garden/maple-mature-gravel-v2.webp",
   "./assets/home/pet/calico-walk-v3.png",
   "./assets/home/pet/calico-sit-v1.png",
   "./assets/home/pet/calico-loaf-v2.png",

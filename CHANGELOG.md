@@ -6,6 +6,18 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-01 - Every painted growth stage now belongs in the gravel yard
+
+Replaced all 18 sakura, maple, camellia and sunflower growth cutouts with transparent gravel-integrated v2 artwork. Planted stages use a seed or marker; sprouts remain small; later stages grow progressively without changing the scene-scale contract. Roots and planting pockets now meet pale yard gravel instead of sitting on raised brown soil discs. The old CSS ground-haze overlay was removed because it would double-cover the new artwork. Measured each stage's alpha baseline, updated `PLANT_ART`, pre-cached every new file, and bumped the offline shell to v212. A four-species in-yard QA board confirms the progression and ground contact; the full suite passes 395/395.
+
+### 2026-08-31 - Gravel-integrated sprout direction mock
+
+Added sakura and sunflower sprout candidates that replace the raised brown soil piles with compact, shallow planting pockets: a tiny recessed soil center, a few yard-matched pale pebbles and a transparent edge. The plant anatomy was revised as part of the same pass so sakura reads as a young woody seedling and sunflower has cotyledons plus its first true leaves. `sprout-gravel-yard-preview-v1.jpg` tests both at real yard scale; production files are unchanged pending approval.
+
+### 2026-08-31 - Less synthetic selectable-character direction mock
+
+Added transparent standing-pose art-direction tests. V1 retained the male hoodie and blonde kimono character while reducing plastic AI-anime signals through less-glossy eyes, individual facial structure, subtle asymmetry, matte gouache texture and flatter shading. V2 is the current revision: both eyes are slightly larger but restrained, and the man's modern clothes are replaced with an indigo kimono and charcoal haori that coordinate with the woman's burgundy kimono. Neither mock is wired; approving the direction comes before generating complete bow, wave and clap sheets.
+
 ### 2026-08-31 - Display furniture art for shelf-top objects
 
 Added two transparent room assets matched to the existing room and small-object inventory: a low kiri-wood cabinet with a broad empty top, and a staggered open kazari shelf with three usable levels. Room previews test them with the existing daruma, maneki-neko and bonsai assets. The furniture is not yet in the catalogue, and placing child objects on its surfaces still needs explicit anchor and layering logic.
@@ -13,6 +25,20 @@ Added two transparent room assets matched to the existing room and small-object 
 ### 2026-08-31 - Sunflower four-stage garden art
 
 Added a transparent, semi-realistic sunflower growth set matching the existing garden cutouts: planted soil marker, sprout, closed-bud growing plant and mature bloom. The four 512px WebP files share one source sheet, lighting, soil treatment and a measured 95.5-95.7% ground baseline so growth does not jump vertically. The species is connected to the garden catalogue and painted-art map.
+
+### 2026-09-01 - Feathering the new bases, and a cat that was blown to white
+
+**The v2 cutouts stand on gravel now, and a patch of gravel still ends somewhere.** The repainted art solved the colour - the old brown soil disc on grey ground is gone - but left the edge, so the base was still a visible oval seam.
+
+The earlier haze was the wrong tool for this. It tinted a colour over the rim, which suited a brown disc on grey gravel where the colour was the fault; here both are gravel and only the edge is. It has been replaced by a fade: two mask layers added together, keeping everything above the base intact and replacing the patch below with a soft ellipse that dissolves at its rim. **What survives blends because it is the same material as what it lands on.**
+
+**The cat was not lit, it was blown out.** Measuring the production sheets the way the plants were measured: the brightest 5% of the calico's fur reaches 255 at between 1.05x and 1.16x - the grooming sheet is tightest at 1.05, because of the white bib. The yard rule was asking **1.55x** and the room **1.30x**. In daylight the cat had been a flat white shape with its markings gone in both scenes, which is the whole of "the cat lighting is not natural in both".
+
+Daylight is carried by contrast instead. A contrast below 1 pulls the picture toward mid-grey, lifting the dark fur far more than it moves the white, so the cat reads brighter with its highlights still under 255. Brightness never exceeds 1.10 now.
+
+**And the cat takes the doorway lamp.** At night in the yard it was a flat 0.64 wherever it stood while every plant beside it ran 0.68 to 1.02 with the hue swinging - so a cat sitting under a warmly lit tree was uniformly dim. It now carries `--pet-lamp`, set from its position and **updated as it walks**, and its night rule mirrors the plants'. Indoors that variable is 1: the room has its own light and no falloff across it.
+
+The test now checks the ceiling as well as the order - the yard cat must still be brighter than the room cat, but neither above 1.2, and both must carry a contrast below 1. Anything above that means someone has gone back to lighting the cat like a wall.
 
 ### 2026-08-31 - Widening the night range again, and hazing the soil disc
 
