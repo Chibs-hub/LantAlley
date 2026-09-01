@@ -984,3 +984,39 @@ test("the yard's night lighting falls off with distance from the doorway", () =>
     assert.match(block, /--plant-lamp/, `${hour} ignores the lamp`);
   }
 });
+
+/* Leaving the house must take the house with it.
+ *
+ * The home paints a whole yard into `#scene` - background, plants, cat, and
+ * its own row of controls. Places that render into `#scene` themselves
+ * overwrote it and looked fine; places that work through the dialogue panel
+ * never touched it, so the yard stayed underneath and 家に入る, 飾る and 店
+ * were live and clickable on top of another stage.
+ *
+ * This asserts the invariant where it lives rather than by playing, and that
+ * is a deliberate compromise worth explaining. Reproducing it needs a
+ * destination in a state that writes nothing to `#scene` - the Entrance while
+ * its tutorial is still running - and staging that in the fake DOM defeated
+ * several attempts: seeding the Entrance unvisited stops `わが家` reaching the
+ * map at all. A DOM test that passes against the broken code is worse than
+ * none, so this checks the one line every location passes through instead.
+ * The behaviour itself was reproduced and confirmed fixed in a browser.
+ */
+test("leaving a location clears the workspace the last one drew", () => {
+  const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  const start = app.indexOf("function enterLocation(");
+  assert.ok(start > -1, "enterLocation is gone");
+  const body = app.slice(start, app.indexOf("\n  function ", start + 10));
+
+  assert.match(body, /\$\("scene"\)\.innerHTML = ""/,
+    "enterLocation must empty #scene, or a stage that renders only into the "
+    + "dialogue panel inherits whatever the last one left there");
+
+  // it has to happen before the new location renders, not after
+  const clearAt = body.indexOf('$("scene").innerHTML = ""');
+  const renderAt = body.indexOf("renderStage");
+  if (renderAt > -1) {
+    assert.ok(clearAt < renderAt,
+      "the workspace is cleared after the new stage draws, which erases it");
+  }
+});

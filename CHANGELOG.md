@@ -30,6 +30,20 @@ Added two transparent room assets matched to the existing room and small-object 
 
 Added a transparent, semi-realistic sunflower growth set matching the existing garden cutouts: planted soil marker, sprout, closed-bud growing plant and mature bloom. The four 512px WebP files share one source sheet, lighting, soil treatment and a measured 95.5-95.7% ground baseline so growth does not jump vertically. The species is connected to the garden catalogue and painted-art map.
 
+### 2026-09-01 - The house followed the learner out of the house
+
+Reported as a bug going from the home to the Entrance, and that is exactly where it showed.
+
+**`#scene` was never emptied when changing location.** The home paints a whole yard into it - background, plants, the cat, and its own row of controls. Places that render into `#scene` themselves overwrote all that and looked fine, which is why this survived: the fault only appears at a destination that works through the dialogue panel and never touches `#scene`. The Entrance while its tutorial is running is such a place, so the yard simply stayed underneath it, with `家に入る`, `飾る`, `店` and a second `Lantern Alley` live and clickable on top of another stage.
+
+Cleared in `enterLocation`, beside the two class resets that were already there for the same reason. That is the one place every location passes through, so the next stage that renders only into the dialogue panel cannot inherit the same fault.
+
+**Ruled out before fixing, so nobody re-checks them:** `enterLocation` already cleared `is-silent` and the `home-stage` class correctly - both flip as they should, and the dialogue panel showed the Entrance's own line throughout. The greeting-panel removal earlier in the day touched only `is-silent` and was not the cause.
+
+**A false lead worth recording.** Testing the fix, the Inn and the Market appeared still to hold the house. They do - but both are `state-locked` in that save, so the click is refused, the learner never leaves the map, and `#scene` legitimately still holds the last place they were. `screen-game` is hidden, so nothing is shown or reachable. Leftover markup behind a hidden screen is not the same fault as leftover markup on a visible one.
+
+**The test is a source assertion and that is a compromise**, explained where it sits. Reproducing this in the fake DOM needs the Entrance mid-tutorial, and seeding it unvisited stops `わが家` reaching the map at all - three attempts produced a DOM test that passed against the broken code, which is worse than none. So the invariant is checked at the one line every location passes through, and the behaviour itself was reproduced and confirmed fixed in a browser: 0 leftover elements and no stray controls, where before there were 7 and four buttons.
+
 ### 2026-09-01 - Feathering the new bases, and a cat that was blown to white
 
 **The v2 cutouts stand on gravel now, and a patch of gravel still ends somewhere.** The repainted art solved the colour - the old brown soil disc on grey ground is gone - but left the edge, so the base was still a visible oval seam.

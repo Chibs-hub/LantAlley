@@ -2477,6 +2477,21 @@
      * until now, which is exactly why it went unnoticed. */
     $("dialogue-shell").classList.remove("is-silent");
     screenGame.classList.remove("home-stage");
+    /* And the workspace is emptied, which the two lines above were not enough
+     * to do.
+     *
+     * The house paints a whole yard into `#scene` - background, plants, the
+     * cat, and its own row of controls. Places that render into `#scene`
+     * themselves overwrite that and looked fine; places that work through the
+     * dialogue panel instead never touched it, so the yard simply stayed
+     * underneath them. Leaving home for the Entrance, the Inn or the Market
+     * left `家に入る`, `飾る`, `店` and a second `Lantern Alley` live and
+     * clickable on top of the new stage.
+     *
+     * Clearing here rather than in each stage is the point: this is the one
+     * place every location passes through, and the next stage that renders
+     * only into the dialogue panel would otherwise inherit the same fault. */
+    $("scene").innerHTML = "";
     if(loc.key !== "home"){
       state.lastPlace = loc.key;
       saveProgress();
