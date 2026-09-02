@@ -1076,6 +1076,39 @@ test("without ?skip=1, the Inn's skip controls never appear", async () => {
   assert.equal(game.$("btn-skip-stage").hidden, true);
 });
 
+/* The stage-completion skip only covered the Learn/Practice/Challenge stage
+ * itself; Episode 1 - the ten-question story shift the stage unlocks - runs
+ * through a second, separate answer-handling function (previewState's own
+ * renderPreviewQuestion, not answerStage), which had no skip hook at all. */
+test("?skip=1's skip-question control also works inside Episode 1", async () => {
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game);
+  game.$("btn-skip-stage").click();
+  game.$("btn-next").click(); // "路地へ戻る →": mastered, so this starts Episode 1.
+  game.clock.advance(500);
+
+  const begin = game.$("btn-episode-begin");
+  assert.ok(begin, "the episode's opening card is on screen");
+  begin.click();
+  game.clock.advance(500);
+  game.$("btn-brief-begin").click();
+  game.clock.advance(500);
+
+  assert.equal(game.$("btn-skip-question").hidden, false,
+    "the skip-question control shows once a real episode question is on screen");
+  // No whole-episode skip: an episode is a flat ten-question shift rather
+  // than a fixed three-part stage, so there is no single state to jump to.
+  assert.equal(game.$("btn-skip-stage").hidden, true);
+
+  const firstEncounter = game.$("encounter-progress").textContent;
+  game.$("btn-skip-question").click();
+  assert.equal(game.$("next-row").style.display, "block",
+    "a correct answer shows the continue control immediately in the episode flow");
+  game.$("btn-next").click();
+  assert.notEqual(game.$("encounter-progress").textContent, firstEncounter,
+    "skipping one episode question moves to the next, without answering it");
+});
+
 /* The shop sells only what has been painted - wallpaper included.
  *
  * Furniture and plants were gated on having a picture from the start, and

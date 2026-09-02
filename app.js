@@ -1216,8 +1216,15 @@
 
   // One button, one question: marks whatever is currently on screen correct
   // and lets the normal timed advance carry it forward, same as a real
-  // answer would.
+  // answer would. An episode question (previewState set) and a pre-episode
+  // Learn/Practice/Challenge/Review question (getActivePrompt) are answered
+  // through two different functions, so this checks which one is live.
   function skipCurrentQuestion(){
+    if(previewState){
+      if(previewState.answered || !previewState.answerHandler) return;
+      previewState.answerHandler(previewState.correctValue);
+      return;
+    }
     var loc = getLocation(state.currentKey);
     if(!loc || !loc.encounters) return;
     var prompt = getActivePrompt(loc);
@@ -2030,7 +2037,10 @@
     var dayLabel = (entry.label || "宵の一時間") + "・" + (entry.question.seconds || 8) + "秒";
 
     $("stage-phase-row").style.display = "flex";
-    $("btn-skip-question").hidden = true;
+    $("btn-skip-question").hidden = !testingSkipEnabled;
+    // No whole-episode skip: an episode is one ten-question shift rather than
+    // a fixed three-part stage, so there is no single "mastered" state for it
+    // to jump to the way skipWholeStage() jumps a stage to its unlock.
     $("btn-skip-stage").hidden = true;
     $("stage-phase-badge").textContent = dayLabel;
     $("scene-label").textContent = "Episode 1 preview - " + question.skill;
@@ -2124,7 +2134,10 @@
     }
 
     previewState.answered = false;
-    LanternQuestionRenderer.renderInto($("preview-controls"), question, function(value){
+    // Named and kept on previewState, rather than passed inline, so
+    // skipCurrentQuestion (testing only, see testingSkipEnabled) can call it
+    // directly with the correct index instead of needing a real click.
+    function handlePreviewAnswer(value){
       if(previewState.answered) return;
       clearPreviewTimer();
       if(!options.length){
@@ -2161,7 +2174,10 @@
       // makes no sense in a timed hour, where the guest has already been kept
       // waiting. The item returns in the correction round instead.
       advancePreviewLater(correct);
-    }, {phase: entry.mode});
+    }
+    previewState.answerHandler = handlePreviewAnswer;
+    previewState.correctValue = options.length ? question.answer.correctIndex : null;
+    LanternQuestionRenderer.renderInto($("preview-controls"), question, handlePreviewAnswer, {phase: entry.mode});
   }
 
   function advancePreviewLater(isCorrect){

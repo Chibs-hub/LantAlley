@@ -6,6 +6,20 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-02 - `?skip=1`'s skip-question control now also works inside Episode 1
+
+Owner-reported: "episode 1 preview doesnt have skip function." The previous entry's skip-question control only worked against `answerStage()`, the function the pre-episode Learn/Practice/Challenge stage answers through - Episode 1 (the ten-question story shift the stage unlocks) answers through a second, entirely separate function inside `renderPreviewQuestion()`, which had no skip hook at all.
+
+That function's answer handler was an anonymous callback passed straight into `LanternQuestionRenderer.renderInto(...)`, so there was nothing outside it to call. Named it `handlePreviewAnswer` and kept a reference on `previewState.answerHandler` (plus `previewState.correctValue`, the option index worth calling it with, or `null` for an action question that already auto-skips in preview) - `skipCurrentQuestion()` now checks `previewState` first and, if set, calls the same handler a real click already used, with the correct answer.
+
+No whole-episode skip: an episode is a flat ten-question shift rather than a fixed three-part stage, so there is no single "mastered" state the way `skipWholeStage()` had one to jump a stage to. `#btn-skip-stage` stays hidden throughout Episode 1.
+
+A regression test masters the Inn stage with `?skip=1`'s existing whole-stage skip, clicks through the episode's two intro screens, and confirms `#btn-skip-question` shows on the real first question and correctly advances it without answering; confirmed to fail before this fix (previewState questions had no working skip) and pass after.
+
+Verified live: skipping the episode's first question showed "正解です。 +¥10" and advanced to question 2 with no errors thrown.
+
+Cache is v231. `node --test` passes 413/413.
+
 ### 2026-09-02 - Per-question and whole-stage skip controls in the Inn, gated behind `?skip=1`
 
 `?skip=1` (above) got a tester past character selection and the Entrance, but every Learn/Practice/Challenge question inside the Inn still had to be solved for real on every test pass. Owner asked for "the skip button so I can go through and test," and confirmed the intent covered both a per-question skip and a way to finish the whole stage in one click.
