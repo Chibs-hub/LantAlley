@@ -610,6 +610,38 @@ test("decorate mode reveals owned items and placement interaction", () => {
     "owned decor is available to place");
 });
 
+/* home-pet.js's enterScene() always arrives at the scene's door - deliberate
+ * for the very first sighting of the cat ("walking in to greet you"), but
+ * homePetMarkup() used to call it for every switch between the yard and the
+ * room too, not just that first sighting. A learner tapping between the two
+ * views while decorating would see the cat land on the exact same dead-
+ * centre spot every single time, which reads as being teleported to the
+ * middle of the screen rather than a cat going about its day. */
+test("switching between the yard and the room does not always re-seat the cat at the door", () => {
+  const game = boot(plantedCamelliaSave());
+  enterHome(game);
+  const petPos = () => {
+    const pet = game.doc.querySelector(".home-pet");
+    return pet ? { left: pet.style.left, top: pet.style.top } : null;
+  };
+  // First sighting arrives through the yard door - that part is unchanged.
+  assert.deepEqual(petPos(), { left: "50%", top: "59%" });
+
+  // Walking into the house is a real scene change and gets a fresh spot -
+  // create() excludes door anchors from its pick, so this can never
+  // coincidentally land on the door regardless of the random seed.
+  game.doc.querySelectorAll("[data-enter-house]")[0].click();
+  game.clock.advance(50);
+  assert.notDeepEqual(petPos(), { left: "50%", top: "74%" },
+    "switching to the room must not always drop the cat at its own door");
+
+  // And walking back out must not always drop it at the yard's door either.
+  game.doc.querySelectorAll("[data-leave-house]")[0].click();
+  game.clock.advance(50);
+  assert.notDeepEqual(petPos(), { left: "50%", top: "59%" },
+    "switching back to the yard must not always re-seat the cat at its door");
+});
+
 test("yard reset actions live in a compact overflow menu", () => {
   const game = boot(plantedCamelliaSave());
   enterHome(game);

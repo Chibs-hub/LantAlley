@@ -6,6 +6,20 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-02 - The home's cat no longer resets to the door every time the yard and the room are switched
+
+Owner-reported: "cat is always transport to the middle of the screen when just enter either room or yard." Confirmed with the owner it was specifically the door-reset behavior, not the same-scene case (which already correctly preserved the cat's last position - verified separately with a deterministic clock-driven harness, since this environment cannot reliably simulate live `requestAnimationFrame` timing).
+
+`homePetMarkup(scene)` reset `homePetState` via `LanternHomePet.enterScene()` whenever the rendered scene did not match the cat's last known one - which correctly covers the very first sighting of the cat each visit (arriving through the door, "walking in to greet the player"), but also fired on every later switch between the yard and the room within the same visit. `enterScene()` always resolves to that scene's door anchor - `x:50` in both scenes, dead centre - so a learner tapping "家に入る" and back a few times while decorating saw the cat land on the exact same spot every single time, reading as a teleport rather than a cat going about its day.
+
+Fixed by splitting the two cases: the first sighting (`!homePetState`) still arrives via `enterScene()`; a later scene switch (`homePetState.scene !== scene`, with `homePetState` already set) now uses `LanternHomePet.create(scene, Date.now())` instead, which already excludes door-kind anchors from its pick - so it can never coincidentally land on the door either.
+
+A regression test in `walkthrough.test.mjs` enters the home, confirms the first sighting is still at the yard door, then switches into the house and asserts the position is not the interior's door coordinates, and switches back and asserts the same for the yard - confirmed to fail against the unfixed code (landing exactly on the door both times) and pass with the fix. Verified live: four house/yard round-trips landed the cat on five different, sensible resting spots (a window, a cushion, a rock, a veranda, a lane tile), never the door.
+
+Two further owner reports from the same round of feedback - the Inn's content-heavy rooms scrolling before an answer, and a home-viewer's crash after visiting home - are recorded separately below; a third report (no visible way out of the yard) was investigated and not reproduced, recorded in PROJECT-HANDOFF.md section 11 pending the owner's input.
+
+Cache is v226. `node --test` passes 406/406.
+
 ### 2026-09-02 - The Inn's content-heavy rooms no longer scroll before the learner has even answered
 
 Owner-reported: "the screen is cut for even for desktop screen" - a screenshot of the arrange task (thirteen cushions, baskets and appliances to sort) showed the object tray sliced off by a scrollbar inside the scene panel, on a perfectly ordinary desktop viewport.

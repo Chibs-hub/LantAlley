@@ -3291,10 +3291,23 @@
 
   function homePetMarkup(scene){
     if(typeof LanternHomePet === "undefined") return "";
-    if(!homePetState || homePetState.scene !== scene){
+    if(!homePetState){
+      // The very first sighting of the cat this visit: let it arrive through
+      // the door, as if walking in to greet the player.
       homePetState = LanternHomePet.enterScene
         ? LanternHomePet.enterScene(scene, Date.now())
         : LanternHomePet.create(scene, Date.now());
+      homePetIdleMs = 0;
+    } else if(homePetState.scene !== scene){
+      // Switching between the yard and the room mid-visit used to walk the
+      // cat to that scene's door every time via the same enterScene() call -
+      // always the exact same dead-centre spot, which a learner tapping
+      // between the two views a few times reads as the cat being teleported
+      // to the middle of the screen on every entry, not as it going about
+      // its day. create() already excludes door anchors from its pick, so a
+      // fresh ordinary resting spot in the new scene keeps this feeling
+      // continuous instead of like a hard reset.
+      homePetState = LanternHomePet.create(scene, Date.now());
       homePetIdleMs = 0;
     }
     var blockers = homePetBlockers(scene);
