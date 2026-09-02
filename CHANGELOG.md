@@ -6,6 +6,16 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-02 - A `?skip=1` flag for testing past the Entrance without replaying it
+
+Owner asked for "the skip button so I can go through and test" after several rounds of testing home/yard/room features that all sit past character selection and the Entrance's own question - both of which reset on every fresh save, so every reload meant replaying both just to get back to whatever was actually being tested.
+
+Added `?skip=1`, following the existing `?unlockall=1`/`?trees=N`/`?review=1` convention: a query flag, not a visible in-game button, since a skip control a real player could find would let them bypass demonstrating understanding, which the project's own design rule rules out. It sets `characterSelected`, `playerCharacter` (defaulting to "woman" if unset), and marks the Entrance visited and starred, then saves - so `btn-start`'s own existing click handler (`if(!state.characterSelected...) showCharacterSelection(); if(!state.visited.entrance) enterLocation("entrance"); else showMap();`) takes the same path it would for a returning player, straight to the map. It only ever fills in what a fresh save would otherwise ask for - a save with real progress past those two gates is untouched.
+
+A regression test boots with `?skip=1`, confirms the save shows a selected character and a visited Entrance, then clicks start and asserts the map screen displays rather than the Entrance or character select. Confirmed to fail without the flag's code. Verified live: a completely cleared save with `?skip=1` lands on the map after one click, no character screen or Entrance dialogue in between.
+
+Cache is v229. `node --test` passes 409/409.
+
 ### 2026-09-02 - The room now has a painted way back to the yard too
 
 Follow-up to the yard's own exit hotspot, above: owner asked for "clickable exit from inside of house to the yard" - the same asymmetry existed one level in. `home-house-hotspot` let a learner walk from the yard into the room; the room itself only offered the corner text link ("← 庭") to walk back out, no painted spot in the room to match.

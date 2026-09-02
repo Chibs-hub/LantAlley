@@ -747,6 +747,20 @@
     var unlockOptions = {matureTrees: treeCount ? Number(treeCount[1]) : 0};
     setTimeout(function(){ unlockEverythingForTesting(unlockOptions); }, 0);
   }
+
+  /* `?skip=1` clears the two gates every session starts behind - choosing a
+   * character and playing the Entrance - so testing the map, the Inn or the
+   * home does not mean replaying both from a fresh save every single reload.
+   * A real player never adds this to a URL, so it is safe to force rather
+   * than merge: it only ever fills in what a fresh save would otherwise ask
+   * for, never overwrites real progress a save already has past that point. */
+  if(/[?&]skip=1(&|$)/.test(window.location.search)){
+    state.characterSelected = true;
+    state.playerCharacter = state.playerCharacter || "woman";
+    state.visited.entrance = true;
+    state.starred.entrance = true;
+    saveProgress();
+  }
   state.dailyPractice = pendingDaily.dailyPractice;
   state.streak = pendingDaily.streak;
   state.freezes = pendingDaily.freezes;

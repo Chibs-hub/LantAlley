@@ -982,6 +982,24 @@ test("the ?unlockall=1 flag unlocks on load without breaking the module", () => 
     "the catalogue survived the unlock");
 });
 
+/* Testing anything past the Entrance meant replaying character selection and
+ * the Entrance's own question on every reload of a fresh save. ?skip=1 fills
+ * in just those two gates - never anything a real save could already have
+ * past them - so btn-start's own click handler drops straight to the map. */
+test("the ?skip=1 flag lands on the map without playing the Entrance", () => {
+  const game = boot(null, "?skip=1");
+  game.clock.advance(50);
+
+  const saved = JSON.parse(game.storage.getItem("lanternAlley.v3") || "{}");
+  assert.equal(saved.characterSelected, true, "a character is pre-selected");
+  assert.ok(saved.visited.includes("entrance"), "the Entrance is pre-visited");
+
+  game.$("btn-start").click();
+  game.clock.advance(200);
+  assert.equal(game.$("screen-map").style.display, "block",
+    "start goes straight to the map, not the Entrance or character select");
+});
+
 /* The shop sells only what has been painted - wallpaper included.
  *
  * Furniture and plants were gated on having a picture from the start, and
