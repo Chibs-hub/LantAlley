@@ -6,6 +6,18 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-02 - Fixed a crash on returning to the Entrance or the Inn after a home visit
+
+A learner-reported bug, reproduced live before being touched: finish the Entrance, walk to the home, leave the home, then go back to the Entrance (or the Inn) - the game broke immediately, stuck on a stale `わが家` label with an uncaught `TypeError: Cannot read properties of null (reading 'parentElement')`.
+
+Root cause: `#avatar-slot` is a singleton DOM node, normally parked inside `#dialogue-shell`, that the Entrance's `renderScene()` physically relocates into `#scene` so Kon can stand next to the player there (`scene.appendChild($("avatar-slot"))`). `enterLocation()` was the only place that ever moved it back - but only for non-home destinations, because `if(loc.isHome){ renderHome(); return; }` returned before reaching that restore step. Going straight from the Entrance into the home skipped the restore entirely, so `#avatar-slot` was still sitting inside `#scene` when `paintHome()` ran `$("scene").innerHTML = '<div class="home-room">'...` - which destroyed the node outright, the way assigning `.innerHTML` always discards a parent's existing children rather than detaching them. Every later `$("avatar-slot")` came back `null`, and the very next line that read its `.parentElement` threw.
+
+Fixed by hoisting the "move `#avatar-slot` back to `#dialogue-shell` if it isn't there" check to the top of `enterLocation()`, before any branch - home included - can touch `#scene`. The later, now-redundant copy of the same check was removed rather than left as an inert duplicate.
+
+A regression test (`walkthrough.test.mjs`) plays the Entrance, visits the home, leaves, and returns to the Entrance, asserting nothing throws and the shared avatar node survives. Writing it surfaced a second, unrelated bug: `dom-harness.mjs`'s `insertBefore` never detached the moved node from its old parent first (unlike `appendChild`, which does), so the very restore step this fix depends on left a stale duplicate reference behind in the fake DOM and the test could not observe the crash at all. Fixed `insertBefore` to detach first, matching real DOM semantics - confirmed the regression test now fails against the unfixed `enterLocation` and passes against the fix.
+
+Verified live in the browser for both reported paths - Entrance to home to leave to Entrance, and Entrance to home to leave to the Inn - with no thrown errors and `#avatar-slot` correctly present and reparented at every step. Cache is v224. `node --test` passes 405/405.
+
 ### 2026-09-02 - The three remaining Inn QA items are resolved, and the route was played clean start to finish
 
 The three checks the previous entry listed as outstanding are done, each verified in a real browser rather than asserted.

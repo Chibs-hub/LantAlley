@@ -2517,6 +2517,21 @@
   function enterLocation(key){
     var loc = getLocation(key);
     if(!loc) return;
+    /* The Entrance borrows `#avatar-slot` - a singleton node normally parked
+     * inside `#dialogue-shell` - and plants it in `#scene` so Kon can stand
+     * next to the player there. Nothing put it back before the home branch
+     * below returns early, so a Home visit right after the Entrance left it
+     * sitting inside `#scene` when `paintHome()` overwrote that element's
+     * innerHTML - destroying the node outright. Every later `$("avatar-slot")`
+     * came back null and crashed the next Entrance or Inn visit. Restoring it
+     * here, before any branch (home included) can touch `#scene`, closes that
+     * off for every destination rather than just the ones that used to reach
+     * the old restore step further down. */
+    var avatarSlot = $("avatar-slot");
+    var dialogueShell = $("dialogue-shell");
+    if(avatarSlot.parentElement !== dialogueShell){
+      dialogueShell.insertBefore(avatarSlot, $("dialogue-panel"));
+    }
     /* Only the home silences the speech panel or hides the furigana switch and
      * the understanding gauge, so both are restored here.
      *
@@ -2613,11 +2628,8 @@
       state.resumedStageEntry = true;
     }
 
-    var avatarSlot = $("avatar-slot");
-    var dialogueShell = $("dialogue-shell");
-    if(avatarSlot.parentElement !== dialogueShell){
-      dialogueShell.insertBefore(avatarSlot, $("dialogue-panel"));
-    }
+    // avatarSlot/dialogueShell were already restored to #dialogue-shell at
+    // the top of this function, before the home branch could displace them.
     var transparentFox = LanternAlleyLogic.shouldUseTransparentFox(loc.key, !!loc.encounters);
     dialogueShell.classList.toggle("entrance-dialogue", transparentFox);
     avatarSlot.classList.add("avatar-animated");

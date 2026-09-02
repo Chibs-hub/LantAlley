@@ -621,6 +621,56 @@ test("yard reset actions live in a compact overflow menu", () => {
     "reset actions are not a permanent row in the main menu");
 });
 
+/* The entrance borrows the shared `#avatar-slot` node and plants it inside
+ * `#scene` so Kon can stand next to the player there. Nothing moved it back
+ * before entering the home, and `paintHome()` overwrites `#scene`'s innerHTML
+ * on every visit - which used to destroy the node outright. The next
+ * `getElementById("avatar-slot")`, back at the entrance or the inn, came back
+ * null and crashed on the very next line that read its `.parentElement`.
+ */
+test("visiting home right after the entrance does not strand or destroy the shared avatar node", () => {
+  const game = boot();
+  game.$("btn-start").click();
+  game.clock.advance(500);
+  const character = game.doc.querySelectorAll("[data-character]")[0];
+  if (character) { character.click(); game.clock.advance(500); }
+
+  for (let step = 0; step < 25; step += 1) {
+    const actions = game.doc.querySelectorAll("[data-key]");
+    const choice = actions.filter((a) => a.getAttribute("data-key") === "bow")[0] || actions[0];
+    if (choice) { choice.click(); game.clock.advance(3000); break; }
+    game.tapScreen();
+  }
+  assert.ok(game.$("avatar-slot"), "avatar-slot exists once the entrance has rendered");
+  assert.equal(game.$("avatar-slot").parentNode && game.$("avatar-slot").parentNode.id, "scene",
+    "the entrance moves the shared avatar into the scene - the setup the bug depends on");
+
+  if (game.$("next-row").style.display !== "none") {
+    game.$("btn-next").click();
+    game.clock.advance(500);
+  }
+
+  const home = homeButton(game);
+  assert.ok(home, "home is reachable from the map right after the entrance");
+  home.click();
+  game.clock.advance(200);
+  assert.ok(game.$("avatar-slot"), "avatar-slot survives paintHome() overwriting #scene");
+
+  const leave = game.doc.querySelectorAll("[data-home-map]")[0];
+  assert.ok(leave, "there is a way back to the map from home");
+  leave.click();
+  game.clock.advance(200);
+
+  const entranceAgain = game.doc
+    .querySelectorAll(".map-destination")
+    .find((b) => b.getAttribute("data-map-key") === "entrance");
+  assert.ok(entranceAgain, "the entrance is still reachable from the map");
+  assert.doesNotThrow(() => entranceAgain.click(),
+    "returning to the entrance after a home visit must not throw");
+  game.clock.advance(200);
+  assert.deepEqual(game.errors, [], "revisiting the entrance after home throws nothing");
+});
+
 // A learner who has done the tutorial and has one camellia in the ground.
 // Written as a save so it arrives through the real migration on boot.
 function plantedCamelliaSave(extra) {

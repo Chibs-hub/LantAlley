@@ -158,6 +158,13 @@ class FakeElement {
     return false;
   }
   insertBefore(node, ref) {
+    // Unlike appendChild, this never detached `node` from wherever it was
+    // already parented first. Moving a node that already lives elsewhere in
+    // the tree - which is exactly what app.js does to shuttle the shared
+    // avatar slot between the scene and the dialogue shell - left a second,
+    // stale reference to it sitting in its old parent's childNodes, so the
+    // same element appeared to exist twice.
+    if (node.parentNode) node.parentNode.removeChild(node);
     const at = this.childNodes.indexOf(ref);
     if (at < 0) return this.appendChild(node);
     node.parentNode = this;

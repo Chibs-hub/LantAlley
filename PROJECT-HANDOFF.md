@@ -20,7 +20,9 @@ Sections 1, 3, 4, 5, 6, 8, 13, 14 and 15 are reference: what the game is, how it
 
 ## 0. Current status
 
-**The current working candidate is v223 on `codex/inn-learning-redesign` and is not committed or pushed.** The production baseline remains v218 until the owner authorizes that. The candidate includes the kimono characters, gravel-integrated plant art, guarded home-scene cleanup, a non-overlapping Entrance action dock, corrected first-home starter stock, and the completed and fully verified Inn learning redesign. `sw.js` agrees with all 26 `index.html` stamps. `node --test` passes **404/404**.
+**The current working candidate is v224 on `codex/inn-learning-redesign` and is not committed or pushed.** The production baseline remains v218 until the owner authorizes that. The candidate includes the kimono characters, gravel-integrated plant art, guarded home-scene cleanup, a non-overlapping Entrance action dock, corrected first-home starter stock, the completed and fully verified Inn learning redesign, and a fix for a learner-reported crash on returning to the Entrance or the Inn after a home visit. `sw.js` agrees with all 26 `index.html` stamps. `node --test` passes **405/405**.
+
+**A learner-reported crash is fixed and verified live:** finishing the Entrance, visiting the home, leaving, then returning to the Entrance or the Inn broke the game immediately with an uncaught `TypeError`. The Entrance moves a singleton `#avatar-slot` node into `#scene`; nothing moved it back before entering the home, so `paintHome()` overwriting `#scene`'s innerHTML destroyed it outright, and every later `$("avatar-slot")` came back `null`. Fixed by moving the restore step to the top of `enterLocation()`, before any branch - home included - can touch `#scene`. See the 2026-09-02 "Fixed a crash..." change log entry for the full root cause and the harness bug (`dom-harness.mjs`'s `insertBefore`) it surfaced along the way.
 
 `inn-learning-mock.html` is a non-production visual proposal for the next Inn learning pass. It uses the real lobby art and transparent Kon cutout to show the proposed compact dock, selective ruby readings, explicit new-word card, visible five-guest shift progression, and answer consequence without revealing the answer before selection. It does not change the playable app.
 
@@ -432,6 +434,8 @@ Nothing in this group is a code task. Listed so a coding session does not start 
    **The trap that cost a whole session:** before v168 the browser painted pre-repack sprite bytes, so the art on disk and the art on screen were different files. A report predating v168 may describe art that no longer exists. **Confirm the reporter's build version before investigating.**
 
 10. **Reconcile the Inn's two entry paths** so all five places are entered the same way - see section 10.
+
+11. ~~Fix the crash on returning to the Entrance or the Inn after a home visit.~~ **Done 2026-09-02.** Owner-reported and reproduced live before being touched: Entrance to home to leave to Entrance (or to the Inn) threw an uncaught `TypeError` and left the game stuck. Root cause was the singleton `#avatar-slot` node - moved into `#scene` by the Entrance and never moved back before `renderHome()` could run, so `paintHome()` overwriting `#scene`'s innerHTML destroyed it. Fixed by restoring the node to `#dialogue-shell` at the top of `enterLocation()`, before any branch can touch `#scene`. Writing the regression test also surfaced and fixed an unrelated bug in the test harness itself (`dom-harness.mjs`'s `insertBefore` was not detaching a moved node from its old parent, unlike `appendChild`). See the 2026-09-02 "Fixed a crash..." change log entry; cache is v224, `node --test` is 405/405.
 
 ### D. Settled - do not redo
 
