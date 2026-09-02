@@ -6,6 +6,22 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-02 - Per-question and whole-stage skip controls in the Inn, gated behind `?skip=1`
+
+`?skip=1` (above) got a tester past character selection and the Entrance, but every Learn/Practice/Challenge question inside the Inn still had to be solved for real on every test pass. Owner asked for "the skip button so I can go through and test," and confirmed the intent covered both a per-question skip and a way to finish the whole stage in one click.
+
+Two buttons, `#btn-skip-question` and `#btn-skip-stage`, sit next to the existing "Restart from Learn" control and stay `hidden` unless `?skip=1` is set - never a control a real player could find, since bypassing the lesson is exactly what the project's design rule rules out. Both go through `answerStage(true, prompt, prompt.correct)`, the same function every real correct answer calls, so a skipped question rewards, saves and mastery-checks exactly as a solved one would - only the solving is skipped. `skipCurrentQuestion()` marks the current prompt correct and lets the normal timed advance carry it forward, same as a real answer. `skipWholeStage()` repeats that pairing with `continueStageEncounter()` in a loop, without waiting for the timer, until the stage is mastered or 40 iterations pass (a safety cap well above any real stage's length).
+
+Getting the *question* skip working also completed an old dead intent left in the source: a `DAY_ORDER` variable and a comment for a "jump straight to the next day" testing aid existed but was never wired to anything. Replaced with the real implementation.
+
+Getting the button to actually appear needed a second fix, found only by testing a genuine page reload rather than a same-session leave-and-return: `enterLocation()` has always had its own separate rendering for resuming an in-progress stage, which a standing code comment already flagged as never running `renderStagePrompt` - and that function was the only place the two buttons' visibility was set. A same-session leave-and-return doesn't reproduce this, because in-memory state still happened to route back through `renderStagePrompt`; only a save that reloads mid-stage takes the other path. Fixed by setting the same visibility toggle in both places.
+
+Three regression tests: one drives a fresh Inn stage entry, skips a question through it, and skips the remaining stage to a mastered finish; one boots fresh from a saved mid-stage record (simulating a genuine reload, not a same-session round trip) and confirms both buttons still show; one confirms neither button ever appears without `?skip=1`. The reload-specific test was confirmed to fail before the second fix and pass after.
+
+Verified live: skipping one question in the arrange room advanced to the next without placing a single object; skipping the whole stage completed all ten Learn/Practice/Challenge items and reached "Day 3 challenge accomplished, 2/2" in one click, saved as mastered with a gold medal; a real `location.reload()` mid-stage still showed both buttons afterward.
+
+Cache is v230. `node --test` passes 412/412.
+
 ### 2026-09-02 - A `?skip=1` flag for testing past the Entrance without replaying it
 
 Owner asked for "the skip button so I can go through and test" after several rounds of testing home/yard/room features that all sit past character selection and the Entrance's own question - both of which reset on every fresh save, so every reload meant replaying both just to get back to whatever was actually being tested.

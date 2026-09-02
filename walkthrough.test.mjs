@@ -1000,6 +1000,82 @@ test("the ?skip=1 flag lands on the map without playing the Entrance", () => {
     "start goes straight to the map, not the Entrance or character select");
 });
 
+/* Skipping the two gates still left every Learn/Practice/Challenge question
+ * in the Inn to solve for real on every test pass. These two controls only
+ * show when ?skip=1 is set, and only against getActivePrompt's own
+ * Learn/Practice/Challenge/Review flow - not the catalog practice cards, an
+ * episode, or a repair round, which read state differently. */
+test("?skip=1 also reveals per-question and whole-stage skip controls in the Inn", async () => {
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game);
+
+  assert.equal(game.$("btn-skip-question").hidden, false,
+    "the skip-question control shows once a real Learn question is on screen");
+  assert.equal(game.$("btn-skip-stage").hidden, false, "the skip-stage control shows too");
+
+  const firstEncounter = game.$("encounter-progress").textContent;
+  game.$("btn-skip-question").click();
+  // Same path a real correct answer takes: feedback shows, next-row hides
+  // while an auto-advance is scheduled, then reappears as a fallback so
+  // there is always a visible way forward - click it, exactly as a learner
+  // (and the other Inn walkthroughs in this file) would.
+  game.clock.advance(6000);
+  assert.equal(game.$("next-row").style.display, "block",
+    "the continue control reappears once the auto-advance window has passed");
+  game.$("btn-next").click();
+  assert.notEqual(game.$("encounter-progress").textContent, firstEncounter,
+    "skipping one question moves to the next, without answering it");
+
+  game.$("btn-skip-stage").click();
+  const saved = JSON.parse(game.storage.getItem("lanternAlley.v3") || "{}");
+  assert.equal(saved.stages["home-inn"].mastered, true,
+    "skipping the whole stage finishes it, mastered, without solving anything");
+});
+
+/* enterLocation() has its own, separate rendering for resuming an
+ * in-progress stage after a real reload - the comment right next to it says
+ * renderStagePrompt "never ran" on that path, and it still does not. The two
+ * skip controls' visibility was set only inside renderStagePrompt, so a
+ * save that reloads mid-stage (leaving the Inn and coming back within the
+ * same session does not reproduce this - state carries over in memory and
+ * still routes through renderStagePrompt) left both hidden even with
+ * ?skip=1, only ever showing on a stage's very first, freshly-started
+ * question. */
+test("?skip=1's Inn skip controls also show when a save reloads mid-stage", async () => {
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game);
+  assert.equal(game.$("btn-skip-question").hidden, false, "shown on a fresh stage start");
+  game.$("btn-skip-question").click();
+  game.clock.advance(6000);
+  game.$("btn-next").click();
+  const saved = JSON.parse(game.storage.getItem("lanternAlley.v3") || "{}");
+  assert.equal(saved.stages["home-inn"].question, 1, "the save now sits mid-stage, on the second item");
+
+  // A genuinely fresh boot from that save, exactly as a real page reload
+  // would read it back - not a same-session leave-and-return, which never
+  // stopped going through renderStagePrompt in the first place.
+  const reloaded = boot(saved, "?skip=1");
+  reloaded.$("btn-start").click();
+  reloaded.clock.advance(500);
+  const inn = reloaded.doc.querySelectorAll(".map-destination").find((b) => b.textContent.includes("月見宿"));
+  inn.click();
+  reloaded.clock.advance(500);
+
+  assert.equal(reloaded.$("scene-label").textContent, "Moonview Inn - N2 - At the washstand",
+    "resumed onto the second item, not restarted");
+  assert.equal(reloaded.$("btn-skip-question").hidden, false,
+    "shown after a real reload resumes mid-stage, not just on a fresh stage start");
+  assert.equal(reloaded.$("btn-skip-stage").hidden, false);
+});
+
+test("without ?skip=1, the Inn's skip controls never appear", async () => {
+  const game = boot(null);
+  await enterTheInn(game);
+  assert.equal(game.$("btn-skip-question").hidden, true,
+    "a real player must never see a control that bypasses the lesson");
+  assert.equal(game.$("btn-skip-stage").hidden, true);
+});
+
 /* The shop sells only what has been painted - wallpaper included.
  *
  * Furniture and plants were gated on having a picture from the start, and

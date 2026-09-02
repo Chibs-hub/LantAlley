@@ -753,8 +753,14 @@
    * home does not mean replaying both from a fresh save every single reload.
    * A real player never adds this to a URL, so it is safe to force rather
    * than merge: it only ever fills in what a fresh save would otherwise ask
-   * for, never overwrites real progress a save already has past that point. */
-  if(/[?&]skip=1(&|$)/.test(window.location.search)){
+   * for, never overwrites real progress a save already has past that point.
+   *
+   * The same flag also reveals two more testing-only controls inside the
+   * Inn itself - see btn-skip-question and btn-skip-stage below - since
+   * skipping the two gates still left every Learn/Practice/Challenge
+   * question in between to solve for real on every test pass. */
+  var testingSkipEnabled = /[?&]skip=1(&|$)/.test(window.location.search);
+  if(testingSkipEnabled){
     state.characterSelected = true;
     state.playerCharacter = state.playerCharacter || "woman";
     state.visited.entrance = true;
@@ -985,6 +991,8 @@
   });
   $("btn-back-map").addEventListener("click", function(){ showMap(); });
   $("btn-restart-learn").addEventListener("click", restartStageLearning);
+  $("btn-skip-question").addEventListener("click", skipCurrentQuestion);
+  $("btn-skip-stage").addEventListener("click", skipWholeStage);
   $("btn-next").addEventListener("click", function(){
     if(practiceState){ advancePractice(); return; }
     if(previewState){ advanceEpisodePreview(); return; }
@@ -1200,10 +1208,37 @@
     renderStagePrompt(loc);
   }
 
-  // Testing aid: jump straight to the next day without answering the current
-  // one. Marked in the label so it cannot be mistaken for part of the lesson,
-  // and it only appears inside a stage that has days.
-  var DAY_ORDER = ["learn", "practice", "challenge"];
+  /* Testing aids, gated behind ?skip=1 and never shown otherwise - see
+   * testingSkipEnabled above. Both go through answerStage(true, ...), the
+   * same function every real correct answer calls, so a skipped question
+   * rewards, saves and mastery-checks exactly as a solved one would; only
+   * the solving is skipped, not the bookkeeping. */
+
+  // One button, one question: marks whatever is currently on screen correct
+  // and lets the normal timed advance carry it forward, same as a real
+  // answer would.
+  function skipCurrentQuestion(){
+    var loc = getLocation(state.currentKey);
+    if(!loc || !loc.encounters) return;
+    var prompt = getActivePrompt(loc);
+    answerStage(true, prompt, prompt.correct);
+  }
+
+  // One button, the whole stage: repeats the same "answer correctly, then
+  // advance" pair continueStageEncounter's own timer would eventually run,
+  // just without waiting for it, until the stage is mastered or the learner
+  // has navigated elsewhere. Capped well above any real stage's length so a
+  // bug in the advance logic cannot spin forever.
+  function skipWholeStage(){
+    var loc = getLocation(state.currentKey);
+    if(!loc || !loc.encounters) return;
+    for(var guard = 0; guard < 40 && state.currentKey === loc.key; guard++){
+      var prompt = getActivePrompt(loc);
+      answerStage(true, prompt, prompt.correct);
+      if(state.stageMastered || state.currentKey !== loc.key) break;
+      continueStageEncounter(loc);
+    }
+  }
 
   // ---- Episode 1 preview (testing only) ----
   //
@@ -1573,6 +1608,10 @@
     var item = LanternCurriculumCatalog.getItem(card.target);
 
     $("stage-phase-row").style.display = "flex";
+    // The testing-only skip buttons only make sense against getActivePrompt's
+    // own Learn/Practice/Challenge/Review flow, which this is not.
+    $("btn-skip-question").hidden = true;
+    $("btn-skip-stage").hidden = true;
     $("stage-phase-badge").textContent = "コンの稽古";
     $("encounter-status").style.display = "block";
     $("encounter-progress").textContent = String(practiceState.index + 1);
@@ -1991,6 +2030,8 @@
     var dayLabel = (entry.label || "宵の一時間") + "・" + (entry.question.seconds || 8) + "秒";
 
     $("stage-phase-row").style.display = "flex";
+    $("btn-skip-question").hidden = true;
+    $("btn-skip-stage").hidden = true;
     $("stage-phase-badge").textContent = dayLabel;
     $("scene-label").textContent = "Episode 1 preview - " + question.skill;
     $("encounter-status").style.display = "block";
@@ -2237,6 +2278,8 @@
     var line = "コン：「お疲れさまでした。最後に、間違えた仕事だけをもう一度確認します。今度は時間が短いので、すぐに答えてください。」";
     clearRepairTimer();
     $("stage-phase-row").style.display = "flex";
+    $("btn-skip-question").hidden = true;
+    $("btn-skip-stage").hidden = true;
     $("stage-phase-badge").textContent = "間違い直し";
     $("encounter-status").style.display = "none";
     $("scene-label").textContent = "月見宿 - 間違い直し";
@@ -2285,6 +2328,8 @@
     var card = LanternLearningContent.makeRepairQuestion(question);
 
     $("stage-phase-row").style.display = "flex";
+    $("btn-skip-question").hidden = true;
+    $("btn-skip-stage").hidden = true;
     $("stage-phase-badge").textContent = "間違い直し";
     $("encounter-status").style.display = "block";
     $("encounter-progress").textContent = String(previewState.missed.length - repair.queue.length + 1);
@@ -2496,6 +2541,8 @@
 
   function renderStagePrompt(loc){
     var prompt = getActivePrompt(loc);
+    $("btn-skip-question").hidden = !testingSkipEnabled;
+    $("btn-skip-stage").hidden = !testingSkipEnabled;
     setInnScene(innSceneFor(prompt));
     var phaseName = state.stagePhase === "review" ? "focused review" : state.stagePhase;
     var phaseLabels = {learn:"Learn / 学ぶ", practice:"Practice / 練習", challenge:"Challenge / 挑戦", review:"Review / 復習"};
@@ -2666,6 +2713,12 @@
 
     var prompt = getActivePrompt(loc);
     $("stage-phase-row").style.display = loc.encounters ? "flex" : "none";
+    // Resuming into a stage never ran renderStagePrompt (see the comment a
+    // few lines down), so its own testingSkipEnabled toggle never ran either
+    // - the skip controls stayed hidden whenever a save reloaded mid-stage,
+    // only ever appearing on a stage's very first, freshly-started question.
+    $("btn-skip-question").hidden = !(testingSkipEnabled && loc.encounters);
+    $("btn-skip-stage").hidden = !(testingSkipEnabled && loc.encounters);
     $("scene-label").textContent = loc.key === "entrance" ? "路地の入口" : (loc.encounters ? loc.label + " - " + prompt.label : loc.label);
     $("encounter-status").style.display = loc.encounters ? "block" : "none";
     // Resuming into a stage never ran renderStagePrompt, so the day badge kept
