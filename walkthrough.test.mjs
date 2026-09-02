@@ -610,6 +610,19 @@ test("decorate mode reveals owned items and placement interaction", () => {
     "owned decor is available to place");
 });
 
+/* The yard already had one picture-shaped way in - the house hotspot - and
+ * only a text link, top-left, as its way out. A learner who read that link
+ * as a title rather than navigation had no symmetric way out painted onto
+ * the scene itself. */
+test("the yard has a scene-painted way out, not just the corner text link", () => {
+  const game = boot(plantedCamelliaSave());
+  enterHome(game);
+  const exit = game.doc.querySelectorAll("[data-home-map]").find((b) => b.className.includes("home-house-hotspot"));
+  assert.ok(exit, "the yard scene has its own exit hotspot, styled like the house hotspot");
+  exit.click();
+  assert.equal(game.$("screen-map").style.display, "block", "clicking it returns to the map");
+});
+
 /* home-pet.js's enterScene() always arrives at the scene's door - deliberate
  * for the very first sighting of the cat ("walking in to greet you"), but
  * homePetMarkup() used to call it for every switch between the yard and the

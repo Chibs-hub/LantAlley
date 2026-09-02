@@ -232,7 +232,15 @@
       yard: {
         background: backgroundFor("yard", "evening"),
         slots: cloneSlots(YARD_SLOTS),
-        houseHotspot: {x:43, y:22, width:16, height:31, label:"家に入る"}
+        houseHotspot: {x:43, y:22, width:16, height:31, label:"家に入る"},
+        /* The stone path down the middle of the yard is the only ground with
+         * no garden slot on it at any row - it is already the visual "way
+         * out" toward the viewer, the same reasoning the house hotspot itself
+         * uses for the door. A text link back to the map already existed,
+         * top-left, but a learner who did not read it as navigation (rather
+         * than a title) had no picture-shaped way out symmetric to the one
+         * picture-shaped way in. */
+        exitHotspot: {x:40, y:84, width:20, height:14, label:"路地へ戻る"}
       },
       interior: {
         background: backgroundFor("interior", "evening"),

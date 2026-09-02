@@ -24,6 +24,9 @@ test("home scenes use the production raster asset paths", () => {
   assert.ok(scenes.yard.houseHotspot.width > 0);
   assert.ok(scenes.yard.houseHotspot.height > 0);
   assert.equal(scenes.yard.houseHotspot.label, "家に入る");
+  assert.ok(scenes.yard.exitHotspot.width > 0);
+  assert.ok(scenes.yard.exitHotspot.height > 0);
+  assert.equal(scenes.yard.exitHotspot.label, "路地へ戻る");
   assert.equal(scenes.interior.background, "assets/home/interior/starter-room-v1.webp");
 
   for(const slot of scenes.yard.slots){

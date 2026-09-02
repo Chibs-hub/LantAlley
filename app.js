@@ -3417,6 +3417,17 @@
       + 'width:' + yard.houseHotspot.width + '%;height:' + yard.houseHotspot.height + '%"'
       + ' aria-label="' + yard.houseHotspot.label + '"><span>' + yard.houseHotspot.label + '</span></button>';
 
+    // The way out, painted onto the scene the same way the way in already
+    // was: the path is the only ground with no garden bed on it, so it
+    // already reads as an exit. data-home-map is the same attribute the
+    // corner breadcrumb link uses - one delegated handler, two doors.
+    if(yard.exitHotspot){
+      html += '<button type="button" class="home-house-hotspot" data-home-map="1"'
+        + ' style="left:' + yard.exitHotspot.x + '%;top:' + yard.exitHotspot.y + '%;'
+        + 'width:' + yard.exitHotspot.width + '%;height:' + yard.exitHotspot.height + '%"'
+        + ' aria-label="' + yard.exitHotspot.label + '"><span>' + yard.exitHotspot.label + '</span></button>';
+    }
+
     slots.forEach(function(slot){
       var plant = byId[slot.id];
       if(!plant) return;

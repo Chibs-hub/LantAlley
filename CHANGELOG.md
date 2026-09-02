@@ -6,6 +6,20 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-02 - The yard now has a painted way out, matching the painted way in
+
+Owner asked, after learning the corner "← Lantern Alley" text link was there all along but easy to miss: "make clickable spot in the scene like the entering to the house from the outside."
+
+The yard already had exactly this pattern for going *in* - `home-house-hotspot`, a transparent overlay button positioned over the door with a small label pill, wired to `data-enter-house`. Nothing symmetric existed for going *out*; the only way back to the map was the text link. The stone path down the centre of the yard is the one strip of ground with no garden slot on it at any row - already the visual "way out" toward the viewer, by the same reasoning the house hotspot already uses for the door.
+
+Added `exitHotspot` to `home-room.js`'s yard scene (`home-room.js:scenes()`), positioned over the bottom of that path, and a second `.home-house-hotspot` button in `renderHomeYard()` reading "路地へ戻る" (return to the alley). It carries `data-home-map="1"` - the same attribute the corner link already used - so it needs no new click handler; the existing delegated listener on `#scene` already routes that attribute to `showMap()`.
+
+Two regression tests: `home-decor.test.mjs` checks the new hotspot's data shape (matching the existing `houseHotspot` check), and `walkthrough.test.mjs` clicks the rendered button and asserts the map screen actually shows. Both confirmed to fail without the change.
+
+Verified live at 1280px and 375px: the label sits legibly at the foot of the path, symmetric with "家に入る" at the top, with no overlap with the garden beds or the fence, and clicking it returns to the map.
+
+Cache is v227. `node --test` passes 407/407.
+
 ### 2026-09-02 - The home's cat no longer resets to the door every time the yard and the room are switched
 
 Owner-reported: "cat is always transport to the middle of the screen when just enter either room or yard." Confirmed with the owner it was specifically the door-reset behavior, not the same-scene case (which already correctly preserved the cat's last position - verified separately with a deterministic clock-driven harness, since this environment cannot reliably simulate live `requestAnimationFrame` timing).
