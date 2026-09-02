@@ -56,24 +56,32 @@ test("Inn questions keep the scene visible behind compact Entrance-style docks",
 test("feedback and the continue button cannot push the page past the viewport", () => {
   // A correct answer used to grow #feedback-row and #next-row inside
   // .answer-workspace with nothing above them capping a maximum height, so
-  // the whole page grew to fit and the result landed below the fold. The fix
-  // gives .game-layout a real height - min and max the same value - so the
-  // minmax(0,1fr) answer row has a fixed budget to divide, then lets the
-  // answered scene be the part that shrinks and scrolls instead of the page.
-  // Anchored on the exact rule rather than a media-block extraction: this
-  // file already has four "@media(min-width:761px)" openings, and matching
-  // the first one found the wrong block entirely.
-  const maxHeight = html.match(/\.inn-stage \.game-layout\{max-height:([^}]+)\}/);
+  // the whole page grew to fit and the result landed below the fold.
+  //
+  // An unconditional fix (max-height always equal to min-height) closed that
+  // gap but opened another: a content-heavy room - the arrange task's
+  // thirteen objects - was squeezed into the same cramped budget and forced
+  // to scroll internally from the very first frame, before any answer. The
+  // cap now only applies once #feedback-row actually carries .show, via
+  // :has() - a quiet room keeps only .game-layout's ordinary min-height and
+  // is free to grow to fit its content, exactly as it could before either
+  // fix existed.
+  const maxHeightRule = html.match(
+    /\.inn-stage \.game-layout:has\(\.answer-workspace #feedback-row\.show\)\{\s*max-height:([^;]+);\s*\}/,
+  );
   const minHeight = html.match(/\.inn-stage \.game-layout\{display:grid;min-height:([^;]+);/);
-  assert.ok(maxHeight, ".game-layout has no max-height rule");
+  assert.ok(maxHeightRule, ".game-layout has no feedback-gated max-height rule");
   assert.ok(minHeight, ".game-layout has no min-height to compare against");
-  assert.equal(maxHeight[1].trim(), minHeight[1].trim(),
-    "max-height must match min-height, or .game-layout is not actually fixed");
+  assert.equal(maxHeightRule[1].trim(), minHeight[1].trim(),
+    "the feedback-gated max-height must match .game-layout's own min-height, or it is not just re-applying the room's normal size");
 
   // And that rule must sit inside a width-gated block, not apply everywhere -
   // an unconditional fixed height would break the mobile stacked layout.
-  const guardedIndex = html.indexOf("@media(min-width:761px){\n    .inn-stage .game-layout{max-height:");
-  assert.ok(guardedIndex > -1, "the max-height rule is not gated to wider layouts");
+  const mediaOpenIndex = html.lastIndexOf("@media(min-width:761px){", maxHeightRule.index);
+  const mediaCloseIndex = html.indexOf("\n  }", maxHeightRule.index);
+  assert.ok(mediaOpenIndex > -1 && mediaOpenIndex < maxHeightRule.index
+    && mediaCloseIndex > maxHeightRule.index,
+    "the feedback-gated max-height rule is not gated to wider layouts");
 
   assert.match(html, /\.inn-stage \.answer-workspace\{display:flex;flex-direction:column/);
   assert.match(html, /\.inn-stage \.answer-workspace \.scene\{flex:1 1 auto;min-height:0;overflow-y:auto\}/);

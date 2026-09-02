@@ -790,41 +790,46 @@
   .inn-stage .answer-workspace .scene{min-width:0}
 
   /* Feedback and the continuation button must never be the reason the page
-   * grows past the viewport.
+   * grows past the viewport - but a content-heavy room (the arrange task's
+   * thirteen objects, say) must not be squeezed into a cramped, always-
+   * scrolling box just because a *different* moment (feedback appearing)
+   * needs protecting. Those are different problems and this fix used to
+   * solve them with the same always-on cap, which is what made every visit
+   * to a tall room scroll from the very first frame, before any answer.
    *
    * #feedback-row and #next-row are plain children of .answer-workspace,
-   * stacked below #scene, and nothing capped a maximum height anywhere in the
-   * chain - .game-layout declared only a minimum. A grid row sized with
-   * minmax(0,1fr) only constrains its content once the grid itself has a
-   * definite height to divide up; with just a min-height, the container's
-   * actual height tracks its content instead, so there was nothing to divide.
-   * A correct answer added a feedback bar's worth of height, the row grew to
-   * fit it, and the whole page grew with the row: measured at 795px before an
-   * answer and 873px after, on a 768px-tall viewport, with the result and the
-   * continue button below the fold on the shift they were most needed for.
+   * stacked below #scene. Uncapped, a grid row sized with minmax(0,1fr) only
+   * tracks its content: a correct answer added a feedback bar's worth of
+   * height, the row grew to fit it, and the whole page grew with the row -
+   * measured at 795px before an answer and 873px after, on a 768px-tall
+   * viewport, with the result and the continue button below the fold on the
+   * shift they were most needed for.
    *
-   * Giving .game-layout the same value as both min-height and max-height
-   * makes it a fixed height, which is what lets minmax(0,1fr) do its job:
-   * row 2 now gets exactly "whatever is left after the stage bar", and
-   * .answer-workspace is capped to that automatically rather than by a second
-   * guessed number. Capping .answer-workspace directly at the container's
-   * full budget was tried first and overshot by the stage bar's own height -
-   * the row still doesn't know about the stage bar unless the grid itself is
-   * the thing that is fixed.
+   * The fix is scoped to exactly that moment with :has(): only once
+   * #feedback-row actually carries .show does .game-layout get a fixed
+   * height (equal to its own pre-existing min-height, so nothing about a
+   * quiet room's normal size changes), which is what lets minmax(0,1fr)
+   * divide the space it is given instead of growing to fit its content.
+   * Before feedback, .game-layout keeps only its ordinary min-height and is
+   * free to grow as tall as the room needs, exactly as it could before this
+   * fix existed.
    *
-   * Inside that fixed row, .answer-workspace becomes a column where the
+   * Inside that now-fixed row, .answer-workspace becomes a column where the
    * answered scene is the part allowed to shrink and scroll, while the
    * feedback bar and the continue button stay full size and always in view.
-   * Nothing about the Japanese text changes; what changes is which element
-   * absorbs the overflow. Scoped to wider layouts only - the room already
-   * reflows completely differently below 760px, and is not where this was
-   * reported. */
+   * flex/overflow on .scene are left unconditional - with no max-height on
+   * .game-layout they are no-ops, since a flex item with no height ceiling
+   * on its container just lays out at its natural size. Scoped to wider
+   * layouts only - the room already reflows completely differently below
+   * 760px, and is not where either report was made. */
   @media(min-width:761px){
-    .inn-stage .game-layout{max-height:calc(min(690px,100svh - 64px) - 28px)}
     .inn-stage .answer-workspace{display:flex;flex-direction:column;max-height:100%}
     .inn-stage .answer-workspace .scene{flex:1 1 auto;min-height:0;overflow-y:auto}
     .inn-stage .answer-workspace #feedback-row,
     .inn-stage .answer-workspace #next-row{flex:0 0 auto}
+    .inn-stage .game-layout:has(.answer-workspace #feedback-row.show){
+      max-height:calc(min(690px,100svh - 64px) - 28px);
+    }
   }
   .inn-stage .inn-instruction{position:relative;margin:0 0 8px;padding:19px 10px 7px;border:1px solid rgba(203,145,85,.78);border-radius:9px;background:linear-gradient(180deg,#fffaf0,#eee0c0);color:#463123;font-size:.78rem}
   .inn-stage .inn-instruction::before{content:"HOW TO INTERACT";position:absolute;left:10px;top:4px;color:#9a5f30;font-size:.56rem;font-weight:900;letter-spacing:.13em}

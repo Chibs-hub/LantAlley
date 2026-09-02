@@ -6,6 +6,18 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-02 - The Inn's content-heavy rooms no longer scroll before the learner has even answered
+
+Owner-reported: "the screen is cut for even for desktop screen" - a screenshot of the arrange task (thirteen cushions, baskets and appliances to sort) showed the object tray sliced off by a scrollbar inside the scene panel, on a perfectly ordinary desktop viewport.
+
+Root cause was the previous fix (see the 2026-09-02 "three remaining Inn QA items" entry, item 3): giving `.game-layout` a fixed height - `min-height` and `max-height` the same value - stopped a correct answer's feedback banner from growing the page past the viewport, which was the bug at the time. But that fixed height applied *unconditionally*, all the time, not only once feedback was showing. `#scene` (which also carries the NEW WORD card and the HOW TO INTERACT banner, all stacked inside it) got squeezed into that same budget on the very first frame, before any answer - and the arrange task's natural content is taller than the budget allows, so it now needed an internal scroll to see the whole room, every single time. Confirmed live: `#scene`'s content measured 580px against a 507px box at 1000x700, with no feedback on screen at all.
+
+The fix scopes the cap to the moment it actually protects, using `:has()`: `.inn-stage .game-layout` only gets `max-height` once `.answer-workspace #feedback-row` carries `.show`. Before an answer, `.game-layout` keeps only its ordinary `min-height` and is free to grow to fit the room, exactly as it could before either fix existed - the page may grow a little (as it always used to), but nothing is clipped. Once feedback appears, the same fixed-height-plus-internal-scroll mechanism as before kicks in, so the result and the continue button still can't be pushed below the fold.
+
+Verified live at 1000x700 and 1280x800: the arrange task's full room and object tray now render with no internal scroll and `#scene`'s content fits its box exactly (`scrollHeight === clientHeight`). Answering correctly still activates the cap (`max-height` computed to a real pixel value) and the continue button measured fully inside the viewport, same as the original fix proved. The existing regression test in `n2-home-inn-stage.test.mjs` was rewritten to check the new `:has()`-gated rule rather than an unconditional one - confirmed it fails without the gate and passes with it.
+
+Cache is v225. `node --test` passes 405/405.
+
 ### 2026-09-02 - Fixed a crash on returning to the Entrance or the Inn after a home visit
 
 A learner-reported bug, reproduced live before being touched: finish the Entrance, walk to the home, leave the home, then go back to the Entrance (or the Inn) - the game broke immediately, stuck on a stale `わが家` label with an uncaught `TypeError: Cannot read properties of null (reading 'parentElement')`.
