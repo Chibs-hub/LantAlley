@@ -70,7 +70,7 @@
 
   /* Marks up one line. Returns HTML: matched words become buttons carrying
    * their reading and meaning, everything else is escaped text. */
-  function annotate(text, index, exclusions){
+  function annotate(text, index, exclusions, mode){
     var source = String(text || "");
     if(!index || !index.byWord) return escapeHtml(source);
     exclusions = exclusions || {};
@@ -101,10 +101,15 @@
       if(matched){
         if(plain){ out += escapeHtml(plain); plain = ""; }
         var entry = index.byWord[matched];
-        out += '<button type="button" class="gloss" data-reading="'
-          + escapeHtml(entry.reading) + '" data-meaning="' + escapeHtml(entry.meaning)
-          + '" aria-label="' + escapeHtml(matched + " の読みと意味") + '">'
-          + escapeHtml(matched) + '</button>';
+        if(mode === "ruby"){
+          out += '<ruby class="gloss-ruby">' + escapeHtml(matched)
+            + '<rt>' + escapeHtml(entry.reading) + '</rt></ruby>';
+        }else{
+          out += '<button type="button" class="gloss" data-reading="'
+            + escapeHtml(entry.reading) + '" data-meaning="' + escapeHtml(entry.meaning)
+            + '" aria-label="' + escapeHtml(matched + " の読みと意味") + '">'
+            + escapeHtml(matched) + '</button>';
+        }
         i += matched.length;
       }else{
         plain += source.charAt(i);

@@ -788,8 +788,56 @@
   .inn-stage .speak-btn{position:absolute;right:8px;bottom:10px;margin:0;color:#5c3824}
   .inn-stage .answer-workspace{grid-column:5/-1;grid-row:2;position:relative;align-self:end;min-width:0;min-height:0;padding:0;border:0;border-radius:13px;background:transparent;box-shadow:none}
   .inn-stage .answer-workspace .scene{min-width:0}
+
+  /* Feedback and the continuation button must never be the reason the page
+   * grows past the viewport.
+   *
+   * #feedback-row and #next-row are plain children of .answer-workspace,
+   * stacked below #scene, and nothing capped a maximum height anywhere in the
+   * chain - .game-layout declared only a minimum. A grid row sized with
+   * minmax(0,1fr) only constrains its content once the grid itself has a
+   * definite height to divide up; with just a min-height, the container's
+   * actual height tracks its content instead, so there was nothing to divide.
+   * A correct answer added a feedback bar's worth of height, the row grew to
+   * fit it, and the whole page grew with the row: measured at 795px before an
+   * answer and 873px after, on a 768px-tall viewport, with the result and the
+   * continue button below the fold on the shift they were most needed for.
+   *
+   * Giving .game-layout the same value as both min-height and max-height
+   * makes it a fixed height, which is what lets minmax(0,1fr) do its job:
+   * row 2 now gets exactly "whatever is left after the stage bar", and
+   * .answer-workspace is capped to that automatically rather than by a second
+   * guessed number. Capping .answer-workspace directly at the container's
+   * full budget was tried first and overshot by the stage bar's own height -
+   * the row still doesn't know about the stage bar unless the grid itself is
+   * the thing that is fixed.
+   *
+   * Inside that fixed row, .answer-workspace becomes a column where the
+   * answered scene is the part allowed to shrink and scroll, while the
+   * feedback bar and the continue button stay full size and always in view.
+   * Nothing about the Japanese text changes; what changes is which element
+   * absorbs the overflow. Scoped to wider layouts only - the room already
+   * reflows completely differently below 760px, and is not where this was
+   * reported. */
+  @media(min-width:761px){
+    .inn-stage .game-layout{max-height:calc(min(690px,100svh - 64px) - 28px)}
+    .inn-stage .answer-workspace{display:flex;flex-direction:column;max-height:100%}
+    .inn-stage .answer-workspace .scene{flex:1 1 auto;min-height:0;overflow-y:auto}
+    .inn-stage .answer-workspace #feedback-row,
+    .inn-stage .answer-workspace #next-row{flex:0 0 auto}
+  }
   .inn-stage .inn-instruction{position:relative;margin:0 0 8px;padding:19px 10px 7px;border:1px solid rgba(203,145,85,.78);border-radius:9px;background:linear-gradient(180deg,#fffaf0,#eee0c0);color:#463123;font-size:.78rem}
   .inn-stage .inn-instruction::before{content:"HOW TO INTERACT";position:absolute;left:10px;top:4px;color:#9a5f30;font-size:.56rem;font-weight:900;letter-spacing:.13em}
+  .inn-stage .inn-new-word{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:9px;align-items:center;margin:0 0 8px;padding:7px 10px;border:1px solid rgba(205,151,86,.72);border-radius:9px;background:rgba(57,31,20,.82);box-shadow:inset 0 1px rgba(255,230,182,.14);color:#fff3d7}
+  .inn-stage .inn-new-word-kicker{grid-column:1/-1;color:#f3c779;font-size:.57rem;font-weight:900;letter-spacing:.14em}
+  .inn-stage .inn-new-word b{font-family:'Shippori Mincho',serif;font-size:1.1rem;line-height:1.1}
+  .inn-stage .inn-new-word-reading{color:#f6d9a6;font-size:.7rem}
+  .inn-stage .inn-new-word-meaning{grid-column:1/-1;color:#f4ead5;font-size:.7rem}
+  .inn-stage .inn-shift-progress{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:3px;margin:0 0 8px;padding:7px 9px;list-style:none;border:1px solid rgba(205,151,86,.68);border-radius:9px;background:rgba(57,31,20,.82);box-shadow:inset 0 1px rgba(255,230,182,.14)}
+  .inn-stage .inn-shift-beat{display:grid;justify-items:center;gap:2px;min-width:0;color:#ceb79a;font-size:.58rem;line-height:1.1;text-align:center}
+  .inn-stage .inn-shift-beat span{width:8px;height:8px;border:1px solid #d39b55;border-radius:50%;background:rgba(255,243,214,.14)}
+  .inn-stage .inn-shift-beat.is-done{color:#f7dfab}.inn-stage .inn-shift-beat.is-done span{background:#efb95d}
+  .inn-stage .inn-shift-beat.is-current{color:#fff2d2}.inn-stage .inn-shift-beat.is-current span{background:#ffe1a0;box-shadow:0 0 0 3px rgba(246,190,98,.24)}
   .inn-stage .inn-clue{margin-bottom:8px;border-left-color:#c18c4f;background:#f3ead3;color:#493827;font-size:.78rem}
   .inn-stage .inn-room-composite{border-color:#8c562d;box-shadow:0 8px 18px rgba(0,0,0,.34)}
   .inn-stage .hint-btn{color:#f1dfbd}
@@ -809,6 +857,8 @@
     .inn-stage .jp-line{font-size:1rem;line-height:1.35}
     .inn-stage .romaji-line{font-size:.72rem}
     .inn-stage .inn-instruction{font-size:.72rem}
+    .inn-stage .inn-new-word{margin-bottom:7px;padding:6px 8px}
+    .inn-stage .inn-shift-progress{padding:6px 7px}
     .inn-stage .inn-room-composite{width:100%;margin:0}
     .inn-stage .next-row{margin-left:-7px;margin-right:-7px}
   }
@@ -1017,6 +1067,13 @@
     .inn-room-composite{width:min(100%,70vh);margin-inline:auto}
     .inn-room-viewport{width:100%;margin:0}
     .inn-room-illustrated .inn-object:has(.inn-caption),.inn-room-illustrated .inn-drop-zone:has(.inn-caption){min-height:0;padding:3px}
+    .inn-stage .inn-new-word{grid-template-columns:auto auto auto minmax(0,1fr);align-items:baseline;gap:0 7px;margin-bottom:6px;padding:5px 8px}
+    .inn-stage .inn-new-word-kicker{grid-column:auto;font-size:.52rem;white-space:nowrap}
+    .inn-stage .inn-new-word b{font-size:.96rem;white-space:nowrap}
+    .inn-stage .inn-new-word-reading{font-size:.66rem;white-space:nowrap}
+    .inn-stage .inn-new-word-meaning{grid-column:auto;min-width:0;overflow:hidden;color:#f4ead5;font-size:.66rem;text-overflow:ellipsis;white-space:nowrap}
+    .inn-room-viewport{aspect-ratio:8/5}
+    .inn-room-composite > .inn-supply-shelf{padding:6px 10px 8px;border-top-width:5px}
   }
   @media(prefers-reduced-motion:reduce){.inn-object,.inn-action,.inn-drop-zone{transition:none}.tea-steam:before,.tea-steam:after{animation:none}.schedule-handle{transition:none}.inn-room-viewport::before{transition:none}.room-light-bright::after{animation:none;opacity:.22}}
 
@@ -1296,6 +1353,10 @@
   }
   .gloss-reading{display:block; color:#ffe4a0; font-weight:700}
   .gloss-meaning{display:block; color:#f3e6d4}
+  .gloss-ruby{ruby-position:over;color:inherit;text-decoration:underline dotted rgba(255,211,138,.68);text-underline-offset:3px}
+  .gloss-ruby rt{color:#c88949;font-size:.54em;font-weight:800;letter-spacing:0;text-decoration:none}
+  .challenge-transcript{display:grid;gap:3px;margin:8px 0 0;padding:7px 9px;border-left:3px solid #ba8144;background:rgba(255,250,238,.56);font-size:.82rem;line-height:1.55}
+  .challenge-transcript b{color:#80512c;font-size:.72rem;letter-spacing:.08em}
   @media(max-width:560px){ .gloss-bubble{max-width:12em} }
 
   /* わが家 - the room, and the one screen with nothing to answer. */

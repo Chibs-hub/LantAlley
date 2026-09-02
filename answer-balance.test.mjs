@@ -88,7 +88,7 @@ test("the Inn's three days do not put the answer first every time", () => {
 
   // This file was missed when the episodes were balanced, because its
   // correctness is decided by option key rather than by index - nothing about
-  // it looked positional. All fifteen items listed the answer first, so the
+  // it looked positional. The retrieval prompts listed the answer first, so the
   // whole first stage could be cleared by always tapping the top option.
   const positions = [];
   for (const phase of ["practice", "challenge"]) {
@@ -99,7 +99,7 @@ test("the Inn's three days do not put the answer first every time", () => {
       if (at >= 0) positions.push(at);
     }
   }
-  assert.ok(positions.length >= 8, "there are enough option sets to judge: " + positions.length);
+  assert.ok(positions.length >= 5, "there are enough option sets to judge: " + positions.length);
 
   const first = positions.filter((p) => p === 0).length;
   assert.ok(first <= Math.ceil(positions.length * 0.5),

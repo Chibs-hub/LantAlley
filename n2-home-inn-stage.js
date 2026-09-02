@@ -490,9 +490,9 @@
       // Support is withdrawn one layer per day, so the three days differ in
       // difficulty rather than only in situation:
       //   Day 1 基礎   Japanese + romaji + English meaning + hint
-      //   Day 2 実践   Japanese + English translation, no romaji
+      //   Day 2 実践   Japanese + tappable support-word glosses, no romaji
       //   Day 3 挑戦   audio only
-      meaning:phase === "learn" ? text.meaning : (phase === "practice" ? practiceWordChoice[index].english : ""),
+      meaning:phase === "learn" ? text.meaning : "",
       successReply:phase === "practice" ? practiceWordChoice[index].successReply : text.successReply,
       romaji:phase === "learn" ? (text.romaji || base.romaji) : "",
       hint:phase === "learn" ? "Use the subject, object, and scene result to decide whether the request describes a deliberate action or a change of state." : "",
@@ -501,9 +501,11 @@
     });
   }
 
+  // Practice retrieves three representative words in a changed written
+  // context. All five already require a correct Learn interaction, so this is
+  // a check for transfer rather than a second five-card loop.
   var practice = [
-    phaseItem(0, false, "practice"), phaseItem(1, false, "practice"),
-    phaseItem(2, false, "practice"), phaseItem(3, false, "practice"),
+    phaseItem(0, false, "practice"), phaseItem(2, false, "practice"),
     phaseItem(4, false, "practice")
   ];
 
@@ -513,9 +515,7 @@
   // shuffled independently of the story. Challenge stays harder by hiding
   // romaji and hints and by using the variant-B situations, not by reordering.
   var challenge = [
-    phaseItem(0, true, "challenge"), phaseItem(1, true, "challenge"),
-    phaseItem(2, true, "challenge"), phaseItem(3, true, "challenge"),
-    phaseItem(4, true, "challenge")
+    phaseItem(0, true, "challenge"), phaseItem(3, true, "challenge")
   ];
 
   function getEncounter(index){
@@ -537,10 +537,14 @@
     return encounters;
   }
 
-  function isChallengeMastered(score, correctWords){
+  function hasTrainingEvidence(correctWords){
     var unique = {};
     (correctWords || []).forEach(function(word){ unique[word] = true; });
-    return score >= challenge.length && encounters.every(function(item){ return !!unique[item.focusWord]; });
+    return encounters.every(function(item){ return !!unique[item.focusWord]; });
+  }
+
+  function isChallengeMastered(score, correctWords){
+    return score >= challenge.length && hasTrainingEvidence(correctWords);
   }
 
   function isFocusedReviewComplete(reviewItems, correctWords){
@@ -609,6 +613,27 @@
     return TARGET_IDS[focusWord] || null;
   }
 
+  /* The catalog's first sense is not always the Inn's sense.
+   *
+   * w-chousei's meanings are ["regulation","adjustment","tuning"], in that
+   * order, because "regulation" is the catalog's general-purpose first sense
+   * across every place that uses this word. In the Inn it never means that -
+   * the checkout-time and arrival-time tasks are both about reconciling
+   * several conditions into one time, which is "adjustment" or "coordination".
+   * A learner reading "regulation" on the new-word card would associate the
+   * kanji with the wrong concept before ever answering the question.
+   *
+   * This overrides the card only, not the catalog entry: nothing else that
+   * reads meanings[0] - reviews, other places, the general gloss - should have
+   * its sense reordered for a fix that is specific to one story. */
+  var CARD_SENSES = {
+    "調整":"adjustment, coordination"
+  };
+
+  function getCardSense(focusWord){
+    return CARD_SENSES[focusWord] || null;
+  }
+
   root.N2HomeInnStage = {
     key:"home-inn",
     name:"Moonview Inn",
@@ -623,6 +648,7 @@
     getDayMeta:getDayMeta,
     getDayAnnouncement:getDayAnnouncement,
     getPhaseItems:getPhaseItems,
+    hasTrainingEvidence:hasTrainingEvidence,
     isChallengeMastered:isChallengeMastered,
     isFocusedReviewComplete:isFocusedReviewComplete,
     getWrittenPrompt:getWrittenPrompt,
@@ -631,6 +657,7 @@
     getKonResponse:getKonResponse,
     getWrongAnswerFeedback:getWrongAnswerFeedback,
     getTargetId:getTargetId,
+    getCardSense:getCardSense,
     balanceOptions:balanceOptions
   };
 })(typeof window !== "undefined" ? window : globalThis);

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Moonview Inn learning mock</title>
+  <style>
+    :root{--ink:#fff4db;--paper:#fff8e9;--wood:#28170f;--edge:#a96b31;--gold:#efb34f;--sage:#8eb69a}
+    *{box-sizing:border-box} body{margin:0;min-height:100vh;background:#080f1e;color:var(--ink);font-family:system-ui,"Yu Gothic UI","Hiragino Kaku Gothic ProN",sans-serif}
+    .stage{min-height:100vh;padding:22px;display:grid;grid-template-rows:auto 1fr;gap:16px;background:linear-gradient(180deg,rgba(5,11,23,.12),rgba(5,11,23,.4)),url("assets/inn/scenes/lobby.jpg") center/cover fixed}
+    .topbar,.dock{border:1px solid rgba(211,151,76,.78);box-shadow:inset 0 0 0 2px rgba(255,216,148,.11),0 10px 35px rgba(0,0,0,.36)}
+    .topbar{display:flex;align-items:center;gap:18px;min-height:62px;padding:11px 17px;border-radius:14px;background:linear-gradient(110deg,rgba(47,25,15,.92),rgba(50,27,18,.77))}
+    .back{font-weight:800}.place{padding-left:18px;border-left:1px solid rgba(255,228,176,.28);font-size:.88rem;font-weight:800;letter-spacing:.05em}.mastery{margin-left:auto;display:flex;align-items:center;gap:9px;color:#ffd77d;font-size:.84rem;font-weight:800}.meter{width:120px;height:9px;border-radius:9px;background:#1b120d;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,224,159,.38)}.meter i{display:block;width:38%;height:100%;background:linear-gradient(90deg,#e59b42,#ffe08a)}
+    .scene-note{align-self:start;justify-self:center;margin-top:30px;padding:8px 14px;border-radius:99px;background:rgba(13,17,25,.66);backdrop-filter:blur(8px);font-size:.72rem;letter-spacing:.08em}.scene-note b{color:#ffd37b}
+    .dock{align-self:end;display:grid;grid-template-columns:245px minmax(0,1fr);gap:16px;padding:14px;border-radius:18px;background:linear-gradient(120deg,rgba(45,24,15,.94),rgba(29,18,16,.89));backdrop-filter:blur(5px)}
+    .kon-panel{position:relative;min-height:250px;padding:15px 102px 15px 15px;border-radius:13px;background:linear-gradient(160deg,rgba(103,55,30,.88),rgba(42,23,16,.93));border:1px solid rgba(203,141,72,.72)}
+    .kon-panel img{position:absolute;right:2px;bottom:5px;width:98px;height:120px;object-fit:contain;object-position:bottom}.name{position:absolute;left:13px;top:-13px;padding:4px 12px;border:1px solid var(--edge);border-radius:7px;background:#5a301b;color:#ffe2a3;font-size:.76rem;font-weight:800}.kon-panel p{margin:22px 0 0;font-family:Georgia,"Yu Mincho",serif;font-size:1.02rem;line-height:1.75}.hint{margin-top:13px;color:#e7cfa6;font-size:.72rem;line-height:1.4}.hint b{color:#ffd47d}
+    .work{display:grid;grid-template-rows:auto auto 1fr auto;gap:9px;min-width:0}.shift{display:flex;align-items:center;gap:10px;font-size:.75rem;color:#f2d7a6;font-weight:800;letter-spacing:.04em}.step{display:flex;gap:5px}.step i{width:20px;height:6px;border-radius:9px;background:rgba(255,238,197,.25)}.step i.on{background:var(--gold)}
+    .word-card{display:flex;align-items:baseline;gap:11px;padding:11px 14px;border-radius:11px;background:rgba(255,249,233,.97);color:#3b261a;border:1px solid #cf9552}.word-card small{font-size:.68rem;color:#8e5b31;font-weight:900;letter-spacing:.08em}.word-card strong{font-size:1.18rem}.word-card .reading{color:#76614d;font-size:.82rem}.word-card .meaning{margin-left:auto;color:#527a63;font-size:.8rem;font-weight:800}
+    .request{padding:13px 17px;border-radius:12px;background:var(--paper);color:#34251c;border:1px solid #d4a160;font-family:Georgia,"Yu Mincho",serif;font-size:1.24rem;line-height:1.6}.request ruby{border-bottom:1px dashed #9f7140;cursor:pointer}.request rt{font-family:system-ui,sans-serif;font-size:.54em;color:#8e6039}.request mark{padding:0 3px;border-radius:3px;background:#ffe0a3;color:#392313;font-weight:700}
+    .answers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.answer{min-height:82px;padding:11px 12px;border:1px solid #cb9454;border-radius:11px;background:linear-gradient(180deg,#fff9ea,#ead9ba);color:#3a271c;font-family:Georgia,"Yu Mincho",serif;font-size:1rem;text-align:left;box-shadow:0 3px 0 #754621}.answer small{display:block;margin-top:7px;color:#86643e;font-family:system-ui,sans-serif;font-size:.66rem}.answer:hover{border-color:#e4af57;transform:translateY(-1px)}
+    .support{display:flex;align-items:center;gap:10px;font-size:.72rem;color:#d8c09a}.support b{padding:4px 8px;border-radius:99px;background:rgba(142,182,154,.22);color:#bce7c8}.support span:last-child{margin-left:auto;color:#ffd37c}
+    .caption{position:fixed;right:22px;top:99px;max-width:260px;padding:10px 13px;border-radius:10px;background:rgba(13,17,25,.76);font-size:.72rem;line-height:1.45;color:#e8d3af}.caption b{color:#ffd37b}
+    @media(max-width:760px){.stage{padding:10px;background-position:center}.topbar{gap:8px;padding:10px}.place{display:none}.mastery .meter{width:74px}.dock{grid-template-columns:1fr;padding:10px;gap:12px}.kon-panel{min-height:118px;padding:15px 105px 12px 15px}.kon-panel p{margin:0;font-size:.92rem;line-height:1.55}.kon-panel img{height:115px}.answers{grid-template-columns:1fr}.answer{min-height:58px}.caption{display:none}.word-card{flex-wrap:wrap}.word-card .meaning{margin-left:0}.scene-note{margin-top:5px}.request{font-size:1.07rem}}
+  </style>
+</head>
+<body>
+  <main class="stage">
+    <header class="topbar">
+      <span class="back">← Lantern Alley</span>
+      <span class="place">月見宿 ・ 一日目</span>
+      <span class="mastery">理解度 <span class="meter"><i></i></span> 38%</span>
+    </header>
+    <p class="scene-note"><b>客室の準備</b> ・ 2 / 5 guests are ready</p>
+    <section class="dock" aria-label="Concept learning screen">
+      <section class="kon-panel">
+        <span class="name">コン (Kon)</span>
+        <img src="assets/fox/fox-neutral-idle-transparent-v2.webp" alt="Kon">
+        <p>お客様をお部屋へご案内しましょう。先に、新しい言葉を見てください。</p>
+        <div class="hint"><b>How to interact:</b> Read the new word, then choose the reply that helps the guest.</div>
+      </section>
+      <section class="work">
+        <div class="shift"><span>LEARN ・ 2 / 5</span><span class="step"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span><span>this shift</span></div>
+        <div class="word-card"><small>NEW WORD</small><strong>案内する</strong><span class="reading">あんないする</span><span class="meaning">to guide a person</span></div>
+        <div class="request"><ruby>お客様<rt>おきゃくさま</rt></ruby>を <ruby>お部屋<rt>おへや</rt></ruby>へ <mark>案内</mark>してください。</div>
+        <div class="answers" aria-label="Answer choices">
+          <button class="answer">はい、お部屋へご案内します。<small>Choose the reply that serves this guest.</small></button>
+          <button class="answer">ただいま閉まっています。<small>Choose the reply that serves this guest.</small></button>
+          <button class="answer">お荷物をお預かりします。<small>Choose the reply that serves this guest.</small></button>
+        </div>
+        <div class="support"><b>Tap dotted kanji for reading</b><span>The new word is taught above, not hidden in the help.</span><span>¥10 for correct work</span></div>
+      </section>
+    </section>
+  </main>
+</body>
+</html>

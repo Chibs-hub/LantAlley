@@ -1,6 +1,6 @@
 # Lantern Alley Project Handoff
 
-Last updated: 2026-09-01
+Last updated: 2026-09-02
 
 A browser game that teaches JLPT N2 Japanese. Vanilla JS, CSS and HTML, no build step, no framework, offline-capable.
 
@@ -20,7 +20,19 @@ Sections 1, 3, 4, 5, 6, 8, 13, 14 and 15 are reference: what the game is, how it
 
 ## 0. Current status
 
-**The current production baseline is v218.** It includes the kimono characters, gravel-integrated plant art, guarded home-scene cleanup, a non-overlapping Entrance action dock, and corrected first-home starter stock. `node --test` passes **399/399**, `sw.js` agrees with all 26 `index.html` stamps, and the standalone Entrance-and-Inn demo is 11.87 MB.
+**The current working candidate is v223 on `codex/inn-learning-redesign` and is not committed or pushed.** The production baseline remains v218 until the owner authorizes that. The candidate includes the kimono characters, gravel-integrated plant art, guarded home-scene cleanup, a non-overlapping Entrance action dock, corrected first-home starter stock, and the completed and fully verified Inn learning redesign. `sw.js` agrees with all 26 `index.html` stamps. `node --test` passes **404/404**.
+
+`inn-learning-mock.html` is a non-production visual proposal for the next Inn learning pass. It uses the real lobby art and transparent Kon cutout to show the proposed compact dock, selective ruby readings, explicit new-word card, visible five-guest shift progression, and answer consequence without revealing the answer before selection. It does not change the playable app.
+
+**Inn learning redesign is implemented and played clean start to finish.** The approved plan is `docs/superpowers/plans/2026-09-01-inn-learning-redesign.md`: 5 Learn, 3 Practice and 2 Challenge tasks; evidence-based mastery across those phases; selective reading help; and a five-beat shift tracker for each episode. Learn cards show only the target word, reading and concise meaning. Existing Inn scene art was sufficient, so no new raster art was added.
+
+The three acceptance gaps the previous QA pass left open are resolved, each confirmed live rather than by re-reading source - see the 2026-09-02 change log entries for the detail:
+
+1. `調整`'s new-word card said "regulation" (the catalog's general first sense) where the story means "adjustment/coordination". `N2HomeInnStage.getCardSense` now overrides the card only, leaving the catalog entry - and every other consumer of it - untouched.
+2. The schedule slider's earlier "stuck at 10:00" report does not reproduce with a real pointer: a single click lands exactly on the intended hour, confirmed at both 1280px and 375px. Synthetic ArrowRight/ArrowLeft key dispatch did not step it in this browser-automation environment even though no code intercepts those keys - consistent with the plan's own suspicion that this was an automation artifact rather than a defect, so nothing was changed.
+3. A correct answer grew the page past its own viewport - 795px to 873px measured at 768px tall, pushing the result and the continue button below the fold. `.game-layout` now gets `max-height` equal to its existing `min-height`, which is what lets its `minmax(0,1fr)` answer row actually divide the available space instead of growing to fit its content; `#scene` absorbs any remaining overflow with `overflow-y:auto` while the feedback bar and continue button stay full size and always in view. Confirmed at 768px and the plan's own 720px: the page no longer grows by even one pixel when feedback appears.
+
+A full clean-save walkthrough then played all 5 Learn, all 3 Practice, and Challenge with one deliberate wrong answer on 調整 (scored 1/2, routed to a review naming only the missed word) followed by a correct review answer, completing the route and unlocking Episode 1. The five-beat shift tracker was seen live for the first time on the episode's own first question, with 受付 correctly lit as the current beat.
 
 The latest browser check completed the Entrance and selected Moonview Inn from the map in a clean session. The Inn introduction rendered normally, with no blank completed-Entrance screen. The Entrance action instruction now has its own grid row and a measured 7px gap above the three cards.
 
@@ -181,6 +193,8 @@ Every episode is ten questions in a 3-3-4 shape, told as one continuous shift:
 - **Day 2 - Practice.** Three items in changed situations.
 - **Day 3 - Challenge.** Four items, longer and harder, including the reading.
 - **間違い直し.** Only the items that were missed, on a shorter clock. Three tries at any one card, then Kon gives the answer and leaves it for a later review - an uncapped queue held a learner who could not get one card right for ever.
+
+**The Moonview Inn's introductory route is the one named exception to this 3-3-4 shape**, and is a separate stage from its own four 3-3-4 episodes. `N2HomeInnStage` teaches the Inn's first five words - 揃える, 取り替える, 温める, 調整, 引き受ける - as **5 Learn, 3 Practice, 2 Challenge**: fifteen near-duplicate tasks read as repetition rather than as three days, so Practice and Challenge were each cut to the words that actually need retrieval practice rather than one card per word. A learner only unlocks Episode 1 once every one of the five words has training evidence - a recorded *correct* answer, in any phase including 間違い直し - **and** both Challenge prompts are answered correctly, so the shorter route is not a lower bar, only a less repetitive one. See `docs/superpowers/plans/2026-09-01-inn-learning-redesign.md` and the 2026-09-01/02 change log entries.
 
 ### Clocks
 
@@ -403,7 +417,9 @@ Nothing in this group is a code task. Listed so a coding session does not start 
 
 ### C. Code work
 
-8. **The reported cat clipping, which has never been reproduced.** Do not re-check the items below; they are measured and ruled out.
+8. ~~Finish the Inn learning redesign QA before starting other code work.~~ **Done 2026-09-02.** All three acceptance checks resolved and verified live - `調整`'s card sense corrected via an Inn-specific override, the schedule slider confirmed working with a real pointer at 1280px and 375px (the "stuck at 10:00" report did not reproduce and is recorded as a probable automation artifact), and the feedback-driven page growth eliminated by giving `.game-layout` a real height so its answer row can actually divide the space it is given. A full clean-save walkthrough then played all 5 Learn, all 3 Practice, and Challenge with a deliberate miss and its correction, through to Episode 1 unlocking and its five-beat tracker rendering correctly. Section 4 now states the Inn's 5/3/2 exception beside the general 3-3-4 model. See the 2026-09-02 change log entries for the detail on each fix; cache is v223, `node --test` is 404/404.
+
+9. **The reported cat clipping, which has never been reproduced.** Do not re-check the items below; they are measured and ruled out.
 
    - Every frame in all ten production behavior sheets keeps **at least 13px clear on all four sides** of its 192px cell.
    - The cat's box sits **inside the scene at every anchor**, clearing the goal line by 6px at the lowest.
@@ -415,7 +431,7 @@ Nothing in this group is a code task. Listed so a coding session does not start 
 
    **The trap that cost a whole session:** before v168 the browser painted pre-repack sprite bytes, so the art on disk and the art on screen were different files. A report predating v168 may describe art that no longer exists. **Confirm the reporter's build version before investigating.**
 
-9. **Reconcile the Inn's two entry paths** so all five places are entered the same way - see section 10.
+10. **Reconcile the Inn's two entry paths** so all five places are entered the same way - see section 10.
 
 ### D. Settled - do not redo
 

@@ -24,6 +24,15 @@ test("Episode 1 is 3, 3, 4", () => {
   assert.equal(stage.episodes[0].days.map((d) => d.questions.length).join(","), "3,3,4");
 });
 
+test("each Inn episode has a visible five-beat shift", () => {
+  const { N2InnEpisodes: stage } = load();
+  for (const episode of stage.episodes) {
+    assert.equal(episode.progress.beats.length, 5, `${episode.id} needs five shift beats`);
+    assert.ok(episode.progress.beats.every((beat) => /^[ぁ-んァ-ヶ一-龠ー]+$/u.test(beat)), `${episode.id} uses authored Japanese beats`);
+    assert.equal(new Set(episode.progress.beats).size, 5, `${episode.id} repeats a shift beat`);
+  }
+});
+
 test("every target resolves in the catalog", () => {
   const { LanternCurriculumCatalog: catalog, N2InnEpisodes: stage } = load();
   for (const day of stage.episodes[0].days) {

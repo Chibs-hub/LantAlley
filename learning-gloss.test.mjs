@@ -31,6 +31,16 @@ test("a kanji word becomes tappable and carries its reading and meaning", () => 
   assert.match(html, /してください。/);
 });
 
+test("Learn mode uses ruby only for support words, never the target", () => {
+  const { LanternGloss: gloss, LanternCurriculumCatalog: catalog } = load();
+  const index = gloss.buildIndex(catalog);
+  const html = gloss.annotate("客間を掃除してください。", index, { "掃除": true }, "ruby");
+
+  assert.match(html, /<ruby class="gloss-ruby">客間<rt>きゃくま<\/rt><\/ruby>/);
+  assert.doesNotMatch(html, /<ruby[^>]*>掃除<rt>/, "the word being taught must stay unreadable");
+  assert.doesNotMatch(html, /<button/, "ruby support is informative, not a second interaction");
+});
+
 test("the longest word wins, so 会 is not glossed inside 会計", () => {
   const { LanternGloss: gloss, LanternCurriculumCatalog: catalog } = load();
   const index = gloss.buildIndex(catalog);

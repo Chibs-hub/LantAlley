@@ -176,6 +176,7 @@
     phaseItems:null,
     challengeScore:0,
     challengeCorrectWords:{},
+    trainingCorrectWords:{},
     challengeMisses:[],
     stageMastered:false,
     resumedStageEntry:false,
@@ -414,6 +415,7 @@
         index: inn.question || 0,
         challengeScore: inn.challengeScore || 0,
         correctWords: inn.correctWords || [],
+        trainingWords: inn.trainingWords || [],
         misses: inn.misses || [],
         mastered: !!inn.mastered,
         declined: !!inn.declined,
@@ -429,6 +431,7 @@
           index:state.encounterIndex,
           challengeScore:state.challengeScore,
           correctWords:Object.keys(state.challengeCorrectWords),
+          trainingWords:Object.keys(state.trainingCorrectWords),
           misses:state.challengeMisses.map(function(item){ return item.focusWord; }),
           mastered:state.stageMastered,
           declined:state.stageDeclined,
@@ -449,6 +452,7 @@
           question: inn.index,
           challengeScore: inn.challengeScore,
           correctWords: inn.correctWords,
+          trainingWords: inn.trainingWords,
           misses: inn.misses,
           mastered: inn.mastered,
           declined: inn.declined,
@@ -536,6 +540,7 @@
    */
   var glossIndex = null;
   var glossExclusions = {};
+  var glossMode = "tap";
 
   function glossReady(){
     if(typeof LanternGloss === "undefined" || typeof LanternCurriculumCatalog === "undefined") return false;
@@ -549,9 +554,40 @@
       : {};
   }
 
-  function glossHtml(text){
+  function glossHtml(text, mode){
     if(!glossReady()) return null;
-    return LanternGloss.annotate(text, glossIndex, glossExclusions);
+    var selectedMode = mode || glossMode;
+    if(selectedMode === "plain") return null;
+    return LanternGloss.annotate(text, glossIndex, glossExclusions, selectedMode === "ruby" ? "ruby" : undefined);
+  }
+
+  function stageReadingMode(phase){
+    if(phase === "learn") return "ruby";
+    if(phase === "challenge") return "plain";
+    return "tap";
+  }
+
+  function prepareStageReading(stage, prompt){
+    var options = (prompt.options || []).map(function(option){ return option.label || option; });
+    setGlossQuestion({
+      target:stage && stage.getTargetId ? stage.getTargetId(prompt.focusWord) : "",
+      answer:{options:options}
+    });
+    glossMode = stageReadingMode(state.stagePhase);
+  }
+
+  function writeStagePrompt(stage, prompt){
+    prepareStageReading(stage, prompt);
+    var text = stage.getWrittenPrompt ? stage.getWrittenPrompt(prompt, state.stagePhase) : prompt.jp;
+    var marked = glossHtml(text);
+    if(marked === null) $("jp-line").textContent = text;
+    else $("jp-line").innerHTML = marked;
+    return text;
+  }
+
+  function challengeTranscript(prompt){
+    var marked = glossHtml(prompt.jp, "ruby");
+    return '<p class="challenge-transcript"><b>聞いた文</b><span>' + (marked === null ? prompt.jp : marked) + '</span></p>';
   }
 
   function hideGlossBubble(){
@@ -1897,6 +1933,18 @@
     return doc.heading + "を読んでください。";
   }
 
+  function innShiftProgressMarkup(episode, index, total){
+    if(!episode || !episode.progress || !episode.progress.beats) return "";
+    var beats = episode.progress.beats;
+    var current = Math.min(beats.length - 1, Math.floor(index * beats.length / Math.max(1, total)));
+    return '<ol class="inn-shift-progress" aria-label="' + episode.progress.label + '">'
+      + beats.map(function(beat, beatIndex){
+        var stateClass = beatIndex < current ? " is-done" : (beatIndex === current ? " is-current" : "");
+        return '<li class="inn-shift-beat' + stateClass + '"><span aria-hidden="true"></span><b>' + beat + '</b></li>';
+      }).join("")
+      + '</ol>';
+  }
+
   // Marks the answered question as answered: every choice goes inert, and the
   // one that was picked stays visible so the explanation has something to
   // point at.
@@ -1922,6 +1970,7 @@
     // would otherwise gloss this question's own answer using the last
     // question's exclusions.
     setGlossQuestion(question);
+    glossMode = stageReadingMode(entry.mode);
     setInnScene(innSceneFor(question));
     // An episode is one evening, not three days, so the badge names the part of
     // the shift the learner is in.
@@ -1994,6 +2043,7 @@
 
     var scene = $("scene");
     scene.innerHTML = '<div class="inn-workspace">'
+      + innShiftProgressMarkup(currentEpisode(), previewState.index, previewState.list.length)
       + '<p class="inn-instruction" id="inn-instruction"></p>'
       + '<div class="repair-timer" id="preview-timer"><span class="repair-timer-fill" id="preview-timer-fill"></span><b id="preview-timer-text">…</b></div>'
       + docMarkup
@@ -2377,6 +2427,7 @@
     state.stageProgress.homeInn = null;
     state.challengeScore = 0;
     state.challengeCorrectWords = {};
+    state.trainingCorrectWords = {};
     state.challengeMisses = [];
     state.stageMastered = false;
     startStagePhase(loc, "learn");
@@ -2451,19 +2502,16 @@
       storyNarration = loc.getDayAnnouncement(state.stagePhase) + " " + prompt.narration;
     }
     $("narration").textContent = storyNarration;
-    $("jp-line").textContent = loc.getWrittenPrompt(prompt, state.stagePhase);
+    var writtenPrompt = writeStagePrompt(loc, prompt);
     $("romaji-line").textContent = prompt.romaji;
     $("romaji-line").style.display = state.romajiOn && state.stagePhase !== "challenge" ? "block" : "none";
-    $("meaning-line").textContent = prompt.meaning;
-    // Day 2 shows the English translation as part of the question, in place of
-    // the romaji it no longer gets. Every other day reveals meaning only after
-    // an answer, so it cannot be read instead of the Japanese.
-    $("meaning-line").classList.toggle("show", state.stagePhase === "practice");
+    $("meaning-line").textContent = "";
+    $("meaning-line").classList.remove("show");
     $("hint-box").textContent = prompt.hint;
     $("hint-box").classList.remove("show");
     $("hint-btn").style.display = state.stagePhase === "challenge" ? "none" : "block";
     renderInnInteraction(prompt, true);
-    speak(prompt.jp, undefined, false, loc.getWrittenPrompt ? loc.getWrittenPrompt(prompt, state.stagePhase) : undefined);
+    speak(prompt.jp, undefined, false, writtenPrompt);
   }
 
   function enterLocation(key){
@@ -2522,6 +2570,7 @@
     state.phaseItems = null;
     state.challengeScore = 0;
     state.challengeCorrectWords = {};
+    state.trainingCorrectWords = {};
     state.challengeMisses = [];
     state.stageMastered = false;
     state.resumedStageEntry = false;
@@ -2551,6 +2600,14 @@
       state.resumedAfterDecline = !!resumed.declined;
       state.stageDeclined = false;
       (resumed.correctWords || []).forEach(function(word){ state.challengeCorrectWords[word] = true; });
+      (resumed.trainingWords || []).forEach(function(word){ state.trainingCorrectWords[word] = true; });
+      // Pre-v219 saves only recorded Challenge words. A learner who had
+      // already finished Learn must retain that evidence or would be trapped
+      // in an endless Challenge/Review loop after the shorter route ships.
+      if(!resumed.trainingWords){
+        var learnedCount = state.stagePhase === "learn" ? state.encounterIndex : loc.encounters.length;
+        loc.encounters.slice(0, learnedCount).forEach(function(item){ state.trainingCorrectWords[item.focusWord] = true; });
+      }
       state.challengeMisses = loc.challenge.filter(function(item){ return (resumed.misses || []).indexOf(item.focusWord) >= 0; });
       state.stageMastered = !!resumed.mastered;
       state.resumedStageEntry = true;
@@ -2600,16 +2657,11 @@
     // Day 3 is audio-first, so the written prompt must stay
     // 「音声を聞いてください。」. This path runs when entering a stage and printed
     // the sentence directly, so arriving at Challenge revealed the request.
-    $("jp-line").textContent = loc.getWrittenPrompt
-      ? loc.getWrittenPrompt(prompt, state.stagePhase)
-      : prompt.jp;
+    var resumedPrompt = writeStagePrompt(loc, prompt);
     $("romaji-line").textContent = prompt.romaji;
-    $("romaji-line").style.display = state.romajiOn ? "block" : "none";
-    $("meaning-line").textContent = prompt.meaning;
-    // Day 2 shows the English translation as part of the question, in place of
-    // the romaji it no longer gets. Every other day reveals meaning only after
-    // an answer, so it cannot be read instead of the Japanese.
-    $("meaning-line").classList.toggle("show", state.stagePhase === "practice");
+    $("romaji-line").style.display = state.romajiOn && state.stagePhase !== "challenge" ? "block" : "none";
+    $("meaning-line").textContent = "";
+    $("meaning-line").classList.remove("show");
     $("hint-box").textContent = prompt.hint;
     $("hint-box").classList.remove("show");
     $("hint-btn").style.display = loc.type === "finale" || loc.key === "entrance" ? "none" : "block";
@@ -2621,7 +2673,7 @@
       renderStageIntro(loc);
     }else if(loc.encounters){
       renderInnInteraction(prompt, true);
-      speak(prompt.jp, undefined, false, loc.getWrittenPrompt ? loc.getWrittenPrompt(prompt, state.stagePhase) : undefined);
+      speak(prompt.jp, undefined, false, resumedPrompt);
     }else{
       renderScene(prompt);
       if(loc.key === "entrance") startEntranceGreeting(loc);
@@ -4538,6 +4590,19 @@
     });
   }
 
+  function innWordCard(prompt){
+    var stage = getLocation(prompt.stageKey || state.currentKey);
+    var targetId = stage && stage.getTargetId ? stage.getTargetId(prompt.focusWord) : null;
+    var item = typeof LanternCurriculumCatalog !== "undefined" && LanternCurriculumCatalog.getItem
+      ? LanternCurriculumCatalog.getItem(targetId) : null;
+    var reading = item && item.reading ? item.reading : "";
+    // The catalog's first sense is the general one, and it is sometimes wrong
+    // for this specific story - see getCardSense in n2-home-inn-stage.js.
+    var cardSense = stage && stage.getCardSense ? stage.getCardSense(prompt.focusWord) : null;
+    var meaning = cardSense || (item && item.meanings && item.meanings[0] ? item.meanings[0] : "");
+    return '<aside class="inn-new-word" aria-label="New word"><span class="inn-new-word-kicker">NEW WORD</span><b>' + prompt.focusWord + '</b><span class="inn-new-word-reading">' + reading + '</span><span class="inn-new-word-meaning">' + meaning + '</span></aside>';
+  }
+
   function renderInnInteraction(prompt, reset){
     if(isWordChoiceDay(prompt)){
       renderWordChoice(prompt);
@@ -4568,9 +4633,10 @@
     var clueSurface = roomVisual
       ? '<details class="inn-clue"><summary>部屋の様子</summary><span>' + interaction.clue + '</span></details>'
       : '<div class="inn-clue">' + interaction.clue + '</div>';
+    var wordSurface = state.stagePhase === "learn" ? innWordCard(prompt) : '';
     // Always visible, not a collapsed <details>: the tap-to-place shortcut is
     // useless if the only place it is mentioned is behind a disclosure arrow.
-    scene.innerHTML = '<p class="inn-instruction">'+interaction.controlHelp+'</p>'
+    scene.innerHTML = wordSurface + '<p class="inn-instruction">'+interaction.controlHelp+'</p>'
       + clueSurface
       + '<div class="inn-room' + (roomVisual ? ' inn-room-illustrated' : '') + '"><div class="inn-workspace" id="inn-workspace">'
       + roomSurface
@@ -5214,7 +5280,7 @@
     if(!isCorrect && state.stagePhase !== "challenge"){
       konResponseTimer = setTimeout(function(){
         if(state.answered || state.currentKey !== stage.key) return;
-        $("jp-line").textContent = stage.getWrittenPrompt(prompt, state.stagePhase);
+        writeStagePrompt(stage, prompt);
         $("romaji-line").textContent = prompt.romaji;
         $("romaji-line").style.display = state.romajiOn ? "block" : "none";
         setEntranceFoxPose("listen");
@@ -5223,22 +5289,13 @@
     }
   }
 
-  // The Day 2 translation belongs to the question. Once Kon replies, the
-  // Japanese on screen is her answer, and leaving the question's English under
-  // it read as a mistranslation of what she just said.
   function showPracticeTranslation(visible){
     if(state.stagePhase !== "practice") return;
     var line = $("meaning-line");
-    // Clear the text, not just the class: the correct-answer branch re-adds
-    // "show" further down, which brought the question's English back under
-    // Kon's reply.
-    if(visible){
-      var prompt = getActivePrompt(getLocation(state.currentKey));
-      line.textContent = prompt ? prompt.meaning : "";
-    }else{
-      line.textContent = "";
-    }
-    line.classList.toggle("show", !!visible);
+    // Practice gives help word by word, not a sentence-level translation that
+    // could answer the cloze without Japanese retrieval.
+    line.textContent = "";
+    line.classList.remove("show");
   }
 
   function answerStage(isCorrect, prompt, selectedKey){
@@ -5252,6 +5309,7 @@
       // the same evidence of understanding as answering it in an episode.
       var masteredId = stage.getTargetId && stage.getTargetId(prompt.focusWord);
       if(masteredId) markMastered(prompt.stageKey, masteredId);
+      state.trainingCorrectWords[prompt.focusWord] = true;
       rewardCorrect("training:" + prompt.stageKey + ":" + state.stagePhase + ":" + (prompt.id || prompt.focusWord || state.encounterIndex), state.stagePhase);
     }
 
@@ -5260,18 +5318,17 @@
       if(isCorrect){
         state.challengeScore += 1;
         state.challengeCorrectWords[prompt.focusWord] = true;
-        showFeedback(true, prompt.meaning ? "Correct! " + prompt.meaning : "正解です。");
+        showFeedback(true, "正解です。" + challengeTranscript(prompt));
       }else{
         state.mistakesThisVisit = Math.min(3, state.mistakesThisVisit + 1);
         state.challengeMisses.push(prompt);
-        showFeedback(false, stage.getWrongAnswerFeedback(prompt, selectedKey) + " This word will return in focused review.");
+        showFeedback(false, stage.getWrongAnswerFeedback(prompt, selectedKey) + challengeTranscript(prompt));
       }
-      $("meaning-line").classList.add("show");
       renderHud();
 
       if(state.encounterIndex === items.length - 1){
-        var correctWords = Object.keys(state.challengeCorrectWords);
-        state.stageMastered = stage.isChallengeMastered(state.challengeScore, correctWords);
+        var trainingWords = Object.keys(state.trainingCorrectWords);
+        state.stageMastered = stage.isChallengeMastered(state.challengeScore, trainingWords);
         if(state.stageMastered){
           var already = !!state.starred[stage.key];
           state.visited[stage.key] = true;
@@ -5295,11 +5352,15 @@
 
     if(isCorrect){
       state.answered = true;
-      $("meaning-line").classList.add("show");
+      if(prompt.meaning){
+        $("meaning-line").textContent = prompt.meaning;
+        $("meaning-line").classList.add("show");
+      }
       if(state.stagePhase === "review") state.challengeCorrectWords[prompt.focusWord] = true;
       var isFinalEncounter = state.encounterIndex === items.length - 1;
       if(isFinalEncounter && state.stagePhase === "review"){
-        state.stageMastered = stage.isFocusedReviewComplete(items, Object.keys(state.challengeCorrectWords));
+        state.stageMastered = stage.isFocusedReviewComplete(items, Object.keys(state.challengeCorrectWords))
+          && (!stage.hasTrainingEvidence || stage.hasTrainingEvidence(Object.keys(state.trainingCorrectWords)));
         state.visited[stage.key] = true;
         saveProgress();
         renderHud();

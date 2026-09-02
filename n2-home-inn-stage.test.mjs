@@ -53,6 +53,67 @@ test("Inn questions keep the scene visible behind compact Entrance-style docks",
   assert.match(html, /\.inn-stage \.game-layout\{[^}]*min-height/);
 });
 
+test("feedback and the continue button cannot push the page past the viewport", () => {
+  // A correct answer used to grow #feedback-row and #next-row inside
+  // .answer-workspace with nothing above them capping a maximum height, so
+  // the whole page grew to fit and the result landed below the fold. The fix
+  // gives .game-layout a real height - min and max the same value - so the
+  // minmax(0,1fr) answer row has a fixed budget to divide, then lets the
+  // answered scene be the part that shrinks and scrolls instead of the page.
+  // Anchored on the exact rule rather than a media-block extraction: this
+  // file already has four "@media(min-width:761px)" openings, and matching
+  // the first one found the wrong block entirely.
+  const maxHeight = html.match(/\.inn-stage \.game-layout\{max-height:([^}]+)\}/);
+  const minHeight = html.match(/\.inn-stage \.game-layout\{display:grid;min-height:([^;]+);/);
+  assert.ok(maxHeight, ".game-layout has no max-height rule");
+  assert.ok(minHeight, ".game-layout has no min-height to compare against");
+  assert.equal(maxHeight[1].trim(), minHeight[1].trim(),
+    "max-height must match min-height, or .game-layout is not actually fixed");
+
+  // And that rule must sit inside a width-gated block, not apply everywhere -
+  // an unconditional fixed height would break the mobile stacked layout.
+  const guardedIndex = html.indexOf("@media(min-width:761px){\n    .inn-stage .game-layout{max-height:");
+  assert.ok(guardedIndex > -1, "the max-height rule is not gated to wider layouts");
+
+  assert.match(html, /\.inn-stage \.answer-workspace\{display:flex;flex-direction:column/);
+  assert.match(html, /\.inn-stage \.answer-workspace \.scene\{flex:1 1 auto;min-height:0;overflow-y:auto\}/);
+  assert.match(html, /\.inn-stage \.answer-workspace #feedback-row,\s*\n\s*\.inn-stage \.answer-workspace #next-row\{flex:0 0 auto\}/);
+});
+
+test("the Learn word card shows only the target word support", () => {
+  assert.match(html, /function innWordCard\(prompt\)/);
+  assert.match(html, /LanternCurriculumCatalog\.getItem/);
+  assert.doesNotMatch(html, /inn-new-word-reading[^\n]*prompt\.romaji/);
+  assert.doesNotMatch(html, /inn-new-word-meaning[^\n]*prompt\.meaning/);
+});
+
+test("the 調整 word card uses the Inn's sense, not the catalog's general one", () => {
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(readFileSync(stageUrl, "utf8"), context);
+  const stage = context.N2HomeInnStage;
+
+  // The catalog's own first sense is "regulation" - checked directly so this
+  // test still means something if the catalog is ever reordered.
+  const catalogUrl = new URL("./curriculum-catalog.js", import.meta.url);
+  const catalogContext = {};
+  vm.createContext(catalogContext);
+  vm.runInContext(readFileSync(catalogUrl, "utf8"), catalogContext);
+  const catalogItem = catalogContext.LanternCurriculumCatalog.getItem(stage.getTargetId("調整"));
+  assert.equal(catalogItem.meanings[0], "regulation",
+    "the catalog's general sense changed - the override below may no longer be needed, or may need updating");
+
+  const cardSense = stage.getCardSense("調整");
+  assert.ok(cardSense, "調整 has no card-sense override");
+  assert.doesNotMatch(cardSense, /regulation/i,
+    "the Inn's checkout and arrival-time tasks are about reconciling conditions, not regulation");
+
+  // Every other focus word falls through to the catalog's own sense.
+  for (const word of ["揃える", "取り替える", "温める", "引き受ける"]) {
+    assert.equal(stage.getCardSense(word), null, `${word} should not need an override`);
+  }
+});
+
 test("episode openings form one aligned bottom dock instead of floating boxes", () => {
   assert.match(html, /\.inn-stage \.game-layout:has\(\.episode-open\)/);
   assert.match(html, /\.inn-stage \.answer-workspace:has\(\.episode-open\)/);
@@ -100,13 +161,15 @@ test("Moonview Inn has evidence-based practice and challenge phases", () => {
   vm.createContext(context);
   vm.runInContext(readFileSync(stageUrl, "utf8"), context);
   const stage = context.N2HomeInnStage;
-  assert.equal(stage.practice.length, 5);
-  assert.equal(stage.challenge.length, 5);
+  assert.equal(stage.practice.length, 3);
+  assert.equal(stage.challenge.length, 2);
 
+  const learned = new Set(stage.encounters.map((item) => item.focusWord));
   for (const word of stage.encounters.map((item) => item.focusWord)) {
-    assert.equal(stage.practice.filter((item) => item.focusWord === word).length, 1);
-    assert.equal(stage.challenge.filter((item) => item.focusWord === word).length, 1);
+    assert.equal(learned.has(word), true, `${word} has a Learn interaction`);
   }
+  assert.equal(new Set(stage.practice.map((item) => item.focusWord)).size, 3);
+  assert.equal(new Set(stage.challenge.map((item) => item.focusWord)).size, 2);
   assert.ok(stage.challenge.every((item) => item.romaji === "" && item.hint === ""));
   assert.equal(
     stage.challenge.every((item) => !stage.practice.some((practice) => practice.jp === item.jp)),
@@ -122,9 +185,9 @@ test("practice never repeats a Learn request", () => {
   const stage = context.N2HomeInnStage;
   const learnRequests = new Set(stage.encounters.map((item) => item.jp));
 
-  assert.equal(stage.practice.length, 5);
+  assert.equal(stage.practice.length, 3);
   assert.equal(stage.practice.every((item) => !learnRequests.has(item.jp)), true);
-  assert.equal(new Set(stage.practice.map((item) => item.jp)).size, 5);
+  assert.equal(new Set(stage.practice.map((item) => item.jp)).size, 3);
 });
 
 test("stage UI separates phase status from the story title and offers a Learn restart", () => {
@@ -134,15 +197,15 @@ test("stage UI separates phase status from the story title and offers a Learn re
   assert.match(html, /\$\("stage-phase-row"\)\.style\.display = loc\.encounters \? "flex" : "none"/);
 });
 
-test("challenge mastery requires all five one-time challenge words", () => {
+test("challenge mastery requires two audio answers and evidence for all five taught words", () => {
   const context = {};
   vm.createContext(context);
   vm.runInContext(readFileSync(stageUrl, "utf8"), context);
   const stage = context.N2HomeInnStage;
   const allWords = stage.encounters.map((item) => item.focusWord);
-  assert.equal(stage.isChallengeMastered(5, allWords), true);
-  assert.equal(stage.isChallengeMastered(4, allWords), false);
-  assert.equal(stage.isChallengeMastered(5, allWords.slice(0, 4)), false);
+  assert.equal(stage.isChallengeMastered(2, allWords), true);
+  assert.equal(stage.isChallengeMastered(1, allWords), false);
+  assert.equal(stage.isChallengeMastered(2, allWords.slice(0, 4)), false);
 });
 
 test("focused review completes after only the missed verbs are recalled", () => {
@@ -150,7 +213,7 @@ test("focused review completes after only the missed verbs are recalled", () => 
   vm.createContext(context);
   vm.runInContext(readFileSync(stageUrl, "utf8"), context);
   const stage = context.N2HomeInnStage;
-  const missed = [stage.challenge[1], stage.challenge[3]];
+  const missed = [stage.challenge[0], stage.challenge[1]];
 
   assert.equal(stage.isFocusedReviewComplete(missed, [missed[0].focusWord]), false);
   assert.equal(stage.isFocusedReviewComplete(missed, missed.map((item) => item.focusWord)), true);
@@ -241,8 +304,7 @@ test("Kon gives a contextual Japanese response after every stage answer", () => 
   }
 
   const expectedPracticeResults = [
-    /向き/, /シーツ/, /ごはん/, /Cグループ.*12時.*Dグループ.*14時/, /朝食/,
-    /大きさ/, /電球/, /スープ/, /Aグループ.*15時.*Bグループ.*17時/, /荷物/,
+    /向き/, /ごはん/, /朝食/,
   ];
   stage.practice.forEach((item, index) => {
     assert.match(stage.getKonResponse(item, true), expectedPracticeResults[index], item.variant);
@@ -383,7 +445,7 @@ test("schedule coordination distinguishes chousei from chousetsu", () => {
   vm.createContext(context);
   vm.runInContext(readFileSync(stageUrl, "utf8"), context);
   const stage = context.N2HomeInnStage;
-  const item = stage.practice.find((entry) => entry.focusWord === "調整");
+  const item = stage.challenge.find((entry) => entry.focusWord === "調整");
   assert.match(item.jp, /時間|予定/);
   assert.doesNotMatch(item.jp, /温度/);
   const nearMiss = item.options.find((option) => option.nearMiss);
@@ -607,7 +669,7 @@ test("the object-moving scenes are identical, so only the verb selects the actio
 
   const moving = stage.getPhaseItems("learn").concat(stage.practice, stage.challenge)
     .filter((item) => ["arrange", "replace", "warm"].includes(item.mechanic));
-  assert.ok(moving.length >= 9);
+  assert.ok(moving.length >= 6);
 
   // every one of them shows the same room: same props, same clue, same help text
   const first = moving[0].interaction;
@@ -889,12 +951,11 @@ test("the challenge day runs in story order", () => {
   // Each narration is tied to its own task, so the question order cannot be
   // shuffled independently of the story. A previous order of 2, 0, 4, 1, 3 made
   // day 3 jump from after dark, to the next morning, to before closing.
-  const order = stage.getPhaseItems("challenge").map((item) => item.focusWord);
-  const learnOrder = stage.getPhaseItems("learn").map((item) => item.focusWord);
-  assert.deepEqual(order, learnOrder);
+  const order = Array.from(stage.getPhaseItems("challenge"), (item) => item.focusWord);
+  assert.deepEqual(order, ["揃える", "調整"]);
 
   const story = stage.getPhaseItems("challenge").map((item) => item.narration).join(" ");
-  const beats = ["次の朝です", "廊下が暗く", "日暮れ後", "帳場を閉める前", "最後のお客様"];
+  const beats = ["次の朝です", "帳場を閉める前"];
   let cursor = -1;
   for (const beat of beats) {
     const at = story.indexOf(beat, cursor + 1);
@@ -919,9 +980,9 @@ test("each day withdraws one layer of support", () => {
   };
 
   assert.equal(JSON.stringify(layer("learn")), JSON.stringify({ romaji: true, meaning: true, hint: true }));
-  // Day 2 trades romaji for the English translation: by the second day the
-  // learner should be reading the script, but still needs the meaning.
-  assert.equal(JSON.stringify(layer("practice")), JSON.stringify({ romaji: false, meaning: true, hint: false }));
+  // Day 2 keeps the request in Japanese. Support words are tappable in the
+  // renderer; a full English sentence would solve the cloze without reading.
+  assert.equal(JSON.stringify(layer("practice")), JSON.stringify({ romaji: false, meaning: false, hint: false }));
   assert.equal(JSON.stringify(layer("challenge")), JSON.stringify({ romaji: false, meaning: false, hint: false }));
 
   // Challenge is audio-first: the written prompt must not give the sentence away.
@@ -1028,11 +1089,9 @@ test("challenge speaks the request but never types it out", () => {
   // getWrittenPrompt a few milliseconds after it ran.
   assert.match(html, /function speak\(text, mode, isReplay, displayText\)/);
   assert.match(html, /dialogueFlow\.start\(displayText === undefined \? text : displayText/);
-  const calls = [...html.matchAll(/speak\(prompt\.jp[^)]*\)/g)].map((m) => m[0]);
-  assert.ok(calls.length >= 1);
-  for (const call of calls) {
-    assert.match(call, /getWrittenPrompt/, `a request is spoken without a display override: ${call}`);
-  }
+  assert.match(html, /var writtenPrompt = writeStagePrompt\(loc, prompt\);/);
+  assert.match(html, /speak\(prompt\.jp, undefined, false, writtenPrompt\)/);
+  assert.match(html, /function writeStagePrompt[\s\S]*?stage\.getWrittenPrompt/);
 });
 
 test("the Inn frames match the Entrance rather than a second wood", () => {
@@ -1043,7 +1102,7 @@ test("the Inn frames match the Entrance rather than a second wood", () => {
   assert.match(html, /\.inn-room-viewport \.inn-drop-zone\{[\s\S]*?background:rgba\(255,250,240,\.2\)/);
 });
 
-test("day 2 offers four Japanese choices and an English translation", () => {
+test("day 2 offers four Japanese choices without translating the whole request", () => {
   const context = {};
   vm.createContext(context);
   vm.runInContext(readFileSync(new URL("./moonview-inn-interactions.js", import.meta.url), "utf8"), context);
@@ -1055,28 +1114,19 @@ test("day 2 offers four Japanese choices and an English translation", () => {
     assert.equal(new Set(item.options.map((o) => o.key)).size, 4, `${item.focusWord} has duplicate keys`);
     assert.equal(item.options.filter((o) => o.key === item.correct).length, 1);
     assert.equal(item.options.filter((o) => o.nearMiss).length, 1);
-    // The choices stay Japanese; only the question carries English.
+    // The choices and the request stay Japanese.
     for (const option of item.options) {
       assert.doesNotMatch(option.label, /[A-Za-z]/, `${item.focusWord}: ${option.label}`);
     }
-    assert.match(item.meaning, /[A-Za-z]/, `${item.focusWord} needs an English translation`);
-    // A full sentence, not one carrying the blank: English collapses the
-    // distinction being tested, so the verb does not give the answer away.
-    assert.doesNotMatch(item.meaning, /\(\s*\)/, `${item.focusWord} translation still has a blank`);
+    assert.equal(item.meaning, "", `${item.focusWord} must not translate the cloze`);
     assert.equal(item.romaji, "", `${item.focusWord} must not show romaji on day 2`);
   }
-
-  // The translation must be visible with the question, not only after answering.
-  assert.match(html, /classList\.toggle\("show", state\.stagePhase === "practice"\)/);
 });
 
-test("the day 2 translation belongs to the question, not to Kon's reply", () => {
-  // Leaving the question's English under Kon's answer read as a mistranslation
-  // of what she had just said.
+test("day 2 never restores a full English translation after retry", () => {
   assert.match(html, /function showPracticeTranslation\(visible\)/);
   assert.match(html, /function answerStage\(isCorrect, prompt, selectedKey\)\{\s*showPracticeTranslation\(false\);/);
-  // and it comes back when the question does
-  assert.match(html, /renderInnInteraction\(prompt, true\);\s*showPracticeTranslation\(true\);/);
+  assert.doesNotMatch(html, /classList\.toggle\("show", state\.stagePhase === "practice"\)/);
 });
 
 test("the Kon name tab does not land on the narration", () => {
