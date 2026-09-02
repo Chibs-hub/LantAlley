@@ -3490,6 +3490,16 @@
       + sceneLayer(background, "わが家の部屋")
       + wallpaperLayer() + homePetMarkup("interior") + homeSceneChrome("interior");
 
+    // The open veranda already reads as the way out; a labeled hotspot over
+    // it matches the yard's own house hotspot rather than leaving only the
+    // corner text link, same reasoning as the yard's own exitHotspot.
+    if(interior.exitHotspot){
+      html += '<button type="button" class="home-house-hotspot" data-leave-house="1"'
+        + ' style="left:' + interior.exitHotspot.x + '%;top:' + interior.exitHotspot.y + '%;'
+        + 'width:' + interior.exitHotspot.width + '%;height:' + interior.exitHotspot.height + '%"'
+        + ' aria-label="' + interior.exitHotspot.label + '"><span>' + interior.exitHotspot.label + '</span></button>';
+    }
+
     if(decor){
       interior.slots.forEach(function(slot){
         var here = home.placed[slot.id];

@@ -244,7 +244,14 @@
       },
       interior: {
         background: backgroundFor("interior", "evening"),
-        slots: cloneSlots(SLOTS)
+        slots: cloneSlots(SLOTS),
+        /* The open veranda on the left is the one place the painting actually
+         * shows the outside - sliding door drawn open, garden visible through
+         * it - so it is the room's own equivalent of the yard's door: the
+         * spot that already reads as "the way out" before any button is even
+         * drawn on it. Kept below y=38 so it does not sit under wall-left or
+         * eave, both hung higher on the same strip of wall. */
+        exitHotspot: {x:9, y:38, width:15, height:34, label:"庭へ戻る"}
       }
     };
   }

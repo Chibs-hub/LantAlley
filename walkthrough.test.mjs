@@ -623,6 +623,21 @@ test("the yard has a scene-painted way out, not just the corner text link", () =
   assert.equal(game.$("screen-map").style.display, "block", "clicking it returns to the map");
 });
 
+/* The interior had the same asymmetry one level in: a house hotspot to walk
+ * into the room from the yard, but only a corner text link ("← 庭") to walk
+ * back out - no painted spot in the room itself, unlike every other door in
+ * the house so far. */
+test("the room has a scene-painted way back to the yard, not just the corner text link", () => {
+  const game = boot(plantedCamelliaSave());
+  enterHome(game);
+  game.doc.querySelectorAll("[data-enter-house]")[0].click();
+  const exit = game.doc.querySelectorAll("[data-leave-house]").find((b) => b.className.includes("home-house-hotspot"));
+  assert.ok(exit, "the interior scene has its own exit hotspot, styled like the house hotspot");
+  exit.click();
+  assert.ok(game.doc.querySelectorAll("[data-enter-house]").length > 0,
+    "clicking it returns to the yard, where the house hotspot lives");
+});
+
 /* home-pet.js's enterScene() always arrives at the scene's door - deliberate
  * for the very first sighting of the cat ("walking in to greet you"), but
  * homePetMarkup() used to call it for every switch between the yard and the

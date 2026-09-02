@@ -6,6 +6,18 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-02 - The room now has a painted way back to the yard too
+
+Follow-up to the yard's own exit hotspot, above: owner asked for "clickable exit from inside of house to the yard" - the same asymmetry existed one level in. `home-house-hotspot` let a learner walk from the yard into the room; the room itself only offered the corner text link ("← 庭") to walk back out, no painted spot in the room to match.
+
+The interior's painting already shows one spot as "outside" - the open veranda on the left, sliding door drawn open with the garden visible through it - so it needed no invented landmark, just a hotspot over what the picture already depicts. Added `exitHotspot` to `home-room.js`'s interior scene (`x:9, y:38, width:15, height:34`, clear of the `wall-left`/`eave` decor slots hung higher on the same strip), and a matching `.home-house-hotspot` button in `renderHomeInterior()` reading "庭へ戻る". It carries the existing `data-leave-house="1"` attribute, so - like the yard's own exit hotspot - it needed no new click handler.
+
+Two regression tests mirror the yard's: `home-decor.test.mjs` checks the new hotspot's data shape, and `walkthrough.test.mjs` enters the house, clicks the rendered button, and asserts the yard's own house hotspot is visible again. Both confirmed to fail without the change.
+
+Verified live at 1280px and 375px: the label sits legibly over the open veranda, and clicking it returns to the yard.
+
+Cache is v228. `node --test` passes 408/408.
+
 ### 2026-09-02 - The yard now has a painted way out, matching the painted way in
 
 Owner asked, after learning the corner "← Lantern Alley" text link was there all along but easy to miss: "make clickable spot in the scene like the entering to the house from the outside."
