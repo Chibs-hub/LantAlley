@@ -2102,11 +2102,28 @@
     // to jump to the way skipWholeStage() jumps a stage to its unlock.
     $("btn-skip-stage").hidden = true;
     $("stage-phase-badge").textContent = dayLabel;
-    $("scene-label").textContent = "Episode 1 preview - " + question.skill;
+    /* Was "Episode 1 preview - quick-response": the word "preview", the
+     * episode's internal number and the renderer's own skill taxonomy, all in
+     * English, on the line a player reads to know where they are. The episode
+     * already carries a story title; use that, as every other stage label
+     * does. */
+    var episodeNow = currentEpisode();
+    $("scene-label").textContent = episodeNow && episodeNow.title
+      ? "月見宿 - " + episodeNow.title
+      : "月見宿";
+    // Episodes never show romaji - renderPreviewQuestion clears the line - so
+    // the switch is hidden here explicitly rather than inheriting whatever
+    // stagePhase the three days happened to end on.
+    $("romaji-toggle").hidden = true;
     $("encounter-status").style.display = "block";
     $("encounter-progress").textContent = String(previewState.index + 1);
     $("encounter-total").textContent = String(previewState.list.length);
-    $("narration").textContent = question.sourceNote;
+    /* Not the source note. 「月見宿・第一話「宵の一時間」」 is a citation, and
+     * putting it here printed it inside Kon's speech slot, directly above her
+     * name tab, as though she were saying it - while the episode-open card
+     * and the scene label already carry the same words. The slot stays empty
+     * during an episode; the question itself is the only thing being said. */
+    $("narration").textContent = "";
     $("romaji-line").textContent = "";
     $("meaning-line").textContent = "";
     $("meaning-line").classList.remove("show");
@@ -2530,6 +2547,11 @@
   }
 
   function advanceStagePhase(loc){
+    // The last Challenge answer arms a deferred advance and btn-next performs
+    // the same advance immediately, so both can arrive here with the stage
+    // mastered. Starting the episode twice threw the learner back to its
+    // opening card partway through question one.
+    if(previewState) return;
     if(state.stageMastered){
       // The three days teach the words; the episode is the shift they were
       // training for. Finishing the days used to drop the learner back on the
@@ -5647,6 +5669,9 @@
     function go(){
       if(state.currentKey !== stage.key || !state.answered) return;
       if(state.stagePhase !== expectedPhase || state.encounterIndex !== expectedIndex) return;
+      // An episode may already have begun in the meantime, by the learner
+      // pressing the continue button rather than waiting for this.
+      if(previewState) return;
       continueStageEncounter(stage);
     }
 

@@ -784,6 +784,9 @@
    * the bubble below. Two differently-styled boxes read as two speakers, so
    * this is aligned to the speech column and given the same paper as the
    * bubble - one voice, two lines, the earlier one quieter. */
+  /* An episode leaves this empty, and an empty paper box still drew a bar
+   * above Kon with nothing in it. */
+  .inn-stage .narration:empty{display:none}
   .inn-stage .narration{margin:0 0 7px;padding:7px 10px;border:2px solid rgba(156,95,48,.5);border-radius:10px;background:rgba(255,250,240,.86);color:#4a3423;font-style:normal;font-size:.75rem}
   .inn-stage .romaji-toggle{position:absolute;right:10px;top:8px;margin:0;color:#f1dfbd;font-size:.65rem}
   .inn-stage .dialogue.entrance-dialogue{position:relative;display:grid;grid-template-columns:minmax(88px,118px) minmax(0,1fr);gap:7px;align-items:end;margin:0;padding:0;background:transparent;box-shadow:none}

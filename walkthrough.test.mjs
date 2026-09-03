@@ -1464,3 +1464,66 @@ test("the romaji switch is not offered when it cannot do anything", async () => 
   game.clock.advance(300);
   assert.equal(game.$("romaji-toggle").hidden, false, "offered again on Day 1, where it works");
 });
+
+test("an episode names its story, not its internal skill taxonomy", async () => {
+  // The label read "Episode 1 preview - quick-response": the word preview,
+  // the episode number and the renderer's own skill names, in English, on the
+  // line a player reads to know where they are.
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game);
+  game.$("btn-skip-stage").click();
+  game.$("btn-next").click();
+  game.clock.advance(500);
+  game.$("btn-episode-begin").click();
+  game.clock.advance(300);
+  game.$("btn-brief-begin").click();
+  game.clock.advance(300);
+
+  const label = game.$("scene-label").textContent;
+  assert.doesNotMatch(label, /preview/i, "players should not be told they are in a preview");
+  assert.doesNotMatch(label, /quick-response|single-choice|listening-task/,
+    "the renderer's skill taxonomy is not a place name");
+  assert.match(label, /月見宿/);
+  assert.equal(game.$("romaji-toggle").hidden, true, "episodes never show romaji");
+});
+
+test("an episode question does not print its citation as Kon's speech", async () => {
+  // question.sourceNote is 月見宿・第一話「宵の一時間」 - a citation. It was
+  // written into the narration slot, directly above Kon's name tab, while
+  // the episode-open card and the scene label already say the same thing.
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game);
+  game.$("btn-skip-stage").click();
+  game.$("btn-next").click();
+  game.clock.advance(500);
+  game.$("btn-episode-begin").click();
+  game.clock.advance(300);
+  game.$("btn-brief-begin").click();
+  game.clock.advance(300);
+
+  assert.doesNotMatch(game.$("narration").textContent, /第一話/,
+    "the citation belongs on the opening card, not in the character's speech slot");
+});
+
+test("finishing a stage starts its episode once, not twice", async () => {
+  // The last correct answer of Challenge schedules a deferred advance, and
+  // btn-next performs the same advance immediately. Both reach
+  // advanceStagePhase, and with the stage mastered both call startEpisode -
+  // so the timer restarted the episode underneath the learner, dropping them
+  // back on the opening card partway through question one.
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game);
+  game.$("btn-skip-stage").click();
+  game.$("btn-next").click();
+  game.clock.advance(500);
+  game.$("btn-episode-begin").click();
+  game.clock.advance(300);
+  game.$("btn-brief-begin").click();
+  game.clock.advance(300);
+  assert.equal(game.doc.querySelectorAll(".episode-open").length, 0, "a question is on screen");
+
+  // Let every deferred advance the stage armed run out.
+  game.clock.advance(20000);
+  assert.equal(game.doc.querySelectorAll(".episode-open").length, 0,
+    "the episode restarted itself and threw the learner back to its opening card");
+});
