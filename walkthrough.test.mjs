@@ -1452,3 +1452,15 @@ test("the cold open marks the attempt neither right nor wrong", async () => {
 
   assert.equal(game.$("stamp").textContent, "", "the cold open carries no verdict stamp");
 });
+
+test("the romaji switch is not offered when it cannot do anything", async () => {
+  // Challenge and the cold open withhold romaji whatever the switch says, so
+  // showing it lit and in the on position promised help that never came.
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game);
+  assert.equal(game.$("romaji-toggle").hidden, true, "hidden during the cold open");
+
+  game.$("btn-skip-question").click();
+  game.clock.advance(300);
+  assert.equal(game.$("romaji-toggle").hidden, false, "offered again on Day 1, where it works");
+});

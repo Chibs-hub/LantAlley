@@ -2641,7 +2641,11 @@
     $("narration").textContent = storyNarration;
     var writtenPrompt = writeStagePrompt(loc, prompt);
     $("romaji-line").textContent = prompt.romaji;
-    $("romaji-line").style.display = state.romajiOn && state.stagePhase !== "challenge" && state.stagePhase !== "coldopen" ? "block" : "none";
+    $("romaji-line").style.display = state.romajiOn && !isSingleAttemptPhase() ? "block" : "none";
+    // A switch that cannot change anything should not be offered: Challenge
+    // and the cold open withhold romaji whatever it says, and leaving it lit
+    // and in the on position promised help that never came.
+    $("romaji-toggle").hidden = isSingleAttemptPhase();
     $("meaning-line").textContent = "";
     $("meaning-line").classList.remove("show");
     $("hint-box").textContent = prompt.hint;
@@ -2810,7 +2814,11 @@
     $("encounter-total").textContent = resumedItems ? String(resumedItems.length) : "1";
     $("narration").textContent = stageNarrationFor(loc, prompt);
     // Day 3 is audio-first, so the written prompt must stay
-    // 「音声を聞いてください。」. This path runs when entering a stage and printed
+    $("romaji-line").style.display = state.romajiOn && !isSingleAttemptPhase() ? "block" : "none";
+    // A switch that cannot change anything should not be offered: Challenge
+    // and the cold open withhold romaji whatever it says, and leaving it lit
+    // and in the on position promised help that never came.
+    $("romaji-toggle").hidden = isSingleAttemptPhase();
     // the sentence directly, so arriving at Challenge revealed the request.
     var resumedPrompt = writeStagePrompt(loc, prompt);
     $("romaji-line").textContent = prompt.romaji;
