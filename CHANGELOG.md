@@ -5,6 +5,18 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-03 - First-run verification, and the last of the cold open's loose ends
+
+Walked the whole first run at 1280x720 and 375x812 with no testing flags: title, character select, gate, bow, map, Inn, cold open, Day 1. Two things came out of it.
+
+The romaji switch was still on screen during the cold open, lit and in the on position, while romaji was withheld - a control that promised help it could not give. It also wrote `romaji-line`'s display directly, so it could override the phase gate in Challenge as well as in the cold open. It respects the phase now, and is hidden wherever romaji is withheld, in both render paths.
+
+One scripted walkthrough failed in a way worth recording, because it was the harness and not the game. The Entrance's three action buttons are in the DOM from the first line of the tutorial; only `#scene.entrance-actions-visible` decides whether they can be seen. A driver that waits for the buttons to exist rather than for that class will click 「お辞儀」 during the greeting, register nothing, and leave `visited` empty - which then leaves 月見宿 locked and looks exactly like a broken unlock. Wait for the class.
+
+Verified end to end at v243: the gate teaches the bow and the star lands; the map explains its own lantern count on first arrival; a single click on 月見宿 opens the intro; accepting the job brings a guest with no word card, no romaji, no hint and no counter; fumbling it credits nothing, shows no verdict stamp, and Kon absorbs it; continuing lands on Day 1 with every support restored, asking the same task; and finishing the stage closes on 「明日、この五つの言葉をもう一度たしかめましょう。」 with all five words genuinely in the schedule.
+
+Cache is v243. `node --test` passes 424/424.
+
 ### 2026-09-03 - A first guest arrives before the three days
 
 The Inn used to open with Kon asking for help and then ten questions of preparation for a shift the learner had never seen. Nobody wants to rehearse before knowing what the performance is, and nothing could be failed until the episode, by which point the learner had already decided whether the game was interesting.
