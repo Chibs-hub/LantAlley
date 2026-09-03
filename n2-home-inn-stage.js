@@ -12,7 +12,21 @@
     learn:{day:1,label:"一日目",mode:"基礎",difficulty:"やさしい",stars:"★☆☆"},
     practice:{day:2,label:"二日目",mode:"実践",difficulty:"ふつう",stars:"★★☆"},
     challenge:{day:3,label:"三日目",mode:"挑戦",difficulty:"むずかしい",stars:"★★★"},
-    review:{day:3,label:"三日目",mode:"復習",difficulty:"もう一度",stars:"★★★"}
+    review:{day:3,label:"三日目",mode:"復習",difficulty:"もう一度",stars:"★★★"},
+    // Day 0, and deliberately starless: the cold open is not scored, so a
+    // star rating on it would promise a judgement that never comes.
+    coldopen:{day:0,label:"はじめの仕事",mode:"ためし",difficulty:"",stars:""}
+  };
+
+  /* The first guest arrives before any teaching, and the learner almost
+   * certainly cannot help her yet. That is the point: the three days become an
+   * answer to a problem they have just felt rather than homework set in
+   * advance. Kon absorbs the outcome - nothing here is scored, paid or
+   * recorded - and the correct branch exists so a learner who already knows
+   * 揃える is not sent away to practise it. */
+  var coldOpen = {
+    wrongReply:"コン：「大丈夫ですよ。お客様は私が。三日ありますから、一緒に覚えていきましょう。」",
+    correctReply:"コン：「よくご存じですね。では、残りの言葉も見ていきましょう。」"
   };
 
   var DAY_ANNOUNCEMENTS = {
@@ -641,6 +655,7 @@
     pos:{x:64, y:74},
     label:"月見宿・N2",
     intro:intro,
+    coldOpen:coldOpen,
     encounters:encounters,
     practice:practice,
     challenge:challenge,

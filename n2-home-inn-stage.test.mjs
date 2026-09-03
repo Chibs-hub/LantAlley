@@ -1169,3 +1169,22 @@ test("wrong-answer feedback never hands over the target word", () => {
     }
   }
 });
+
+test("the cold open has its own replies and its own day badge", () => {
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(readFileSync(stageUrl, "utf8"), context);
+  const stage = context.N2HomeInnStage;
+
+  assert.ok(stage.coldOpen, "the stage has no cold-open content");
+  // Kon absorbs a miss rather than scoring it, and offers the three days.
+  assert.match(stage.coldOpen.wrongReply, /三日/);
+  assert.doesNotMatch(stage.coldOpen.wrongReply, /間違/);
+  // A learner who already knows the word is not sent to remedial practice.
+  assert.match(stage.coldOpen.correctReply, /ご存じ/);
+
+  // The badge must not claim this is Day 1 - Day 1 comes after it.
+  const meta = stage.getDayMeta("coldopen");
+  assert.notEqual(meta.label, "一日目");
+  assert.equal(meta.stars, "");
+});
