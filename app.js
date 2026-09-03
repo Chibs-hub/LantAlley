@@ -4729,7 +4729,7 @@
     // for this specific story - see getCardSense in n2-home-inn-stage.js.
     var cardSense = stage && stage.getCardSense ? stage.getCardSense(prompt.focusWord) : null;
     var meaning = cardSense || (item && item.meanings && item.meanings[0] ? item.meanings[0] : "");
-    return '<aside class="inn-new-word" aria-label="New word"><span class="inn-new-word-kicker">NEW WORD</span><b>' + prompt.focusWord + '</b><span class="inn-new-word-reading">' + reading + '</span><span class="inn-new-word-meaning">' + meaning + '</span></aside>';
+    return '<aside class="inn-new-word" aria-label="あたらしい言葉"><span class="inn-new-word-kicker">あたらしい言葉</span><b>' + prompt.focusWord + '</b><span class="inn-new-word-reading">' + reading + '</span><span class="inn-new-word-meaning" lang="en">' + meaning + '</span></aside>';
   }
 
   function renderInnInteraction(prompt, reset){
@@ -5139,11 +5139,11 @@
         scene.appendChild($("avatar-slot"));
         var stage = document.createElement("div");
         stage.className = "duo-stage";
-        stage.innerHTML = '<div class="player-figure" id="player-figure" style="--player-action-sprite:url(\'' + playerActionSprite() + '\')"><span class="entrance-player-art" aria-hidden="true"></span></div><div class="player-caption">You</div>';
+        stage.innerHTML = '<div class="player-figure" id="player-figure" style="--player-action-sprite:url(\'' + playerActionSprite() + '\')"><span class="entrance-player-art" aria-hidden="true"></span></div><div class="player-caption">あなた</div>';
         scene.appendChild(stage);
         var how = document.createElement("div");
         how.className = "inn-control-help entrance-control-help";
-        how.innerHTML = '<strong>How to interact</strong><span>' + LanternAlleyLogic.getHowToInteract() + '</span>';
+        how.innerHTML = '<strong>How to interact</strong><span lang="en">' + LanternAlleyLogic.getHowToInteract() + '</span>';
       }
 
       var wrap = document.createElement("div");
@@ -5153,7 +5153,7 @@
         var btn = document.createElement("button");
         btn.className = "hotspot";
         btn.setAttribute("data-key", opt.key);
-        btn.innerHTML = '<span class="entrance-action-art entrance-action-art-'+opt.key+'" aria-hidden="true" style="--player-action-sprite:url(\'' + playerActionSprite() + '\')"></span><span>'+opt.label+'</span>';
+        btn.innerHTML = '<span class="entrance-action-art entrance-action-art-'+opt.key+'" aria-hidden="true" style="--player-action-sprite:url(\'' + playerActionSprite() + '\')"></span><span lang="en">'+opt.label+'</span>';
         btn.addEventListener("click", function(){
           var key = this.getAttribute("data-key");
           if(loc.interactiveDuo){

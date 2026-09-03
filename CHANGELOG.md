@@ -6,6 +6,37 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-03 - A UI audit of the opening, the Inn and the home, and the seven things it found
+
+Walked the whole route at 1280x720 and 375x812 - title, character select, Entrance, map, Inn intro and Learn 1, home yard and room - measuring rather than eyeballing. Seven findings, all fixed; three things were withdrawn after checking, and two need art rather than code.
+
+**1. The Entrance HUD was crushed to 162px on desktop.** The first gameplay screen a learner sees. `.entrance-stage .game-layout` switches to a 12-column grid, but `.entrance-stage .stage-bar` never set `grid-column`, so it inherited `grid-area:bar` from the base rule and landed in columns 1-2 of 12 - 162px inside a 972px layout. The 理解度 label was 12px wide and wrapped one character per line; the back link, star count, meter and wallet stacked underneath it, and Kon's opening sentence was clipped mid-word. The mobile breakpoint had always assigned the bar explicitly, which is why only desktop was broken and why it survived so long. Fixed with `grid-column:1/-1;grid-row:1`, matching what `.inn-stage .stage-bar` already did. Bar 162px to 972px, label 12px to 37px, sentence no longer clipped.
+
+**2. The Inn's task feedback was unreadable.** `#inn-status` - the "0 / 4 枚の座布団を置きました。" line that reports progress through the task - was `#6c4930` on the dark page: a measured contrast of 2.21:1, failing AA (4.5:1) and even large-text AA (3:1). The brown was chosen for a light card and the element renders on dark. Now `#f2ddb6`, measured 13.25:1.
+
+**3. The mechanic outranked the language.** The NEW WORD card carried the word at 15px in a 29px strip; the HOW TO INTERACT box above it was 46px and brighter. The thing being taught was visually subordinate to the tapping instructions. Their weights are swapped: the word card is now bright paper with a gold left rule and the word at 20px, and the instruction is a quiet dark strip.
+
+**4. The Entrance's three actions were indistinguishable.** Wave, Bow and Clap rendered at 34x62px inside 128x100px buttons - three standing kimono figures at 34px wide, where telling the poses apart is the entire question. Now 50x90. Sized against the fox rather than as large as possible: 62x112 was clearly legible but put 70px of the fox behind the action panel; 50x90 keeps the poses readable with the fox essentially clear.
+
+**5. Kon spoke twice, in two different boxes.** Every Inn screen stacked a dark narration chip over the scene and a cream speech panel below it - both Kon, two visual treatments, reading as two speakers. The narration now uses the same paper as the speech bubble and sits flush in the same column, so it reads as one voice saying two things.
+
+**6. English chrome inside `lang="ja"`.** Two costs: visual noise around the lesson, and a screen reader pronouncing English with Japanese phonetics. Translated the chrome that has a natural Japanese form - 学ぶからやり直す, 問題 N / M, ヒントを見る, あたらしい言葉, あなた, 男性/女性, 使う姿をえらぶ, and the five Inn scene labels plus the stage label. The English that stays is marked `lang="en"`.
+
+**7. The home had two exits doing the same thing.** Once the yard's path and the room's veranda carried painted ways out, the corner text link was a second control for the same action a few hundred pixels away, in a different language. The corner link stands down; the painted hotspot is the single scene exit. One `display:none` to revert.
+
+**Withdrawn after checking.** Three things looked wrong and were not:
+
+- *The home scenes looked small with dead margins.* Measured, the scene is 764px of a 1000px frame because `calc((100vh - 290px) * 16 / 9)` caps it - that is height management at a 720px viewport, not wasted space. Widening it would overflow vertically.
+- *The Inn's fox stacks above the speech instead of beside it.* A `@media(max-width:1400px)` rule collapses it deliberately, and the comment beside it explains why: side by side, the fox took 38% of a 325px column and wrapped N2 sentences to three characters per line.
+- *"HOW TO INTERACT" is English.* `question-renderer.test.mjs` has a test named "answer content stays Japanese; only How to interact is English" - operating instructions are deliberately English so effort goes to the Japanese content. The first pass translated it and broke that test; it is reverted, and the same reasoning left "Practice complete." and "Answer before the lantern goes out." in English.
+
+Also left alone: the Learn phase's English answer options, which the redesign entry documents as day-one scaffolding that Practice and Challenge withdraw.
+
+**Needs art, not code.** The home renders in daylight while every other scene is fixed at night, so walking home from the alley crosses twelve hours. The home's clock-driven lighting is deliberate and documented; what is missing is the other scenes' day variants. And Kon appears in three rendering styles - a photoreal plush toy on the title and in the scenes, a flat illustration in the character-select header, over painted backgrounds. Both are listed for the owner rather than bodged in CSS.
+
+Cache is v236. `node --test` passes 413/413.
+
+
 ### 2026-09-02 - `?skip=1`'s skip-question control now also works inside Episode 1
 
 Owner-reported: "episode 1 preview doesnt have skip function." The previous entry's skip-question control only worked against `answerStage()`, the function the pre-episode Learn/Practice/Challenge stage answers through - Episode 1 (the ten-question story shift the stage unlocks) answers through a second, entirely separate function inside `renderPreviewQuestion()`, which had no skip hook at all.

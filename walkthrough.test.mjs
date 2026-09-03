@@ -1061,7 +1061,7 @@ test("?skip=1's Inn skip controls also show when a save reloads mid-stage", asyn
   inn.click();
   reloaded.clock.advance(500);
 
-  assert.equal(reloaded.$("scene-label").textContent, "Moonview Inn - N2 - At the washstand",
+  assert.equal(reloaded.$("scene-label").textContent, "月見宿・N2 - 洗面所で",
     "resumed onto the second item, not restarted");
   assert.equal(reloaded.$("btn-skip-question").hidden, false,
     "shown after a real reload resumes mid-stage, not just on a fresh stage start");

@@ -161,7 +161,9 @@ test("the open-world map loads Moonview Inn and advances its encounters", () => 
   assert.match(html, /locations\.push\(N2HomeInnStage\)/);
   assert.match(html, /state\.encounterIndex/);
   assert.match(html, /continueStageEncounter/);
-  assert.match(html, /Encounter <span id="encounter-progress">1<\/span> of <span id="encounter-total">5<\/span>/);
+  // The counter is Japanese chrome now; what this pins is that both spans
+  // are still there for the progress numbers to be written into.
+  assert.ok(html.includes('問題 <span id="encounter-progress">1</span> / <span id="encounter-total">5</span>'));
 });
 
 test("Moonview Inn has evidence-based practice and challenge phases", () => {
