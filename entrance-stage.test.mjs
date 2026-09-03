@@ -441,3 +441,9 @@ test("the finished Entrance keeps Kon's reply, the result and the continue butto
     "the workspace lift must live inside the phone media block",
   );
 });
+
+test("the Entrance says what the alley's lanterns are for", () => {
+  // The map reads 灯り 0 / 6 from the first moment it is seen, and nothing
+  // ever said what that counts or why it would matter.
+  assert.match(html, /灯りがひとつずつ戻ります/);
+});

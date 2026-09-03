@@ -31,8 +31,8 @@
       ],
       correct:"bow",
       followUpCorrect:{
-        jp:"上手です！日本語を聞いて行動できました。これから路地を歩いて、行きたい場所を選んでください。",
-        romaji:"Jouzu desu! Nihongo o kiite koudou dekimashita. Kore kara roji o aruite, ikitai basho o erande kudasai.",
+        jp:"上手です！日本語を聞いて行動できました。この路地の灯りは、今は消えています。言葉をひとつずつ覚えるたびに、灯りがひとつずつ戻ります。さあ、行きたい場所を選んでください。",
+        romaji:"Jouzu desu! Nihongo o kiite koudou dekimashita. Kono roji no akari wa, ima wa kiete imasu. Kotoba o hitotsu zutsu oboeru tabi ni, akari ga hitotsu zutsu modorimasu. Saa, ikitai basho o erande kudasai.",
         meaning:""
       },
       followUpWrong:{
@@ -5513,7 +5513,7 @@
           if(state.mistakesThisVisit === 0 && !already) state.starred[stage.key] = true;
           saveProgress();
           renderHud();
-          showFeedback(true, "三日目の挑戦を達成しました。" + state.challengeScore + "/" + items.length + "、五つの言葉を思い出せました。");
+          showFeedback(true, "三日目の挑戦を達成しました。" + state.challengeScore + "/" + items.length + "、五つの言葉を思い出せました。明日、この五つの言葉をもう一度たしかめましょう。");
           $("btn-next").textContent = "路地へ戻る →";
         }else{
           showFeedback(false, "三日目の結果は" + state.challengeScore + "/" + items.length + "です。間違えた言葉だけ復習しましょう。");

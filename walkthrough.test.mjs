@@ -1399,3 +1399,12 @@ test("leaving a location clears the workspace the last one drew", () => {
       "the workspace is cleared after the new stage draws, which erases it");
   }
 });
+
+test("finishing the Inn points at tomorrow's review", async () => {
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game);
+  game.$("btn-skip-stage").click();
+  // The schedule really does hold these five words for tomorrow now, so the
+  // closing line should say so rather than just ending.
+  assert.match(game.$("feedback-text").textContent, /明日/);
+});
