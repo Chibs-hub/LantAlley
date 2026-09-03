@@ -5,6 +5,22 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-03 - Playing the Inn route through, and the episode restarting itself
+
+Played the whole route rather than the parts that had changed: gate, map, Inn intro, cold open, the three days, and into Episode 1. One real bug and four pieces of chrome.
+
+**Episode 1 started twice.** The last Challenge answer arms a deferred advance through `scheduleCorrectAdvance`, and the continue button performs the same advance immediately. With the stage mastered, both reach `advanceStagePhase` and both call `startEpisode()`. Pressing continue rather than waiting therefore began the episode, and the timer's copy arrived a few seconds later and began it again - dropping the learner back onto the episode's opening card partway through question one. It is guarded now in both places, on `previewState` already being live. This is not new and is not caused by the skip controls; any learner who pressed the button instead of waiting hit it.
+
+The scene label read `Episode 1 preview - quick-response`: the word preview, the episode's internal number, and the question renderer's own skill taxonomy, all in English, on the line a player reads to know where they are. It uses the episode's story title now - 「月見宿 - 宵の一時間」 - as every other stage label does.
+
+`question.sourceNote` is 「月見宿・第一話「宵の一時間」」, a citation. It was written into the narration slot directly above Kon's name tab, as though she were saying it, while the opening card and the scene label already carried the same words. The slot stays empty during an episode, and an empty `.inn-stage .narration` no longer draws a bordered bar with nothing in it.
+
+The romaji switch is hidden explicitly during episodes, which never show romaji, rather than inheriting whichever `stagePhase` the three days happened to end on.
+
+**A note on testing timed content through automation.** Episode questions run on an eight-second clock, and a scripted driver that pauses between tool calls will lose questions to 「時間切れです」 without meaning to. Twice this looked like a defect and was not. The deterministic clock in `walkthrough.test.mjs` is the right instrument for episode flow; the browser is the right instrument for how it looks.
+
+Cache is v246. `node --test` passes 427/427.
+
 ### 2026-09-03 - First-run verification, and the last of the cold open's loose ends
 
 Walked the whole first run at 1280x720 and 375x812 with no testing flags: title, character select, gate, bow, map, Inn, cold open, Day 1. Two things came out of it.
