@@ -997,6 +997,12 @@
     if(practiceState){ advancePractice(); return; }
     if(previewState){ advanceEpisodePreview(); return; }
     var loc = getLocation(state.currentKey);
+    // The cold open is one task outside the day model, so it advances into
+    // Day 1 rather than to a next encounter it does not have.
+    if(state.stagePhase === "coldopen" && loc && loc.encounters){
+      startStagePhase(loc, "learn");
+      return;
+    }
     if(loc && loc.encounters){
       continueStageEncounter(loc);
     }else{
@@ -1227,6 +1233,12 @@
     }
     var loc = getLocation(state.currentKey);
     if(!loc || !loc.encounters) return;
+    // The cold open is a scene rather than a question - there is nothing to
+    // answer correctly - so skipping it means stepping into Day 1.
+    if(state.stagePhase === "coldopen"){
+      startStagePhase(loc, "learn");
+      return;
+    }
     var prompt = getActivePrompt(loc);
     answerStage(true, prompt, prompt.correct);
   }
@@ -1239,6 +1251,9 @@
   function skipWholeStage(){
     var loc = getLocation(state.currentKey);
     if(!loc || !loc.encounters) return;
+    // Step out of the cold open first: it answers to nothing and would
+    // otherwise be walked five times by the loop below.
+    if(state.stagePhase === "coldopen") startStagePhase(loc, "learn");
     for(var guard = 0; guard < 40 && state.currentKey === loc.key; guard++){
       var prompt = getActivePrompt(loc);
       answerStage(true, prompt, prompt.correct);
@@ -2574,7 +2589,7 @@
     $("next-row").style.display = "none";
     $("scene").innerHTML = '<div class="stage-intro-action"><button class="btn btn-primary" id="btn-accept-helper">' + intro.accept + '</button></div>';
     $("btn-accept-helper").addEventListener("click", function(){
-      startStagePhase(loc, "learn");
+      startStagePhase(loc, state.stageProgress.homeInn ? "learn" : "coldopen");
     });
     speak(intro.jp);
   }
@@ -2590,7 +2605,7 @@
     $("scene-label").textContent = prompt.stageLabel + " - " + prompt.label;
     $("stage-phase-row").style.display = "flex";
     $("stage-phase-badge").textContent = dayMeta ? dayMeta.label + "・" + dayMeta.mode + " " + dayMeta.stars : (phaseLabels[state.stagePhase] || phaseName);
-    $("encounter-status").style.display = "block";
+    $("encounter-status").style.display = state.stagePhase === "coldopen" ? "none" : "block";
     $("encounter-progress").textContent = String(state.encounterIndex + 1);
     $("encounter-total").textContent = String((state.phaseItems || loc.getPhaseItems(state.stagePhase)).length);
     // Resolve the greeting once. Calling stageNarrationFor twice consumed the
@@ -2605,12 +2620,12 @@
     $("narration").textContent = storyNarration;
     var writtenPrompt = writeStagePrompt(loc, prompt);
     $("romaji-line").textContent = prompt.romaji;
-    $("romaji-line").style.display = state.romajiOn && state.stagePhase !== "challenge" ? "block" : "none";
+    $("romaji-line").style.display = state.romajiOn && state.stagePhase !== "challenge" && state.stagePhase !== "coldopen" ? "block" : "none";
     $("meaning-line").textContent = "";
     $("meaning-line").classList.remove("show");
     $("hint-box").textContent = prompt.hint;
     $("hint-box").classList.remove("show");
-    $("hint-btn").style.display = state.stagePhase === "challenge" ? "none" : "block";
+    $("hint-btn").style.display = isSingleAttemptPhase() ? "none" : "block";
     renderInnInteraction(prompt, true);
     speak(prompt.jp, undefined, false, writtenPrompt);
   }
@@ -2778,7 +2793,7 @@
     // the sentence directly, so arriving at Challenge revealed the request.
     var resumedPrompt = writeStagePrompt(loc, prompt);
     $("romaji-line").textContent = prompt.romaji;
-    $("romaji-line").style.display = state.romajiOn && state.stagePhase !== "challenge" ? "block" : "none";
+    $("romaji-line").style.display = state.romajiOn && state.stagePhase !== "challenge" && state.stagePhase !== "coldopen" ? "block" : "none";
     $("meaning-line").textContent = "";
     $("meaning-line").classList.remove("show");
     $("hint-box").textContent = prompt.hint;
@@ -5109,7 +5124,7 @@
     var prompt = getActivePrompt(stage);
     if(action.type === "nearMiss"){
       var near = prompt.options.filter(function(option){ return option.nearMiss; })[0];
-      if(state.stagePhase === "challenge") answerStage(false, prompt, near.key);
+      if(isSingleAttemptPhase()) answerStage(false, prompt, near.key);
       else{
         showKonStageResponse(stage, prompt, false);
         showFeedback(false, near.explanation);
@@ -5119,7 +5134,7 @@
     }
     if(action.type === "wrongVerb"){
       var missed = prompt.options.filter(function(option){ return option.nearMiss; })[0];
-      if(state.stagePhase === "challenge") answerStage(false, prompt, missed.key);
+      if(isSingleAttemptPhase()) answerStage(false, prompt, missed.key);
       else{
         showKonStageResponse(stage, prompt, false);
         showFeedback(false, "That is a different action from the one the request asked for.");
@@ -5141,7 +5156,7 @@
     if(result.outcome === "wrong"){
       var nearMiss = prompt.options.filter(function(option){ return option.nearMiss; })[0];
       var selectedKey = action.key || (nearMiss && nearMiss.key) || "";
-      if(state.stagePhase === "challenge") answerStage(false, prompt, selectedKey);
+      if(isSingleAttemptPhase()) answerStage(false, prompt, selectedKey);
       else{
         showKonStageResponse(stage, prompt, false, selectedKey);
         if(prompt.replyResponses && prompt.replyResponses[selectedKey]) $("feedback-row").classList.remove("show");
@@ -5454,6 +5469,12 @@
   function answerStage(isCorrect, prompt, selectedKey){
     showPracticeTranslation(false);
     var stage = getLocation(prompt.stageKey);
+    // Before Kon's usual reply and before anything is credited: the cold open
+    // has its own reply and credits nothing at all.
+    if(state.stagePhase === "coldopen"){
+      resolveColdOpen(isCorrect, stage);
+      return;
+    }
     var items = state.phaseItems || stage.getPhaseItems(state.stagePhase);
     showKonStageResponse(stage, prompt, isCorrect, selectedKey);
     // Outside the isCorrect branch: a missed word has to enter the schedule
@@ -5548,8 +5569,30 @@
   // question answerable. Only Challenge is scored on one attempt. Without this
   // the scene kept whatever state the failed attempt left behind and there was
   // no way to try again.
+  // Challenge is scored on one attempt, and so is the cold open - for the
+  // opposite reason. Challenge withholds a retry because the shift is timed;
+  // the cold open withholds one because failing is what it is for.
+  function isSingleAttemptPhase(){
+    return state.stagePhase === "challenge" || state.stagePhase === "coldopen";
+  }
+
+  /* The cold open borrows Day 1's first encounter and throws the result away.
+   * Nothing is paid, scheduled, mastered or starred: the learner has not been
+   * taught the word yet, so an answer here is evidence of nothing. Kon
+   * absorbs it, and the three days begin as the answer to it. */
+  function resolveColdOpen(isCorrect, stage){
+    state.answered = true;
+    var reply = stage && stage.coldOpen
+      ? (isCorrect ? stage.coldOpen.correctReply : stage.coldOpen.wrongReply)
+      : "";
+    $("narration").textContent = reply;
+    showFeedback(true, isCorrect ? "けっこうです。" : "ここからが練習です。");
+    $("btn-next").textContent = "一日目をはじめる →";
+    $("next-row").style.display = "block";
+  }
+
   function offerRetry(prompt){
-    if(state.stagePhase === "challenge") return;
+    if(isSingleAttemptPhase()) return;
     setTimeout(function(){
       if(state.answered) return;
       if(state.currentKey !== "home-inn") return;

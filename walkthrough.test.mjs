@@ -1016,6 +1016,54 @@ test("finishing the Inn puts its words into the delayed-review schedule", async 
     "a word answered correctly should be due later, not immediately");
 });
 
+/* The Inn used to open with three days of preparation for a shift the
+ * learner had never seen. The cold open puts the first guest in front of
+ * them before any teaching, with every support withheld, so the three days
+ * answer a problem they have just felt. Nothing here is scored. */
+test("the cold open shows the request with every support withheld", async () => {
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game);
+
+  assert.equal(game.$("stage-phase-badge").textContent.indexOf("一日目"), -1,
+    "the cold open must not claim to be Day 1");
+  assert.equal(game.doc.querySelectorAll(".inn-new-word").length, 0,
+    "the new-word card is the main support and must be absent");
+  assert.equal(game.$("romaji-line").style.display, "none", "romaji must be withheld");
+  assert.equal(game.$("hint-btn").style.display, "none", "the hint button must be withheld");
+  assert.equal(game.$("encounter-status").style.display, "none",
+    "the cold open is one unscored task, not question 1 of 5");
+});
+
+test("the cold open is unscored and hands over to Day 1", async () => {
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game);
+
+  const moneyBefore = JSON.parse(game.storage.getItem("lanternAlley.v3") || "{}").money;
+
+  // Answer wrongly on purpose: this is the moment the learner cannot do it.
+  const objects = game.doc.querySelectorAll(".inn-object").filter(game.visible);
+  const zones = game.doc.querySelectorAll(".inn-drop-zone").filter(game.visible);
+  assert.ok(objects.length && zones.length, "the cold open renders its room");
+  objects[0].click();
+  game.clock.advance(150);
+  zones[zones.length - 1].click();
+  game.clock.advance(4000);
+
+  const saved = JSON.parse(game.storage.getItem("lanternAlley.v3") || "{}");
+  // Not zero: the Entrance's bow already paid ¥10 before the Inn. What must
+  // not change is the balance across the cold open itself.
+  assert.equal(saved.money, moneyBefore, "the cold open must not pay");
+  assert.equal(Object.keys(saved.reviewProgress || {}).length, 0,
+    "the cold open is a demonstration, not evidence, and must not be scheduled");
+
+  assert.equal(game.$("next-row").style.display, "block", "there is a way forward either way");
+  game.$("btn-next").click();
+  game.clock.advance(500);
+  assert.match(game.$("stage-phase-badge").textContent, /一日目/, "it must lead into Day 1");
+  assert.equal(game.doc.querySelectorAll(".inn-new-word").length, 1,
+    "Day 1 restores the new-word card");
+});
+
 test("the ?skip=1 flag lands on the map without playing the Entrance", () => {
   const game = boot(null, "?skip=1");
   game.clock.advance(50);
@@ -1042,6 +1090,11 @@ test("?skip=1 also reveals per-question and whole-stage skip controls in the Inn
   assert.equal(game.$("btn-skip-question").hidden, false,
     "the skip-question control shows once a real Learn question is on screen");
   assert.equal(game.$("btn-skip-stage").hidden, false, "the skip-stage control shows too");
+
+  // The first skip steps out of the cold open, which is a scene rather than a
+  // question. The second skips a real Day 1 question.
+  game.$("btn-skip-question").click();
+  game.clock.advance(200);
 
   const firstEncounter = game.$("encounter-progress").textContent;
   game.$("btn-skip-question").click();
