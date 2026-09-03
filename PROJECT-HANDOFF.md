@@ -380,6 +380,23 @@ Grouped by **who can actually do it**, because most of what is left is not code 
 
 1. **Native review of the Japanese.** 200 questions, five story arcs, all of Kon's dialogue, the eight tutorial lines at the house, every garden and shop string - authored in this project, never checked by a native speaker. Everything else is cheap to change; this is the one thing nobody else can do. `?review=1` walks all 215 items in place with the clock off and an おかしい checkbox. `generate-audio.py` hashes its input, so corrections later cost only the lines that changed.
 
+   **Lines written by Claude and not yet reviewed.** `?review=1` walks the 215 question items; these are dialogue and chrome, so they sit outside it. The owner reviews the Japanese once stage creation is finished, so this list is kept current rather than acted on.
+
+   | Line | Where |
+   | --- | --- |
+   | コン：「あっ、もうお客様がいらっしゃいました。さっそくですが、お願いします。」 | `n2-home-inn-stage.js`, `DAY_ANNOUNCEMENTS.coldopen` |
+   | コン：「大丈夫ですよ。お客様は私が。三日ありますから、一緒に覚えていきましょう。」 | `n2-home-inn-stage.js`, `coldOpen.wrongReply` |
+   | コン：「よくご存じですね。では、残りの言葉も見ていきましょう。」 | `n2-home-inn-stage.js`, `coldOpen.correctReply` |
+   | はじめの仕事 / ためし | `n2-home-inn-stage.js`, `DAY_META.coldopen` |
+   | けっこうです。 / ここからが練習です。 | `app.js`, `resolveColdOpen` |
+   | 一日目をはじめる → | `app.js`, `resolveColdOpen` |
+   | 明日、この五つの言葉をもう一度たしかめましょう。 | `app.js`, the stage's mastery message |
+   | この路地の灯りは消えています。場所の言葉をすべて覚えると、灯りがひとつ戻ります。 | `app.js`, `renderMap`, `#map-goal-note` |
+   | 学ぶからやり直す / 問題 N / M / ヒントを見る / あたらしい言葉 / あなた / 男性 / 女性 / 使う姿をえらぶ | `index.html` and `app.js` chrome |
+   | お客様が来る前に / 洗面所で / お茶が冷めてしまった / 明日の予定を立てる / 夕食の配膳 / 月見宿・N2 | `n2-home-inn-stage.js`, encounter and stage labels |
+
+   Two conventions the replacements should keep: operating instructions stay English (`question-renderer.test.mjs` pins this, and answer content stays Japanese), and any change to a spoken Entrance tutorial line needs a matching audio clip in `audio-index.js` or `pwa.test.mjs` fails.
+
 2. **Approve the audio run.** 506 lines have no clip. `collect-spoken-lines.js` already walks every stage, so the run needs no code change - but generation sends Japanese text to Microsoft Edge TTS, an external service, so it is approval-gated every time. A local open TTS model (section 14) would remove that gate entirely, since nothing would leave the machine.
 
 ### B. Blocked on artwork
