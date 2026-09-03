@@ -31,8 +31,8 @@
       ],
       correct:"bow",
       followUpCorrect:{
-        jp:"上手です！日本語を聞いて行動できました。この路地の灯りは、今は消えています。言葉をひとつずつ覚えるたびに、灯りがひとつずつ戻ります。さあ、行きたい場所を選んでください。",
-        romaji:"Jouzu desu! Nihongo o kiite koudou dekimashita. Kono roji no akari wa, ima wa kiete imasu. Kotoba o hitotsu zutsu oboeru tabi ni, akari ga hitotsu zutsu modorimasu. Saa, ikitai basho o erande kudasai.",
+        jp:"上手です！日本語を聞いて行動できました。これから路地を歩いて、行きたい場所を選んでください。",
+        romaji:"Jouzu desu! Nihongo o kiite koudou dekimashita. Kore kara roji o aruite, ikitai basho o erande kudasai.",
         meaning:""
       },
       followUpWrong:{
@@ -1053,6 +1053,25 @@
       destinationsEl.appendChild(btn);
     });
     $("map-progress-text").textContent = "灯り " + completedCount + " / " + LanternAlleyMap.destinations.length;
+    /* 灯り 0 / 6 sat there from the first visit with nothing saying what it
+     * counted. The explanation belongs next to the number rather than in
+     * Kon's tutorial: every spoken Entrance line needs a pre-rendered clip
+     * (pwa.test.mjs), so putting it there would have meant either an
+     * approval-gated audio run or a line with no voice. It retires itself
+     * once the first lantern is lit and the counter explains itself. */
+    var goalNote = $("map-goal-note");
+    // Not "no lanterns lit": the Entrance lights one, and it completes on the
+    // step immediately before the map is first shown - so counting it would
+    // hide this note at exactly the moment it is needed. The Entrance is a
+    // tutorial rather than a place with words to learn, so the note stays
+    // until a real place is finished.
+    var placesDone = LanternAlleyMap.destinations.filter(function(place){
+      return place.key !== "entrance" && LanternAlleyMap.resolveState(place.key, state) === "completed";
+    }).length;
+    goalNote.hidden = placesDone > 0;
+    if(!goalNote.hidden){
+      goalNote.textContent = "この路地の灯りは消えています。場所の言葉をすべて覚えると、灯りがひとつ戻ります。";
+    }
 
     // Practice lives on the map rather than inside a place, because clicking a
     // place now enters it and the detail shelf never stays on screen.
@@ -1161,7 +1180,9 @@
     state.romajiOn = !state.romajiOn;
     this.classList.toggle("on", state.romajiOn);
     this.setAttribute("aria-pressed", String(state.romajiOn));
-    $("romaji-line").style.display = state.romajiOn ? "block" : "none";
+    // Challenge and the cold open withhold romaji whatever the switch says,
+    // and the switch used to override both by writing the style directly.
+    $("romaji-line").style.display = state.romajiOn && !isSingleAttemptPhase() ? "block" : "none";
   });
 
   $("speak-btn").addEventListener("click", function(){
@@ -5587,6 +5608,12 @@
       : "";
     $("narration").textContent = reply;
     showFeedback(true, isCorrect ? "けっこうです。" : "ここからが練習です。");
+    /* No stamp either way. 「もう一度」 would punish the stumble this scene
+     * exists to produce, and 「正解」 on a wrong answer is simply false - the
+     * first version of this stamped 正解 on a miss. The scene is not marked,
+     * so it shows no mark. */
+    $("stamp").textContent = "";
+    $("stamp").className = "stamp";
     $("btn-next").textContent = "一日目をはじめる →";
     $("next-row").style.display = "block";
   }

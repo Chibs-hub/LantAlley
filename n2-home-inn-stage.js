@@ -33,7 +33,10 @@
     learn:"コン：「一日目です。今日は基礎から始めましょう。」",
     practice:"コン：「二日目です。今日は実際の仕事の中で練習しましょう。」",
     challenge:"コン：「三日目です。今日は音声を聞いて仕事に挑戦しましょう。」",
-    review:"コン：「三日目の最後に、間違えた仕事だけもう一度確認しましょう。」"
+    review:"コン：「三日目の最後に、間違えた仕事だけもう一度確認しましょう。」",
+    // Without its own line the cold open announced 「一日目です」, which is the
+    // one thing it is not: the three days start after it, because of it.
+    coldopen:"コン：「あっ、もうお客様がいらっしゃいました。さっそくですが、お願いします。」"
   };
 
   var encounters = [

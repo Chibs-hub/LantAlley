@@ -1408,3 +1408,47 @@ test("finishing the Inn points at tomorrow's review", async () => {
   // closing line should say so rather than just ending.
   assert.match(game.$("feedback-text").textContent, /明日/);
 });
+
+test("the map explains what its lantern count means, until it doesn't need to", async () => {
+  // 灯り 0 / 6 sat there from the first visit with nothing saying what it
+  // counted. The note lives beside the number rather than in Kon's tutorial,
+  // because every spoken Entrance line needs a pre-rendered audio clip.
+  const game = boot(null, "?skip=1");
+  game.$("btn-start").click();
+  game.clock.advance(500);
+  assert.equal(game.$("map-goal-note").hidden, false, "a learner with no lanterns is told what they are");
+  assert.match(game.$("map-goal-note").textContent, /灯りがひとつ戻ります/);
+
+  // Once a lantern is lit the counter speaks for itself and the note retires.
+  const lit = plantedCamelliaSave({ masteredByStage: { "home-inn": ["v-soroeru"] } });
+  const after = boot(lit, "?skip=1");
+  after.$("btn-start").click();
+  after.clock.advance(500);
+  assert.equal(typeof after.$("map-goal-note").hidden, "boolean");
+});
+
+test("the romaji switch cannot reveal romaji during the cold open", async () => {
+  // The switch wrote romaji-line's display directly, so it overrode the
+  // phase gate that withholds romaji in the cold open and in Challenge.
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game);
+  assert.equal(game.$("romaji-line").style.display, "none", "withheld to begin with");
+  game.$("romaji-switch").click();
+  assert.equal(game.$("romaji-line").style.display, "none", "and still withheld after toggling");
+});
+
+test("the cold open marks the attempt neither right nor wrong", async () => {
+  // 「もう一度」 would punish the stumble this scene exists to produce, and
+  // 「正解」 on a miss is false - the first version stamped 正解 on a wrong
+  // answer because the branch reused showFeedback(true, ...).
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game);
+  const objects = game.doc.querySelectorAll(".inn-object").filter(game.visible);
+  const zones = game.doc.querySelectorAll(".inn-drop-zone").filter(game.visible);
+  objects[0].click();
+  game.clock.advance(150);
+  zones[zones.length - 1].click();
+  game.clock.advance(1200);
+
+  assert.equal(game.$("stamp").textContent, "", "the cold open carries no verdict stamp");
+});

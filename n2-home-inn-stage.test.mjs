@@ -1188,3 +1188,13 @@ test("the cold open has its own replies and its own day badge", () => {
   assert.notEqual(meta.label, "一日目");
   assert.equal(meta.stars, "");
 });
+
+test("the cold open announces a guest, not Day 1", () => {
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(readFileSync(stageUrl, "utf8"), context);
+  const stage = context.N2HomeInnStage;
+  const line = stage.getDayAnnouncement("coldopen");
+  assert.match(line, /お客様/);
+  assert.doesNotMatch(line, /一日目/, "the three days start after the cold open, because of it");
+});

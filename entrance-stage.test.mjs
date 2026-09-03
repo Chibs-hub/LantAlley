@@ -442,8 +442,21 @@ test("the finished Entrance keeps Kon's reply, the result and the continue butto
   );
 });
 
-test("the Entrance says what the alley's lanterns are for", () => {
-  // The map reads 灯り 0 / 6 from the first moment it is seen, and nothing
-  // ever said what that counts or why it would matter.
-  assert.match(html, /灯りがひとつずつ戻ります/);
+test("the Entrance's spoken lines are left alone for their audio clips", () => {
+  // The lantern explanation was drafted as a fourth tutorial line and moved
+  // to the map instead: pwa.test.mjs requires every spoken Entrance line to
+  // have a pre-rendered clip in audio-index.js, and generating one is an
+  // approval-gated run against an external service. This pins the completion
+  // line to the text its clip was rendered from.
+  const logic = readFileSync(new URL("./entrance-stage-logic.js", import.meta.url), "utf8");
+  const context = {};
+  context.self = context;
+  vm.createContext(context);
+  vm.runInContext(logic, context);
+
+  const logicApi = context.LanternAlleyLogic;
+  const complete = logicApi.getTutorialStep(logicApi.completeTutorial());
+  assert.equal(complete.kind, "complete");
+  assert.equal(complete.jp,
+    "上手です！日本語を聞いて行動できました。これから路地を歩いて、行きたい場所を選んでください。");
 });
