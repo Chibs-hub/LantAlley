@@ -5,6 +5,36 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-03 - A first guest arrives before the three days
+
+The Inn used to open with Kon asking for help and then ten questions of preparation for a shift the learner had never seen. Nobody wants to rehearse before knowing what the performance is, and nothing could be failed until the episode, by which point the learner had already decided whether the game was interesting.
+
+A guest now arrives the moment the job is accepted. Kon asks for one real thing - 「二つのマットに、同じ色の座布団を二枚ずつ揃えてください。」 - with every support withheld: no new-word card, no romaji, no hint button, no question counter. Most learners cannot do it, because 揃える has not been taught yet. That is the point.
+
+Nothing about it is scored. No coins, no star, no mastery, nothing entered into the review schedule, and no verdict stamp in either direction. Kon absorbs it - 「大丈夫ですよ。お客様は私が。三日ありますから、一緒に覚えていきましょう。」 - and the three days begin as the answer to a problem the learner has just felt rather than as homework set in advance. A learner who already knows the word gets the other branch, 「よくご存じですね。では、残りの言葉も見ていきましょう。」, so competence is not answered with remedial practice.
+
+Day 1 then asks the same task again with the word card, romaji and hints in place. The repeat is deliberate: it closes the loop inside two minutes and lets the learner feel what the teaching bought them, and it costs no new content.
+
+Implemented as a phase, `coldopen`, rather than a separate renderer. The support gates already keyed off `state.stagePhase`, so the card, the romaji, the hint and the counter fall away for free; the single-attempt gates Challenge already used are widened to cover it, so there is no retry either; and `answerStage` early-branches to `resolveColdOpen` before Kon's usual reply and before anything is credited. The skip controls step out of it rather than trying to answer it, because it is a scene rather than a question, and it only runs on a first visit.
+
+**Three things only a live walkthrough caught.**
+
+The lantern explanation was drafted as a fourth Entrance tutorial line, and the test written for it grepped `app.js` - which carries a second, dead copy of that line in the location's `followUpCorrect`. The test passed while the screen still showed the old text. The line the Entrance actually plays lives in `entrance-stage-logic.js`, and changing it there failed `pwa.test.mjs`, which requires every spoken Entrance line to have a pre-rendered clip; generating one is an approval-gated run against an external service. The explanation moved to the map instead, beside the 灯り counter it explains, where it needs no audio: 「この路地の灯りは消えています。場所の言葉をすべて覚えると、灯りがひとつ戻ります。」 It hides once a real place is finished - not once any lantern is lit, because the Entrance lights one on the step immediately before the map first appears, which would have hidden the note at exactly the moment it was needed.
+
+The cold open announced 「一日目です」, which is the one thing it is not. It has its own guest-arrival line now.
+
+It also stamped 正解 on a wrong answer, because both branches reused `showFeedback(true, ...)`. It carries no stamp at all now: 「もう一度」 would punish the stumble the scene exists to produce, and 正解 on a miss is simply false.
+
+Separately, the romaji switch wrote `romaji-line`'s display directly and could therefore reveal romaji during the cold open and during Challenge, overriding both phase gates. It respects the phase now.
+
+The stage's closing line also names tomorrow - 「明日、この五つの言葉をもう一度たしかめましょう。」 - which is only honest since the story started feeding the review schedule earlier today.
+
+Nothing changed about the ten questions, the day model, the support withdrawal, mastery, unlocking or the economy, and no new art was added.
+
+Spec: `docs/superpowers/specs/2026-09-03-first-run-experience-design.md`. Plan: `docs/superpowers/plans/2026-09-03-first-run-experience.md`.
+
+Cache is v242. `node --test` passes 423/423.
+
 ### 2026-09-03 - The story now feeds the review schedule, which it never did
 
 `review-engine.js` has always been the good part of this project: expanding intervals of 1, 3, 7 and 14 days, a wrong answer resetting the step and falling due immediately, mastery requiring two successes on separate days at least a week apart, and an explicit refusal to credit same-day repetition - "repeating an item minutes after getting it right is recognition, not retrieval, so it neither advances the schedule nor counts toward mastery."
