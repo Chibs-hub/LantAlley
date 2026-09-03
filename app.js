@@ -1431,6 +1431,29 @@
     if(state.masteredByStage[key].indexOf(target) < 0) state.masteredByStage[key].push(target);
   }
 
+  /* Put a story answer into the delayed-review schedule.
+   *
+   * The schedule existed and worked, and for a long time only コンの稽古 fed
+   * it - so a learner could finish the Inn's three days, be told they had
+   * remembered all five words, and have nothing at all come back later. Every
+   * one of those ten answers happened inside one sitting, which is exactly
+   * what review-engine.js refuses to count: "repeating an item minutes after
+   * getting it right is recognition, not retrieval". The engine was right and
+   * nothing was asking it.
+   *
+   * Recorded on a miss as well as a hit, for the same reason the practice
+   * caller does it: a word answered wrongly has to come back tomorrow.
+   *
+   * markMastered stays as it was. It records that the word has been met and
+   * drives the 理解度 coverage figure; this records whether it is actually
+   * being retained, which is a different question and needs days to answer. */
+  function scheduleReview(target, correct){
+    if(!target || typeof LanternReviewEngine === "undefined") return;
+    state.reviewProgress = LanternReviewEngine.recordOutcome(state.reviewProgress || {}, {
+      id: target, correct: !!correct, now: Date.now()
+    });
+  }
+
   /* ---- Payday: being paid should be felt, not just recorded ----
    *
    * The wallet already counted up silently, which made the one moment of
@@ -2157,6 +2180,7 @@
         rememberEpisode();
       }
       var earned = 0;
+      scheduleReview(question.target, correct);
       if(correct){
         markMastered(state.currentKey, question.target);
         earned = rewardCorrect(question.id, entry.mode);
@@ -5432,12 +5456,16 @@
     var stage = getLocation(prompt.stageKey);
     var items = state.phaseItems || stage.getPhaseItems(state.stagePhase);
     showKonStageResponse(stage, prompt, isCorrect, selectedKey);
+    // Outside the isCorrect branch: a missed word has to enter the schedule
+    // too, or the one word the learner actually struggled with is the one
+    // word that never comes back.
+    var targetId = stage.getTargetId && stage.getTargetId(prompt.focusWord);
+    scheduleReview(targetId, isCorrect);
     if(isCorrect){
       // Credit the word itself, not just the wallet. The three days teach five
       // of the Inn's forty catalog words, and answering one correctly here is
       // the same evidence of understanding as answering it in an episode.
-      var masteredId = stage.getTargetId && stage.getTargetId(prompt.focusWord);
-      if(masteredId) markMastered(prompt.stageKey, masteredId);
+      if(targetId) markMastered(prompt.stageKey, targetId);
       state.trainingCorrectWords[prompt.focusWord] = true;
       rewardCorrect("training:" + prompt.stageKey + ":" + state.stagePhase + ":" + (prompt.id || prompt.focusWord || state.encounterIndex), state.stagePhase);
     }

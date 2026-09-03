@@ -986,6 +986,36 @@ test("the ?unlockall=1 flag unlocks on load without breaking the module", () => 
  * the Entrance's own question on every reload of a fresh save. ?skip=1 fills
  * in just those two gates - never anything a real save could already have
  * past them - so btn-start's own click handler drops straight to the map. */
+/* review-engine.js schedules delayed review and refuses to count same-session
+ * repetition, and for a long time only コンの稽古 fed it. A learner could
+ * finish the Inn's three days, be told they had remembered all five words,
+ * and have reviewProgress still empty - nothing scheduled, "今日の復習" never
+ * shown, the words never seen again. The teaching was fine; the retention
+ * mechanism simply was not connected to it. */
+test("finishing the Inn puts its words into the delayed-review schedule", async () => {
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game);
+  game.$("btn-skip-stage").click();
+
+  const saved = JSON.parse(game.storage.getItem("lanternAlley.v3") || "{}");
+  assert.equal(saved.stages["home-inn"].mastered, true, "the stage was finished");
+
+  const scheduled = Object.keys(saved.reviewProgress || {});
+  assert.ok(scheduled.length > 0,
+    "the Inn's words must enter the review schedule; an empty reviewProgress means nothing ever comes back");
+
+  // The five taught words, by their catalog ids, not just any id.
+  for (const id of ["v-soroeru", "v-torikaeru", "v-atatameru-food", "w-chousei", "v-hikiukeru"]) {
+    assert.ok(scheduled.includes(id), `${id} was taught but never scheduled`);
+  }
+
+  // And the schedule must place them in the future, not leave them due now -
+  // a correct answer earns the first interval.
+  const now = Date.now();
+  assert.ok(saved.reviewProgress["v-soroeru"].due > now,
+    "a word answered correctly should be due later, not immediately");
+});
+
 test("the ?skip=1 flag lands on the map without playing the Entrance", () => {
   const game = boot(null, "?skip=1");
   game.clock.advance(50);

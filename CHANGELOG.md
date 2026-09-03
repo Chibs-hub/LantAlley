@@ -5,6 +5,28 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-03 - The story now feeds the review schedule, which it never did
+
+`review-engine.js` has always been the good part of this project: expanding intervals of 1, 3, 7 and 14 days, a wrong answer resetting the step and falling due immediately, mastery requiring two successes on separate days at least a week apart, and an explicit refusal to credit same-day repetition - "repeating an item minutes after getting it right is recognition, not retrieval, so it neither advances the schedule nor counts toward mastery."
+
+It had one caller. `recordOutcome` was invoked only from `renderPracticeCard`, which is コンの稽古 - the optional catalog practice reached from the map. The story path, which is the actual game, never touched it.
+
+Measured on a clean save, finishing the Inn's three days to full mastery: Kon says 「三日目の挑戦を達成しました。2/2、五つの言葉を思い出せました。」, `masteredByStage` holds all five words permanently, 理解度 reads 13%, and `reviewProgress` holds **nothing**. The map's 「今日の復習」 line - which is built, correct, and wired to the schedule - had nothing to show. The five words the learner had just been congratulated for remembering were never going to be asked again.
+
+All ten of those answers happened inside one sitting, which is precisely what the engine refuses to count. The engine was right and nothing was asking it.
+
+`scheduleReview(target, correct)` now sits beside `markMastered` and is called from both story answer paths: `answerStage` for the Inn's three days, and the episode's `handlePreviewAnswer`. Recorded on a miss as well as a hit, for the same reason the practice caller already did it - a word answered wrongly has to come back tomorrow, and otherwise the one word the learner actually struggled with is the one word that never returns.
+
+`markMastered` is unchanged. It records that a word has been met and drives the 理解度 coverage figure; the schedule records whether it is being retained. Those are different questions and the second one needs days to answer, so they stay separate rather than one being redefined as the other.
+
+Verified end to end at v237: finishing the three days now schedules all five words, the first review falling due in exactly 1.00 days; a day later `getDueItems` returns all five, each building two or three practice cards from the catalog, and the map's review count has something to report.
+
+This matters more than it first looks. Each place is 4 episodes of 10 questions with **40 distinct targets across 40 questions** - one exposure per word in the entire story. Before this, a learner who answered all forty correctly first time would never meet those words again, because `paidAnswers` also stops a replay paying out. The schedule is now the only thing giving a story word a second exposure, and until today it was not connected to the story.
+
+A regression test finishes the Inn stage and asserts all five catalog ids land in `reviewProgress` with a future due date; it fails against the unwired code with "an empty reviewProgress means nothing ever comes back".
+
+Cache is v237. `node --test` passes 414/414.
+
 
 ### 2026-09-03 - A UI audit of the opening, the Inn and the home, and the seven things it found
 

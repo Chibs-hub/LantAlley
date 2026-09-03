@@ -99,7 +99,11 @@ test("the first Inn stage moves the understanding gauge, not just the wallet", (
   // Answering correctly in the three days has to mark the word, exactly as
   // answering correctly in an episode does.
   assert.match(app, /stage\.getTargetId && stage\.getTargetId\(prompt\.focusWord\)/);
-  assert.match(app, /if\(masteredId\) markMastered\(prompt\.stageKey, masteredId\)/);
+  assert.match(app, /if\(targetId\) markMastered\(prompt\.stageKey, targetId\)/);
+  // And the same answer has to enter the delayed-review schedule, which is a
+  // separate question from coverage: markMastered records that the word was
+  // met, scheduleReview records whether it is being retained.
+  assert.match(app, /scheduleReview\(targetId, isCorrect\)/);
 });
 
 test("the gauge counts distinct words understood, never attempts", () => {
