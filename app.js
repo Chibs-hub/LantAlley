@@ -177,6 +177,10 @@
     challengeScore:0,
     challengeCorrectWords:{},
     trainingCorrectWords:{},
+    // Set by a correct cold-open answer, consumed by the btn-next handler
+    // that starts Day 1: it tells "learn" to begin one encounter in, so the
+    // task the learner just solved is not asked again immediately after.
+    coldOpenSkipFirst:false,
     challengeMisses:[],
     stageMastered:false,
     resumedStageEntry:false,
@@ -998,9 +1002,13 @@
     if(previewState){ advanceEpisodePreview(); return; }
     var loc = getLocation(state.currentKey);
     // The cold open is one task outside the day model, so it advances into
-    // Day 1 rather than to a next encounter it does not have.
+    // Day 1 rather than to a next encounter it does not have. A correct
+    // cold-open guess also skips replaying that same encounter as Day 1's
+    // first question - see resolveColdOpen.
     if(state.stagePhase === "coldopen" && loc && loc.encounters){
-      startStagePhase(loc, "learn");
+      var skipFirst = state.coldOpenSkipFirst;
+      state.coldOpenSkipFirst = false;
+      startStagePhase(loc, "learn", null, skipFirst ? 1 : 0);
       return;
     }
     if(loc && loc.encounters){
@@ -2535,10 +2543,10 @@
   }
 
 
-  function startStagePhase(loc, phase, items){
+  function startStagePhase(loc, phase, items, startIndex){
     state.stagePhase = phase;
     state.phaseItems = items || null;
-    state.encounterIndex = 0;
+    state.encounterIndex = startIndex || 0;
     state.answered = false;
     $("feedback-row").classList.remove("show");
     $("next-row").style.display = "none";
@@ -5369,18 +5377,18 @@
     state.acting = true;
     var playerEl = $("player-figure");
     if(playerEl){
-      playerEl.classList.remove("action-bow", "action-wave", "action-clap", "action-celebrate", "action-try-again");
+      playerEl.classList.remove("action-bow", "action-wave", "action-clap", "action-celebrate", "action-try-again", "pose-correct");
       void playerEl.offsetWidth;
       playerEl.classList.add("action-" + optKey);
     }
     setTimeout(function(){
-      if(playerEl) playerEl.classList.remove("action-" + optKey);
-      resolveDuoAnswer(optKey === loc.correct, loc);
+      resolveDuoAnswer(optKey === loc.correct, loc, optKey);
     }, 1250);
   }
 
-  function resolveDuoAnswer(isCorrect, loc){
+  function resolveDuoAnswer(isCorrect, loc, optKey){
     state.acting = false;
+    var playerEl = $("player-figure");
 
     if(isCorrect){
       state.answered = true;
@@ -5395,10 +5403,15 @@
       $("meaning-line").textContent = fu.meaning;
       $("meaning-line").classList.add("show");
       speak(fu.jp, "correct");
-      var correctPlayer = $("player-figure");
-      if(correctPlayer){
-        correctPlayer.classList.add("action-celebrate");
-        setTimeout(function(){ correctPlayer.classList.remove("action-celebrate"); }, 800);
+      if(playerEl){
+        // Keep the pose the learner actually performed - a correct Bow
+        // must still look like a bow. This used to force "action-celebrate",
+        // which shares the wave frame, so every correct answer flashed a
+        // wave even when the learner had bowed or clapped.
+        playerEl.classList.add("pose-correct");
+        setTimeout(function(){
+          playerEl.classList.remove("action-" + optKey, "pose-correct");
+        }, 800);
       }
 
       var already = !!state.starred[loc.key];
@@ -5434,10 +5447,10 @@
       $("meaning-line").textContent = fw.meaning;
       $("meaning-line").classList.add("show");
       speak(fw.jp, "wrong");
-      var retryPlayer = $("player-figure");
-      if(retryPlayer){
-        retryPlayer.classList.add("action-try-again");
-        setTimeout(function(){ retryPlayer.classList.remove("action-try-again"); }, 800);
+      if(playerEl){
+        playerEl.classList.remove("action-" + optKey);
+        playerEl.classList.add("action-try-again");
+        setTimeout(function(){ playerEl.classList.remove("action-try-again"); }, 800);
       }
 
       if(activeFoxEl){
@@ -5523,7 +5536,7 @@
     // Before Kon's usual reply and before anything is credited: the cold open
     // has its own reply and credits nothing at all.
     if(state.stagePhase === "coldopen"){
-      resolveColdOpen(isCorrect, stage);
+      resolveColdOpen(isCorrect, stage, prompt);
       return;
     }
     var items = state.phaseItems || stage.getPhaseItems(state.stagePhase);
@@ -5630,9 +5643,27 @@
   /* The cold open borrows Day 1's first encounter and throws the result away.
    * Nothing is paid, scheduled, mastered or starred: the learner has not been
    * taught the word yet, so an answer here is evidence of nothing. Kon
-   * absorbs it, and the three days begin as the answer to it. */
-  function resolveColdOpen(isCorrect, stage){
+   * absorbs it, and the three days begin as the answer to it.
+   *
+   * A correct guess is the one exception, and only for what Day 1 opens
+   * with: playing this live, solving the cushion task cold and then being
+   * asked the identical task again as "Day 1, question 1" reads as a
+   * mistake, not a lesson - Kon's own correctReply already says "let's look
+   * at the rest" rather than "let's do that again". coldOpenSkipFirst tells
+   * the next startStagePhase("learn") to begin one encounter in instead of
+   * replaying it, and trainingCorrectWords is credited to match, so the
+   * later full-coverage check still passes without that encounter ever
+   * running through the real, scored answer path. Nothing else this
+   * function's opening comment protects - money, stars, reviewProgress,
+   * masteredByStage - is touched. A wrong guess skips nothing: that word
+   * genuinely has not been taught yet. */
+  function resolveColdOpen(isCorrect, stage, prompt){
     state.answered = true;
+    state.coldOpenSkipFirst = false;
+    if(isCorrect && prompt && prompt.focusWord){
+      state.trainingCorrectWords[prompt.focusWord] = true;
+      state.coldOpenSkipFirst = true;
+    }
     var reply = stage && stage.coldOpen
       ? (isCorrect ? stage.coldOpen.correctReply : stage.coldOpen.wrongReply)
       : "";

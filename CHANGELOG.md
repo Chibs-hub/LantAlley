@@ -5,6 +5,18 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-04 - The cold open stopped repeating itself, a wave stopped playing for a bow, and the reward chip stopped crossing the wallet
+
+First real-learner feedback on the branch, not more of my own playtesting. Three fixes.
+
+**The cold open's cushion task and Day 1's first question were the same encounter.** This was by design - the first-run spec says outright that "Day 1's first question is the same encounter the cold open borrowed, and it arrives with its full support restored" - on the theory that a learner who just failed cold benefits from immediately seeing the identical task taught for real. Played live, it does not read that way: solving 「揃える」 unaided in the cold open and then being handed the exact same cushion layout again as "問題 1 / 5" reads as a mistake, not a lesson, especially since Kon's own correct-branch reply already says "では、残りの言葉も見ていきましょう" (now let's look at the rest) rather than "let's do that again." A correct cold-open guess now skips straight to Day 1's second question; a wrong one still repeats the task for real, since that word genuinely has not been taught yet. `trainingCorrectWords` is credited on the skip so the later full-coverage check (gating both Day 3's Challenge mastery and Review completion) still passes without that encounter ever running through the scored answer path - the two systems the cold open's own docstring protects, `reviewProgress` and `masteredByStage`, are untouched either way.
+
+**Bow's success animation played the wave frame.** `answerDuoAction` correctly plays the chosen pose (bow/wave/clap) for the 1.25s attempt, but `resolveDuoAnswer` then swapped every correct answer to a hardcoded `action-celebrate`, and `action-celebrate` shared `action-wave`'s sprite position in the CSS. So a correct Bow showed the bow frame, then snapped to the wave frame as its own reward. The celebration is now a glow/bounce layered on whichever pose the learner actually performed, never a frame swap.
+
+**The `+¥N` reward chip rose through the wallet's own digits.** `.payout-chip` started at `top:-0.35em` and animated through `translateY(.3em)` on entry, which put the rising number directly over the `¥` balance at the moment it became visible - confirmed by sampling the animation at fixed `currentTime`s against the wallet's bounding rect, not by trying to catch a 1s CSS animation in a screenshot. Raised the chip's baseline so it clears the pill at every sampled frame (0/90/180/300/500/1000ms), including the reduced-motion resting position, which is a separate, non-animated case since the global `*{animation:none!important}` rule leaves the chip parked at its base `top` for its whole 1.1s lifetime.
+
+Two new tests cover the cold-open skip in both directions. `node --test` passes 429/429. Cache is v247.
+
 ### 2026-09-03 - Playing the Inn route through, and the episode restarting itself
 
 Played the whole route rather than the parts that had changed: gate, map, Inn intro, cold open, the three days, and into Episode 1. One real bug and four pieces of chrome.

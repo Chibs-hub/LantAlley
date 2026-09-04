@@ -1064,6 +1064,47 @@ test("the cold open is unscored and hands over to Day 1", async () => {
     "Day 1 restores the new-word card");
 });
 
+/* Played live, solving the cold open's cushion task and then being asked the
+ * identical task again as "Day 1, question 1" read as a mistake, not a
+ * lesson - Kon's own correct reply already says "let's look at the rest",
+ * not "let's do that again". A correct guess should not be asked twice; a
+ * wrong one still needs the real, taught pass. */
+test("a correct cold-open answer does not repeat that task as Day 1's first question", async () => {
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game);
+
+  const task = game.$("jp-line").textContent;
+  assert.ok(playRoom(game, task), "the cold open's room task is solvable");
+  game.clock.advance(1200);
+  assert.equal(game.$("next-row").style.display, "block", "there is a way forward");
+
+  game.$("btn-next").click();
+  game.clock.advance(500);
+
+  assert.match(game.$("stage-phase-badge").textContent, /一日目/, "Day 1 has begun");
+  assert.equal(game.$("encounter-progress").textContent, "2",
+    "the task just solved cold must not be asked again as question 1");
+  assert.equal(game.$("encounter-total").textContent, "5", "the day still has all five questions");
+});
+
+test("a wrong cold-open answer still teaches that task for real as Day 1's first question", async () => {
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game);
+
+  const objects = game.doc.querySelectorAll(".inn-object").filter(game.visible);
+  const zones = game.doc.querySelectorAll(".inn-drop-zone").filter(game.visible);
+  objects[0].click();
+  game.clock.advance(150);
+  zones[zones.length - 1].click();
+  game.clock.advance(4000);
+
+  game.$("btn-next").click();
+  game.clock.advance(500);
+
+  assert.equal(game.$("encounter-progress").textContent, "1",
+    "a word never demonstrated correctly must still be taught, not skipped");
+});
+
 test("the ?skip=1 flag lands on the map without playing the Entrance", () => {
   const game = boot(null, "?skip=1");
   game.clock.advance(50);

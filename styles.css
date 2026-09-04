@@ -417,10 +417,15 @@
     text-transform:uppercase; letter-spacing:0.08em; margin-top:2px;
   }
   .action-bow .entrance-player-art{background-position:33.333% center;animation:player-pose-pop 1.2s cubic-bezier(.25,1,.5,1) 1;}
-  .action-wave .entrance-player-art,.action-celebrate .entrance-player-art{background-position:66.667% center;animation:player-pose-pop .9s cubic-bezier(.25,1,.5,1) 1;}
+  .action-wave .entrance-player-art{background-position:66.667% center;animation:player-pose-pop .9s cubic-bezier(.25,1,.5,1) 1;}
   .action-clap .entrance-player-art{background-position:100% center;animation:player-pose-pop .9s cubic-bezier(.25,1,.5,1) 1;}
   .action-try-again .entrance-player-art{background-position:0 center;animation:player-try-again .8s ease-in-out 1;}
+  /* The success flourish must never pick its own sprite frame - it used to
+     share the wave frame ("action-celebrate"), so a correct Bow flashed a
+     wave. It now only glows/bounces over whatever pose is already showing. */
+  .pose-correct .entrance-player-art{animation:player-pose-correct .8s ease-in-out 1;filter:drop-shadow(0 9px 7px rgba(0,0,0,.38)) drop-shadow(0 0 14px rgba(255,214,120,.85));}
   @keyframes player-pose-pop{0%{transform:translateY(3px) scale(.96)}18%,82%{transform:translateY(0) scale(1.02)}100%{transform:translateY(0) scale(1)}}
+  @keyframes player-pose-correct{0%,100%{transform:translateY(0) scale(1)}40%{transform:translateY(-4px) scale(1.08)}}
   @keyframes player-try-again{0%,100%{transform:translateX(0)}30%{transform:translateX(-5px)}60%{transform:translateX(5px)}}
 
   /* Entrance tutorial: Kon, learner, dialogue and choices share one alley scene. */
@@ -1326,7 +1331,13 @@
      learner with reduced motion still sees it - it just does not travel. */
   .money-hud{position:relative}
   .payout-chip{
-    position:absolute; left:50%; top:-0.35em;
+    /* Clear of the pill's own digits at every frame, including the
+       reduced-motion resting position (the keyframes are killed by the
+       global *{animation:none!important} rule, so this base `top` is what
+       those learners actually see for the chip's whole 1.1s lifetime). It
+       used to sit at -0.35em and rise through translateY(.3em) at 0%, which
+       put the "+Y" text right over the "Y" balance as it passed. */
+    position:absolute; left:50%; top:-2em;
     transform:translate(-50%,0);
     font-weight:800; font-size:.95em; color:#ffe4a0;
     text-shadow:0 1px 3px rgba(20,10,4,.85);
