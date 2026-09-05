@@ -213,8 +213,13 @@
     roomScene({verb:"warm", target:"tea"}),
     {
       scene:"checkout",
-      controlHelp:"Move the time card, then confirm.",
-      clue:"A checkout board with one adjustable time card, and the next booking already fixed.",
+      // "Move the time card" named neither the control (a slider) nor which
+      // of the two labeled sliders responds to it, and "a checkout board
+      // with one adjustable time card" described the widget rather than the
+      // constraint driving the puzzle - reported live as leaving a learner
+      // unsure what to actually do.
+      controlHelp:"Drag the slider to a time, then press 決定 to confirm.",
+      clue:"Only the checkout time can move. The next guest's check-in time is already fixed and cannot change.",
       min:9,max:15,startA:10,startB:15,gap:2,targetA:13,targetB:15,fixedB:true,labelA:"チェックアウト",labelB:"次のチェックイン"
     },
     {
@@ -234,8 +239,8 @@
     roomScene({verb:"warm", target:"soup"}),
     {
       scene:"arrivals",
-      controlHelp:"Move the two time cards, then confirm.",
-      clue:"An arrivals board with two movable time cards.",
+      controlHelp:"Drag each slider to a time, then press 決定 to confirm.",
+      clue:"Both arrival times on this board can move.",
       min:14,max:19,startA:15,startB:15,gap:2,targetA:15,targetB:17,fixedB:false,labelA:"Aグループ到着",labelB:"Bグループ到着"
     },
     {
@@ -255,8 +260,8 @@
     roomScene({verb:"warm", target:"rice"}),
     {
       scene:"arrivals",
-      controlHelp:"Move the two time cards, then confirm.",
-      clue:"An arrivals board with two movable time cards.",
+      controlHelp:"Drag each slider to a time, then press 決定 to confirm.",
+      clue:"Both arrival times on this board can move.",
       min:10,max:16,startA:12,startB:12,gap:2,targetA:12,targetB:14,fixedB:false,labelA:"Cグループ到着",labelB:"Dグループ到着"
     },
     guidedInteractions[4]

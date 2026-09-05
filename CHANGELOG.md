@@ -5,6 +5,17 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-04 - The schedule question's own instructions named the wrong thing
+
+Removing the misaligned handle dot (previous entry) was not the whole complaint: reported again, live, that it was still "hard to know what to do to answer" and that the question's own wording was confusing. The two English strings driving this - `controlHelp` ("HOW TO INTERACT") and `clue`, both in `n2-home-inn-stage.js` - were the actual problem, independent of the dot:
+
+- `controlHelp` said "Move the time card, then confirm." A slider is not obviously a "card," and the sentence never says which of the two labeled sliders responds to it - the checkout scene has one adjustable and one disabled, and nothing pointed at which was which.
+- `clue` said "A checkout board with one adjustable time card, and the next booking already fixed." - describing the widget rather than the constraint the word problem actually turns on.
+
+`controlHelp` now says "Drag the slider to a time, then press 決定 to confirm." - names the control, the action, and the exact on-screen button. `clue` now states the constraint directly: "Only the checkout time can move. The next guest's check-in time is already fixed and cannot change." The sibling "arrivals" scene (Day 2 and Day 3, both sliders adjustable) got the same treatment: "Drag each slider to a time, then press 決定 to confirm." / "Both arrival times on this board can move." No Japanese content changed - only the English operating instructions, which carry no audio-clip requirement.
+
+Verified live at the same reported question: read the new instructions, dragged the slider to 13:00, confirmed, correct. `node --test` passes 429/429. Cache is v249.
+
 ### 2026-09-04 - The schedule question's floating time-card stopped disagreeing with its own sliders
 
 Reported live, mid-play: the checkout-time question ("調整") looked confusing - a row of hour labels, a green dot floating somewhere near them, and two labeled sliders below, none obviously connected. The dot was `.schedule-handle`, a second, independent visual meant to mirror each slider's position on the hour-label timeline above it. It never could: the timeline centers seven labels across grid cells plus 4px gaps inside 12px of padding, while the handle track placed its dot with a flat 0-100% linear percentage inside 12px of margin - two different box models computing "where is 13:00" differently, so the dot drifted away from both the label it claimed to mark and the slider thumb it was supposed to summarize. A separate, disconnected-looking element that visibly disagrees with the two controls that actually work is worse than not having it: removed the handle track and its dots entirely. The hour-label row and the two labeled sliders remain - the sliders already say the chosen hour in plain text, which is what solving the word problem requires. Also added `user-select:none` to both, since a slider drag that strayed onto the timeline text could catch it in a native selection highlight, which is what the reported "boxed 12:00" most likely was.
