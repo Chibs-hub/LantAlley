@@ -981,11 +981,41 @@
      reported live as letters being hard to see, which the numbers back up:
      #f2ebdd text on #fffaf0 is well under WCAG's minimum contrast. */
   .schedule-controls label{padding:10px;border-radius:12px;background:#fffaf0;font-weight:700;color:#6c5a46}
-  .schedule-controls input{width:100%}
+  /* The instructions already said "drag the slider," but the slider itself
+     was a bare, unstyled <input type=range> - the one native control in a
+     game where everything else is hand-styled, so it read as leftover
+     browser chrome rather than something the game wanted touched. Reported
+     live as still not obvious to interact with even after the text and
+     contrast were fixed. A visible track plus a large, lantern-colored,
+     gently pulsing handle gives it the same "touch me" language the
+     dialogue-continue dot already uses elsewhere (see dialogue-nudge). */
+  .schedule-controls input{
+    width:100%; margin:10px 0 4px; height:8px; border-radius:999px;
+    background:rgba(140,110,70,.25); outline:none;
+    -webkit-appearance:none; appearance:none;
+  }
+  .schedule-controls input::-webkit-slider-runnable-track{height:8px;border-radius:999px;background:transparent}
+  .schedule-controls input::-moz-range-track{height:8px;border-radius:999px;background:transparent}
+  .schedule-controls input::-webkit-slider-thumb{
+    -webkit-appearance:none; width:26px; height:26px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, var(--lantern-bright), var(--lantern) 70%);
+    border:3px solid #6b4423; box-shadow:0 2px 5px rgba(0,0,0,.4);
+    margin-top:-9px; cursor:grab; animation:slider-nudge 1.6s ease-in-out infinite;
+  }
+  .schedule-controls input::-moz-range-thumb{
+    width:20px; height:20px; border-radius:50%; border:3px solid #6b4423;
+    background:radial-gradient(circle at 35% 30%, var(--lantern-bright), var(--lantern) 70%);
+    box-shadow:0 2px 5px rgba(0,0,0,.4); cursor:grab; animation:slider-nudge 1.6s ease-in-out infinite;
+  }
+  .schedule-controls input:active::-webkit-slider-thumb,.schedule-controls input:active::-moz-range-thumb{cursor:grabbing}
+  @keyframes slider-nudge{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
   /* The fixed slider is inert, not just another control - dimming its whole
      card (label text included) sets it apart from the one that responds,
-     on top of the "(fixed)" text on its own label. */
+     on top of the "(fixed)" text on its own label. Its handle drops the
+     lantern color and the pulse, since nothing here is waiting to be moved. */
   .schedule-controls label:has(input:disabled){opacity:.55}
+  .schedule-controls input:disabled::-webkit-slider-thumb{background:#b9ada0;border-color:#8a7f72;box-shadow:none;cursor:not-allowed;animation:none}
+  .schedule-controls input:disabled::-moz-range-thumb{background:#b9ada0;border-color:#8a7f72;box-shadow:none;cursor:not-allowed;animation:none}
   .inn-status{text-align:center;min-height:24px;font-weight:800;color:#f2ddb6}
   .medal{margin-left:5px;font-size:1.05rem}
   .inn-drop-zone:disabled,.inn-object:disabled{opacity:.35;cursor:not-allowed;box-shadow:none;transform:none}

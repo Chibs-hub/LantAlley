@@ -5,6 +5,14 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-04 - The schedule slider was a bare `<input type=range>` in a game where nothing else is
+
+Reported live again, after the label contrast and the "(fixed)" marker were already fixed: still hard to know there was anything to interact with. The instructions already said "drag the slider" in plain text - the slider itself was the problem. It was the one native, entirely unstyled browser control in a stage where every other object, button and card is hand-drawn, so it read as leftover browser chrome rather than a control the game wanted touched.
+
+Gave it an actual designed handle: a visible track, a large lantern-colored circular thumb with a border and shadow, and a gentle continuous pulse (the same "notice me" language the dialogue-continue dot already uses via its own nudge animation, `prefers-reduced-motion` respected the same way). The fixed slider's thumb drops the color and the pulse - grey and still, matching its already-dimmed card, so the one control worth touching is now the only one that looks alive.
+
+`node --test` passes 432/432. Cache is v253.
+
 ### 2026-09-04 - The schedule sliders' own label text was nearly invisible, and looked identical whether or not they worked
 
 Reported live, after the premise rewrite: the sliders were "hard to know what to do" and "some letters is hard to see." Both were real, and both were in `styles.css`/`app.js`, not the content.
