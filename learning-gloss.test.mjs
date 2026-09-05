@@ -120,6 +120,51 @@ test("a single kanji is only a word when it stands alone", () => {
   assert.match(ash, />灰</, "a lone kanji word is still glossed");
 });
 
+test("a multi-character catalog word is only a word when it stands alone too", () => {
+  const { LanternGloss: gloss, LanternCurriculumCatalog: catalog } = load();
+  const index = gloss.buildIndex(catalog);
+
+  // 日本 is a catalog entry (にっぽん), but 日本語 is one word to a reader -
+  // the same お客様 problem, just two characters wide instead of one. This
+  // was live in this Inn's own intro line before the flanking check (which
+  // used to apply only to single characters) was widened to every length.
+  const language = gloss.annotate("日本語の練習をしながら、宿の仕事を手伝ってくれませんか？", index, {});
+  assert.doesNotMatch(language, />日本</, "日本 must not be picked out of 日本語");
+  assert.match(language, />練習</, "other words in the same line still gloss");
+
+  // Standing on its own, it is a word again.
+  const country = gloss.annotate("日本から来ました。", index, {});
+  assert.match(country, />日本</, "日本 on its own is still glossed");
+});
+
+test("a lone 来 is left unglossed, because it is a verb stem here, not the らい prefix", () => {
+  const { LanternGloss: gloss, LanternCurriculumCatalog: catalog } = load();
+  const index = gloss.buildIndex(catalog);
+
+  // 来 alone in the catalog is the 来週/来年 prefix, read らい. A lone 来
+  // flanked by kana in running text is almost always 来る conjugated -
+  // 来ます reads き, never らい - and the module has no conjugation engine
+  // to pick the right one. Reported live as a wrong furigana reading.
+  const html = gloss.annotate("次のお客様は15時に来ます。", index, {}, "ruby");
+  assert.doesNotMatch(html, /来<rt>らい<\/rt>/, "来 must not be glossed with the wrong reading");
+  assert.doesNotMatch(html, />来</, "nor tappable with it, in the non-ruby mode");
+});
+
+test("時 after a digit is left unglossed, because it is the o'clock counter, not the noun とき", () => {
+  const { LanternGloss: gloss, LanternCurriculumCatalog: catalog } = load();
+  const index = gloss.buildIndex(catalog);
+
+  // 時 alone in the catalog is the noun "moment" (あの時), read とき. Right
+  // after a digit it is the o'clock counter instead (14時, 15時), read じ -
+  // a different word, not a variant reading of the same one.
+  const clock = gloss.annotate("次のお客様は15時に来ます。", index, {}, "ruby");
+  assert.doesNotMatch(clock, /時<rt>とき<\/rt>/, "15時's 時 must not be glossed as とき");
+
+  // Standing on its own, with no digit before it, it is the noun again.
+  const moment = gloss.annotate("あの時、彼はまだ子供でした。", index, {}, "ruby");
+  assert.match(moment, /時<rt>とき<\/rt>/, "時 as its own word is still glossed");
+});
+
 test("the exclusions are set before anything is rendered", () => {
   const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
   const fn = app.slice(app.indexOf("function renderPreviewQuestion"));

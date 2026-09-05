@@ -21,6 +21,21 @@
 
   var KANJI = /[一-龯]/;
 
+  // The catalog reading is correct for the word as its own entry, but wrong
+  // for the same lone character when it is actually a verb stem in context.
+  // 来 alone in the catalog is the "来週/来年" prefix, read らい - but a lone
+  // 来 flanked by kana in running text (来ます, 来た, 来て, 来い...) is the
+  // stem of 来る, whose reading depends on conjugation and is never らい.
+  // This module has no conjugation engine to pick the right one, and a
+  // wrong reading teaches the wrong thing, so a lone 来 is left unglossed.
+  var AMBIGUOUS_ALONE = {"来": true};
+
+  // 時 alone in the catalog is the noun "moment" (あの時), read とき. A digit
+  // right before it makes it the o'clock counter instead (14時, 15時), read
+  // じ - a different reading for a different word, not a variant of the
+  // same one. Left unglossed there rather than glossed with とき.
+  var DIGIT = /[0-9０-９]/;
+
   function hasKanji(text){
     return KANJI.test(text || "");
   }
@@ -84,16 +99,19 @@
       for(var len = maxLen; len >= 1; len--){
         var candidate = source.substr(i, len);
         if(index.byWord[candidate] && !exclusions[candidate]){
+          var before = i > 0 ? source.charAt(i - 1) : "";
           if(len === 1){
-            // A single character is only a word when it stands alone. 様 is in
-            // the catalog, but glossing it inside お客様 breaks a word the
-            // learner reads as one thing and teaches the wrong unit. A lone
-            // 灰 or 竹 still glosses, because nothing is attached to it.
-            if(!hasKanji(candidate)) continue;
-            var before = i > 0 ? source.charAt(i - 1) : "";
-            var after = i + 1 < source.length ? source.charAt(i + 1) : "";
-            if(hasKanji(before) || hasKanji(after)) continue;
+            if(AMBIGUOUS_ALONE[candidate]) continue;
+            if(candidate === "時" && DIGIT.test(before)) continue;
           }
+          // A catalog word is only that word when nothing kanji is attached
+          // to either side of it. 様 is in the catalog, but glossing it out
+          // of お客様 breaks a word the learner reads as one thing; the same
+          // is true of 日本 carved out of 日本語, at any matched length, not
+          // only single characters. A lone 灰 or a stand-alone 会議 still
+          // glosses, because nothing is attached to it.
+          var after = i + len < source.length ? source.charAt(i + len) : "";
+          if(hasKanji(before) || hasKanji(after)) continue;
           matched = candidate;
           break;
         }

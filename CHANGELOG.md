@@ -5,6 +5,18 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-04 - Two wrong furigana readings, and the check that should have caught the second one
+
+Asked to check the hiragana on this stage's kanji while looking at the same schedule question. Found two, both in `learning-gloss.js`'s reading aid, both the same shape: a kanji is one word on its own and a different word inside a longer one, and the catalog only knows the standalone reading.
+
+**来 read as らい in 来ます.** 来 alone in the catalog is the 来週/来年 prefix (らい). A lone 来 flanked by kana in running text is almost always 来る conjugated - 来ます reads き, never らい - and the module has no conjugation engine to pick the right one. Added it to a short list of characters left unglossed when they stand alone, rather than glossed with a reading that is simply wrong there.
+
+**時 read as とき in 14時 and 15時.** 時 alone in the catalog is the noun "moment" (あの時), read とき. Right after a digit it is the o'clock counter instead, read じ - a different word, not a variant reading of the same one. Left unglossed specifically when a digit precedes it; あの時 and its kind still gloss normally.
+
+**Widened the check that should have caught this class of bug on its own.** The module already refused to carve 様 out of お客様 - but only for single characters. 日本 sat right next to it in this same stage's opening line, correctly catalogued, incorrectly glossed on its own inside 日本語, because the "don't gloss me if I'm attached to more kanji" check only ran for `len === 1`. Widened it to every matched length. Fixing this exposed a second bug in the fix itself: the "after" position was computed as `i + 1`, correct only when the match itself was one character long - at any greater length that reads the match's own second character as if it followed the match, and 会計 briefly stopped glossing as a result before `i + len` corrected it.
+
+Two of these were guessed from a screenshot and confirmed by running the actual `annotate()` function against the actual catalog, not by reasoning about what "should" be true - the same rule this project's testing skill states outright: evidence before assertions. `node --test` passes 432/432. Cache is v250.
+
 ### 2026-09-04 - The schedule question's own instructions named the wrong thing
 
 Removing the misaligned handle dot (previous entry) was not the whole complaint: reported again, live, that it was still "hard to know what to do to answer" and that the question's own wording was confusing. The two English strings driving this - `controlHelp` ("HOW TO INTERACT") and `clue`, both in `n2-home-inn-stage.js` - were the actual problem, independent of the dot:
