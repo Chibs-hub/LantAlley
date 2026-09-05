@@ -976,8 +976,16 @@
   .schedule-timeline span{text-align:center;font-size:.82rem;color:#6c5a46}
   .schedule-controls{display:grid;grid-template-columns:1fr 1fr;gap:12px;user-select:none}
   .answer-workspace .schedule-controls{width:100%;align-self:stretch}
-  .schedule-controls label{padding:10px;border-radius:12px;background:#fffaf0;font-weight:700}
+  /* No color was ever set here, so the label text fell back to the page's
+     own light theme color (--washi, near-white) on this near-white card -
+     reported live as letters being hard to see, which the numbers back up:
+     #f2ebdd text on #fffaf0 is well under WCAG's minimum contrast. */
+  .schedule-controls label{padding:10px;border-radius:12px;background:#fffaf0;font-weight:700;color:#6c5a46}
   .schedule-controls input{width:100%}
+  /* The fixed slider is inert, not just another control - dimming its whole
+     card (label text included) sets it apart from the one that responds,
+     on top of the "(fixed)" text on its own label. */
+  .schedule-controls label:has(input:disabled){opacity:.55}
   .inn-status{text-align:center;min-height:24px;font-weight:800;color:#f2ddb6}
   .medal{margin-left:5px;font-size:1.05rem}
   .inn-drop-zone:disabled,.inn-object:disabled{opacity:.35;cursor:not-allowed;box-shadow:none;transform:none}

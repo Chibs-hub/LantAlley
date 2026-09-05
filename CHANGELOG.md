@@ -5,6 +5,18 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-04 - The schedule sliders' own label text was nearly invisible, and looked identical whether or not they worked
+
+Reported live, after the premise rewrite: the sliders were "hard to know what to do" and "some letters is hard to see." Both were real, and both were in `styles.css`/`app.js`, not the content.
+
+**The label text.** `.schedule-controls label` never set its own `color`, so it fell back to the page's light theme color (`--washi`, `#f2ebdd`) - meant for the dark indigo background everywhere else, not the near-white `#fffaf0` card these labels sit on. `#f2ebdd` on `#fffaf0` is nowhere close to readable; it now matches the timeline's own brown (`#6c5a46`), which sits on the identical background one row up.
+
+**The two sliders looked like the same control.** One of them is inert - the clue text above says so in prose ("Only when cleaning starts can move") - but nothing about the sliders themselves showed it. The fixed one's label now says so directly (`（固定）`), and its whole card is dimmed, so the one that responds is the one that visibly stands out, not the one you have to read a sentence to identify.
+
+Both fixes are general to the `coordinate` mechanic, not specific to the 調整 question - the existing Day 2/3 "two arrival groups" sliders read just as poorly before this and are fixed by the same rule.
+
+`node --test` passes 432/432. Cache is v252.
+
 ### 2026-09-04 - The Day 1 調整 question's premise, rewritten three times to survive scrutiny
 
 Reported live, once the wording and furigana were already fixed: "in reality we don't adjust checkout time." Right - checkout is a fixed house time, and any exception is a simple guest request, not a three-value calculation performed by staff. The question needed a new premise, not new phrasing, and it took three passes to actually land on a real one.
