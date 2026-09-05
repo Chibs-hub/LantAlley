@@ -969,17 +969,17 @@
   .tea-visual.ready .tea-steam{opacity:.8}
   .tea-visual.ready .tea-food{filter:saturate(1)}
   @keyframes steam{50%{transform:translateY(-8px)}}
-  .schedule-timeline{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;padding:12px;border-radius:14px;background:rgba(255,250,240,.8)}
+  /* user-select:none because dragging the range inputs just below this row
+     could catch the hour labels in a native text selection, which drew as a
+     stray highlighted box over whichever label the drag passed through. */
+  .schedule-timeline{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;padding:12px;border-radius:14px;background:rgba(255,250,240,.8);user-select:none}
   .schedule-timeline span{text-align:center;font-size:.82rem;color:#6c5a46}
-  .schedule-controls{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .schedule-controls{display:grid;grid-template-columns:1fr 1fr;gap:12px;user-select:none}
   .answer-workspace .schedule-controls{width:100%;align-self:stretch}
   .schedule-controls label{padding:10px;border-radius:12px;background:#fffaf0;font-weight:700}
   .schedule-controls input{width:100%}
   .inn-status{text-align:center;min-height:24px;font-weight:800;color:#f2ddb6}
   .medal{margin-left:5px;font-size:1.05rem}
-  .schedule-handle-track{position:relative;height:16px;margin:0 12px}
-  .schedule-handle{position:absolute;top:1px;width:14px;height:14px;border-radius:50%;background:#8da486;border:2px solid #40503d;transform:translateX(-50%);transition:left .08s linear,background .15s,border-color .15s}
-  .schedule-handle.out-of-range{background:#e0a898;border-color:#9f5546}
   .inn-drop-zone:disabled,.inn-object:disabled{opacity:.35;cursor:not-allowed;box-shadow:none;transform:none}
   .answer-workspace .inn-room,.answer-workspace .inn-workspace{min-height:0}
   .answer-workspace .inn-workspace{padding:12px;gap:8px}
@@ -1093,7 +1093,7 @@
     .inn-room-viewport{aspect-ratio:8/5}
     .inn-room-composite > .inn-supply-shelf{padding:6px 10px 8px;border-top-width:5px}
   }
-  @media(prefers-reduced-motion:reduce){.inn-object,.inn-action,.inn-drop-zone{transition:none}.tea-steam:before,.tea-steam:after{animation:none}.schedule-handle{transition:none}.inn-room-viewport::before{transition:none}.room-light-bright::after{animation:none;opacity:.22}}
+  @media(prefers-reduced-motion:reduce){.inn-object,.inn-action,.inn-drop-zone{transition:none}.tea-steam:before,.tea-steam:after{animation:none}.inn-room-viewport::before{transition:none}.room-light-bright::after{animation:none;opacity:.22}}
 
 /* Question controls.
    Sized in em so they grow with the page text: at 200% zoom a px-sized button

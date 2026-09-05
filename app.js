@@ -5088,38 +5088,24 @@
         $("inn-status").textContent = "";
       }
     }else if(prompt.mechanic === "coordinate"){
+      // This used to also draw a green "handle" dot for each slider, floating
+      // on its own track above the timeline to mirror the slider's position.
+      // The two tracks measure position differently - the timeline centers
+      // labels across grid cells plus gaps, the handle track is a flat
+      // percentage across a margin-only box - so the dot never lined up under
+      // the hour it claimed to mark, or with the slider's own thumb below it.
+      // A floating indicator that visibly disagrees with the two sliders it
+      // is supposed to summarize is worse than no indicator: the labeled
+      // sliders already state the chosen hour in plain text, which is what
+      // the learner actually needs to solve the word problem.
       var timeline = document.createElement("div"); timeline.className = "schedule-timeline";
       timeline.style.gridTemplateColumns = "repeat(" + (interaction.max - interaction.min + 1) + ", 1fr)";
       for(var hour=interaction.min;hour<=interaction.max;hour++){ var mark=document.createElement("span"); mark.textContent=hour+":00"; timeline.appendChild(mark); }
       work.appendChild(timeline);
-      var handleTrack = document.createElement("div"); handleTrack.className = "schedule-handle-track";
-      var handleA = document.createElement("div"); handleA.className = "schedule-handle"; handleA.id = "handle-a"; handleA.setAttribute("aria-hidden", "true");
-      handleTrack.appendChild(handleA);
-      if(!interaction.fixedB){
-        var handleB = document.createElement("div"); handleB.className = "schedule-handle"; handleB.id = "handle-b"; handleB.setAttribute("aria-hidden", "true");
-        handleTrack.appendChild(handleB);
-      }
-      work.appendChild(handleTrack);
       var controls = document.createElement("div"); controls.className = "schedule-controls";
       controls.innerHTML = '<label>'+interaction.labelA+': <output id="arrival-a-out">'+innInteractionState.arrivalA+':00</output><input id="arrival-a" type="range" min="'+interaction.min+'" max="'+interaction.max+'" value="'+innInteractionState.arrivalA+'"></label><label>'+interaction.labelB+': <output id="arrival-b-out">'+innInteractionState.arrivalB+':00</output><input id="arrival-b" type="range" min="'+interaction.min+'" max="'+interaction.max+'" value="'+innInteractionState.arrivalB+'" '+(interaction.fixedB ? "disabled" : "")+'></label>';
       work.appendChild(controls);
-      function updateScheduleHandles(){
-        var a = Number($("arrival-a").value);
-        var b = Number($("arrival-b").value);
-        var span = interaction.max - interaction.min;
-        var elA = $("handle-a");
-        if(elA){
-          elA.style.left = ((a - interaction.min) / span * 100) + "%";
-          elA.classList.toggle("out-of-range", Math.abs(a - b) < interaction.gap);
-        }
-        var elB = $("handle-b");
-        if(elB){
-          elB.style.left = ((b - interaction.min) / span * 100) + "%";
-          elB.classList.toggle("out-of-range", Math.abs(a - b) < interaction.gap);
-        }
-      }
-      ["a","b"].forEach(function(key){ $("arrival-"+key).addEventListener("input", function(){ $("arrival-"+key+"-out").textContent = this.value + ":00"; updateScheduleHandles(); }); });
-      updateScheduleHandles();
+      ["a","b"].forEach(function(key){ $("arrival-"+key).addEventListener("input", function(){ $("arrival-"+key+"-out").textContent = this.value + ":00"; }); });
       var confirm = iconButton("calendar", "決定", "Confirm this schedule", "inn-action", {type:"confirmTimes"});
       confirm.addEventListener("click", function(event){ event.stopImmediatePropagation(); performInnAction({type:"setTimes",arrivalA:Number($("arrival-a").value),arrivalB:Number($("arrival-b").value),min:interaction.min,max:interaction.max,gap:interaction.gap,targetA:interaction.targetA,targetB:interaction.targetB}); });
       actions.appendChild(confirm);

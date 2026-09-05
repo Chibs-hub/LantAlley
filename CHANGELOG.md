@@ -5,6 +5,12 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-04 - The schedule question's floating time-card stopped disagreeing with its own sliders
+
+Reported live, mid-play: the checkout-time question ("調整") looked confusing - a row of hour labels, a green dot floating somewhere near them, and two labeled sliders below, none obviously connected. The dot was `.schedule-handle`, a second, independent visual meant to mirror each slider's position on the hour-label timeline above it. It never could: the timeline centers seven labels across grid cells plus 4px gaps inside 12px of padding, while the handle track placed its dot with a flat 0-100% linear percentage inside 12px of margin - two different box models computing "where is 13:00" differently, so the dot drifted away from both the label it claimed to mark and the slider thumb it was supposed to summarize. A separate, disconnected-looking element that visibly disagrees with the two controls that actually work is worse than not having it: removed the handle track and its dots entirely. The hour-label row and the two labeled sliders remain - the sliders already say the chosen hour in plain text, which is what solving the word problem requires. Also added `user-select:none` to both, since a slider drag that strayed onto the timeline text could catch it in a native selection highlight, which is what the reported "boxed 12:00" most likely was.
+
+No content or scoring changed - `applyCoordinate` in `moonview-inn-interactions.js` already validated the gap and target on submit regardless of what the handle showed beforehand. `node --test` passes 429/429. Cache is v248.
+
 ### 2026-09-04 - The cold open stopped repeating itself, a wave stopped playing for a bow, and the reward chip stopped crossing the wallet
 
 First real-learner feedback on the branch, not more of my own playtesting. Three fixes.
