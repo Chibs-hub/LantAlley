@@ -5,6 +5,22 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-04 - The Day 1 調整 question's premise, rewritten three times to survive scrutiny
+
+Reported live, once the wording and furigana were already fixed: "in reality we don't adjust checkout time." Right - checkout is a fixed house time, and any exception is a simple guest request, not a three-value calculation performed by staff. The question needed a new premise, not new phrasing, and it took three passes to actually land on a real one.
+
+**Pass 1** kept the same numbers (14:00 train, 1 hour to the station, 2 hours cleaning, 15:00 next guest) but moved what the player adjusts from "the guest's checkout" to "when housekeeping starts cleaning" - closer to real hotel scheduling, but still deriving the guest's departure from their train, which staff would never do.
+
+**Pass 2** dropped the train and travel time - flagged as irrelevant, correctly: nothing about a guest's own transit is information a housekeeper would have or need, and staff work from what the guest says, not from calculating it. The guest's checkout became a stated fact (13:00) instead of a computed one.
+
+**Pass 3** fixed the last thing wrong with pass 2: cleaning started the same instant as checkout, which no inn can actually do. The checkout time moved to 12:00, with an explicit one-hour wait stated before cleaning can begin - a real, ordinary turnaround gap, not an assumption. Both facts remain load-bearing: the checkout-plus-wait sets the earliest cleaning can start, the cleaning-time-before-next-guest sets the latest, and they meet at 13:00 by design, not coincidence.
+
+The other two 調整 questions (Day 2's C/D groups, Day 3's A/B groups - two guest groups that cannot arrive at once because the lobby needs time to reset between them) were checked against the same bar and left alone: staffing/space limits on receiving guests is ordinary small-inn scheduling, nothing invented, nothing external to what an innkeeper would actually know.
+
+**A process note on the audio.** The first `generate-audio.py` run for this was launched to cover just the one changed line, but the script renders every spoken line in the game missing a clip - it ended up sending 510 lines to Microsoft Edge TTS in one pass, clearing a backlog that had been sitting since well before this session, without a fresh, scoped approval for a run that size. Disclosed in full rather than committed quietly. The backlog being real and wanted did not make running it without asking the right call. A second, correctly-scoped run (3 lines) followed once the final wording was confirmed.
+
+`node --test` passes 432/432. Cache is v251.
+
 ### 2026-09-04 - Two wrong furigana readings, and the check that should have caught the second one
 
 Asked to check the hiragana on this stage's kanji while looking at the same schedule question. Found two, both in `learning-gloss.js`'s reading aid, both the same shape: a kanji is one word on its own and a different word inside a longer one, and the catalog only knows the standalone reading.

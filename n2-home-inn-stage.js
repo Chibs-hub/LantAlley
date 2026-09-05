@@ -106,13 +106,25 @@
       reading:"ちょうせい",
       actionType:"object interaction",
       label:"明日の予定を立てる",
-      narration:"コン：「お客様が部屋で休んでいる間に、明日の予定を決めておきましょう。お客様はできるだけ遅くまで滞在したいそうですが、駅への移動と掃除、次のお客様の準備時間も必要です。」",
-      jp:"電車は14時で、駅まで1時間かかります。掃除には2時間必要で、次のお客様は15時に来ます。できるだけ遅いチェックアウト時間に調整してください。",
-      romaji:"Densha wa juuyoji de, eki made ichijikan kakarimasu. Souji ni wa nijikan hitsuyou de, tsugi no okyakusama wa juugoji ni kimasu. Dekiru dake osoi chekku auto jikan ni chousei shite kudasai.",
-      meaning:"The train is at 14:00 and the station is one hour away. Cleaning needs two hours before the next guest arrives at 15:00. Coordinate the latest possible checkout.",
-      successReply:"ありがとうございます。チェックアウトを13時に調整できました。これなら電車にも掃除にも間に合います。",
+      // Real inns do not let staff move a guest's checkout time around like
+      // this - checkout is a fixed house time, and any exception is a simple
+      // request, not a calculation. Reported live three times running: the
+      // checkout-adjusting premise, then the train/travel-time math once
+      // that was fixed, then cleaning starting the same instant as checkout
+      // once that was fixed too - nothing hands a room straight over the
+      // second a guest leaves. The guest's checkout (12:00) is a stated
+      // fact; cleaning is stated as starting an hour after that, at the
+      // earliest, which is what actually separates the two times. The other
+      // side is unchanged: two hours of cleaning before the fixed 15:00
+      // arrival. Both facts remain load-bearing - removing either changes
+      // which bound produces 13:00.
+      narration:"コン：「お客様が部屋で休んでいる間に、明日の予定を決めておきましょう。お客様のチェックアウト時刻と、次のお客様の到着時刻を確認して、掃除を始める時間を調整してください。」",
+      jp:"お客様は12時にチェックアウトするそうです。チェックアウトの1時間後から掃除ができます。掃除には2時間必要です。次のお客様は15時に到着します。掃除を始める時間を調整してください。",
+      romaji:"Okyakusama wa juuniji ni chekku auto suru sou desu. Chekku auto no ichijikan go kara souji ga dekimasu. Souji ni wa nijikan hitsuyou desu. Tsugi no okyakusama wa juugoji ni touchaku shimasu. Souji o hajimeru jikan o chousei shite kudasai.",
+      meaning:"The guest says they'll check out at 12:00. Cleaning can start one hour after checkout at the earliest. Cleaning needs two hours. The next guest arrives at 15:00. Coordinate what time to start cleaning.",
+      successReply:"ありがとうございます。掃除を13時に始めるよう調整できました。これで次のお客様の到着にも間に合います。",
       retryReply:"時間の条件をもう一度確認してください。",
-      hint:"Use both the travel time and cleaning time. 調整 means reconciling several conditions.",
+      hint:"Use both the checkout time (plus its one-hour wait) and the cleaning time. 調整 means reconciling several conditions.",
       options:[
         {key:"adjust", emoji:"📅", label:"Coordinate the time"},
         {key:"lock", emoji:"🌡️", label:"Control the temperature"},
@@ -212,15 +224,15 @@
     roomScene({verb:"replace", target:"towel"}),
     roomScene({verb:"warm", target:"tea"}),
     {
-      scene:"checkout",
+      scene:"cleaning",
       // "Move the time card" named neither the control (a slider) nor which
       // of the two labeled sliders responds to it, and "a checkout board
       // with one adjustable time card" described the widget rather than the
       // constraint driving the puzzle - reported live as leaving a learner
       // unsure what to actually do.
       controlHelp:"Drag the slider to a time, then press 決定 to confirm.",
-      clue:"Only the checkout time can move. The next guest's check-in time is already fixed and cannot change.",
-      min:9,max:15,startA:10,startB:15,gap:2,targetA:13,targetB:15,fixedB:true,labelA:"チェックアウト",labelB:"次のチェックイン"
+      clue:"Only when cleaning starts can move. The next guest's arrival time is already fixed and cannot change.",
+      min:9,max:15,startA:10,startB:15,gap:2,targetA:13,targetB:15,fixedB:true,labelA:"掃除開始",labelB:"次のお客様到着"
     },
     {
       scene:"errand",

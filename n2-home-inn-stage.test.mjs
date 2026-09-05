@@ -544,10 +544,10 @@ test("every question provides matching scene context and non-answer control help
     assert.ok(item.interaction.clue.length > 20, item.focusWord);
     assert.ok(item.interaction.scene);
   }
-  const checkout = stage.encounters.find((item) => item.focusWord === "調整");
-  assert.match(checkout.jp, /14時/);
-  assert.match(checkout.jp, /2時間/);
-  assert.equal(checkout.interaction.targetA, 13);
+  const cleaning = stage.encounters.find((item) => item.focusWord === "調整");
+  assert.match(cleaning.jp, /12時/);
+  assert.match(cleaning.jp, /2時間/);
+  assert.equal(cleaning.interaction.targetA, 13);
   const arrivals = stage.challenge.find((item) => item.focusWord === "調整" && item.variant === "challenge-b");
   assert.match(arrivals.jp, /15時/);
   assert.match(arrivals.jp, /17時/);
