@@ -459,6 +459,10 @@
         correctWords: inn.correctWords || [],
         trainingWords: inn.trainingWords || [],
         misses: inn.misses || [],
+        encounterMissed: !!inn.encounterMissed,
+        dayMisses: inn.dayMisses || [],
+        reviewPasses: inn.reviewPasses || {},
+        reviewQueue: Array.isArray(inn.reviewQueue) ? inn.reviewQueue : null,
         mastered: !!inn.mastered,
         declined: !!inn.declined,
         medal: inn.medal || "none"
@@ -468,6 +472,7 @@
   function saveProgress(){
     try{
       if(state.currentKey === "home-inn"){
+        var reviewStart = state.encounterIndex + (state.stagePhase === "review" && state.answered ? 1 : 0);
         state.stageProgress.homeInn = {
           phase:state.stagePhase,
           index:state.encounterIndex,
@@ -475,6 +480,14 @@
           correctWords:Object.keys(state.challengeCorrectWords),
           trainingWords:Object.keys(state.trainingCorrectWords),
           misses:state.challengeMisses.map(function(item){ return item.focusWord; }),
+          encounterMissed:!!state.encounterMissed,
+          dayMisses:Object.keys(state.dayMisses || {}),
+          reviewPasses:Object.assign({}, state.reviewPasses || {}),
+          reviewQueue:state.stagePhase === "review" && state.phaseItems
+            ? state.phaseItems.slice(reviewStart).map(function(item){
+                return {word:item.focusWord, pass:Number(item.reviewPass) || 0};
+              })
+            : null,
           mastered:state.stageMastered,
           declined:state.stageDeclined,
           // Two gates, not one. Silver is the shift cleared: every word
@@ -504,6 +517,10 @@
           correctWords: inn.correctWords,
           trainingWords: inn.trainingWords,
           misses: inn.misses,
+          encounterMissed: inn.encounterMissed,
+          dayMisses: inn.dayMisses,
+          reviewPasses: inn.reviewPasses,
+          reviewQueue: inn.reviewQueue,
           mastered: inn.mastered,
           declined: inn.declined,
           medal: inn.medal
@@ -2250,6 +2267,7 @@
         if(previewState.missed.indexOf(entry.question.id) < 0) previewState.missed.push(entry.question.id);
         rememberMissedTarget(entry.question);
         showFeedback(false, "時間切れです。お客様を待たせました。この問題は最後にもう一度出ます。");
+        revealEpisodeTarget(entry.question);
         advancePreviewLater(false);
       }
     }, 100);
@@ -2449,6 +2467,7 @@
       if(!options.length){
         previewState.answered = true;
         showFeedback(true, "Action question - skipped in preview.");
+        revealEpisodeTarget(question);
         advancePreviewLater(true);
         return;
       }
@@ -2477,6 +2496,7 @@
       var chosen = (question.answer.options || [])[value];
       showFeedback(correct, correct ? "正解です。" + (earned ? " +¥" + earned : "")
         : (note ? "「" + chosen + "」 = " + note : "もう一度考えてみましょう。"));
+      revealEpisodeTarget(question);
       // A wrong answer used to re-render the same question after 1.8 seconds,
       // which wiped the explanation before it could be read - and retrying
       // makes no sense in a timed hour, where the guest has already been kept
@@ -2722,6 +2742,7 @@
     [...$("repair-controls").querySelectorAll("button")].forEach(function(b){ b.disabled = true; });
 
     var cardId = repair.queue[0];
+    var repairedQuestion = repair.byId[cardId];
     if(!repair.attempts) repair.attempts = {};
     if(outcome !== "correct") repair.attempts[cardId] = (repair.attempts[cardId] || 0) + 1;
     var result = LanternReviewEngine.answerRepair(
@@ -2730,7 +2751,6 @@
     rememberEpisode();
 
     if(outcome === "correct"){
-      var repairedQuestion = repair.byId[cardId];
       if(repairedQuestion) markMastered(state.currentKey, repairedQuestion.target);
       var repairPay = rewardCorrect(cardId, "review");
       showFeedback(true, "正解です。" + (repairPay ? " +¥" + repairPay : ""));
@@ -2747,6 +2767,7 @@
     }else{
       showFeedback(false, "正しい答えは「" + card.options[card.correctIndex] + "」です。");
     }
+    revealEpisodeTarget(repairedQuestion);
     rememberEpisode();
     setTimeout(function(){ if(previewState && previewState.repair) renderRepairCard(); }, 1400);
   }
@@ -2873,6 +2894,25 @@
     if(previewState.missedTargets.indexOf(question.target) < 0){
       previewState.missedTargets.push(question.target);
     }
+  }
+
+  // A time, picture, or action may test a word without printing its kanji.
+  // Name the exact catalog target after the attempt, never before it, so the
+  // feedback teaches the word without handing over the answer.
+  function revealEpisodeTarget(question){
+    if(!question || !question.target || typeof LanternCurriculumCatalog === "undefined") return;
+    var entry = LanternCurriculumCatalog.getItem && LanternCurriculumCatalog.getItem(question.target);
+    if(!entry) return;
+    var host = $("feedback-text");
+    if(!host) return;
+    var reveal = document.createElement("span");
+    reveal.id = "episode-target-reveal";
+    reveal.className = "episode-target-reveal";
+    var loc = getLocation(state.currentKey);
+    var override = loc && loc.getCardSense ? loc.getCardSense(entry.canonical) : null;
+    reveal.textContent = entry.canonical + "（" + (entry.reading || "") + "） - "
+      + (override || (entry.meanings && entry.meanings[0]) || "");
+    host.appendChild(reveal);
   }
 
   function episodeMistakeRows(){
@@ -3092,6 +3132,8 @@
     state.trainingCorrectWords = {};
     state.challengeMisses = [];
     state.reviewPasses = {};
+    state.dayMisses = {};
+    state.encounterMissed = false;
     state.stageMastered = false;
     startStagePhase(loc, "learn");
   }
@@ -3318,12 +3360,20 @@
       // Resuming into review rebuilt the identical Day 3 questions, which is
       // the behaviour the ladder replaced. Rebuild it the same way starting it
       // fresh does, so closing the tab does not quietly undo the redesign.
-      state.phaseItems = state.stagePhase === "review"
-        ? buildReviewQueue(loc, (resumed.misses || []).map(function(word){ return {focusWord:word}; }))
-        : null;
+      if(state.stagePhase === "review" && Array.isArray(resumed.reviewQueue)){
+        state.reviewPasses = Object.assign({}, resumed.reviewPasses || {});
+        state.phaseItems = resumed.reviewQueue.map(function(saved){
+          return loc.getReviewItem ? loc.getReviewItem(saved.word, saved.pass) : null;
+        }).filter(function(item){ return !!item; });
+      }else{
+        state.phaseItems = state.stagePhase === "review"
+          ? buildReviewQueue(loc, (resumed.misses || []).map(function(word){ return {focusWord:word}; }))
+          : null;
+      }
       if(state.phaseItems && !state.phaseItems.length){ state.stagePhase = "challenge"; state.phaseItems = null; }
       var resumeItems = state.phaseItems || loc.getPhaseItems(state.stagePhase);
-      state.encounterIndex = Math.max(0, Math.min(resumeItems.length - 1, Number(resumed.index) || 0));
+      state.encounterIndex = state.stagePhase === "review" && Array.isArray(resumed.reviewQueue)
+        ? 0 : Math.max(0, Math.min(resumeItems.length - 1, Number(resumed.index) || 0));
       state.challengeScore = Number(resumed.challengeScore) || 0;
       state.resumedAfterDecline = !!resumed.declined;
       state.stageDeclined = false;
@@ -3337,6 +3387,9 @@
         loc.encounters.slice(0, learnedCount).forEach(function(item){ state.trainingCorrectWords[item.focusWord] = true; });
       }
       state.challengeMisses = loc.challenge.filter(function(item){ return (resumed.misses || []).indexOf(item.focusWord) >= 0; });
+      state.encounterMissed = !!resumed.encounterMissed;
+      (resumed.dayMisses || []).forEach(function(word){ state.dayMisses[word] = true; });
+      if(state.stagePhase !== "review") state.reviewPasses = Object.assign({}, resumed.reviewPasses || {});
       state.stageMastered = !!resumed.mastered;
       state.resumedStageEntry = true;
     }
@@ -3550,6 +3603,7 @@
    */
   var homeView = "yard";      // "yard" | "interior" | "shop"
   var homeReturnView = "yard";
+  var homeSceneScroll = {yard:null, interior:null};
   var homeDecorating = false;
   var homeShopCategory = "plants";
   var homeSelected = null;    // {kind:"decor"|"plant", id:...} waiting to be placed
@@ -3589,6 +3643,34 @@
       + '<span class="home-scene-stars">' + (state.stars || 0) + ' ⭐</span>'
       + '<span class="home-scene-money">¥' + (state.money || 0) + '</span>'
       + '</div>';
+  }
+
+  function restoreHomeSceneCamera(){
+    var viewport = $("scene").querySelector("[data-home-scene-viewport]");
+    if(!viewport) return;
+    var area = viewport.getAttribute("data-home-scene-viewport");
+    viewport.addEventListener("scroll", function(){
+      if($("scene").querySelector("[data-home-scene-viewport]") !== viewport) return;
+      homeSceneScroll[area] = viewport.scrollLeft;
+    });
+    viewport.addEventListener("keydown", function(event){
+      if(event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      event.preventDefault();
+      viewport.scrollLeft += event.key === "ArrowRight" ? 72 : -72;
+      homeSceneScroll[area] = viewport.scrollLeft;
+    });
+    requestAnimationFrame(function(){
+      var maxScroll = Math.max(0, (viewport.scrollWidth || 0) - (viewport.clientWidth || 0));
+      var remembered = homeSceneScroll[area];
+      viewport.scrollLeft = remembered === null ? Math.round(maxScroll / 2) : Math.min(maxScroll, remembered);
+    });
+  }
+
+  function rememberHomeSceneCamera(){
+    var viewport = $("scene").querySelector("[data-home-scene-viewport]");
+    if(!viewport) return;
+    var area = viewport.getAttribute("data-home-scene-viewport");
+    homeSceneScroll[area] = viewport.scrollLeft;
   }
 
   /* Which species have painted art, and where each stage lives.
@@ -4132,7 +4214,7 @@
     var background = LanternHomeRoom.backgroundFor("yard", lighting);
 
     var html = '<div class="home-scene home-yard-scene light-' + lighting + '">'
-      + sceneLayer(background, "わが家の庭") + homePetMarkup("yard") + homeSceneChrome("yard");
+      + sceneLayer(background, "わが家の庭") + homePetMarkup("yard");
 
     // The house is a real button, not a hot region with no name: a learner who
     // cannot see the picture still has to be able to go inside.
@@ -4212,7 +4294,7 @@
     var background = LanternHomeRoom.backgroundFor("interior", lighting);
     var html = '<div class="home-scene home-interior-scene light-' + lighting + '">'
       + sceneLayer(background, "わが家の部屋")
-      + wallpaperLayer() + homePetMarkup("interior") + homeSceneChrome("interior");
+      + wallpaperLayer() + homePetMarkup("interior");
 
     // The open veranda already reads as the way out; a labeled hotspot over
     // it matches the yard's own house hotspot rather than leaving only the
@@ -4801,6 +4883,7 @@
   }
 
   function paintHome(){
+    rememberHomeSceneCamera();
     if(typeof LanternHomeDecor === "undefined" || !homeScenes()){
       $("scene").innerHTML = '<div class="home-room"></div>';
       return;
@@ -4822,8 +4905,16 @@
     var hint = homeSelected
       ? '<span class="home-hint">置きたい場所をえらんでください</span>' : '';
 
+    var homeArea = homeView === "yard" ? "yard" : "interior";
     $("scene").innerHTML = '<div class="home-room">'
+      + '<div class="home-scene-camera">'
+      + homeSceneChrome(homeArea)
+      + '<div class="home-scene-viewport" data-home-scene-viewport="' + homeArea + '"'
+      + ' tabindex="0" aria-label="Scrollable home scene">'
       + (homeView === "yard" ? renderHomeYard() : renderHomeInterior())
+      + '</div>'
+      + '<p class="home-pan-hint" aria-hidden="true">&larr; Swipe to look around &rarr;</p>'
+      + '</div>'
       /* The wallet is already in the HUD a few pixels above; printing it again
        * under the picture was the same number twice. What is left is the line
        * that says something the HUD cannot: what to do next. */
@@ -4848,6 +4939,7 @@
       + '</div>'
       + tutorialPanel();
     homeNotice = "";
+    restoreHomeSceneCamera();
     startHomePetMotion();
     renderHud();
     settleGrowth();

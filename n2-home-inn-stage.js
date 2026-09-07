@@ -416,6 +416,20 @@
     }
   ];
 
+  // Day 3 is audio-only, so its two word-choice items need complete spoken
+  // requests rather than Day 2's visible cloze. These lines and replies are
+  // also used by Episode 1, so their actor recordings remain available here.
+  var challengeListening = {
+    2:{
+      jp:"お客様：「このお茶、冷めてしまいました。同じものを温かくしていただけますか。」",
+      successReply:"温かいお茶をお出しできました。飲み物には「温める」を使います。"
+    },
+    4:{
+      jp:"コン：「明日の朝、駅までお客様を送る仕事があります。お願いできますか。」",
+      successReply:"任せました。責任を持ってやると決めるのが「引き受ける」です。"
+    }
+  };
+
   var japaneseOptions = [
     ["揃える", "揃う", "散らかす"],
     ["取り替える", "代える", "取り替わる"],
@@ -534,6 +548,8 @@
     var guided = variant === "guided";
     var text = guided ? base : (variant ? practiceVariantsB[index] : practiceVariantsA[index]);
     format = format || (phase === "practice" ? "choice" : "task");
+    var choiceContent = phase === "challenge" && challengeListening[index]
+      ? challengeListening[index] : practiceWordChoice[index];
     var options = format === "choice"
       ? practiceWordChoice[index].options.map(function(option){
           return {
@@ -565,14 +581,14 @@
       label:text.label || base.label,
       narration:guided ? base.narration
         : (variant ? evidenceNarrationsB[index] : evidenceNarrationsA[index]),
-      jp:format === "choice" ? practiceWordChoice[index].jp : text.jp,
+      jp:format === "choice" ? choiceContent.jp : text.jp,
       // Support is withdrawn one layer per day, so the three days differ in
       // difficulty rather than only in situation:
       //   Day 1 基礎   Japanese + romaji + English meaning + hint
       //   Day 2 実践   Japanese + tappable support-word glosses, no romaji
       //   Day 3 挑戦   audio only
       meaning:phase === "learn" ? text.meaning : "",
-      successReply:format === "choice" ? practiceWordChoice[index].successReply : text.successReply,
+      successReply:format === "choice" ? choiceContent.successReply : text.successReply,
       romaji:phase === "learn" ? (text.romaji || base.romaji) : "",
       hint:phase === "learn" ? "Use the subject, object, and scene result to decide whether the request describes a deliberate action or a change of state." : "",
       replyResponses:null,
@@ -601,26 +617,8 @@
     return phaseItem(index, false, "practice");
   });
 
-  /* Day 3 is all task for now, and that is a known compromise.
-   *
-   * 温める and 引き受ける do not need the room: the first turns on food versus
-   * a room and the second is a decision, so neither is demonstrated by
-   * dragging anything - and 引き受ける's task is a two-button accept/decline,
-   * which is a coin flip sitting inside the final test. Both should be
-   * answered by naming the word instead. `format` exists for exactly that.
-   *
-   * What blocks it is content, not code. A word-choice question cannot speak a
-   * sentence that contains its own answer, so those two need a listening
-   * prompt written for them - the way Episode 1 does it, a guest saying
-   * 「このお茶、冷めてしまいました。」 - plus option sets in the right form.
-   * Reusing Day 2's cloze lines was the cheap way out and would have had Day 3
-   * read yesterday's sentence back with a blank in it.
-   *
-   * So it waits for the content pass. Until then 引き受ける can be passed by
-   * guessing, which the gate does not yet catch.
-   */
   var challenge = [0, 1, 2, 3, 4].map(function(index){
-    return phaseItem(index, true, "challenge");
+    return phaseItem(index, true, "challenge", index === 2 || index === 4 ? "choice" : "task");
   });
 
   /* The review ladder: the same word, a different way of asking, every time.
@@ -659,7 +657,9 @@
     var index = indexOfWord(word);
     if(index < 0) return null;
     var rung = REVIEW_LADDER[Math.max(0, Number(pass) || 0) % REVIEW_LADDER.length];
-    return phaseItem(index, rung.variant, "review", rung.format);
+    return copyItem(phaseItem(index, rung.variant, "review", rung.format), {
+      reviewPass:Math.max(0, Number(pass) || 0)
+    });
   }
 
   function getReviewLadderLength(){

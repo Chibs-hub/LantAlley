@@ -11,7 +11,7 @@ Written 2026-09-07 on `codex/inn-learning-redesign`.
 | C8 | Wrong-answer sound | **done** - v263 |
 | C1 | All five words on all three days | **done** - v264, 15 clips rendered |
 | C3 | Job board | **done** - v267 |
-| C5 | Day 3 format split | blocked on content - see the note in the source |
+| C5 | Day 3 format split | **done** - 温める and 引き受ける use recorded listening prompts |
 | C6 | Review ladder | **done** - v270 |
 | C7 | Two gates (silver today, gold on retention) | **done** - v270 |
 | W1 | Rewrite the throwaway distractors | not started |
@@ -39,11 +39,8 @@ Two things found while building, recorded because they change the plan:
 
 ## What is left
 
-`C5` and `W1`-`W3` are all content work needing a native check, not code:
+`W1`-`W3` remain content work needing a native check:
 
-- **C5** needs a listening prompt and an option set written for 温める and
-  引き受ける, so Day 3 can ask them by name instead of by task. Until then
-  引き受ける can be passed on a coin flip.
 - **W1** the four cloze options behave like two - one real near-miss and two
   throwaways.
 - **W2** 引き受ける has one scenario, so its review ladder repeats a screen.
@@ -98,10 +95,10 @@ colour on the map.
 ## 2. Target flow
 
 ```
-cold open (one task you cannot do yet)      <- unchanged, single attempt
+job board: tonight's five jobs              <- names the learning goal first
    |
    v
-job board: tonight's five jobs              <- NEW, replaces nothing today
+cold open (one unsupported task)             <- single attempt, unscored
    |
    v
 Day 1 基礎   5 guided tasks, full support
@@ -163,7 +160,7 @@ failure honestly today. That separation is correct. Keep it.
 ### C3. Job board replaces the word list and the progress readouts
 
 **What:** one screen, styled as the innkeeper's board of jobs for the shift.
-Shown after the cold open, and again between days. Five jobs, each carrying its
+Shown before the cold open, and again between days. Five jobs, each carrying its
 word. Completed jobs check off as words are cleared.
 
 **Why:** the learner needs to know the target words up front and needs to see
@@ -171,19 +168,22 @@ what is still weak - but three separate status screens in a fifteen minute
 session stop the story dead, and grey chips read as failure. One board that
 fills in is a checklist, not a report card, and it fits the fiction.
 
-**Placement:** after the cold open, never before it. The cold open works
-because you feel the need before you are given the words.
+**Placement:** before the cold open. Live testing showed that putting an
+unsupported task first felt like being dropped into unexplained work. The
+board names the five-word goal without telling the learner which word solves
+the cold-open scene.
 
 **Cost:** new screen in `app.js`, new styles. Save format gains per-word state.
 
-### C4. Day 2 uses mixed formats
+### C4. Day 2 retrieves all five words in a new format
 
-**What:** 3 cloze plus 2 guided tasks with support reduced (no romaji).
+**What:** five four-choice Japanese clozes with support reduced (no romaji and
+no full-sentence translation).
 
-**Why:** five cloze items in a row is read-blank-tap five times, with no scene,
-no mechanic and no consequence. It costs only about forty seconds more than
-three, but attention is not measured in seconds. Coverage is about words, not
-about the format being uniform.
+**Why:** Day 1 tests whether the learner can carry out each job. Day 2 changes
+the retrieval demand consistently: read a new sentence and choose the Japanese
+form that fits it. The four choices include the important near miss rather than
+letting the learner repeat the room solution from memory.
 
 ### C5. Day 3 keeps the mechanic only where the action carries the meaning
 

@@ -365,7 +365,8 @@ test("dialogue replies are neutral, plausible, and do not reveal acceptance", ()
   // Day 2 asks this item as a vocabulary cloze, where 引き止めて is a fair near
   // miss. Only the days that actually make the offer must stay neutral, since
   // marking a reply as a near miss would prejudge a social choice.
-  const offerItems = [...stage.encounters, ...stage.challenge].filter((entry) => entry.mechanic === "undertake");
+  const offerItems = [...stage.encounters, ...stage.challenge]
+    .filter((entry) => entry.mechanic === "undertake" && entry.format === "task");
   for (const item of offerItems) {
     assert.equal(item.options.some((option) => option.nearMiss), false, item.variant);
     assert.deepEqual(
@@ -597,7 +598,7 @@ test("the request names the appliance it requires", () => {
   const applianceWord = { stove: "コンロ", microwave: "電子レンジ" };
 
   for (const item of [...stage.encounters, ...stage.practice, ...stage.challenge]) {
-    if (item.mechanic !== "warm") continue;
+    if (item.mechanic !== "warm" || item.format !== "task") continue;
     const dish = item.interaction.room.dishes.find((d) => d.key === item.interaction.target);
     assert.ok(dish, `no dish for target ${item.interaction.target}`);
     assert.match(
@@ -1291,5 +1292,31 @@ test("every review rung speaks a line that has a recorded clip", () => {
       const rung = stage.getReviewItem(item.focusWord, pass);
       assert.ok(audio[rung.jp], `review rung ${pass} for ${item.focusWord} has no clip: ${rung.jp}`);
     }
+  }
+});
+
+test("Day 3 tests warming and accepting by listening, not by a guessable room action", () => {
+  const context = {};
+  context.self = context;
+  vm.createContext(context);
+  vm.runInContext(readFileSync(new URL("./moonview-inn-interactions.js", import.meta.url), "utf8"), context);
+  vm.runInContext(readFileSync(stageUrl, "utf8"), context);
+  vm.runInContext(readFileSync(new URL("./audio-index.js", import.meta.url), "utf8"), context);
+  const stage = context.N2HomeInnStage;
+  const audio = context.LanternAlleyAudio;
+  const challenge = stage.getPhaseItems("challenge");
+
+  for (const word of ["温める", "引き受ける"]) {
+    const item = challenge.find((candidate) => candidate.focusWord === word);
+    assert.equal(item.format, "choice", `${word} must be answered by naming what was heard`);
+    assert.equal(item.options.length, 4, `${word} needs four plausible Japanese choices`);
+    assert.doesNotMatch(item.jp, /（　　）/, `${word} must not read a cloze aloud`);
+    assert.equal(item.jp.includes(word), false, `${word} must not say its own answer`);
+    assert.ok(audio[item.jp], `${word} listening prompt needs a recorded clip`);
+    assert.ok(audio[item.successReply], `${word} correct reply needs a recorded clip`);
+  }
+
+  for (const word of ["揃える", "取り替える", "調整"]) {
+    assert.equal(challenge.find((item) => item.focusWord === word).format, "task");
   }
 });

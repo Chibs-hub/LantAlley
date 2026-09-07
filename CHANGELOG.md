@@ -5,6 +5,26 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-07 - Mobile home scenes are tall, pannable cameras
+
+The yard and room previously kept their full 16:9 painting inside the phone width, leaving only about 211px of scene height at 375px. Enlarging or cropping that picture directly would move or hide the percentage-positioned plants, furniture, cat, and door controls. Mobile now places the unchanged 16:9 scene inside a 300px to 390px-tall horizontal camera. A short `Swipe to look around` cue explains the gesture, while the scrollbar track stays out of the artwork.
+
+The yard and interior remember separate camera positions. Only the currently mounted viewport may update that memory, preventing a late scroll event from a replaced node from resetting the position to zero. A fixed map or yard exit remains in the mobile chrome even when the painted exit is off-camera. Desktop keeps the original full-width scene with no swipe cue or duplicate exit.
+
+Verified in real browser captures at 375x812 and 844x794. At 375px, both scenes are 374px tall, the page has no horizontal overflow, and a yard -> room -> yard -> room round trip restored scroll positions 42 and 210 independently. `node --test` passes 462/462. Cache is v276.
+
+### 2026-09-07 - Inn questions now identify what they teach and survive a reload honestly
+
+The Inn audit found three connected learning failures. The reading aid used valid standalone catalog readings in the wrong grammatical context, including 空 read から in 空いています, 何 read なに in 何と言いますか, and 分 read ぶ in 分かりました. Narrow context rules now provide the correct reading only where the surrounding kana makes it unambiguous, while preserving the original standalone reading elsewhere.
+
+An episode could test a time, action, or situation without ever showing the exact target kanji on that question. Correct, incorrect, timeout, and correction-round feedback now end with the catalog word, reading, and meaning. The panel appears only after the answer, so it teaches the target without revealing it beforehand. The episode word board remains derived from the complete question list, guaranteeing every target is listed before the shift.
+
+Day 3 no longer tests 温める with an unnecessary room action or 引き受ける with a 50/50 accept/decline guess. Both now use four-choice listening with realistic requests and existing actor recordings; 揃える, 取り替える, and 調整 retain the actions that demonstrate their meaning.
+
+Finally, the stage save now keeps whether the current item was already missed, the day's mistake set, the review pass map, and the remaining review queue. Reloading can no longer turn a corrected miss into first-attempt credit or send a review word back to rung zero. The rebuild plan and handoff now match the actual board-first, 5/5/5 flow.
+
+Verified in the local v274 browser through the job board, cold open, all three days, both new Day 3 listening items, the Episode 1 ten-word board, and correct and incorrect target feedback. `node --test` passes 460/460. Cache is v274.
+
 ### 2026-09-07 - The audio schedule task is replayable and now describes real dinner service
 
 The Day 3 `調整` task had two separate problems. Its Challenge prompt said only `音声を聞いてください。`, and the small speaker beside it replayed that placeholder instead of the hidden Japanese request. A learner could neither reliably find an explicit replay action nor hear the actual request again. Challenge now offers a labelled `Listen again` button. It replays the Japanese clip without replacing the audio-only prompt with written Japanese.

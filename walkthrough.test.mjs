@@ -694,6 +694,68 @@ test("home lighting is automatic and has no manual controls", () => {
   assert.ok(game.doc.querySelectorAll(".home-scene")[0].className.includes("light-"));
 });
 
+test("the mobile home uses a tall, pannable camera without moving scene coordinates", () => {
+  const game = boot(plantedCamelliaSave());
+  enterHome(game);
+
+  const camera = game.doc.querySelector(".home-scene-camera");
+  const viewport = game.doc.querySelector("[data-home-scene-viewport]");
+  assert.ok(camera, "the yard needs a camera frame around its full painting");
+  assert.ok(viewport, "the yard needs a horizontally pannable viewport");
+  assert.equal(viewport.getAttribute("tabindex"), "0", "keyboard users must be able to pan it");
+  assert.ok(game.doc.querySelector(".home-pan-hint"), "the swipe interaction needs a visible cue");
+
+  game.doc.querySelectorAll("[data-enter-house]")[0].click();
+  assert.equal(game.doc.querySelector("[data-home-scene-viewport]").dataset.homeSceneViewport, "interior");
+
+  const css = read("styles.css");
+  const mobile = css.slice(css.indexOf("Mobile home camera"));
+  assert.match(mobile, /@media\(max-width:620px\)/);
+  assert.match(mobile, /height:clamp\(300px,46svh,390px\)/);
+  assert.match(mobile, /overflow-x:auto/);
+  assert.match(mobile, /touch-action:pan-x/);
+  assert.match(mobile, /\.home-scene-chrome \.home-scene-back\{display:block\}/,
+    "mobile keeps a fixed exit even when the painted exit is off-camera");
+});
+
+test("the home remembers a separate pan position for the yard and room", () => {
+  const game = boot(plantedCamelliaSave());
+  enterHome(game);
+
+  const yard = game.doc.querySelector("[data-home-scene-viewport]");
+  yard.scrollWidth = 600;
+  yard.clientWidth = 320;
+  yard.scrollLeft = 42;
+  yard.dispatchEvent(new FakeEvent("scroll", { bubbles: false }));
+
+  game.doc.querySelectorAll("[data-enter-house]")[0].click();
+  const room = game.doc.querySelector("[data-home-scene-viewport]");
+  room.scrollWidth = 600;
+  room.clientWidth = 320;
+  game.clock.advance(20);
+  room.scrollLeft = 210;
+  room.dispatchEvent(new FakeEvent("scroll", { bubbles: false }));
+
+  // A browser may deliver one final scroll event from the node paintHome just
+  // detached. It must not erase the value saved before the room transition.
+  yard.scrollLeft = 0;
+  yard.dispatchEvent(new FakeEvent("scroll", { bubbles: false }));
+
+  game.doc.querySelectorAll("[data-leave-house]")[0].click();
+  const yardAgain = game.doc.querySelector("[data-home-scene-viewport]");
+  yardAgain.scrollWidth = 600;
+  yardAgain.clientWidth = 320;
+  game.clock.advance(20);
+  assert.equal(yardAgain.scrollLeft, 42, "the yard returns to its own camera position");
+
+  game.doc.querySelectorAll("[data-enter-house]")[0].click();
+  const roomAgain = game.doc.querySelector("[data-home-scene-viewport]");
+  roomAgain.scrollWidth = 600;
+  roomAgain.clientWidth = 320;
+  game.clock.advance(20);
+  assert.equal(roomAgain.scrollLeft, 210, "the room keeps a different camera position");
+});
+
 test("the home shop opens as its own stage", () => {
   const game = boot(plantedCamelliaSave());
   enterHome(game);
@@ -1674,6 +1736,63 @@ test("an episode question does not print its citation as Kon's speech", async ()
     "the citation belongs on the opening card, not in the character's speech slot");
 });
 
+async function openFirstEpisodeQuestion(game) {
+  await enterTheInn(game);
+  game.$("btn-skip-stage").click();
+  game.$("btn-next").click();
+  game.clock.advance(500);
+  game.$("btn-episode-begin").click();
+  game.clock.advance(300);
+  game.$("btn-brief-begin").click();
+  game.clock.advance(300);
+  game.$("btn-words-begin").click();
+  game.clock.advance(300);
+}
+
+test("every episode answer names the exact learning word after the attempt", async () => {
+  for (const outcome of ["correct", "incorrect"]) {
+    const game = boot(null, "?skip=1");
+    await openFirstEpisodeQuestion(game);
+    const question = game.context.N2InnEpisodes.episodes[0].days[0].questions[0];
+    const catalog = game.context.LanternCurriculumCatalog.getItem(question.target);
+    const choices = game.$("preview-controls").querySelectorAll("button");
+    const picked = outcome === "correct"
+      ? question.answer.correctIndex
+      : choices.findIndex((_, index) => index !== question.answer.correctIndex);
+    choices[picked].click();
+    game.clock.advance(100);
+
+    const reveal = game.$("episode-target-reveal");
+    assert.ok(reveal, `${outcome} feedback needs a learning-word panel`);
+    assert.match(reveal.textContent, new RegExp(catalog.canonical));
+    assert.match(reveal.textContent, new RegExp(catalog.reading));
+    assert.match(reveal.textContent, new RegExp(catalog.meanings[0]));
+  }
+});
+
+test("an episode timeout still teaches the exact word", () => {
+  // Fake audio deliberately rejects, so its promise-driven speech fallback
+  // cannot be advanced reliably by the synchronous fake clock. Pin the actual
+  // timeout branch instead; correct and incorrect rendering are exercised live
+  // by the preceding DOM test.
+  const app = read("app.js");
+  const timeout = app.slice(app.indexOf("時間切れです。お客様を待たせました"));
+  assert.match(timeout.slice(0, 240), /revealEpisodeTarget\(entry\.question\)/);
+});
+
+test("episode repair answers also name their learning word", () => {
+  const app = read("app.js");
+  const repair = app.slice(app.indexOf("function settleRepair"));
+  assert.match(repair.slice(0, 2400), /revealEpisodeTarget\(repairedQuestion\)/);
+});
+
+test("the episode word board is built from every question target", () => {
+  const app = read("app.js");
+  const board = app.slice(app.indexOf("function renderEpisodeWordBoard"));
+  assert.match(board.slice(0, 800), /previewState\.list\.forEach/);
+  assert.match(board.slice(0, 800), /entry\.question\.target/);
+});
+
 test("finishing a stage starts its episode once, not twice", async () => {
   // The last correct answer of Challenge schedules a deferred advance, and
   // btn-next performs the same advance immediately. Both reach
@@ -1772,6 +1891,46 @@ test("a word guessed on the second try is not credited as known", async () => {
     [],
     "a word reached by trial and error was credited as training evidence",
   );
+});
+
+test("a retryable miss remains a miss after reloading the page", async () => {
+  const first = boot(practiceQuestionSave(0));
+  await openResumedInnScheduleChallenge(first);
+  const item = practiceItem(first, 0);
+  const wrong = item.options.find((option) => option.key !== item.correct);
+  optionButton(first, wrong.label).click();
+  first.clock.advance(100);
+
+  const saved = JSON.parse(first.storage.getItem("lanternAlley.v3"));
+  const stored = saved.stages["home-inn"];
+  assert.equal(stored.encounterMissed, true);
+  assert.deepEqual(stored.dayMisses, [item.focusWord]);
+
+  const reloaded = boot(saved);
+  await openResumedInnScheduleChallenge(reloaded);
+  const right = practiceItem(reloaded, 0).options.find((option) => option.key === item.correct);
+  optionButton(reloaded, right.label).click();
+  reloaded.clock.advance(3000);
+  await tick();
+  assert.deepEqual(savedTrainingWords(reloaded), [],
+    "reload must not turn a corrected miss into first-attempt evidence");
+});
+
+test("a review word resumes on the rung reached before reloading", async () => {
+  const seed = practiceQuestionSave(0);
+  seed.stages["home-inn"].phase = "review";
+  seed.stages["home-inn"].misses = ["取り替える"];
+  seed.stages["home-inn"].reviewPasses = {"取り替える": 1};
+  seed.stages["home-inn"].reviewQueue = [{word:"取り替える", pass:1}];
+
+  const game = boot(seed);
+  await openResumedInnScheduleChallenge(game);
+  const expected = game.context.N2HomeInnStage.getReviewItem("取り替える", 1);
+  assert.equal(game.$("scene-label").textContent, "月見宿・N2 - " + expected.label);
+  assert.equal(game.$("inn-word-choice"), null,
+    "resume rebuilt rung 0's word choices instead of rung 1's room task");
+  assert.ok(game.doc.querySelectorAll(".inn-object").length > 0,
+    "the saved rung 1 room task did not render");
 });
 
 test("a word answered right the first time is credited", async () => {

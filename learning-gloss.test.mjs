@@ -201,3 +201,35 @@ test("a reading that is real but wrong for this context is left unglossed", () =
   // a switch that turned the feature off.
   assert.match(inside, /れんしゅう/, "練習 still glosses");
 });
+
+test("Inn sentences use the reading required by their grammatical context", () => {
+  const { LanternGloss: gloss, LanternCurriculumCatalog: catalog } = load();
+  const index = gloss.buildIndex(catalog);
+  const cases = [
+    ["空いています", "空", "あ"],
+    ["何と言いますか", "何", "なん"],
+    ["正しく確認してください", "正", "ただ"],
+    ["分かりました", "分", "わ"],
+    ["明後日までお預かりします", "明後日", "あさって"],
+    ["清掃は終わっています", "終", "お"],
+    ["まだ生きている花です", "生", "い"],
+    ["下の欄を見てください", "下", "した"],
+    ["お預かり品です", "品", "ひん"],
+    ["申し上げません", "上", "あ"],
+    ["戸締まりの後です", "後", "あと"],
+    ["館内を見て回ってください", "回", "まわ"],
+  ];
+
+  for (const [sentence, word, reading] of cases) {
+    const html = gloss.annotate(sentence, index, {}, "ruby");
+    assert.match(
+      html,
+      new RegExp(`<ruby class="gloss-ruby">${word}<rt>${reading}</rt></ruby>`),
+      `${sentence}: ${word} needs ${reading}`,
+    );
+  }
+
+  // The override must be contextual. 品 standing alone is still しな.
+  const standalone = gloss.annotate("傷のない品です", index, {}, "ruby");
+  assert.match(standalone, /品<rt>しな<\/rt>/);
+});

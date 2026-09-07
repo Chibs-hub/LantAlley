@@ -53,6 +53,28 @@
   // same one. Left unglossed there rather than glossed with とき.
   var DIGIT = /[0-9０-９]/;
 
+  /* A catalog headword can be the right string and still need another reading
+   * inside a conjugation or fixed phrase. Keep these overrides deliberately
+   * narrow: each one names the neighbouring kana that makes the reading
+   * unambiguous, so 品 remains しな on its own but is ひん in お預かり品. */
+  function contextualReading(word, source, at, fallback){
+    var before = at > 0 ? source.charAt(at - 1) : "";
+    var after = source.slice(at + word.length);
+    if(word === "空" && after.indexOf("いて") === 0) return "あ";
+    if(word === "何" && after.indexOf("と") === 0) return "なん";
+    if(word === "正" && after.indexOf("しく") === 0) return "ただ";
+    if(word === "分" && after.indexOf("か") === 0) return "わ";
+    if(word === "明後日" && after.indexOf("まで") === 0) return "あさって";
+    if(word === "終" && /^[わえ]/.test(after)) return "お";
+    if(word === "生" && after.indexOf("き") === 0) return "い";
+    if(word === "下" && after.indexOf("の") === 0) return "した";
+    if(word === "品" && before === "り") return "ひん";
+    if(word === "上" && before === "し" && after.indexOf("げ") === 0) return "あ";
+    if(word === "後" && before === "の") return "あと";
+    if(word === "回" && after.indexOf("っ") === 0) return "まわ";
+    return fallback;
+  }
+
   function hasKanji(text){
     return KANJI.test(text || "");
   }
@@ -137,12 +159,13 @@
       if(matched){
         if(plain){ out += escapeHtml(plain); plain = ""; }
         var entry = index.byWord[matched];
+        var reading = contextualReading(matched, source, i, entry.reading);
         if(mode === "ruby"){
           out += '<ruby class="gloss-ruby">' + escapeHtml(matched)
-            + '<rt>' + escapeHtml(entry.reading) + '</rt></ruby>';
+            + '<rt>' + escapeHtml(reading) + '</rt></ruby>';
         }else{
           out += '<button type="button" class="gloss" data-reading="'
-            + escapeHtml(entry.reading) + '" data-meaning="' + escapeHtml(entry.meaning)
+            + escapeHtml(reading) + '" data-meaning="' + escapeHtml(entry.meaning)
             + '" aria-label="' + escapeHtml(matched + " の読みと意味") + '">'
             + escapeHtml(matched) + '</button>';
         }
