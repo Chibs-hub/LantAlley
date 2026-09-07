@@ -7,7 +7,7 @@
  * Bump CACHE_VERSION whenever any shell file changes, or returning players
  * will keep the old build.
  */
-var CACHE_VERSION = "lantern-alley-v261";
+var CACHE_VERSION = "lantern-alley-v262";
 
 // audio-index.js assigns to `self`, so the worker and the page share one list
 // of clip paths. Importing it here means new lines are cached automatically
@@ -130,8 +130,59 @@ var SHELL = [
   "./assets/fox/fox-listening-transparent-v2.webp"
 ];
 
-Object.keys(self.LanternAlleyAudio || {}).forEach(function(line){
-  SHELL.push("./" + self.LanternAlleyAudio[line]);
+/* Audio is cached in groups, not all at once.
+ *
+ * The full set is 605 clips and 26.6 MB. A brand new player can reach the
+ * Entrance and the Inn's three days, which is 46 clips and 2.2 MB; the other
+ * 24.4 MB is episode audio for five stages behind progression gates. Caching
+ * all of it at install made a first run download twenty-four megabytes before
+ * the learner could answer one question.
+ *
+ * So the shell group installs, and an episode stage's group is fetched when
+ * the page asks for it - see the "prefetch-audio" message below. A clip that
+ * is somehow missing is not fatal: speak() falls back to the device voice.
+ *
+ * The fallback keeps an older index working. If audio-index.js predates the
+ * groups, cache everything rather than shipping a build with no audio at all.
+ */
+var AUDIO_GROUPS = self.LanternAlleyAudioGroups || null;
+
+if(AUDIO_GROUPS && AUDIO_GROUPS.shell){
+  AUDIO_GROUPS.shell.forEach(function(path){ SHELL.push("./" + path); });
+}else{
+  Object.keys(self.LanternAlleyAudio || {}).forEach(function(line){
+    SHELL.push("./" + self.LanternAlleyAudio[line]);
+  });
+}
+
+/* Fetch one audio group into the active cache.
+ *
+ * Unlike install, a failure here is swallowed per file. Install fails hard
+ * because a half-cached shell breaks offline in confusing ways; this runs
+ * while the learner is already playing, and a stage whose audio did not
+ * arrive falls back to the device voice rather than breaking.
+ */
+function cacheAudioGroup(name){
+  var paths = (AUDIO_GROUPS || {})[name];
+  if(!paths || !paths.length) return Promise.resolve();
+  return caches.open(CACHE_VERSION).then(function(cache){
+    return Promise.all(paths.map(function(path){
+      var url = "./" + path;
+      return cache.match(url).then(function(hit){
+        if(hit) return null;
+        return fetch(url).then(function(res){
+          if(!res || res.status !== 200) return null;
+          return cache.put(url, res);
+        }).catch(function(){ return null; });
+      });
+    }));
+  });
+}
+
+self.addEventListener("message", function(event){
+  var data = event.data || {};
+  if(data.type !== "prefetch-audio" || !data.group) return;
+  event.waitUntil(cacheAudioGroup(data.group));
 });
 
 self.addEventListener("install", function(event){

@@ -275,6 +275,32 @@
     return true;
   }
 
+  /* Ask the service worker to cache one stage's episode audio.
+   *
+   * The worker installs only the shell group - the Entrance and the Inn's
+   * three days, 2.2 MB - because the full set is 26.6 MB and the rest sits
+   * behind progression gates. This is what pulls a stage's own clips down,
+   * called on the way into that stage so they arrive before the episode does.
+   *
+   * Entirely best-effort. No worker (file://, first load before it activates,
+   * a browser with none) simply means the clips are fetched when they are
+   * played, and a clip that never arrives falls back to the device voice.
+   */
+  var prefetchedAudioGroups = {};
+
+  function prefetchStageAudio(key){
+    if(!key || prefetchedAudioGroups[key]) return;
+    prefetchedAudioGroups[key] = true;
+    try{
+      if(!("serviceWorker" in navigator)) return;
+      var worker = navigator.serviceWorker.controller;
+      if(!worker) return;
+      worker.postMessage({type:"prefetch-audio", group:"episodes:" + key});
+    }catch(err){
+      // Prefetching is an optimisation. It must never stop a stage opening.
+    }
+  }
+
   // `displayText` lets the audio and the written line differ. Day 3 speaks the
   // request but must show 「音声を聞いてください。」; without this the reveal
   // typed out the sentence the learner is supposed to be listening for.
@@ -2790,6 +2816,10 @@
     $("entrance-progress").hidden = loc.key !== "entrance";
 
     state.currentKey = key;
+    // The three days run about fifteen minutes and the episode follows them
+    // immediately, so ask for that stage's audio on the way in rather than at
+    // the episode's first question.
+    prefetchStageAudio(key);
     state.mistakesThisVisit = 0;
     state.selected = 0;
     state.answered = false;

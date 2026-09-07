@@ -6,6 +6,17 @@ import vm from "node:vm";
 
 const read = (name) => readFileSync(new URL("./" + name, import.meta.url), "utf8");
 
+// Run audio-index.js the way sw.js does rather than slicing JSON out of it.
+// The file now declares a second object - the per-stage cache groups - and the
+// old "first { to last }" slice swallowed both and failed to parse.
+const audioIndex = () => {
+  const context = {};
+  context.self = context;
+  vm.createContext(context);
+  vm.runInContext(read("audio-index.js"), context);
+  return context;
+};
+
 test("every file the service worker pre-caches actually exists", () => {
   const sw = read("sw.js");
   const listed = [...sw.matchAll(/"\.\/([^"]+)"/g)].map((m) => m[1]).filter(Boolean);
@@ -81,8 +92,7 @@ test("the page links the manifest, iOS tags, and registers the worker", () => {
 });
 
 test("every pre-rendered audio clip exists and is reachable offline", () => {
-  const indexJs = read("audio-index.js");
-  const map = JSON.parse(indexJs.slice(indexJs.indexOf("{"), indexJs.lastIndexOf("}") + 1));
+  const map = audioIndex().LanternAlleyAudio;
   const lines = Object.keys(map);
 
   assert.ok(lines.length > 20, "expected a clip for every spoken line");
@@ -95,13 +105,61 @@ test("every pre-rendered audio clip exists and is reachable offline", () => {
 
   // The worker imports this same file to build its pre-cache list, so the
   // paths cannot drift apart. That only works if it assigns to `self`.
-  assert.match(indexJs, /^self\.LanternAlleyAudio = /m);
+  assert.match(read("audio-index.js"), /^self\.LanternAlleyAudio = /m);
   assert.match(read("sw.js"), /importScripts\("\.\/audio-index\.js"\)/);
 });
 
+test("audio cache groups are disjoint and cover every clip", () => {
+  const index = audioIndex();
+  const groups = index.LanternAlleyAudioGroups;
+  assert.ok(groups, "audio-index.js must declare the per-stage cache groups");
+  assert.ok(groups.shell && groups.shell.length, "the shell group must exist");
+
+  const seen = new Set();
+  for (const name of Object.keys(groups)) {
+    for (const path of groups[name]) {
+      assert.equal(seen.has(path), false, `${path} is listed in more than one group`);
+      seen.add(path);
+    }
+  }
+
+  // Disjoint is not enough on its own: a clip in no group at all would never
+  // be cached, and the learner would hear the device voice for it forever.
+  const all = Object.values(index.LanternAlleyAudio);
+  assert.equal(seen.size, new Set(all).size, "every clip must belong to exactly one group");
+  for (const path of all) {
+    assert.equal(seen.has(path), true, `${path} belongs to no cache group`);
+  }
+});
+
+test("the worker installs only the shell audio, and can fetch a stage on demand", () => {
+  const sw = read("sw.js");
+
+  // The whole point of the split: a first run downloads 2.2 MB of audio
+  // instead of 26.6 MB. If this ever goes back to pushing every clip into
+  // SHELL unconditionally, that regression is silent and costs every player.
+  assert.match(sw, /AUDIO_GROUPS\.shell\.forEach/);
+  assert.match(sw, /type !== "prefetch-audio"/);
+  assert.match(sw, /function cacheAudioGroup/);
+
+  const index = audioIndex();
+  const shell = new Set(index.LanternAlleyAudioGroups.shell);
+  const episodeClips = Object.keys(index.LanternAlleyAudioGroups)
+    .filter((name) => name !== "shell")
+    .flatMap((name) => index.LanternAlleyAudioGroups[name]);
+
+  assert.ok(shell.size > 20, "the shell still needs the entrance and the three days");
+  assert.ok(episodeClips.length > shell.size * 5, "episode audio should dwarf the shell");
+  for (const path of episodeClips) {
+    assert.equal(shell.has(path), false, `${path} would install with the shell`);
+  }
+
+  // The page has to actually ask, or the groups are cached by nobody.
+  assert.match(read("app.js"), /type:"prefetch-audio", group:"episodes:" \+ key/);
+});
+
 test("spoken Japanese in the stage data has a clip", () => {
-  const indexJs = read("audio-index.js");
-  const map = JSON.parse(indexJs.slice(indexJs.indexOf("{"), indexJs.lastIndexOf("}") + 1));
+  const map = audioIndex().LanternAlleyAudio;
 
   // Check the prompts a player can actually reach rather than every jp: literal
   // in the file. Day 2 now asks a cloze, so the old day-2 request strings stay
@@ -124,8 +182,7 @@ test("spoken Japanese in the stage data has a clip", () => {
 });
 
 test("every spoken Entrance tutorial line uses a pre-rendered clip", () => {
-  const indexJs = read("audio-index.js");
-  const map = JSON.parse(indexJs.slice(indexJs.indexOf("{"), indexJs.lastIndexOf("}") + 1));
+  const map = audioIndex().LanternAlleyAudio;
   const context = {};
   vm.createContext(context);
   vm.runInContext(read("entrance-stage-logic.js"), context);
@@ -173,8 +230,7 @@ test("audio generation collects the Entrance tutorial lines", () => {
 });
 
 test("Kon's spoken replies have clips, not just the requests", () => {
-  const indexJs = read("audio-index.js");
-  const map = JSON.parse(indexJs.slice(indexJs.indexOf("{"), indexJs.lastIndexOf("}") + 1));
+  const map = audioIndex().LanternAlleyAudio;
   const context = {};
   vm.createContext(context);
   vm.runInContext(read("moonview-inn-interactions.js"), context);
