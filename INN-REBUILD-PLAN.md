@@ -394,3 +394,74 @@ ship first - it removes 24 MB from a new player's install on its own.
   question. This plan names where it is structurally likely to drag; only
   playing it can confirm. Worth playing the current Day 2 back to back before
   rebuilding it.
+
+---
+
+## 9. Does this actually teach? A review of the plan itself
+
+Sections 1 to 8 fix how the stage *measures* learning: honest coverage, a gate
+that can be failed, review that repeats until clean, retention separated from
+performance. All of that is worth doing and none of it makes the learner better
+at Japanese by itself. Reviewing the plan against how words are actually
+acquired turns up three gaps it does not address.
+
+### G1. Everything is recognition. Nothing is production.
+
+Every format in the plan - guided task, cloze, audio plus choice - asks the
+learner to *pick* or to *manipulate*. Not one asks them to produce 揃える from
+memory. Four-option multiple choice is the weakest form of retrieval practice,
+and the plan doubles down on it across all three days.
+
+**Add:** one assembly item per word. `n2-inn-episodes.js` already defines a
+`sentence-order` type for Episode 2's 文の組み立て, and `question-renderer.js`
+already renders it. Reusing that renderer in the days costs no new machinery -
+only the sentences.
+
+### G2. The near-miss pairs are the real N2 target, and they are only distractors
+
+揃える/揃う, 温める/暖める, 調整/調節, 取り替える/代える. These pairs are the
+entire difficulty of this word set, and today each one appears as one wrong
+option among four. A learner can clear the stage without ever being asked to
+*contrast* the pair directly.
+
+**Add:** one contrast item per pair - two sentences, both correct, assign the
+right form to each. This is the item that proves the distinction is understood
+rather than that the right button was findable.
+
+### G3. Half of Episode 1 tests words the three days never teach
+
+[verified: Episode 1's ten targets against the days' five focus words]
+
+| Taught in the days | Never taught, tested in Episode 1 |
+|---|---|
+| 揃える 取り替える 温める 調整 引き受ける | **案内 注文 掃除 確認 断る** |
+
+The days teach five words slowly and the episode - timed, no hints - asks about
+ten. This is a bigger learning problem than anything in sections 1 to 8, and
+the plan as written walks straight past it.
+
+It is cheaper to fix than it looks. Three of the five already appear in the
+days' own text (掃除 seven times, 確認 seven, 案内 three), and all five are in
+the curriculum catalog, so `LanternGloss` can already annotate them wherever
+they appear. Only 注文 and 断る are genuinely absent.
+
+**Add:** let the days' narration carry all five as glossed support words, and
+work 注文 and 断る into a line each. They then reach Episode 1 as words met in
+context rather than words seen for the first time under a clock - which is what
+an episode should be testing.
+
+### What the plan already gets right, and should not lose
+
+- The cold open creates the need before the teaching. Keep it first.
+- Support fades day by day: romaji, then glosses, then audio alone.
+- Spaced review at 1/3/7/14 days, fed by first-attempt results.
+- Wrong answers explain the word the learner reached for instead of naming the
+  target. That is the single best teaching moment in the stage.
+- C2's first-attempt-only credit is what turns a tap-until-green screen into
+  actual retrieval practice.
+
+### One risk the plan introduces
+
+The job board (C3) lists the five target words. If it is reachable *during* a
+question, Day 2 and Day 3 answers can be read straight off it. It must be a
+between-days screen only.
