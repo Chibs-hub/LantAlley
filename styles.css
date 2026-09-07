@@ -838,6 +838,13 @@
   @media(min-width:761px){
     .inn-stage .answer-workspace{display:flex;flex-direction:column;max-height:100%}
     .inn-stage .answer-workspace .scene{flex:1 1 auto;min-height:0;overflow-y:auto}
+    /* .scene is a plain block, so growing it via flex:1 above just gives a
+       reply or word-choice list a taller box to sit at the top of - the gap
+       this was meant to fix moved one level down instead of closing. This is
+       the layer that actually had it: centering .answer-workspace alone did
+       nothing here, since .scene (not .answer-workspace) is what claims the
+       leftover height at this width. */
+    .inn-stage .answer-workspace .scene:has(.inn-replies){display:flex;flex-direction:column;justify-content:center}
     .inn-stage .answer-workspace #feedback-row,
     .inn-stage .answer-workspace #next-row{flex:0 0 auto}
     .inn-stage .game-layout:has(.answer-workspace #feedback-row.show){

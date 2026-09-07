@@ -1199,6 +1199,11 @@
   });
 
   $("hint-btn").addEventListener("click", function(){
+    // A hint-less item still has a hint-box in the DOM. Toggling "show" on it
+    // regardless drew a visible, empty, bordered bar - most often reachable
+    // through a stray click on this button while a transition is mid-render,
+    // but a blank box should never be a reachable state either way.
+    if(!$("hint-box").textContent) return;
     $("hint-box").classList.toggle("show");
   });
 
@@ -2680,7 +2685,9 @@
     $("meaning-line").classList.remove("show");
     $("hint-box").textContent = prompt.hint;
     $("hint-box").classList.remove("show");
-    $("hint-btn").style.display = isSingleAttemptPhase() ? "none" : "block";
+    // Day 2's cloze/word-choice items carry no hint field - offering the
+    // button there risked toggling an empty box open with nothing to show.
+    $("hint-btn").style.display = isSingleAttemptPhase() || !prompt.hint ? "none" : "block";
     renderInnInteraction(prompt, true);
     speak(prompt.jp, undefined, false, writtenPrompt);
   }
@@ -2857,7 +2864,7 @@
     $("meaning-line").classList.remove("show");
     $("hint-box").textContent = prompt.hint;
     $("hint-box").classList.remove("show");
-    $("hint-btn").style.display = loc.type === "finale" || loc.key === "entrance" ? "none" : "block";
+    $("hint-btn").style.display = loc.type === "finale" || loc.key === "entrance" || !prompt.hint ? "none" : "block";
     $("feedback-row").classList.remove("show");
     $("next-row").style.display = "none";
 

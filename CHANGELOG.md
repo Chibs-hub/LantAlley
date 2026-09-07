@@ -5,6 +5,16 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-04 - The centering fix only worked in the harness's own narrower test viewport
+
+Reported live again, on a real desktop browser, right after the previous entry's fix shipped: still not fixed. It wasn't - the previous fix centered `.answer-workspace` itself, but a `@media(min-width:761px)` rule (`.inn-stage .answer-workspace .scene{flex:1 1 auto}`) makes `.scene` - a plain block, one level in - the element that actually grows to claim the row's leftover height. Centering its parent did nothing, because the parent no longer had any leftover height left to distribute; `.scene` had already taken it. This session's own test viewport happened to render at an effective width under 761px, so the media query never engaged there and the fix looked correct - a false positive caught only because the owner tested on an actual browser window instead of trusting the harness's.
+
+`.inn-stage .answer-workspace .scene:has(.inn-replies){display:flex;flex-direction:column;justify-content:center}` - added inside the same media query, targeting the element that is actually oversized. Confirmed this time by measurement, not a screenshot: `.inn-workspace`'s top and bottom gaps inside `.scene` came out equal (60.7px each) at a real 799px-wide render.
+
+Also hardened `#hint-btn` while in there: Day 2's cloze/word-choice items carry no `hint` field, so the button now stays hidden whenever a prompt has none, and its click handler refuses to toggle an already-empty `#hint-box` open - closing off every way to reach a visible, blank hint box, however it gets triggered.
+
+`node --test` passes 432/432. Cache is v255.
+
 ### 2026-09-04 - A reply or word-choice question sat pinned to the bottom of a much taller row
 
 Reported live on Day 2's word-choice practice (「電子レンジで（　　）ください」, four options): a lot of unused space, not organized. Chased the wrong lead first - a genuinely empty, visible `#hint-box` did turn up during testing, but tracing every place its `show` class gets touched (a `classList` monkey-patch with stack traces, replayed until it reproduced) pinned that to this session's own test automation clicking through a transition, not to real play; recorded here so the false lead does not get chased again.
