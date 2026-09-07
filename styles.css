@@ -1315,6 +1315,42 @@
 .episode-brief-list li{margin-bottom:4px;}
 .episode-brief .btn{display:block; margin:0 auto;}
 
+/* The job board: tonight's five jobs, and which are already done.
+   Deliberately a checklist rather than a score card - the same board is shown
+   before each day, and jobs tick off on it, so it reads as the shift going
+   well rather than as three progress reports interrupting a story. */
+.job-board{max-width:480px; text-align:left;}
+/* The board is not a question, so the hint control has nothing to offer on it.
+   Hidden from here rather than from the renderer because the finished day left
+   an inline display on that button, and !important is what reliably beats it
+   regardless of which write happens to land last. */
+.answer-workspace:has(.job-board) #hint-btn,
+.answer-workspace:has(.job-board) #hint-box{display:none!important;}
+.job-board .episode-open-kicker,
+.job-board .episode-open-title,
+.job-board .episode-open-note{text-align:center;}
+.job-board .btn{display:block; margin:0 auto;}
+.job-board-list{margin:14px 0 18px; padding:0; list-style:none;}
+/* Three columns, and the word stacked over its sense in the middle one. Four
+   flat columns fitted the card's own max-width but not the answer column it
+   actually sits in, where every row wrapped. */
+.job-row{
+  display:grid; grid-template-columns:1.5em 1fr auto;
+  align-items:center; gap:10px;
+  padding:6px 2px; border-bottom:1px solid rgba(93,66,42,.16);
+}
+.job-row:last-child{border-bottom:0;}
+.job-mark{color:#a08a6a; font-size:.78rem; font-weight:900; text-align:center;}
+.job-text{display:flex; flex-direction:column; gap:1px; min-width:0;}
+.job-word{font-family:'Shippori Mincho',serif; font-size:1rem; line-height:1.5; color:#2d2926;}
+.job-word rt{font-size:.48em; color:#7a6752;}
+.job-gloss{color:#6b5844; font-size:.74rem; line-height:1.3;}
+.job-state{color:#9a8b74; font-size:.68rem; font-weight:800; letter-spacing:.04em; white-space:nowrap;}
+/* Done is stated in colour and in words, not colour alone. */
+.job-row.done .job-mark,
+.job-row.done .job-state{color:var(--moss);}
+.job-row.done .job-word{color:#3f5a34;}
+
 /* The correction clock is the strictest thing in the game, so it reads as a
    countdown rather than decoration, and turns urgent in the last two seconds. */
 .repair-timer.is-countdown{height:30px;}

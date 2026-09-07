@@ -180,3 +180,24 @@ test("the exclusions are set before anything is rendered", () => {
   assert.ok(setAt < panelAt, "exclusions must be set before the reading panel is built");
   assert.ok(setAt < sceneAt, "and before the scene is written");
 });
+
+test("a reading that is real but wrong for this context is left unglossed", () => {
+  // Both readings exist. The catalog holds the one heading each dictionary
+  // sense, and there is no parser to tell which applies in running text, so
+  // glossing at all would teach the wrong one - the same conclusion 来 and 時
+  // already reached.
+  const { LanternGloss: gloss, LanternCurriculumCatalog: catalog } = load();
+  const index = gloss.buildIndex(catalog);
+
+  // 今日 is こんにち in 今日では "nowadays", but きょう here. Kon's own line.
+  const day = gloss.annotate("今日は基礎から始めましょう。", index, {});
+  assert.equal(day.includes("こんにち"), false, "今日 must not be read こんにち in running text");
+
+  // 中 is ちゅう as a suffix (仕事中) but なか standing alone after の.
+  const inside = gloss.annotate("実際の仕事の中で練習しましょう。", index, {});
+  assert.equal(inside.includes("ちゅう"), false, "中 after の must not be read ちゅう");
+
+  // The rest of the same line still glosses, so this is an exclusion and not
+  // a switch that turned the feature off.
+  assert.match(inside, /れんしゅう/, "練習 still glosses");
+});

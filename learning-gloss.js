@@ -30,6 +30,23 @@
   // wrong reading teaches the wrong thing, so a lone 来 is left unglossed.
   var AMBIGUOUS_ALONE = {"来": true};
 
+  /* Words whose catalog reading is real but is not the one running text takes.
+   *
+   * Unlike 来, these are not wrong entries - both readings exist, and the
+   * catalog holds the one that heads its dictionary sense. What is missing is
+   * a parser to tell which applies here:
+   *
+   *   今日  こんにち in 今日では "nowadays", but きょう in ordinary text. Kon's
+   *         「今日は基礎から始めましょう」 was glossed こんにち.
+   *   中    ちゅう as a suffix (仕事中, 工事中), but なか as a standalone noun
+   *         after の. 「仕事の中で」 was glossed ちゅう.
+   *
+   * Same conclusion as 来 and 時: a wrong reading teaches the wrong thing, so
+   * these are left unglossed. Checked at any length, not only single
+   * characters, because 今日 is two.
+   */
+  var AMBIGUOUS_READING = {"今日": true, "中": true};
+
   // 時 alone in the catalog is the noun "moment" (あの時), read とき. A digit
   // right before it makes it the o'clock counter instead (14時, 15時), read
   // じ - a different reading for a different word, not a variant of the
@@ -104,6 +121,7 @@
             if(AMBIGUOUS_ALONE[candidate]) continue;
             if(candidate === "時" && DIGIT.test(before)) continue;
           }
+          if(AMBIGUOUS_READING[candidate]) continue;
           // A catalog word is only that word when nothing kanji is attached
           // to either side of it. 様 is in the catalog, but glossing it out
           // of お客様 breaks a word the learner reads as one thing; the same

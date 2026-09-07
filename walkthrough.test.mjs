@@ -289,6 +289,17 @@ test("the entrance runs to its end and always leaves something to click", () => 
 // is already queued - an artifact of the harness, not of the game.
 const tick = () => new Promise((resolve) => setImmediate(resolve));
 
+/* Each day now opens on the job board - the five words, and which are
+ * already done - so crossing into a day is a click the old flow did not have. */
+function beginDay(game) {
+  const begin = game.$("btn-jobs-begin");
+  if (!begin) return false;
+  begin.click();
+  game.clock.advance(500);
+  return true;
+}
+
+
 /* Getting to the Inn, and then playing whatever is put in front of us.
  *
  * Shared by both walkthroughs: one checks that nothing is ever dead, the other
@@ -1157,6 +1168,9 @@ test("the cold open is unscored and hands over to Day 1", async () => {
   assert.equal(game.$("next-row").style.display, "block", "there is a way forward either way");
   game.$("btn-next").click();
   game.clock.advance(500);
+  // The board goes between the cold open and Day 1: the need is felt first,
+  // and only then are the five words named.
+  assert.ok(beginDay(game), "the cold open hands over to the job board");
   assert.match(game.$("stage-phase-badge").textContent, /一日目/, "it must lead into Day 1");
   assert.equal(game.doc.querySelectorAll(".inn-new-word").length, 1,
     "Day 1 restores the new-word card");
@@ -1179,6 +1193,9 @@ test("a correct cold-open answer does not repeat that task as Day 1's first ques
   game.$("btn-next").click();
   game.clock.advance(500);
 
+  // A correct cold-open guess already ticks its word, so this board opens on
+  // 1 / 5 - and it still skips replaying the task itself.
+  assert.ok(beginDay(game), "the cold open hands over to the job board");
   assert.match(game.$("stage-phase-badge").textContent, /一日目/, "Day 1 has begun");
   assert.equal(game.$("encounter-progress").textContent, "2",
     "the task just solved cold must not be asked again as question 1");
@@ -1796,4 +1813,56 @@ test("a wrong answer makes a sound of its own, not only a red stamp", () => {
   // Following the same switch as the coin, so muting the fox mutes both.
   const miss = app.slice(app.indexOf("function playMissSound()"));
   assert.match(miss.slice(0, 200), /if\(!state\.voiceOn\) return;/);
+});
+
+test("the job board names the five words before the day that asks about them", async () => {
+  // Nothing in the stage ever told the learner what they were learning. Words
+  // arrived one at a time inside tasks, and which ones were still weak was
+  // tracked but never shown - the only signal was a medal colour on the map.
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game);
+
+  // Not before the cold open. It works because the need is felt first.
+  assert.equal(game.$("btn-jobs-begin"), null,
+    "the words must not be named before the cold open has been attempted");
+
+  const task = game.$("jp-line").textContent;
+  playRoom(game, task);
+  game.clock.advance(1200);
+  game.$("btn-next").click();
+  game.clock.advance(500);
+
+  const board = game.doc.querySelectorAll(".job-board");
+  assert.equal(board.length, 1, "the board stands between the cold open and Day 1");
+
+  const rows = game.doc.querySelectorAll(".job-row");
+  assert.equal(rows.length, 5, "all five words are named");
+  const text = rows.map((r) => r.textContent).join(" ");
+  for (const word of ["揃える", "取り替える", "温める", "調整", "引き受ける"]) {
+    assert.ok(text.includes(word), "the board names " + word);
+  }
+
+  // A solved cold open ticks its word, so the very first board is not blank.
+  const done = game.doc.querySelectorAll(".job-row.done");
+  assert.equal(done.length, 1, "the word solved cold is already marked done");
+  assert.ok(done[0].textContent.includes("揃える"));
+
+  // Done is stated in words, not colour alone.
+  assert.match(done[0].textContent, /覚えました/);
+});
+
+test("the job board is a between-days screen, never reachable during a question", async () => {
+  // Listed beside a live question it would answer Day 2 and Day 3 outright:
+  // the five candidates are exactly the answers.
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game);
+  playRoom(game, game.$("jp-line").textContent);
+  game.clock.advance(1200);
+  game.$("btn-next").click();
+  game.clock.advance(500);
+  assert.ok(beginDay(game), "the board hands over to the day");
+
+  assert.equal(game.doc.querySelectorAll(".job-board").length, 0,
+    "the board must be gone once a question is on screen");
+  assert.equal(game.$("btn-jobs-begin"), null, "and its control with it");
 });

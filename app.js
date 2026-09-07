@@ -1045,7 +1045,12 @@
     if(state.stagePhase === "coldopen" && loc && loc.encounters){
       var skipFirst = state.coldOpenSkipFirst;
       state.coldOpenSkipFirst = false;
-      startStagePhase(loc, "learn", null, skipFirst ? 1 : 0);
+      // The board goes between the cold open and Day 1: the need is felt
+      // first, and only then are the five words named. A correct cold-open
+      // guess already ticks its word, so that board opens on 1 / 5 - and it
+      // still skips replaying the task itself, which is what startIndex
+      // carries - see resolveColdOpen.
+      stageJobBoard(loc, "learn", skipFirst ? 1 : 0);
       return;
     }
     if(loc && loc.encounters){
@@ -1339,6 +1344,11 @@
       answerStage(true, prompt, prompt.correct);
       if(state.stageMastered || state.currentKey !== loc.key) break;
       continueStageEncounter(loc);
+      // Each day now opens on the job board, which waits for a click. Skipping
+      // the stage means skipping that too, or the loop answers the last
+      // question of a day over and over against a board nobody pressed.
+      var begin = $("btn-jobs-begin");
+      if(begin) begin.click();
     }
   }
 
@@ -2633,6 +2643,111 @@
   }
 
 
+  /* The job board: the five words, named, before the day that asks about them.
+   *
+   * Nothing in the stage ever told the learner what they were learning. The
+   * words arrived one at a time inside tasks, and which ones were still weak
+   * was tracked (trainingCorrectWords) but never shown - the only signal was a
+   * medal colour on the map, after the fact.
+   *
+   * It is Kon's board of jobs rather than a vocabulary list, and it is the
+   * same screen every time rather than a separate progress report between each
+   * day. A checklist filling in reads as the shift going well; three status
+   * screens in a fifteen-minute session stop the story dead, and a column of
+   * grey chips reads as failure rather than as work still to do.
+   *
+   * Shown after the cold open, never before it. The cold open works precisely
+   * because the learner feels the need before being handed the words, and
+   * naming them first would spend that for nothing.
+   *
+   * It is also a between-days screen only. Reachable during a question, it
+   * would answer Day 2 and Day 3 outright.
+   */
+  // The one-line English sense for a focus word, catalog first and the stage's
+  // own override on top - the same lookup the Learn word card does, because
+  // the catalog's general sense is sometimes wrong for this story (調整).
+  function wordSense(loc, word){
+    var targetId = loc && loc.getTargetId ? loc.getTargetId(word) : null;
+    var entry = typeof LanternCurriculumCatalog !== "undefined" && LanternCurriculumCatalog.getItem
+      ? LanternCurriculumCatalog.getItem(targetId) : null;
+    var override = loc && loc.getCardSense ? loc.getCardSense(word) : null;
+    return override || (entry && entry.meanings && entry.meanings[0]) || "";
+  }
+
+  function stageJobBoard(loc, phase, startIndex){
+    var meta = loc.getDayMeta ? loc.getDayMeta(phase) : null;
+    // The last answer of a day leaves work in flight: Kon's reply is still
+    // being typed, and showKonStageResponse has armed a timer that rewrites
+    // the speech slot with the request again. Both land after this render and
+    // put the finished day's words back on top of the new day's board.
+    if(konResponseTimer){ clearTimeout(konResponseTimer); konResponseTimer = null; }
+    var first = phase === "learn" && !Object.keys(state.trainingCorrectWords).length;
+    var rows = loc.encounters.map(function(item){
+      var done = !!state.trainingCorrectWords[item.focusWord];
+      // The job, always. The English sense only on the very first board, where
+      // the learner has met none of these words yet - after that it would be a
+      // translation of the answer sitting above the question asking for it.
+      var gloss = first ? (wordSense(loc, item.focusWord) || item.label) : item.label;
+      return '<li class="job-row' + (done ? ' done' : '') + '">'
+        + '<span class="job-mark" aria-hidden="true">' + (done ? "済" : "—") + '</span>'
+        + '<span class="job-text">'
+        + '<span class="job-word"><ruby>' + item.focusWord + '<rt>' + item.reading + '</rt></ruby></span>'
+        + '<span class="job-gloss">' + gloss + '</span>'
+        + '</span>'
+        // Done is said in words as well as in colour and a glyph, so it does
+        // not depend on telling green from brown.
+        + '<span class="job-state">' + (done ? "覚えました" : "まだ") + '</span>'
+        + '</li>';
+    }).join("");
+
+    var doneCount = loc.encounters.filter(function(item){
+      return !!state.trainingCorrectWords[item.focusWord];
+    }).length;
+
+    $("scene").innerHTML = '<div class="episode-open"><div class="episode-open-card job-board">'
+      + '<p class="episode-open-kicker">今日の仕事</p>'
+      + '<h2 class="episode-open-title">' + (meta ? meta.label + " " + meta.mode : "") + '</h2>'
+      + '<p class="episode-open-note">言葉は五つです。' + doneCount + ' / ' + loc.encounters.length + '</p>'
+      + '<ul class="job-board-list">' + rows + '</ul>'
+      + '<button class="btn btn-primary" id="btn-jobs-begin">' + (meta ? meta.label : "") + 'をはじめる</button>'
+      + '</div></div>';
+
+    /* Kon introduces the day rather than leaving the previous question's
+     * request - or, between days, her reply to the last answer - sitting in
+     * her speech slot, which read as though the board were an answer to it.
+     *
+     * Through dialogueFlow rather than by assigning textContent: the reply to
+     * the final question of a day is still typing itself out when this runs,
+     * and it went straight back over anything written underneath it. Starting
+     * the flow is what actually takes the slot over.
+     *
+     * Displayed, not spoken. The day announcements have no clip of their own -
+     * they are only ever heard merged into a narration - so speaking one here
+     * would hand this single line to the device voice.
+     */
+    var announcement = loc.getDayAnnouncement ? loc.getDayAnnouncement(phase) : "";
+    if(dialogueFlow) dialogueFlow.start(announcement, false);
+    else $("jp-line").textContent = announcement;
+    $("romaji-line").textContent = "";
+    $("romaji-line").style.display = "none";
+    $("meaning-line").classList.remove("show");
+    if(meta) $("narration").textContent = meta.label + "のはじまり";
+    setEntranceFoxPose("listen");
+    // No question is being asked, so nothing here has a hint. The button is
+    // hidden by a stylesheet rule keyed on the board rather than from here:
+    // the previous question left an inline display on it, and which of the two
+    // writes lands last depends on a timer.
+    $("hint-box").textContent = "";
+    $("hint-box").classList.remove("show");
+
+    $("feedback-row").classList.remove("show");
+    $("next-row").style.display = "none";
+    $("btn-jobs-begin").addEventListener("click", function(event){
+      event.stopImmediatePropagation();
+      startStagePhase(loc, phase, null, startIndex || 0);
+    });
+  }
+
   function startStagePhase(loc, phase, items, startIndex){
     state.stagePhase = phase;
     state.phaseItems = items || null;
@@ -2661,12 +2776,12 @@
       }
       showMap();
     }else if(state.stagePhase === "learn"){
-      startStagePhase(loc, "practice");
+      stageJobBoard(loc, "practice");
     }else if(state.stagePhase === "practice"){
       state.challengeScore = 0;
       state.challengeCorrectWords = {};
       state.challengeMisses = [];
-      startStagePhase(loc, "challenge");
+      stageJobBoard(loc, "challenge");
     }else if(state.stagePhase === "challenge"){
       startStagePhase(loc, "review", state.challengeMisses.slice());
     }else{
