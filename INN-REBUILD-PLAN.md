@@ -234,30 +234,120 @@ coherent shift order written instead.
 
 ---
 
-## 5. Approvals needed
+## 5. Audio: reuse first, generate last
 
-**Audio generation.** Eight spoken lines have no pre-rendered clip, and Day 3
-at five words needs them [verified: all 21 Inn `jp` lines cross-checked against
-`audio-index.js`]:
+An earlier draft of this plan asked for eight new clips. Checking which lines
+already have audio brings that down to three, because the formats chosen in C5
+can be pointed at lines that are already recorded.
 
-```
-二つのマットに、同じ向きの座布団を二枚ずつ揃えてください。
-汚れたシーツを洗濯かごに入れて、新しいシーツに取り替えてください。
-ごはんを電子レンジで温めてください。
-Cグループは18時以降、Dグループは20時までに夕食を始められます。... 調整してください。
-朝食の配膳を引き受けてください。
-切れた電球を回収箱に入れて、新しい電球に取り替えてください。
-スープをコンロで温めてください。
-荷物を運ぶ仕事を引き受けてください。
-```
+### 5a. What already exists
 
-The two remaining uncovered lines contain `（　　）` and are cloze prompts that
-are read rather than spoken, so they correctly have no audio.
+[verified: every `jp` line in `n2-home-inn-stage.js` cross-checked against
+`audio-index.js`]
+
+| Array | Used by | Clips present |
+|---|---|---|
+| `encounters` | Day 1 | **5 of 5** |
+| `practiceWordChoice` | Day 2 cloze | 3 of 5 (missing 取り替える, 調整) |
+| `practiceVariantsB` | Day 3 | 2 of 5 (missing 取り替える, 温める, 引き受ける) |
+| `practiceVariantsA` | nothing - dead for audio today | 0 of 5 |
+
+Day 1 needs nothing. `practiceVariantsA`'s lines are never spoken under the
+current design, which is why none were ever generated and why nothing is
+broken.
+
+### 5b. Day 3 costs one clip, not five
+
+C5 moves 温める and 引き受ける to audio plus four-option choice. Those questions
+should speak the cloze line, and both cloze lines are already recorded:
+
+| Word | Day 3 format | Line it speaks | Audio |
+|---|---|---|---|
+| 揃える | mechanic | `practiceVariantsB[0]` | have it |
+| 取り替える | mechanic | `practiceVariantsB[1]` | **generate** |
+| 調整 | mechanic | `practiceVariantsB[3]` | have it |
+| 温める | audio + choice | `practiceWordChoice[2]` | have it |
+| 引き受ける | audio + choice | `practiceWordChoice[4]` | have it |
+
+So C5 pays for itself twice: it removes the 引き受ける coin flip *and* it lands
+the two reassigned words on clips that already exist.
+
+**Unverified:** those two cloze lines contain `（　　）`. What Edge TTS rendered
+for the blank has not been listened to. If it reads the brackets aloud rather
+than pausing, these two need re-recording with a natural spoken phrasing.
+Listen before relying on this.
+
+### 5c. Total generation ask
+
+| For | Lines |
+|---|---|
+| Day 3 covering 取り替える | 1 (`切れた電球を回収箱に入れて、新しい電球に取り替えてください。`) |
+| Day 2 covering all five in cloze | 2 (`practiceWordChoice[1]`, `[3]`) |
+| **Minimum to ship C1 + C5** | **3** |
+| C4's two guided Day 2 items, if they use variant A scenes | +2 |
+
+Three clips is about 120 KB. Five is about 200 KB.
+
+### 5d. Missing audio degrades, it does not break
+
+`speak()` tries the pre-rendered clip and falls back to
+`speakWithSynthesis()` - the browser's own voice - when there is no file
+(app.js:288). So a missing clip is a quality regression, not a crash. That
+makes generation schedulable rather than blocking.
+
+### 5e. Approval
 
 `generate-audio.py` sends Japanese text to Microsoft Edge TTS, an external
 service, and is approval-gated every time. Ask before running, and scope the
 run - it renders every missing line project-wide by default, which has already
 caused one oversized run this branch.
+
+---
+
+## 5B. Data footprint
+
+### The clips themselves are already efficient
+
+605 clips, 26.6 MB, mean 45 KB, encoded 48 kbps mono at 24 kHz - Edge TTS's
+sensible default for speech. There are **no orphaned files and no duplicate or
+near-duplicate keys**; the index and the directory agree exactly. Re-encoding
+lower would hurt intelligibility for a few MB and needs ffmpeg, which is not
+installed. **Do not re-encode.**
+
+### The problem is what gets downloaded, not how big each file is
+
+`sw.js` pushes every clip in the index into `SHELL` (sw.js:133-135), and
+install fetches all of it before the app is usable offline. Attributing every
+clip to its source file:
+
+| Source | Clips | Weight |
+|---|---|---|
+| `n2-market-episodes.js` | 111 | 5.12 MB |
+| `n2-inn-episodes.js` | 111 | 4.96 MB |
+| `n2-teahouse-episodes.js` | 114 | 4.88 MB |
+| `n2-station-episodes.js` | 111 | 4.80 MB |
+| `n2-shrine-episodes.js` | 112 | 4.67 MB |
+| `n2-home-inn-stage.js` (the three days) | 41 | 1.98 MB |
+| `entrance-stage-logic.js` | 4 | 0.16 MB |
+| `app.js` | 1 | 0.07 MB |
+
+A brand new player can reach the Entrance and the Inn's three days. That is
+**2.2 MB of audio they can use, and 24.4 MB - 92 percent - for four stages
+behind progression gates**, downloaded before they can answer one question.
+
+### Fix
+
+Keep in `SHELL` only what is reachable at install: the entrance, the Inn's
+three days, and `app.js`. Fetch each episode's audio when its stage unlocks.
+The fetch handler already caches successful same-origin responses at runtime
+(sw.js:188-194), so most of the machinery exists - the change is to stop
+listing episode audio in `SHELL`.
+
+**Trade-off to decide:** a player who installs for offline use and later
+reaches an episode with no network gets browser-voice fallback instead of
+Nanami. Mitigate by prefetching the next stage's clips in the background when
+a stage unlocks. This is worth doing regardless of the rebuild, and it is
+independent of it - it can ship first.
 
 ---
 
@@ -283,7 +373,11 @@ caused one oversized run this branch.
 4. **C6** (review ladder) and **C7** (two gates).
 5. **W1**, **W2**, **W3** content passes, each reviewed by a native speaker.
 
-Audio (section 5) is needed before step 2 ships.
+Audio (section 5) is needed before step 2 ships, but only three clips, and
+missing ones fall back to the browser voice rather than breaking.
+
+The service worker split (section 5B) is independent of all of this and can
+ship first - it removes 24 MB from a new player's install on its own.
 
 ---
 
