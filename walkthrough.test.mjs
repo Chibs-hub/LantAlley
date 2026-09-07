@@ -336,10 +336,13 @@ function resumedScheduleChallengeSave() {
     starred: ["entrance"],
     stages: {
       "home-inn": {
+        // Day 3 asks about all five words now, so the schedule task sits at
+        // index 3 rather than 1. Pinned by name in the assertions below, but
+        // this index is what actually puts it on screen.
         phase: "challenge",
-        question: 1,
-        challengeScore: 1,
-        correctWords: ["揃える"],
+        question: 3,
+        challengeScore: 3,
+        correctWords: ["揃える", "取り替える", "温める"],
         trainingWords: ["揃える", "取り替える", "温める", "調整", "引き受ける"],
         misses: [],
         mastered: false,

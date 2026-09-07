@@ -171,15 +171,21 @@ test("Moonview Inn has evidence-based practice and challenge phases", () => {
   vm.createContext(context);
   vm.runInContext(readFileSync(stageUrl, "utf8"), context);
   const stage = context.N2HomeInnStage;
-  assert.equal(stage.practice.length, 3);
-  assert.equal(stage.challenge.length, 2);
+  // Every word, every day. Coverage used to shrink as difficulty rose - five
+  // words on Day 1, three on Day 2, two on Day 3 - so the final test asked
+  // about forty percent of what the stage claimed to have taught, and
+  // 取り替える was asked once, on Day 1, with a hint on screen, and never
+  // again. Shrinking this back is the regression this guards.
+  const words = stage.encounters.map((item) => item.focusWord);
+  assert.equal(stage.practice.length, words.length);
+  assert.equal(stage.challenge.length, words.length);
 
-  const learned = new Set(stage.encounters.map((item) => item.focusWord));
-  for (const word of stage.encounters.map((item) => item.focusWord)) {
+  const learned = new Set(words);
+  for (const word of words) {
     assert.equal(learned.has(word), true, `${word} has a Learn interaction`);
   }
-  assert.equal(new Set(stage.practice.map((item) => item.focusWord)).size, 3);
-  assert.equal(new Set(stage.challenge.map((item) => item.focusWord)).size, 2);
+  assert.deepEqual(stage.practice.map((item) => item.focusWord), words);
+  assert.deepEqual(stage.challenge.map((item) => item.focusWord), words);
   assert.ok(stage.challenge.every((item) => item.romaji === "" && item.hint === ""));
   assert.equal(
     stage.challenge.every((item) => !stage.practice.some((practice) => practice.jp === item.jp)),
@@ -195,9 +201,9 @@ test("practice never repeats a Learn request", () => {
   const stage = context.N2HomeInnStage;
   const learnRequests = new Set(stage.encounters.map((item) => item.jp));
 
-  assert.equal(stage.practice.length, 3);
+  assert.equal(stage.practice.length, 5);
   assert.equal(stage.practice.every((item) => !learnRequests.has(item.jp)), true);
-  assert.equal(new Set(stage.practice.map((item) => item.jp)).size, 3);
+  assert.equal(new Set(stage.practice.map((item) => item.jp)).size, 5);
 });
 
 test("stage UI separates phase status from the story title and offers a Learn restart", () => {
@@ -213,9 +219,10 @@ test("challenge mastery requires two audio answers and evidence for all five tau
   vm.runInContext(readFileSync(stageUrl, "utf8"), context);
   const stage = context.N2HomeInnStage;
   const allWords = stage.encounters.map((item) => item.focusWord);
-  assert.equal(stage.isChallengeMastered(2, allWords), true);
-  assert.equal(stage.isChallengeMastered(1, allWords), false);
-  assert.equal(stage.isChallengeMastered(2, allWords.slice(0, 4)), false);
+  // The pass mark is the whole day, and the day is now every word.
+  assert.equal(stage.isChallengeMastered(5, allWords), true);
+  assert.equal(stage.isChallengeMastered(4, allWords), false);
+  assert.equal(stage.isChallengeMastered(5, allWords.slice(0, 4)), false);
 });
 
 test("focused review completes after only the missed verbs are recalled", () => {
@@ -314,7 +321,7 @@ test("Kon gives a contextual Japanese response after every stage answer", () => 
   }
 
   const expectedPracticeResults = [
-    /向き/, /ごはん/, /朝食/,
+    /向き/, /シーツ/, /ごはん/, /グループ/, /朝食/,
   ];
   stage.practice.forEach((item, index) => {
     assert.match(stage.getKonResponse(item, true), expectedPracticeResults[index], item.variant);
@@ -971,10 +978,10 @@ test("the challenge day runs in story order", () => {
   // shuffled independently of the story. A previous order of 2, 0, 4, 1, 3 made
   // day 3 jump from after dark, to the next morning, to before closing.
   const order = Array.from(stage.getPhaseItems("challenge"), (item) => item.focusWord);
-  assert.deepEqual(order, ["揃える", "調整"]);
+  assert.deepEqual(order, ["揃える", "取り替える", "温める", "調整", "引き受ける"]);
 
   const story = stage.getPhaseItems("challenge").map((item) => item.narration).join(" ");
-  const beats = ["次の朝です", "夕食の時間"];
+  const beats = ["次の朝です", "廊下が暗く", "日暮れ後", "夕食の時間", "最後のお客様"];
   let cursor = -1;
   for (const beat of beats) {
     const at = story.indexOf(beat, cursor + 1);

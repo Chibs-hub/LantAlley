@@ -491,10 +491,26 @@
     return out;
   }
 
-  function phaseItem(index, variant, phase){
+  /* Build one day's version of an encounter.
+   *
+   * `format` separates how a question is answered from which day it belongs
+   * to. Day 2 is all word choice and Day 1 is all task, so those two defaulted
+   * cleanly off the phase - but Day 3 is now mixed, and keying the renderer off
+   * the phase made that impossible to express.
+   *
+   * Day 3 keeps the task only where performing the action is what proves the
+   * word was understood: 揃える against 揃う is precisely the difference
+   * between doing it and it happening, 取り替える is a physical swap, and the
+   * schedule stepper is what 調整 means. 温める turns on food versus a room,
+   * and 引き受ける is a decision - neither is demonstrated by dragging
+   * anything, and 引き受ける's task is a two-button accept/decline, which is a
+   * coin flip sitting inside the final test.
+   */
+  function phaseItem(index, variant, phase, format){
     var base = encounters[index];
     var text = variant ? practiceVariantsB[index] : practiceVariantsA[index];
-    var options = phase === "practice"
+    format = format || (phase === "practice" ? "choice" : "task");
+    var options = format === "choice"
       ? practiceWordChoice[index].options.map(function(option){
           return {
             key:option.key,
@@ -516,19 +532,20 @@
     options = balanceOptions(options, phase + ":" + index + ":" + (variant ? "b" : "a"));
     return copyItem(base, {
       phase:phase,
+      format:format,
       mechanic:mechanicNames[index],
       interaction:variant ? alternateInteractions[index] : practiceInteractionsA[index],
       variant:phase + "-" + (variant ? "b" : "a"),
       label:text.label || base.label,
       narration:(variant ? evidenceNarrationsB[index] : evidenceNarrationsA[index]),
-      jp:phase === "practice" ? practiceWordChoice[index].jp : text.jp,
+      jp:format === "choice" ? practiceWordChoice[index].jp : text.jp,
       // Support is withdrawn one layer per day, so the three days differ in
       // difficulty rather than only in situation:
       //   Day 1 基礎   Japanese + romaji + English meaning + hint
       //   Day 2 実践   Japanese + tappable support-word glosses, no romaji
       //   Day 3 挑戦   audio only
       meaning:phase === "learn" ? text.meaning : "",
-      successReply:phase === "practice" ? practiceWordChoice[index].successReply : text.successReply,
+      successReply:format === "choice" ? practiceWordChoice[index].successReply : text.successReply,
       romaji:phase === "learn" ? (text.romaji || base.romaji) : "",
       hint:phase === "learn" ? "Use the subject, object, and scene result to decide whether the request describes a deliberate action or a change of state." : "",
       replyResponses:null,
@@ -536,22 +553,48 @@
     });
   }
 
-  // Practice retrieves three representative words in a changed written
-  // context. All five already require a correct Learn interaction, so this is
-  // a check for transfer rather than a second five-card loop.
-  var practice = [
-    phaseItem(0, false, "practice"), phaseItem(2, false, "practice"),
-    phaseItem(4, false, "practice")
-  ];
+  /* Every day asks about every word.
+   *
+   * Coverage used to shrink as difficulty rose - five words on Day 1, three on
+   * Day 2, two on Day 3 - so the easiest day tested everything and the final
+   * exam tested forty percent of it. 取り替える was asked once, on Day 1, with
+   * romaji and a hint on screen, and never again, and the stage could still
+   * report itself mastered. A gate has to cover what it claims to gate.
+   *
+   * Both days run in encounter order, which is also story order: the A
+   * narrations walk one day from the morning cushions to tomorrow's breakfast
+   * rota, and the B narrations walk the next from the morning after to the
+   * luggage that has to reach the station. An earlier shuffle (2, 0, 4, 1, 3)
+   * made a day jump from after dark to the next morning to before closing the
+   * front desk, because each narration is tied to its own task. Day 3 is
+   * harder for hiding romaji, hints and the written request - not for being
+   * out of order.
+   */
+  var practice = [0, 1, 2, 3, 4].map(function(index){
+    return phaseItem(index, false, "practice");
+  });
 
-  // Day 3 runs in story order. An earlier shuffle (2, 0, 4, 1, 3) made the day
-  // jump from after dark, to the next morning, to before closing the front
-  // desk. Each narration is tied to its own task, so the order cannot be
-  // shuffled independently of the story. Challenge stays harder by hiding
-  // romaji and hints and by using the variant-B situations, not by reordering.
-  var challenge = [
-    phaseItem(0, true, "challenge"), phaseItem(3, true, "challenge")
-  ];
+  /* Day 3 is all task for now, and that is a known compromise.
+   *
+   * 温める and 引き受ける do not need the room: the first turns on food versus
+   * a room and the second is a decision, so neither is demonstrated by
+   * dragging anything - and 引き受ける's task is a two-button accept/decline,
+   * which is a coin flip sitting inside the final test. Both should be
+   * answered by naming the word instead. `format` exists for exactly that.
+   *
+   * What blocks it is content, not code. A word-choice question cannot speak a
+   * sentence that contains its own answer, so those two need a listening
+   * prompt written for them - the way Episode 1 does it, a guest saying
+   * 「このお茶、冷めてしまいました。」 - plus option sets in the right form.
+   * Reusing Day 2's cloze lines was the cheap way out and would have had Day 3
+   * read yesterday's sentence back with a blank in it.
+   *
+   * So it waits for the content pass. Until then 引き受ける can be passed by
+   * guessing, which the gate does not yet catch.
+   */
+  var challenge = [0, 1, 2, 3, 4].map(function(index){
+    return phaseItem(index, true, "challenge");
+  });
 
   function getEncounter(index){
     var safeIndex = Math.max(0, Math.min(encounters.length - 1, Number(index) || 0));

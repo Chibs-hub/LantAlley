@@ -4900,9 +4900,15 @@
     // Excluding undertake left it showing a cloze prompt above yes/no replies:
     // 「配膳を（　　）くれませんか」 answered by 「はい、引き受けます。」. The
     // decline branch still lives on Day 1, where the offer is actually made.
-    return state.stagePhase === "practice"
-      && !!(prompt.options && prompt.options.length > 1)
-      && prompt.options.every(function(option){ return !/[A-Za-z]{2,}/.test(option.label); });
+    //
+    // Read off the item rather than the phase, because Day 3 is now mixed:
+    // three of its five words are answered by doing the job and two by naming
+    // it. The label check stays as a guard - an item carrying English option
+    // labels is a task's option list, not a cloze.
+    if(!prompt || !prompt.options || prompt.options.length <= 1) return false;
+    var format = prompt.format || (state.stagePhase === "practice" ? "choice" : "task");
+    if(format !== "choice") return false;
+    return prompt.options.every(function(option){ return !/[A-Za-z]{2,}/.test(option.label); });
   }
 
   function renderWordChoice(prompt){
