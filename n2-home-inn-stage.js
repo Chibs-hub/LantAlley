@@ -508,7 +508,12 @@
    */
   function phaseItem(index, variant, phase, format){
     var base = encounters[index];
-    var text = variant ? practiceVariantsB[index] : practiceVariantsA[index];
+    // "guided" is Day 1's own situation and room, reused by the review ladder.
+    // Variant A's request lines are the one set with no recorded audio - they
+    // are never spoken anywhere else - so a review pass built on them would be
+    // read out by the device voice.
+    var guided = variant === "guided";
+    var text = guided ? base : (variant ? practiceVariantsB[index] : practiceVariantsA[index]);
     format = format || (phase === "practice" ? "choice" : "task");
     var options = format === "choice"
       ? practiceWordChoice[index].options.map(function(option){
@@ -529,15 +534,18 @@
             explanation:index !== 4 && optionIndex === 1 ? nearMissExplanations[index] : ""
           };
         });
-    options = balanceOptions(options, phase + ":" + index + ":" + (variant ? "b" : "a"));
+    var tag = guided ? "guided" : (variant ? "b" : "a");
+    options = balanceOptions(options, phase + ":" + index + ":" + tag);
     return copyItem(base, {
       phase:phase,
       format:format,
       mechanic:mechanicNames[index],
-      interaction:variant ? alternateInteractions[index] : practiceInteractionsA[index],
-      variant:phase + "-" + (variant ? "b" : "a"),
+      interaction:guided ? guidedInteractions[index]
+        : (variant ? alternateInteractions[index] : practiceInteractionsA[index]),
+      variant:phase + "-" + tag,
       label:text.label || base.label,
-      narration:(variant ? evidenceNarrationsB[index] : evidenceNarrationsA[index]),
+      narration:guided ? base.narration
+        : (variant ? evidenceNarrationsB[index] : evidenceNarrationsA[index]),
       jp:format === "choice" ? practiceWordChoice[index].jp : text.jp,
       // Support is withdrawn one layer per day, so the three days differ in
       // difficulty rather than only in situation:
@@ -595,6 +603,49 @@
   var challenge = [0, 1, 2, 3, 4].map(function(index){
     return phaseItem(index, true, "challenge");
   });
+
+  /* The review ladder: the same word, a different way of asking, every time.
+   *
+   * Review used to hand back the identical Day 3 question that was just
+   * missed. Getting it right the second time proves the learner remembers the
+   * screen, which is not the same as knowing the word - and if they miss it
+   * again there is nothing else to try.
+   *
+   * Three rungs, and each one changes both the format and the situation, so
+   * what is left behind is that 取り替える means swapping one thing for another
+   * of the same kind rather than one memorised sentence:
+   *
+   *   0  name it     the cloze, four options, the near-miss pair among them
+   *   1  do it       Day 1's own room and situation, but without romaji or hint
+   *   2  hear it     Day 3's situation again, audio only
+   *
+   * All three speak lines that have recorded clips. Variant A's requests are
+   * the one set with none - nothing else ever speaks them - so the ladder uses
+   * Day 1's `guided` situation for the middle rung rather than variant A.
+   */
+  var REVIEW_LADDER = [
+    {variant:false, format:"choice"},
+    {variant:"guided", format:"task"},
+    {variant:true, format:"task"}
+  ];
+
+  function indexOfWord(word){
+    for(var i = 0; i < encounters.length; i++){
+      if(encounters[i].focusWord === word) return i;
+    }
+    return -1;
+  }
+
+  function getReviewItem(word, pass){
+    var index = indexOfWord(word);
+    if(index < 0) return null;
+    var rung = REVIEW_LADDER[Math.max(0, Number(pass) || 0) % REVIEW_LADDER.length];
+    return phaseItem(index, rung.variant, "review", rung.format);
+  }
+
+  function getReviewLadderLength(){
+    return REVIEW_LADDER.length;
+  }
 
   function getEncounter(index){
     var safeIndex = Math.max(0, Math.min(encounters.length - 1, Number(index) || 0));
@@ -727,6 +778,8 @@
     getDayMeta:getDayMeta,
     getDayAnnouncement:getDayAnnouncement,
     getPhaseItems:getPhaseItems,
+    getReviewItem:getReviewItem,
+    getReviewLadderLength:getReviewLadderLength,
     hasTrainingEvidence:hasTrainingEvidence,
     isChallengeMastered:isChallengeMastered,
     isFocusedReviewComplete:isFocusedReviewComplete,

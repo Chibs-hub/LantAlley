@@ -187,6 +187,9 @@
     // task the learner just solved is not asked again immediately after.
     coldOpenSkipFirst:false,
     challengeMisses:[],
+    // word -> which rung of the review ladder it is on. A word missed again in
+    // review climbs a rung rather than being asked the same way twice.
+    reviewPasses:{},
     stageMastered:false,
     resumedStageEntry:false,
     stageDeclined:false,
@@ -470,7 +473,15 @@
           misses:state.challengeMisses.map(function(item){ return item.focusWord; }),
           mastered:state.stageMastered,
           declined:state.stageDeclined,
-          medal:state.stageMastered ? "gold" : (state.stagePhase === "challenge" || state.stagePhase === "review" ? "silver" : (state.stagePhase === "practice" ? "bronze" : "none"))
+          // Two gates, not one. Silver is the shift cleared: every word
+          // answered at Day 3 difficulty, which is what opens the episode and
+          // is winnable tonight. Gold is retention - the same words still
+          // known days later, which only the spaced engine can answer - so
+          // 習得 stops meaning "one good afternoon".
+          medal:isStageRetained(state.currentKey) ? "gold"
+            : (state.stageMastered ? "silver"
+              : (state.stagePhase === "challenge" || state.stagePhase === "review" ? "silver"
+                : (state.stagePhase === "practice" ? "bronze" : "none")))
         };
       }
       var inn = state.stageProgress.homeInn;
@@ -1168,6 +1179,23 @@
     return place || null;
   }
 
+  /* The medal a place has earned, worked out now rather than read back.
+   *
+   * Gold is retention, and retention changes with the calendar: a learner who
+   * cleared the Inn last week earns it by answering those words correctly
+   * somewhere else entirely, or loses the claim by never being asked again.
+   * A value stamped into the save at the moment the shift ended cannot know
+   * that, so the stored medal is the floor and this is the current answer.
+   */
+  function currentMedal(key){
+    var saved = key === "home-inn" && state.stageProgress.homeInn
+      ? state.stageProgress.homeInn : null;
+    if(!saved) return "none";
+    if(isStageRetained(key)) return "gold";
+    if(saved.mastered) return "silver";
+    return saved.medal === "gold" ? "silver" : (saved.medal || "none");
+  }
+
   function renderMapDetail(){
     var place = LanternAlleyMap.getDestination(selectedMapKey) || LanternAlleyMap.getDestination("home-inn");
     var progressState = LanternAlleyMap.resolveState(place.key, state);
@@ -1176,7 +1204,7 @@
     var statusText = unlocked ? LanternAlleyMap.stateLabels[progressState] : "🔒 未開放";
     if(place.key === "home-inn" && state.stageProgress.homeInn){
       var medalIcons = {bronze:"🥉",silver:"🥈",gold:"🥇"};
-      statusText += " " + (medalIcons[state.stageProgress.homeInn.medal] || "");
+      statusText += " " + (medalIcons[currentMedal(place.key)] || "");
     }
     selectedMapAction = action;
     $("map-detail-status").textContent = statusText;
@@ -1534,6 +1562,28 @@
     if(!key || !target) return;
     if(!state.masteredByStage[key]) state.masteredByStage[key] = [];
     if(state.masteredByStage[key].indexOf(target) < 0) state.masteredByStage[key].push(target);
+  }
+
+  /* Has this stage's whole word set actually been retained?
+   *
+   * Clearing the three days is a performance, and it happens inside one
+   * sitting. review-engine.js already refuses to call that mastery - it wants
+   * successes spread across days - and this asks it that question for every
+   * focus word the stage teaches.
+   *
+   * Used for the gold medal only. What opens the episode is clearing the
+   * shift, which a learner can do tonight; blocking the story for three days
+   * to prove retention would be a worse game and no better teaching.
+   */
+  function isStageRetained(key){
+    var loc = getLocation(key);
+    if(!loc || !loc.encounters || !loc.getTargetId) return false;
+    if(typeof LanternReviewEngine === "undefined" || !LanternReviewEngine.isMastered) return false;
+    var progress = state.reviewProgress || {};
+    return loc.encounters.every(function(item){
+      var targetId = loc.getTargetId(item.focusWord);
+      return !!targetId && LanternReviewEngine.isMastered(progress[targetId]);
+    });
   }
 
   /* Put a story answer into the delayed-review schedule.
@@ -2674,6 +2724,41 @@
     return override || (entry && entry.meanings && entry.meanings[0]) || "";
   }
 
+  /* The review queue, one entry per word missed on Day 3.
+   *
+   * Each word starts on the ladder's first rung. A word missed again in review
+   * is not simply repeated: it goes to the back of the queue on the next rung,
+   * so it is asked a different way and in a different situation each time.
+   * That is what makes review teach rather than test the learner's memory of a
+   * screen they saw ninety seconds ago.
+   */
+  function buildReviewQueue(loc, misses){
+    state.reviewPasses = {};
+    var seen = {};
+    var queue = [];
+    (misses || []).forEach(function(item){
+      var word = item.focusWord;
+      if(!word || seen[word]) return;
+      seen[word] = true;
+      state.reviewPasses[word] = 0;
+      var built = loc.getReviewItem ? loc.getReviewItem(word, 0) : null;
+      queue.push(built || item);
+    });
+    return queue;
+  }
+
+  // A word missed during review comes back on the next rung, at the end of the
+  // queue, rather than being handed straight back in the form that just failed.
+  function requeueReviewWord(loc, prompt){
+    if(state.stagePhase !== "review" || !state.phaseItems) return;
+    var word = prompt && prompt.focusWord;
+    if(!word || !loc.getReviewItem) return;
+    var pass = (state.reviewPasses[word] || 0) + 1;
+    state.reviewPasses[word] = pass;
+    var next = loc.getReviewItem(word, pass);
+    if(next) state.phaseItems.push(next);
+  }
+
   function stageJobBoard(loc, phase, startIndex){
     var meta = loc.getDayMeta ? loc.getDayMeta(phase) : null;
     // The last answer of a day leaves work in flight: Kon's reply is still
@@ -2783,7 +2868,7 @@
       state.challengeMisses = [];
       stageJobBoard(loc, "challenge");
     }else if(state.stagePhase === "challenge"){
-      startStagePhase(loc, "review", state.challengeMisses.slice());
+      startStagePhase(loc, "review", buildReviewQueue(loc, state.challengeMisses));
     }else{
       state.challengeScore = 0;
       state.challengeCorrectWords = {};
@@ -2800,6 +2885,7 @@
     state.challengeCorrectWords = {};
     state.trainingCorrectWords = {};
     state.challengeMisses = [];
+    state.reviewPasses = {};
     state.stageMastered = false;
     startStagePhase(loc, "learn");
   }
@@ -2992,6 +3078,7 @@
     state.challengeCorrectWords = {};
     state.trainingCorrectWords = {};
     state.challengeMisses = [];
+    state.reviewPasses = {};
     state.stageMastered = false;
     state.resumedStageEntry = false;
     if(loc.isHome){ renderHome(); return; }
@@ -3012,7 +3099,12 @@
     if(loc.encounters && state.stageProgress.homeInn){
       var resumed = state.stageProgress.homeInn;
       state.stagePhase = resumed.phase || "learn";
-      state.phaseItems = state.stagePhase === "review" ? loc.challenge.filter(function(item){ return (resumed.misses || []).indexOf(item.focusWord) >= 0; }) : null;
+      // Resuming into review rebuilt the identical Day 3 questions, which is
+      // the behaviour the ladder replaced. Rebuild it the same way starting it
+      // fresh does, so closing the tab does not quietly undo the redesign.
+      state.phaseItems = state.stagePhase === "review"
+        ? buildReviewQueue(loc, (resumed.misses || []).map(function(word){ return {focusWord:word}; }))
+        : null;
       if(state.phaseItems && !state.phaseItems.length){ state.stagePhase = "challenge"; state.phaseItems = null; }
       var resumeItems = state.phaseItems || loc.getPhaseItems(state.stagePhase);
       state.encounterIndex = Math.max(0, Math.min(resumeItems.length - 1, Number(resumed.index) || 0));
@@ -5047,6 +5139,15 @@
           return;
         }
         var stage = getLocation(state.currentKey);
+        // Day 2 hands the cloze straight back, but Review and Challenge score
+        // it. This branch used to do neither - it always wrote its own
+        // feedback and called offerRetry, which is a no-op in a single-attempt
+        // phase - so a missed review cloze left no way forward at all, and the
+        // next press fell through to restarting Day 3.
+        if(isSingleAttemptPhase()){
+          answerStage(false, prompt, option.key);
+          return;
+        }
         registerStageMiss(prompt, option.key);
         state.mistakesThisVisit = Math.min(3, state.mistakesThisVisit + 1);
         renderHud();
@@ -5935,6 +6036,16 @@
       state.mistakesThisVisit = Math.min(3, state.mistakesThisVisit + 1);
       renderHud();
       showFeedback(false, stage.getWrongAnswerFeedback(prompt, selectedKey));
+      if(state.stagePhase === "review"){
+        // Not a retry: the word climbs a rung and comes back later, asked a
+        // different way, in a different situation.
+        state.answered = true;
+        requeueReviewWord(stage, prompt);
+        $("btn-next").textContent = "次の仕事へ →";
+        $("next-row").style.display = "block";
+        saveStageProgress();
+        return;
+      }
       offerRetry(prompt);
     }
   }
@@ -5947,7 +6058,12 @@
   // opposite reason. Challenge withholds a retry because the shift is timed;
   // the cold open withholds one because failing is what it is for.
   function isSingleAttemptPhase(){
-    return state.stagePhase === "challenge" || state.stagePhase === "coldopen";
+    // Review is single-attempt too, but for a third reason again: a miss there
+    // is not the end of the question, it is the next rung. Handing the same
+    // form straight back would keep the learner on the rung that just failed,
+    // which is the behaviour the ladder exists to replace.
+    return state.stagePhase === "challenge" || state.stagePhase === "coldopen"
+      || state.stagePhase === "review";
   }
 
   /* The cold open borrows Day 1's first encounter and throws the result away.

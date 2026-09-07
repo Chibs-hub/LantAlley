@@ -1238,3 +1238,58 @@ test("the day announcement and the situation are spoken as one Kon line", () => 
   assert.equal((merged.match(/「/g) || []).length, 1, "one opening quote");
   assert.equal((merged.match(/」/g) || []).length, 1, "one closing quote");
 });
+
+test("the review ladder asks a missed word a different way each time", () => {
+  // Review used to hand back the identical Day 3 question that was just
+  // missed. Answering it right the second time proves the learner remembers
+  // the screen, not the word - and a second miss had nothing else to offer.
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(readFileSync(new URL("./moonview-inn-interactions.js", import.meta.url), "utf8"), context);
+  vm.runInContext(readFileSync(stageUrl, "utf8"), context);
+  const stage = context.N2HomeInnStage;
+
+  const word = "取り替える";
+  const rungs = [0, 1, 2].map((pass) => stage.getReviewItem(word, pass));
+
+  assert.equal(rungs.length, stage.getReviewLadderLength());
+  for (const rung of rungs) {
+    assert.ok(rung, "every rung builds an item");
+    assert.equal(rung.focusWord, word, "the ladder stays on the missed word");
+    assert.equal(rung.phase, "review");
+  }
+
+  // Name it, do it, hear it - three formats, not one repeated.
+  assert.equal(rungs[0].format, "choice");
+  assert.equal(rungs[1].format, "task");
+  assert.equal(rungs[2].format, "task");
+
+  // And three different situations, so what is learned is the word's range
+  // rather than one memorised sentence.
+  const situations = new Set(rungs.map((r) => r.jp));
+  assert.equal(situations.size, 3, "each rung puts the word in a new situation");
+
+  // The ladder wraps rather than running out.
+  assert.equal(stage.getReviewItem(word, 3).jp, rungs[0].jp);
+});
+
+test("every review rung speaks a line that has a recorded clip", () => {
+  // Variant A's requests are the one set with no audio - nothing else ever
+  // speaks them - so a ladder built on them would be read by the device voice,
+  // in a different voice from the question that preceded it.
+  const context = {};
+  vm.createContext(context);
+  context.self = context;
+  vm.runInContext(readFileSync(new URL("./moonview-inn-interactions.js", import.meta.url), "utf8"), context);
+  vm.runInContext(readFileSync(stageUrl, "utf8"), context);
+  vm.runInContext(readFileSync(new URL("./audio-index.js", import.meta.url), "utf8"), context);
+  const stage = context.N2HomeInnStage;
+  const audio = context.LanternAlleyAudio;
+
+  for (const item of stage.encounters) {
+    for (let pass = 0; pass < stage.getReviewLadderLength(); pass += 1) {
+      const rung = stage.getReviewItem(item.focusWord, pass);
+      assert.ok(audio[rung.jp], `review rung ${pass} for ${item.focusWord} has no clip: ${rung.jp}`);
+    }
+  }
+});

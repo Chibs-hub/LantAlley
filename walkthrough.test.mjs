@@ -1866,3 +1866,114 @@ test("the job board is a between-days screen, never reachable during a question"
     "the board must be gone once a question is on screen");
   assert.equal(game.$("btn-jobs-begin"), null, "and its control with it");
 });
+
+const INN_TARGETS = ["v-soroeru", "v-torikaeru", "v-atatameru-food", "w-chousei", "v-hikiukeru"];
+
+function clearedInnSave(reviewProgress) {
+  return {
+    version: 3,
+    playerCharacter: "woman",
+    characterSelected: true,
+    visited: ["entrance", "home-inn"],
+    starred: ["entrance"],
+    reviewProgress: reviewProgress || {},
+    stages: {
+      "home-inn": {
+        phase: "review", question: 0, challengeScore: 5,
+        correctWords: ["揃える", "取り替える", "温める", "調整", "引き受ける"],
+        trainingWords: ["揃える", "取り替える", "温める", "調整", "引き受ける"],
+        misses: [], mastered: true, declined: false, medal: "none"
+      }
+    }
+  };
+}
+
+// Successes spread across more than the engine's seven-day minimum.
+function retainedProgress() {
+  const now = Date.now();
+  const progress = {};
+  for (const id of INN_TARGETS) {
+    progress[id] = {
+      step: 3, firstSuccess: now - 20 * 86400000, lastAnswered: now,
+      delayedSuccesses: 3, lastDelayedSuccess: now, due: now + 86400000, errorTag: null,
+    };
+  }
+  return progress;
+}
+
+test("clearing the shift is silver; only retention across days is gold", async () => {
+  // Mastery used to be one flag, earned inside a single sitting, and it wrote
+  // itself in gold. Clearing every word at Day 3 difficulty is worth something
+  // and it opens the episode - but it is a performance, and review-engine.js
+  // already refuses to call a same-day run mastery.
+  const sameDay = boot(clearedInnSave());
+  sameDay.$("btn-start").click();
+  sameDay.clock.advance(600);
+  const inn = sameDay.doc.querySelectorAll(".map-destination")
+    .find((b) => b.textContent.includes("月見宿"));
+  inn.click();
+  sameDay.clock.advance(400);
+  assert.match(sameDay.$("map-detail-status").textContent, /🥈/u,
+    "a shift cleared in one sitting is silver, not gold");
+
+  const later = boot(clearedInnSave(retainedProgress()));
+  later.$("btn-start").click();
+  later.clock.advance(600);
+  const innLater = later.doc.querySelectorAll(".map-destination")
+    .find((b) => b.textContent.includes("月見宿"));
+  innLater.click();
+  later.clock.advance(400);
+  assert.match(later.$("map-detail-status").textContent, /🥇/u,
+    "the same words still known days later is what gold should mean");
+});
+
+function reviewSave(missed) {
+  return {
+    version: 3,
+    playerCharacter: "woman",
+    characterSelected: true,
+    visited: ["entrance"],
+    starred: ["entrance"],
+    stages: {
+      "home-inn": {
+        phase: "review", question: 0, challengeScore: 4,
+        correctWords: ["揃える", "温める", "調整", "引き受ける"],
+        trainingWords: ["揃える", "取り替える", "温める", "調整", "引き受ける"],
+        misses: [missed], mastered: false, declined: false, medal: "silver"
+      }
+    }
+  };
+}
+
+test("a word missed in review comes back asked a different way, not handed straight back", async () => {
+  // Two real bugs lived here and no unit test could see either. The cloze's
+  // wrong-answer branch never reached answerStage, so a missed review cloze
+  // offered no way forward at all and the next press restarted Day 3; and
+  // resuming into review rebuilt the identical Day 3 questions, quietly
+  // undoing the ladder for anyone who closed the tab.
+  const game = boot(reviewSave("取り替える"), "?skip=1");
+  await openResumedInnScheduleChallenge(game);
+
+  assert.match(game.$("stage-phase-badge").textContent, /復習/, "review has started");
+  const first = game.$("jp-line").textContent;
+  const clozeButtons = game.doc.querySelectorAll(".reply-option").filter(game.visible);
+  assert.ok(clozeButtons.length >= 3, "the first rung names the word rather than repeating the task");
+
+  // Miss it on purpose: the near-miss, which is the whole point of the item.
+  const wrong = clozeButtons.find((b) => b.textContent.trim() === "代えて");
+  assert.ok(wrong, "the near-miss option is on screen");
+  wrong.click();
+  game.clock.advance(3000);
+
+  // Not a dead end, and not the same rung again.
+  assert.equal(game.$("next-row").style.display, "block", "a missed review question still leads somewhere");
+  game.$("btn-next").click();
+  game.clock.advance(2500);
+
+  assert.match(game.$("stage-phase-badge").textContent, /復習/, "still in review, not restarted into Day 3");
+  const second = game.$("jp-line").textContent;
+  assert.notEqual(second, first, "the word comes back in a new situation");
+  assert.equal(game.doc.querySelectorAll(".reply-option").filter(game.visible).length, 0,
+    "and asked a different way - the second rung is the task, not the cloze");
+  assert.ok(game.doc.querySelectorAll(".inn-object").length > 0, "the second rung puts the learner in the room");
+});
