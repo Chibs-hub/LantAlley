@@ -12,8 +12,8 @@ Written 2026-09-07 on `codex/inn-learning-redesign`.
 | C1 | All five words on all three days | **done** - v264, 15 clips rendered |
 | C3 | Job board | **done** - v267 |
 | C5 | Day 3 format split | blocked on content - see the note in the source |
-| C6 | Review ladder | not started |
-| C7 | Two gates (silver today, gold on retention) | not started |
+| C6 | Review ladder | **done** - v270 |
+| C7 | Two gates (silver today, gold on retention) | **done** - v270 |
 | W1 | Rewrite the throwaway distractors | not started |
 | W2 | Two more scenes for 引き受ける | not started |
 | W3 | Per-day story order | not started |
@@ -27,6 +27,27 @@ Two things found while building, recorded because they change the plan:
 - **The audio estimate was wrong.** Section 5 said three clips, having counted
   only the requests. A newly covered word brings its narration and its success
   reply with it, so it was fifteen.
+- **The review ladder's rungs were constrained by audio.** Section C6 proposed
+  cloze, then a guided task, then audio. The guided rung had to use Day 1's own
+  situation rather than variant A: variant A's requests are the one line set
+  with no recorded clips, because nothing else ever speaks them.
+- **Two ladder bugs were invisible to unit tests.** The cloze's wrong-answer
+  branch never reached `answerStage`, so a missed review cloze offered no way
+  forward and the next press restarted Day 3; and resuming into review rebuilt
+  the identical Day 3 questions. Both were found by playing it in a browser.
+  Anything that changes phase flow needs a walkthrough test, not a data test.
+
+## What is left
+
+`C5` and `W1`-`W3` are all content work needing a native check, not code:
+
+- **C5** needs a listening prompt and an option set written for 温める and
+  引き受ける, so Day 3 can ask them by name instead of by task. Until then
+  引き受ける can be passed on a coin flip.
+- **W1** the four cloze options behave like two - one real near-miss and two
+  throwaways.
+- **W2** 引き受ける has one scenario, so its review ladder repeats a screen.
+- **W3** the five words run in the same order every day.
 
 This plan rebuilds how the Moonview Inn stage teaches its five words. It comes
 out of a review of the current flow, and every claim below was checked against
