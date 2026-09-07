@@ -1,6 +1,32 @@
 # Inn stage rebuild plan
 
-Status: proposed, not started. Written 2026-09-07 on `codex/inn-learning-redesign`.
+Written 2026-09-07 on `codex/inn-learning-redesign`.
+
+## Status
+
+| | Item | State |
+|---|---|---|
+| 5B | Service worker installs the shell audio only | **done** - v262, 26.6 MB to 2.27 MB |
+| C2 | First-attempt-only credit | **done** - v263 |
+| C8 | Wrong-answer sound | **done** - v263 |
+| C1 | All five words on all three days | **done** - v264, 15 clips rendered |
+| C3 | Job board | **done** - v267 |
+| C5 | Day 3 format split | blocked on content - see the note in the source |
+| C6 | Review ladder | not started |
+| C7 | Two gates (silver today, gold on retention) | not started |
+| W1 | Rewrite the throwaway distractors | not started |
+| W2 | Two more scenes for 引き受ける | not started |
+| W3 | Per-day story order | not started |
+
+Two things found while building, recorded because they change the plan:
+
+- **C2 was bigger than written.** Every retryable wrong answer returned before
+  reaching `answerStage`, so a Learn or Practice miss was never scheduled for
+  spaced review either. Section 9 credited the code with doing this correctly;
+  it did not. Only Challenge misses were ever scheduled.
+- **The audio estimate was wrong.** Section 5 said three clips, having counted
+  only the requests. A newly covered word brings its narration and its success
+  reply with it, so it was fifteen.
 
 This plan rebuilds how the Moonview Inn stage teaches its five words. It comes
 out of a review of the current flow, and every claim below was checked against
