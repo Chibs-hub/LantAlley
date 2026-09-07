@@ -230,8 +230,8 @@
       // with one adjustable time card" described the widget rather than the
       // constraint driving the puzzle - reported live as leaving a learner
       // unsure what to actually do.
-      controlHelp:"Drag the slider to a time, then press 決定 to confirm.",
-      clue:"Only when cleaning starts can move. The next guest's arrival time is already fixed and cannot change.",
+      controlHelp:"Use Earlier or Later to set a time, then press 決定 to confirm.",
+      clue:"Only the cleaning start time can move. The next guest's arrival at 15:00 is fixed.",
       min:9,max:15,startA:10,startB:15,gap:2,targetA:13,targetB:15,fixedB:true,labelA:"掃除開始",labelB:"次のお客様到着"
     },
     {
@@ -250,10 +250,10 @@
     roomScene({verb:"replace", target:"bulb"}),
     roomScene({verb:"warm", target:"soup"}),
     {
-      scene:"arrivals",
-      controlHelp:"Drag each slider to a time, then press 決定 to confirm.",
-      clue:"Both arrival times on this board can move.",
-      min:14,max:19,startA:15,startB:15,gap:2,targetA:15,targetB:17,fixedB:false,labelA:"Aグループ到着",labelB:"Bグループ到着"
+      scene:"dinner-seatings",
+      controlHelp:"Use Earlier or Later to set each dinner time, then press 決定 to confirm.",
+      clue:"Both dinner start times can move. Leave enough time to serve one group before the next.",
+      min:17,max:21,startA:18,startB:18,gap:2,targetA:18,targetB:20,fixedB:false,labelA:"Aグループ夕食",labelB:"Bグループ夕食"
     },
     {
       scene:"errand",
@@ -271,10 +271,10 @@
     roomScene({verb:"replace", target:"sheet"}),
     roomScene({verb:"warm", target:"rice"}),
     {
-      scene:"arrivals",
-      controlHelp:"Drag each slider to a time, then press 決定 to confirm.",
-      clue:"Both arrival times on this board can move.",
-      min:10,max:16,startA:12,startB:12,gap:2,targetA:12,targetB:14,fixedB:false,labelA:"Cグループ到着",labelB:"Dグループ到着"
+      scene:"dinner-seatings",
+      controlHelp:"Use Earlier or Later to set each dinner time, then press 決定 to confirm.",
+      clue:"Both dinner start times can move. Leave enough time to serve one group before the next.",
+      min:17,max:21,startA:18,startB:18,gap:2,targetA:18,targetB:20,fixedB:false,labelA:"Cグループ夕食",labelB:"Dグループ夕食"
     },
     guidedInteractions[4]
   ];
@@ -290,7 +290,7 @@
     {jp:"二つのマットに、同じ向きの座布団を二枚ずつ揃えてください。", romaji:"Futatsu no matto ni, onaji muki no zabuton o nimai zutsu soroete kudasai.", narration:"The cushions have been used again and now face different directions.", meaning:"Please place two cushions facing the same direction on each mat.", successReply:"座布団の向きが揃いました。これで朝食の準備を続けられます。"},
     {jp:"汚れたシーツを洗濯かごに入れて、新しいシーツに取り替えてください。", romaji:"Yogoreta shiitsu o sentakukago ni irete, atarashii shiitsu ni torikaete kudasai.", narration:"A marked sheet remains beside the fresh linen.", meaning:"Put the stained sheet in the laundry basket, then replace it with a new one.", successReply:"新しいシーツになりました。これで今夜のお客様を迎えられます。"},
     {jp:"ごはんを電子レンジで温めてください。", romaji:"Gohan o denshi renji de atatamete kudasai.", narration:"The evening meal has gone cold.", meaning:"Please warm the rice in the microwave.", successReply:"ごはんが温まりました。みんなで食事にしましょう。"},
-    {jp:"Cグループは12時以降、Dグループは14時までに到着します。準備に2時間必要なので、到着時間を調整してください。", romaji:"C guruupu wa juuniji ikou, D guruupu wa juuyoji made ni touchaku shimasu. Junbi ni nijikan hitsuyou na node, touchaku jikan o chousei shite kudasai.", narration:"Two afternoon groups need separate arrival times, with two hours needed between them.", meaning:"Coordinate the two arrival times using the stated limits.", successReply:"Cグループは12時、Dグループは14時になりました。これで準備時間を取れます。"},
+    {jp:"Cグループは18時以降、Dグループは20時までに夕食を始められます。一組の食事には2時間かかります。夕食の開始時刻を調整してください。", romaji:"C guruupu wa juuhachiji ikou, D guruupu wa nijuji made ni yuushoku o hajimeraremasu. Hitokumi no shokuji ni wa nijikan kakarimasu. Yuushoku no kaishi jikoku o chousei shite kudasai.", narration:"Two groups need dinner seatings, with enough time to serve one group before the next.", meaning:"Coordinate the two dinner start times using the stated booking windows.", successReply:"Cグループは18時、Dグループは20時になりました。これで順番に夕食をお出しできます。"},
     {jp:"朝食の配膳を引き受けてください。", romaji:"Choushoku no haizen o hikiukete kudasai.", narration:"The breakfast shift still needs someone responsible for serving it.", meaning:"Please undertake serving breakfast.", successReply:"ありがとうございます。明日の朝食の配膳をお願いします。"}
   ];
 
@@ -298,7 +298,7 @@
     {jp:"二つのマットに、同じ大きさの座布団を二枚ずつ揃えてください。", romaji:"Futatsu no matto ni, onaji ookisa no zabuton o nimai zutsu soroete kudasai.", narration:"The cushions are still mixed across the tatami.", meaning:"Please place two cushions of the same size on each mat.", successReply:"座布団の大きさが揃いました。これで部屋が整いました。"},
     {jp:"切れた電球を回収箱に入れて、新しい電球に取り替えてください。", romaji:"Kireta denkyuu o kaishuubako ni irete, atarashii denkyuu ni torikaete kudasai.", narration:"A lamp in the hallway has gone dark.", meaning:"Put the burned-out bulb in the recycling box, then replace it with a new one.", successReply:"新しい電球がつきました。これで廊下が明るくなります。"},
     {jp:"スープをコンロで温めてください。", romaji:"Suupu o konro de atatamete kudasai.", narration:"A guest returns late to a counter of cold dishes.", meaning:"Please warm the soup on the stove.", successReply:"スープが温まりました。お客様に出しましょう。"},
-    {jp:"Aグループは15時以降、Bグループは17時までに到着します。ロビーの準備に2時間必要なので、到着時間を調整してください。", romaji:"A guruupu wa juugoji ikou, B guruupu wa juushichiji made ni touchaku shimasu. Robii no junbi ni nijikan hitsuyou na node, touchaku jikan o chousei shite kudasai.", narration:"Both groups are currently set for 15:00. Group A cannot arrive before 15:00, Group B must arrive by 17:00, and the lobby needs two hours between groups.", meaning:"Coordinate the arrival times using the groups' limits and the two-hour lobby preparation time.", successReply:"Aグループは15時、Bグループは17時になりました。これでロビーを準備できます。"},
+    {label:"夕食の時間を決める", jp:"Aグループは18時以降、Bグループは20時までに夕食を始められます。一組の食事には2時間かかります。夕食の開始時刻を調整してください。", romaji:"A guruupu wa juuhachiji ikou, B guruupu wa nijuji made ni yuushoku o hajimeraremasu. Hitokumi no shokuji ni wa nijikan kakarimasu. Yuushoku no kaishi jikoku o chousei shite kudasai.", narration:"Both groups requested the same dinner time. Group A can begin at 18:00 or later, Group B by 20:00, and each meal needs two hours.", meaning:"Coordinate the two dinner start times using the booking windows and meal length.", successReply:"Aグループは18時、Bグループは20時になりました。これで順番に夕食をお出しできます。"},
     {jp:"荷物を運ぶ仕事を引き受けてください。", romaji:"Nimotsu o hakobu shigoto o hikiukete kudasai.", narration:"The innkeeper needs someone to take responsibility for moving the luggage.", meaning:"Please undertake the job of carrying the luggage.", successReply:"ありがとうございます。明日の朝、荷物をお願いします。"}
   ];
 
@@ -306,7 +306,7 @@
     "コン：「おはようございます。昨夜はよく眠れましたか。最初の家族が遊んで座布団の向きを乱したので、朝食の前に部屋を整えます。」",
     "コン：「家族がチェックアウトしました。今夜もこの部屋を使いますが、滞在中にシーツが一枚汚れました。」",
     "コン：「掃除に予定より時間がかかり、従業員の食事のごはんが冷めてしまいました。」",
-    "コン：「昼すぎにＣグループとＤグループが来ます。ロビーの準備には二時間必要なので、同じ時間には迎えられません。」",
+    "コン：「夕食の時間に、ＣグループとＤグループから同じ時刻の希望をいただきました。食事処は一組ずつご案内します。」",
     "コン：「二つのグループは無事に部屋へ入りました。でも、明日の朝食を配る人がまだ決まっていません。主人が返事を待っています。」"
   ];
 
@@ -314,7 +314,7 @@
     "コン：「次の朝です。朝食のあと、子どもたちが大きさの違う座布団を二つのマットに残しました。」",
     "コン：「廊下が暗くなっています。散歩に出たお客様がもうすぐ戻りますが、この電球が切れてしまいました。」",
     "コン：「散歩のお客様が日暮れ後に戻りました。着替えている間に、夕食のスープが冷めてしまいました。」",
-    "コン：「帳場を閉める前に、ＡグループとＢグループから同じ到着時間を希望されました。ロビーでは同時に迎えられません。」",
+    "コン：「夕食の時間に、ＡグループとＢグループから同じ時刻の希望をいただきました。食事処は一組ずつご案内します。」",
     "コン：「最後のお客様も部屋に入りました。残る仕事は一つです。明日の朝、荷物を駅まで運ぶ人が必要です。」"
   ];
 
@@ -374,15 +374,15 @@
       successReply:"はい、冷めたごはんを自分で温かくするので「温める」です。"
     },
     {
-      jp:"二つのグループの到着時間を（　　）ください。",
-      english:"Please coordinate the arrival times of the two groups.",
+      jp:"二つのグループの夕食開始時刻を（　　）ください。",
+      english:"Please coordinate the dinner start times of the two groups.",
       options:[
         {key:"adjust", label:"調整して"},
         {key:"chousetsu", label:"調節して", nearMiss:true},
         {key:"leave", label:"放置して"},
         {key:"cancel", label:"中止して"}
       ],
-      successReply:"はい、Cグループは12時、Dグループは14時にしました。条件を合わせるのが「調整」です。"
+      successReply:"はい、Cグループは18時、Dグループは20時にしました。条件を合わせるのが「調整」です。"
     },
     {
       jp:"明日の朝食の配膳を（　　）くれませんか。",
@@ -433,7 +433,7 @@
     "group the cushions so they match on the one attribute the sentence names",
     "put the used item in the bin the sentence names, then fit its fresh counterpart",
     "move the dish the sentence names to the appliance the sentence names",
-    "choose a time that satisfies every condition given at once",
+    "choose dinner seating times that satisfy every booking condition at once",
     "answer the request Kon actually made"
   ];
 
@@ -519,6 +519,7 @@
       mechanic:mechanicNames[index],
       interaction:variant ? alternateInteractions[index] : practiceInteractionsA[index],
       variant:phase + "-" + (variant ? "b" : "a"),
+      label:text.label || base.label,
       narration:(variant ? evidenceNarrationsB[index] : evidenceNarrationsA[index]),
       jp:phase === "practice" ? practiceWordChoice[index].jp : text.jp,
       // Support is withdrawn one layer per day, so the three days differ in
@@ -652,7 +653,7 @@
    * w-chousei's meanings are ["regulation","adjustment","tuning"], in that
    * order, because "regulation" is the catalog's general-purpose first sense
    * across every place that uses this word. In the Inn it never means that -
-   * the checkout-time and arrival-time tasks are both about reconciling
+   * the checkout-and-cleaning and dinner-seating tasks are both about reconciling
    * several conditions into one time, which is "adjustment" or "coordination".
    * A learner reading "regulation" on the new-word card would associate the
    * kanji with the wrong concept before ever answering the question.

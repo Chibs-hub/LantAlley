@@ -5,6 +5,26 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-07 - The audio schedule task is replayable and now describes real dinner service
+
+The Day 3 `調整` task had two separate problems. Its Challenge prompt said only `音声を聞いてください。`, and the small speaker beside it replayed that placeholder instead of the hidden Japanese request. A learner could neither reliably find an explicit replay action nor hear the actual request again. Challenge now offers a labelled `Listen again` button. It replays the Japanese clip without replacing the audio-only prompt with written Japanese.
+
+The original pair of sliders also asked a learner to infer both the gesture and the reason for the constraint. They are now named `Earlier` and `Later` controls with a live time between them. The interaction remains a real schedule decision, but each step is visible and keyboard-focusable. The old icon-only speaker and decorative continue chevron are hidden on this audio-only task, leaving the labelled replay button as the only action in that corner.
+
+The old Day 3 arrival-and-lobby story did not make its two-hour condition believable. It is now dinner service: two groups request the same dinner time, the dining room serves one group at a time, Group A may start at 18:00 or later, and Group B must start by 20:00. The answer is 18:00 then 20:00. Day 1's separate checkout-to-cleaning scenario stays as the room-turnover task.
+
+With the owner's scoped approval, `generate-audio.py` rendered the three changed spoken lines and removed their three retired arrival-scenario clips. No new art is needed for this change.
+
+`node --test` passes 437/437, including replay, the actual hidden request, the saved Challenge view, and the replacement controls. Cache is v261.
+
+### 2026-09-07 - Inn tasks now tell the learner where to look
+
+The room task had all the right information, but it asked the learner to infer the reading order from the composition: Kon and the Japanese request sat on the left, while the interaction instructions, room, and objects sat on the right. A first-time player had to decide which panel mattered before solving anything.
+
+The Inn now marks that path in place: `1 Read Kon's request` appears with the dialogue, and `2 Answer here` appears directly above the interactive workspace. The labels exist only while the Inn is active and are covered by a real rendered-game regression test. They are intentionally compact signposts rather than new cards, so the illustrated room remains visible behind the two docks - the existing cinematic-shell checks caught the first, too-opaque version before it shipped.
+
+Verified in the local browser on the Inn introduction and the illustrated room task. Full `node --test` exits successfully. Cache is v257.
+
 ### 2026-09-04 - The word-choice screen, actually composed - and why the two previous attempts could not have worked
 
 Third report on the same screen, and the first one where the whole composition was looked at instead of the last thing that moved. What was actually wrong, measured at a real 1280px viewport:

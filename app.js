@@ -531,6 +531,12 @@
 
   var $ = function(id){ return document.getElementById(id); };
 
+  function setAudioReplayControl(active){
+    $("btn-listen-again").hidden = !active;
+    $("speak-btn").hidden = !!active;
+    $("dialogue-continue").hidden = !!active;
+  }
+
   var dialoguePanel = $("dialogue-panel");
   var dialogueContinue = $("dialogue-continue");
   /* ---- Reading aid: tap a word for its reading and meaning ----
@@ -1193,10 +1199,18 @@
     $("romaji-line").style.display = state.romajiOn && !isSingleAttemptPhase() ? "block" : "none";
   });
 
-  $("speak-btn").addEventListener("click", function(){
+  function replayCurrentPrompt(){
     var loc = getLocation(state.currentKey);
-    if(loc) speak(dialogueFlow.getText() || getActivePrompt(loc).jp, "ask", true);
-  });
+    if(!loc) return;
+    var prompt = getActivePrompt(loc);
+    var spoken = loc.encounters && state.stagePhase === "challenge" && prompt
+      ? prompt.jp
+      : (dialogueFlow.getText() || (prompt && prompt.jp));
+    if(spoken) speak(spoken, "ask", true);
+  }
+
+  $("speak-btn").addEventListener("click", replayCurrentPrompt);
+  $("btn-listen-again").addEventListener("click", replayCurrentPrompt);
 
   $("hint-btn").addEventListener("click", function(){
     // A hint-less item still has a hint-box in the DOM. Toggling "show" on it
@@ -2627,6 +2641,10 @@
     var asset = INN_SCENES[key] || INN_SCENES.lobby;
     screenGame.style.setProperty("--inn-scene-image", 'url("' + asset + '")');
   }
+  function setInnFocusCues(active){
+    $("inn-focus-read").hidden = !active;
+    $("inn-focus-answer").hidden = !active;
+  }
 
   function renderStageIntro(loc){
     setInnScene("lobby");
@@ -2667,6 +2685,7 @@
 
   function renderStagePrompt(loc){
     var prompt = getActivePrompt(loc);
+    setAudioReplayControl(state.stagePhase === "challenge");
     $("btn-skip-question").hidden = !testingSkipEnabled;
     $("btn-skip-stage").hidden = !testingSkipEnabled;
     setInnScene(innSceneFor(prompt));
@@ -2764,6 +2783,8 @@
     screenCharacter.hidden = true;
     screenGame.classList.toggle("entrance-stage", loc.key === "entrance");
     screenGame.classList.toggle("inn-stage", loc.key === "home-inn");
+    setInnFocusCues(loc.key === "home-inn");
+    setAudioReplayControl(false);
     if(loc.key !== "home-inn") screenGame.style.removeProperty("--inn-scene-image");
     screenGame.classList.remove("entrance-complete");
     $("entrance-progress").hidden = loc.key !== "entrance";
@@ -2844,6 +2865,7 @@
     }
 
     var prompt = getActivePrompt(loc);
+    setAudioReplayControl(loc.encounters && state.stagePhase === "challenge");
     $("stage-phase-row").style.display = loc.encounters ? "flex" : "none";
     // Resuming into a stage never ran renderStagePrompt (see the comment a
     // few lines down), so its own testingSkipEnabled toggle never ran either
@@ -5125,16 +5147,45 @@
       for(var hour=interaction.min;hour<=interaction.max;hour++){ var mark=document.createElement("span"); mark.textContent=hour+":00"; timeline.appendChild(mark); }
       work.appendChild(timeline);
       var controls = document.createElement("div"); controls.className = "schedule-controls";
-      // "Only when cleaning starts can move" (the clue text above) said this in
-      // prose, but the two sliders looked like the same kind of control side
-      // by side - reported live as leaving a learner unsure which one was
-      // actually theirs to touch. The fixed one now says so on its own label.
-      var labelB = interaction.labelB + (interaction.fixedB ? "（固定）" : "");
-      controls.innerHTML = '<label>'+interaction.labelA+': <output id="arrival-a-out">'+innInteractionState.arrivalA+':00</output><input id="arrival-a" type="range" min="'+interaction.min+'" max="'+interaction.max+'" value="'+innInteractionState.arrivalA+'"></label><label>'+labelB+': <output id="arrival-b-out">'+innInteractionState.arrivalB+':00</output><input id="arrival-b" type="range" min="'+interaction.min+'" max="'+interaction.max+'" value="'+innInteractionState.arrivalB+'" '+(interaction.fixedB ? "disabled" : "")+'></label>';
+      // A range control only says that a number can change. The learner still
+      // has to guess whether to drag left or right, and the two handles made it
+      // unclear which group they were moving. These named steps make the unit
+      // and direction explicit without giving away the requested time.
+      function scheduleTimeCard(key, label, value, fixed){
+        var id = "arrival-" + key;
+        var steps = fixed
+          ? '<span class="schedule-fixed">Fixed time</span>'
+          : '<div class="schedule-stepper"><button type="button" class="schedule-step" id="'+id+'-earlier" aria-label="Set '+label+' one hour earlier">Earlier</button><output id="'+id+'-out" aria-live="polite">'+value+':00</output><button type="button" class="schedule-step" id="'+id+'-later" aria-label="Set '+label+' one hour later">Later</button></div>';
+        if(fixed) steps = '<output id="'+id+'-out" aria-live="polite">'+value+':00</output>' + steps;
+        return '<section class="schedule-time-card' + (fixed ? ' is-fixed' : '') + '"><h3>'+label+(fixed ? '（固定）' : '')+'</h3>'+steps+'</section>';
+      }
+      controls.innerHTML = scheduleTimeCard("a", interaction.labelA, innInteractionState.arrivalA, false)
+        + scheduleTimeCard("b", interaction.labelB, innInteractionState.arrivalB, !!interaction.fixedB);
       work.appendChild(controls);
-      ["a","b"].forEach(function(key){ $("arrival-"+key).addEventListener("input", function(){ $("arrival-"+key+"-out").textContent = this.value + ":00"; }); });
+      function updateScheduleTime(key){
+        var value = key === "a" ? innInteractionState.arrivalA : innInteractionState.arrivalB;
+        $("arrival-"+key+"-out").textContent = value + ":00";
+        var earlier = $("arrival-"+key+"-earlier");
+        var later = $("arrival-"+key+"-later");
+        if(earlier) earlier.disabled = value <= interaction.min;
+        if(later) later.disabled = value >= interaction.max;
+      }
+      function moveScheduleTime(key, delta){
+        var field = key === "a" ? "arrivalA" : "arrivalB";
+        var next = Math.max(interaction.min, Math.min(interaction.max, innInteractionState[field] + delta));
+        if(next === innInteractionState[field]) return;
+        innInteractionState[field] = next;
+        updateScheduleTime(key);
+      }
+      ["a","b"].forEach(function(key){
+        var earlier = $("arrival-"+key+"-earlier");
+        var later = $("arrival-"+key+"-later");
+        if(earlier) earlier.addEventListener("click", function(){ moveScheduleTime(key, -1); });
+        if(later) later.addEventListener("click", function(){ moveScheduleTime(key, 1); });
+        updateScheduleTime(key);
+      });
       var confirm = iconButton("calendar", "決定", "Confirm this schedule", "inn-action", {type:"confirmTimes"});
-      confirm.addEventListener("click", function(event){ event.stopImmediatePropagation(); performInnAction({type:"setTimes",arrivalA:Number($("arrival-a").value),arrivalB:Number($("arrival-b").value),min:interaction.min,max:interaction.max,gap:interaction.gap,targetA:interaction.targetA,targetB:interaction.targetB}); });
+      confirm.addEventListener("click", function(event){ event.stopImmediatePropagation(); performInnAction({type:"setTimes",arrivalA:innInteractionState.arrivalA,arrivalB:innInteractionState.arrivalB,min:interaction.min,max:interaction.max,gap:interaction.gap,targetA:interaction.targetA,targetB:interaction.targetB}); });
       actions.appendChild(confirm);
       work.appendChild(actions);
     }else{

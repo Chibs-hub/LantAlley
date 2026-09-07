@@ -545,6 +545,9 @@
   }
   .speak-btn:hover{background:rgba(27,42,74,0.08);}
   .speak-btn:focus-visible{outline:2px solid var(--lantern-bright);}
+  .listen-again{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:32px;padding:5px 9px;border:1px solid rgba(140,86,45,.72);border-radius:999px;background:#fff7e5;color:#5c3824;font:inherit;font-size:.68rem;font-weight:800;line-height:1;cursor:pointer;box-shadow:0 2px 0 rgba(73,43,24,.45)}
+  .listen-again:hover{background:#fffdf6;transform:translateY(-1px)}
+  .listen-again:focus-visible{outline:3px solid var(--lantern-bright);outline-offset:2px}
   .dialogue-continue{
     position:absolute;right:8px;bottom:7px;display:grid;place-items:center;
     min-width:24px;height:24px;padding:0 5px;border-radius:999px;
@@ -784,7 +787,7 @@
   .inn-stage .hud-stars{color:#f3be6d}
   .inn-stage .stage-phase-badge{background:#9b4e32;color:#fff3d7}
   .inn-stage .stage-restart{border-color:#c38a56;background:#f5e4bf;color:#4a2b1b}
-  .inn-stage .learning-context{grid-column:1/5;grid-row:2;position:relative;align-self:end;min-width:0;min-height:0;padding:32px 0 0;border:0;border-radius:13px;background:transparent;box-shadow:none}
+  .inn-stage .learning-context{grid-column:1/5;grid-row:2;position:relative;align-self:stretch;display:flex;flex-direction:column;justify-content:flex-end;min-width:0;min-height:0;padding:22px 10px 10px;border:0;border-radius:13px;background:transparent;box-shadow:none}
   /* Kon speaks twice on an Inn screen: this story line, then the request in
    * the bubble below. Two differently-styled boxes read as two speakers, so
    * this is aligned to the speech column and given the same paper as the
@@ -799,8 +802,13 @@
   .inn-stage .dialogue.entrance-dialogue .avatar.avatar-animated{width:118px;height:148px;align-self:end;filter:drop-shadow(0 8px 6px rgba(0,0,0,.38))}
   .inn-stage .dialogue.entrance-dialogue .speech{grid-column:2;min-height:148px;padding:13px 34px 11px 12px;border:2px solid rgba(156,95,48,.82);border-radius:11px;background:linear-gradient(180deg,#fffaf0,#eeddb8);color:#2d2926;box-shadow:0 5px 0 rgba(38,20,13,.8)}
   .inn-stage .speak-btn{position:absolute;right:8px;bottom:10px;margin:0;color:#5c3824}
+  .inn-stage .listen-again{position:absolute;right:40px;bottom:11px;z-index:3}
   .inn-stage .answer-workspace{grid-column:5/-1;grid-row:2;position:relative;align-self:end;min-width:0;min-height:0;padding:0;border:0;border-radius:13px;background:transparent;box-shadow:none}
   .inn-stage .answer-workspace .scene{min-width:0}
+  .inn-stage .inn-focus-cue:not([hidden]){display:flex;align-items:center;gap:7px;width:max-content;max-width:100%;margin:0 0 7px;padding:5px 10px 5px 6px;border:1px solid rgba(230,178,96,.62);border-radius:999px;background:rgba(44,24,14,.88);box-shadow:0 3px 9px rgba(0,0,0,.24);color:#fff0cf;font-size:.68rem;font-weight:800;letter-spacing:.02em;line-height:1.15}
+  .inn-stage .inn-focus-number{display:grid;place-items:center;width:19px;height:19px;border-radius:50%;background:#e2a44f;color:#3f2112;font-family:'Shippori Mincho',serif;font-size:.8rem;font-weight:900}
+  .inn-stage .inn-focus-read{align-self:flex-start}
+  .inn-stage .inn-focus-answer{margin-left:2px}
 
   /* Feedback and the continuation button must never be the reason the page
    * grows past the viewport - but a content-heavy room (the arrange task's
@@ -872,7 +880,7 @@
     #screen-game.inn-stage{min-height:0;padding:10px}
     .inn-stage .game-layout{grid-template-columns:1fr;grid-template-rows:auto auto auto;gap:9px}
     .inn-stage .stage-bar{grid-column:1;grid-row:1;margin:0;padding:8px 10px}
-    .inn-stage .learning-context{display:block;grid-column:1;grid-row:2;padding:28px 0 0}
+    .inn-stage .learning-context{display:block;grid-column:1;grid-row:2;padding:16px 8px 8px;border:0;background:transparent}
     .inn-stage .answer-workspace{grid-column:1;grid-row:3;padding:0}
     .inn-stage .narration{font-size:.7rem;line-height:1.35}
     .inn-stage .dialogue.entrance-dialogue{position:relative;top:auto;grid-template-columns:70px minmax(0,1fr);padding:0;background:transparent;box-shadow:none}
@@ -882,6 +890,7 @@
     .inn-stage .jp-line{font-size:1rem;line-height:1.35}
     .inn-stage .romaji-line{font-size:.72rem}
     .inn-stage .inn-instruction{font-size:.72rem}
+    .inn-stage .inn-focus-cue:not([hidden]){margin-bottom:6px;font-size:.65rem}
     .inn-stage .inn-new-word{margin-bottom:7px;padding:6px 8px}
     .inn-stage .inn-shift-progress{padding:6px 7px}
     .inn-stage .inn-room-composite{width:100%;margin:0}
@@ -983,46 +992,17 @@
   .schedule-timeline span{text-align:center;font-size:.82rem;color:#6c5a46}
   .schedule-controls{display:grid;grid-template-columns:1fr 1fr;gap:12px;user-select:none}
   .answer-workspace .schedule-controls{width:100%;align-self:stretch}
-  /* No color was ever set here, so the label text fell back to the page's
-     own light theme color (--washi, near-white) on this near-white card -
-     reported live as letters being hard to see, which the numbers back up:
-     #f2ebdd text on #fffaf0 is well under WCAG's minimum contrast. */
-  .schedule-controls label{padding:10px;border-radius:12px;background:#fffaf0;font-weight:700;color:#6c5a46}
-  /* The instructions already said "drag the slider," but the slider itself
-     was a bare, unstyled <input type=range> - the one native control in a
-     game where everything else is hand-styled, so it read as leftover
-     browser chrome rather than something the game wanted touched. Reported
-     live as still not obvious to interact with even after the text and
-     contrast were fixed. A visible track plus a large, lantern-colored,
-     gently pulsing handle gives it the same "touch me" language the
-     dialogue-continue dot already uses elsewhere (see dialogue-nudge). */
-  .schedule-controls input{
-    width:100%; margin:10px 0 4px; height:8px; border-radius:999px;
-    background:rgba(140,110,70,.25); outline:none;
-    -webkit-appearance:none; appearance:none;
-  }
-  .schedule-controls input::-webkit-slider-runnable-track{height:8px;border-radius:999px;background:transparent}
-  .schedule-controls input::-moz-range-track{height:8px;border-radius:999px;background:transparent}
-  .schedule-controls input::-webkit-slider-thumb{
-    -webkit-appearance:none; width:26px; height:26px; border-radius:50%;
-    background:radial-gradient(circle at 35% 30%, var(--lantern-bright), var(--lantern) 70%);
-    border:3px solid #6b4423; box-shadow:0 2px 5px rgba(0,0,0,.4);
-    margin-top:-9px; cursor:grab; animation:slider-nudge 1.6s ease-in-out infinite;
-  }
-  .schedule-controls input::-moz-range-thumb{
-    width:20px; height:20px; border-radius:50%; border:3px solid #6b4423;
-    background:radial-gradient(circle at 35% 30%, var(--lantern-bright), var(--lantern) 70%);
-    box-shadow:0 2px 5px rgba(0,0,0,.4); cursor:grab; animation:slider-nudge 1.6s ease-in-out infinite;
-  }
-  .schedule-controls input:active::-webkit-slider-thumb,.schedule-controls input:active::-moz-range-thumb{cursor:grabbing}
-  @keyframes slider-nudge{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
-  /* The fixed slider is inert, not just another control - dimming its whole
-     card (label text included) sets it apart from the one that responds,
-     on top of the "(fixed)" text on its own label. Its handle drops the
-     lantern color and the pulse, since nothing here is waiting to be moved. */
-  .schedule-controls label:has(input:disabled){opacity:.55}
-  .schedule-controls input:disabled::-webkit-slider-thumb{background:#b9ada0;border-color:#8a7f72;box-shadow:none;cursor:not-allowed;animation:none}
-  .schedule-controls input:disabled::-moz-range-thumb{background:#b9ada0;border-color:#8a7f72;box-shadow:none;cursor:not-allowed;animation:none}
+  .schedule-time-card{padding:10px;border:1px solid rgba(140,86,45,.3);border-radius:12px;background:#fffaf0;color:#493827}
+  .schedule-time-card h3{margin:0 0 8px;color:#5c3824;font-size:.86rem;line-height:1.25}
+  .schedule-stepper{display:grid;grid-template-columns:minmax(62px,1fr) auto minmax(62px,1fr);align-items:center;gap:6px}
+  .schedule-step{min-height:40px;padding:6px 8px;border:1px solid #946033;border-radius:9px;background:#f7e4bd;color:#4a2d18;font:inherit;font-size:.7rem;font-weight:900;line-height:1.1;cursor:pointer;box-shadow:0 2px 0 #80512c}
+  .schedule-step:hover{background:#fff1cf;transform:translateY(-1px)}
+  .schedule-step:active{transform:translateY(1px);box-shadow:none}
+  .schedule-step:focus-visible{outline:3px solid var(--lantern-bright);outline-offset:2px}
+  .schedule-step:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+  .schedule-stepper output,.schedule-time-card > output{min-width:61px;color:#4a2d18;font-size:1rem;font-weight:900;text-align:center;white-space:nowrap}
+  .schedule-time-card.is-fixed{background:#f0e6d4;color:#6c5a46}
+  .schedule-fixed{display:block;color:#765d45;font-size:.71rem;font-weight:800;text-align:center}
   .inn-status{text-align:center;min-height:24px;font-weight:800;color:#f2ddb6}
   .medal{margin-left:5px;font-size:1.05rem}
   .inn-drop-zone:disabled,.inn-object:disabled{opacity:.35;cursor:not-allowed;box-shadow:none;transform:none}

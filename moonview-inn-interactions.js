@@ -105,7 +105,7 @@
 
   function applyCoordinate(state, action){
     var next = clone(state);
-    if(action.type !== "setTimes") return result(next, "wrong", "Move both arrival cards on the schedule.");
+    if(action.type !== "setTimes") return result(next, "wrong", "Set both dinner times on the schedule.");
     next.arrivalA = Number(action.arrivalA);
     next.arrivalB = Number(action.arrivalB);
     var min = action.min === undefined ? 14 : Number(action.min);
@@ -113,9 +113,9 @@
     var gap = action.gap === undefined ? 2 : Number(action.gap);
     if(next.arrivalA < min || next.arrivalB > max) return result(next, "wrong", "The proposed times do not fit the visible schedule constraints.");
     if(Math.abs(next.arrivalA - next.arrivalB) < gap) return result(next, "wrong", "The schedule still has a conflict. Recheck the time needed between events.");
-    if(action.targetA !== undefined && next.arrivalA !== Number(action.targetA)) return result(next, "wrong", "That time does not satisfy every travel and preparation clue.");
-    if(action.targetB !== undefined && next.arrivalB !== Number(action.targetB)) return result(next, "wrong", "That time does not satisfy every travel and preparation clue.");
-    return result(next, "success", "The two arrivals are coordinated.");
+    if(action.targetA !== undefined && next.arrivalA !== Number(action.targetA)) return result(next, "wrong", "That time does not satisfy every timing condition.");
+    if(action.targetB !== undefined && next.arrivalB !== Number(action.targetB)) return result(next, "wrong", "That time does not satisfy every timing condition.");
+    return result(next, "success", "The dinner times are coordinated.");
   }
 
   function applyUndertake(state, action){

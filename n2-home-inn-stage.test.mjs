@@ -548,10 +548,19 @@ test("every question provides matching scene context and non-answer control help
   assert.match(cleaning.jp, /12時/);
   assert.match(cleaning.jp, /2時間/);
   assert.equal(cleaning.interaction.targetA, 13);
-  const arrivals = stage.challenge.find((item) => item.focusWord === "調整" && item.variant === "challenge-b");
-  assert.match(arrivals.jp, /15時/);
-  assert.match(arrivals.jp, /17時/);
-  assert.equal(arrivals.interaction.targetB, 17);
+  const dinner = stage.challenge.find((item) => item.focusWord === "調整" && item.variant === "challenge-b");
+  assert.match(dinner.narration, /夕食/);
+  assert.match(dinner.jp, /18時/);
+  assert.match(dinner.jp, /20時/);
+  assert.match(dinner.jp, /2時間/);
+  assert.match(dinner.jp, /夕食の開始時刻/);
+  assert.doesNotMatch(dinner.jp, /到着|ロビー|帳場/,
+    "dinner seating must not inherit irrelevant arrival or front-desk details");
+  assert.equal(dinner.interaction.targetA, 18);
+  assert.equal(dinner.interaction.targetB, 20);
+  assert.match(dinner.interaction.labelA, /夕食/);
+  assert.match(dinner.interaction.labelB, /夕食/);
+  assert.equal(dinner.label, "夕食の時間を決める");
 });
 
 test("the arrange scene never states its own grouping rule", () => {
@@ -965,7 +974,7 @@ test("the challenge day runs in story order", () => {
   assert.deepEqual(order, ["揃える", "調整"]);
 
   const story = stage.getPhaseItems("challenge").map((item) => item.narration).join(" ");
-  const beats = ["次の朝です", "帳場を閉める前"];
+  const beats = ["次の朝です", "夕食の時間"];
   let cursor = -1;
   for (const beat of beats) {
     const at = story.indexOf(beat, cursor + 1);

@@ -111,7 +111,7 @@ function boot(seed, search) {
     return Object.keys(index).filter((text) => index[text] === src)[0] || "";
   }
 
-  return { doc, clock, storage, errors, $, clickable, visible, tapScreen, context, lastHeard };
+  return { doc, clock, storage, errors, heard, $, clickable, visible, tapScreen, context, lastHeard };
 }
 
 /* Plays one room task the way the sentence tells the player to.
@@ -197,7 +197,7 @@ function playRoom(game, task) {
   return move(named(objects())[0], named(zones())[0]);
 }
 
-/* The schedule task: two sliders and a confirm.
+/* The schedule task: named time steps and a confirm.
  *
  * The gap between the two times is stated in the sentence ("2時間必要"), which
  * is the comprehension the question is testing, so it is read from there rather
@@ -205,32 +205,27 @@ function playRoom(game, task) {
  * meet it; otherwise the second is pushed out from the first.
  */
 function playSchedule(game, task) {
-  const a = game.$("arrival-a");
-  const b = game.$("arrival-b");
-  if (!a || !b) return false;
-  const gapText = /(\d+)\s*時間必要/.exec(task || "");
+  const aOut = game.$("arrival-a-out");
+  const bOut = game.$("arrival-b-out");
+  const aEarlier = game.$("arrival-a-earlier");
+  const aLater = game.$("arrival-a-later");
+  const bEarlier = game.$("arrival-b-earlier");
+  const bLater = game.$("arrival-b-later");
+  if (!aOut || !bOut || !aEarlier || !aLater) return false;
+  const gapText = /(\d+)\s*時間(?:必要|かかります)/.exec(task || "");
   const gap = gapText ? Number(gapText[1]) : 2;
-  const min = Number(a.getAttribute("min"));
-  const max = Number(a.getAttribute("max"));
+  const hour = (output) => Number(output.textContent.replace(":00", ""));
 
-  let wantA;
-  let wantB;
-  if (b.disabled) {
-    wantB = Number(b.value);
-    wantA = wantB - gap;
-  } else {
-    wantA = Number(a.value);
-    wantB = wantA + gap;
-    if (wantB > max) { wantB = max; wantA = max - gap; }
-  }
-  if (wantA < min) wantA = min;
-
-  const set = (input, value) => {
-    input.value = String(value);
-    input.dispatchEvent(new FakeEvent("input", { bubbles: true }));
+  const press = (button, count) => {
+    for (let step = 0; step < count; step += 1) button.click();
   };
-  set(a, wantA);
-  if (!b.disabled) set(b, wantB);
+  if (!bEarlier || !bLater) {
+    const difference = hour(bOut) - gap - hour(aOut);
+    press(difference >= 0 ? aLater : aEarlier, Math.abs(difference));
+  } else {
+    const difference = hour(aOut) + gap - hour(bOut);
+    press(difference >= 0 ? bLater : bEarlier, Math.abs(difference));
+  }
   game.clock.advance(100);
 
   const confirm = game.doc.querySelectorAll("button").filter(game.visible)
@@ -331,6 +326,106 @@ async function enterTheInn(game) {
   if (accept) { accept.click(); game.clock.advance(4000); }
   await tick();
 }
+
+function resumedScheduleChallengeSave() {
+  return {
+    version: 3,
+    playerCharacter: "woman",
+    characterSelected: true,
+    visited: ["entrance"],
+    starred: ["entrance"],
+    stages: {
+      "home-inn": {
+        phase: "challenge",
+        question: 1,
+        challengeScore: 1,
+        correctWords: ["揃える"],
+        trainingWords: ["揃える", "取り替える", "温める", "調整", "引き受ける"],
+        misses: [],
+        mastered: false,
+        declined: false,
+        medal: "silver"
+      }
+    }
+  };
+}
+
+async function openResumedInnScheduleChallenge(game) {
+  game.$("btn-start").click();
+  game.clock.advance(500);
+  const inn = game.doc.querySelectorAll(".map-destination")
+    .find((button) => button.textContent.includes("月見宿"));
+  assert.ok(inn, "the resumed Inn is available on the map");
+  inn.click();
+  game.clock.advance(1000);
+  await tick();
+}
+
+test("the Inn tells the learner where to read and where to answer", async () => {
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game);
+
+  const request = game.$("inn-focus-read");
+  const workspace = game.$("inn-focus-answer");
+  assert.ok(request, "the request landmark is rendered");
+  assert.ok(workspace, "the answer landmark is rendered");
+  assert.equal(request.hidden, false, "the request landmark is visible in the Inn");
+  assert.equal(workspace.hidden, false, "the answer landmark is visible in the Inn");
+  assert.ok(request.parentNode.classList.contains("learning-context"), "reading stays with Kon");
+  assert.ok(workspace.parentNode.classList.contains("answer-workspace"), "answering stays with the workspace");
+});
+
+test("the audio-only schedule question offers a clear replay control", async () => {
+  const game = boot(resumedScheduleChallengeSave(), "?skip=1");
+  await openResumedInnScheduleChallenge(game);
+
+  assert.equal(game.$("jp-line").textContent, "音声を聞いてください。",
+    "the request stays audio-only");
+  const replay = game.$("btn-listen-again");
+  assert.ok(replay, "a learner can find a dedicated replay control");
+  assert.equal(replay.hidden, false, "the replay control is available on the audio question");
+  assert.equal(game.$("speak-btn").hidden, true,
+    "the old icon-only replay control does not compete with the labelled button");
+  assert.equal(game.$("dialogue-continue").hidden, true,
+    "a decorative continue cue does not suggest an unavailable action");
+  assert.match(replay.textContent, /Listen again/i);
+});
+
+test("the audio-only replay control repeats the hidden Japanese request", async () => {
+  const game = boot(resumedScheduleChallengeSave(), "?skip=1");
+  await openResumedInnScheduleChallenge(game);
+  const question = "Aグループは18時以降、Bグループは20時までに夕食を始められます。一組の食事には2時間かかります。夕食の開始時刻を調整してください。";
+  const before = game.heard.length;
+
+  game.$("btn-listen-again").click();
+  await tick();
+  game.clock.advance(600);
+
+  assert.equal(game.heard.length, before + 1, "replay starts another audio clip");
+  assert.equal(game.lastHeard(), question, "the spoken request is replayed, not the visible placeholder");
+  assert.equal(game.$("jp-line").textContent, "音声を聞いてください。",
+    "replaying does not reveal the audio-only question in writing");
+});
+
+test("the schedule uses clear earlier and later controls instead of sliders", async () => {
+  const game = boot(resumedScheduleChallengeSave(), "?skip=1");
+  await openResumedInnScheduleChallenge(game);
+
+  const earlier = game.$("arrival-a-earlier");
+  const later = game.$("arrival-a-later");
+  assert.ok(earlier, "Group A has an explicit earlier-time control");
+  assert.ok(later, "Group A has an explicit later-time control");
+  assert.match(earlier.textContent, /Earlier/i);
+  assert.match(later.textContent, /Later/i);
+  assert.equal(game.$("arrival-a-out").textContent, "18:00");
+
+  later.click();
+
+  assert.equal(game.$("arrival-a-out").textContent, "19:00",
+    "the later control advances the displayed arrival time by one hour");
+  assert.equal(game.doc.querySelectorAll("input").filter((input) => input.getAttribute("type") === "range").length, 0,
+    "the opaque slider controls are gone");
+});
 
 /* The labels that count as correct in the Inn's three days.
  *
