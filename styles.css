@@ -1039,6 +1039,16 @@
   .answer-workspace .inn-room:has(.inn-replies){min-height:0;background:transparent;border:0;box-shadow:none;overflow:visible}
   .answer-workspace .inn-room:has(.inn-replies):before{display:none}
   .answer-workspace .inn-room:has(.inn-replies) .inn-workspace{min-height:0;padding:0}
+  /* A short reply list or a word-choice question is only a few lines of
+     text, but .answer-workspace itself sizes to that short content and then
+     sits align-self:end against whatever the room-task column next to it
+     needs - a kitchen scene plus a room's worth of objects. The result was
+     the whole card pinned to the bottom of a much taller row, with a bare
+     gap above it reading as unfinished layout rather than a deliberate
+     composition. Centering the workspace within the full row height it is
+     actually given fixes that without touching object-room tasks, which
+     have no .inn-replies and are unaffected by this selector. */
+  .inn-stage .answer-workspace:has(.inn-replies){align-self:stretch;display:flex;flex-direction:column;justify-content:center}
 
   /* Illustrated room: fixtures live in the background; answer objects do not. */
   .inn-room-illustrated{min-height:0;overflow:visible;border:0;background:transparent;box-shadow:none}

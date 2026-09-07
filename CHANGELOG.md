@@ -5,6 +5,16 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-04 - A reply or word-choice question sat pinned to the bottom of a much taller row
+
+Reported live on Day 2's word-choice practice (「電子レンジで（　　）ください」, four options): a lot of unused space, not organized. Chased the wrong lead first - a genuinely empty, visible `#hint-box` did turn up during testing, but tracing every place its `show` class gets touched (a `classList` monkey-patch with stack traces, replayed until it reproduced) pinned that to this session's own test automation clicking through a transition, not to real play; recorded here so the false lead does not get chased again.
+
+The real cause was layout, not a stray element. `.inn-stage .answer-workspace{align-self:end}` sizes the answer column to its own short content, then pins that content to the bottom of a grid row whose height is set by the room-task column next to it - a kitchen scene plus a full room of objects. A four-line word-choice list or a two-button reply has nowhere near that much content, so it sat correctly-rendered but bottom-anchored, with a bare gap above it reading as unfinished rather than composed.
+
+`.inn-stage .answer-workspace:has(.inn-replies){align-self:stretch; ... justify-content:center}` - stretches the column to the full row height only when it holds a reply or word-choice list, then centers that content within it. Object-room tasks have no `.inn-replies` and are untouched by the selector.
+
+`node --test` passes 432/432. Cache is v254.
+
 ### 2026-09-04 - The schedule slider was a bare `<input type=range>` in a game where nothing else is
 
 Reported live again, after the label contrast and the "(fixed)" marker were already fixed: still hard to know there was anything to interact with. The instructions already said "drag the slider" in plain text - the slider itself was the problem. It was the one native, entirely unstyled browser control in a stage where every other object, button and card is hand-drawn, so it read as leftover browser chrome rather than a control the game wanted touched.
