@@ -190,6 +190,10 @@
     // word -> which rung of the review ladder it is on. A word missed again in
     // review climbs a rung rather than being asked the same way twice.
     reviewPasses:{},
+    // Words got wrong during the day now ending, so the day can close by
+    // showing what to look at again. Not the same as "not yet correct": a word
+    // missed and then corrected still earned a second look.
+    dayMisses:{},
     stageMastered:false,
     resumedStageEntry:false,
     stageDeclined:false,
@@ -1056,12 +1060,11 @@
     if(state.stagePhase === "coldopen" && loc && loc.encounters){
       var skipFirst = state.coldOpenSkipFirst;
       state.coldOpenSkipFirst = false;
-      // The board goes between the cold open and Day 1: the need is felt
-      // first, and only then are the five words named. A correct cold-open
-      // guess already ticks its word, so that board opens on 1 / 5 - and it
-      // still skips replaying the task itself, which is what startIndex
-      // carries - see resolveColdOpen.
-      stageJobBoard(loc, "learn", skipFirst ? 1 : 0);
+      // The board has already been seen - it opens the stage now - so the
+      // cold open runs straight into Day 1 rather than showing it twice.
+      // startIndex still carries the skip: a correctly guessed cold-open task
+      // is not replayed as Day 1's first question. See resolveColdOpen.
+      startStagePhase(loc, "learn", null, skipFirst ? 1 : 0);
       return;
     }
     if(loc && loc.encounters){
@@ -2759,6 +2762,65 @@
     if(next) state.phaseItems.push(next);
   }
 
+  /* The day's mistakes, with what the words actually mean.
+   *
+   * Shown between days, before the board for the next one. The board says
+   * which words are still outstanding; this says what the ones you got wrong
+   * mean, which is the thing you need in order to do better tomorrow and the
+   * one thing the stage never offered - a miss explained the choice and then
+   * the question moved on.
+   *
+   * Only the missed words. A list of all five with four already known is a
+   * list you skim; three words you actually got wrong is a list you read.
+   * Skipped entirely on a clean day, because there is nothing to review and a
+   * screen saying so is a screen in the way.
+   */
+  function stageMistakeReview(loc, nextPhase, startIndex){
+    var missed = loc.encounters.filter(function(item){
+      return !!state.dayMisses[item.focusWord];
+    });
+    if(!missed.length){
+      stageJobBoard(loc, nextPhase, startIndex);
+      return;
+    }
+
+    var meta = loc.getDayMeta ? loc.getDayMeta(state.stagePhase) : null;
+    var rows = missed.map(function(item){
+      return '<li class="miss-row">'
+        + '<span class="miss-word"><ruby>' + item.focusWord + '<rt>' + item.reading + '</rt></ruby></span>'
+        + '<span class="miss-sense" lang="en">' + (wordSense(loc, item.focusWord) || "") + '</span>'
+        + '<span class="miss-note">' + item.label + '</span>'
+        + '</li>';
+    }).join("");
+
+    if(konResponseTimer){ clearTimeout(konResponseTimer); konResponseTimer = null; }
+    $("scene").innerHTML = '<div class="episode-open"><div class="episode-open-card miss-review">'
+      + '<p class="episode-open-kicker">' + (meta ? meta.label : "") + 'のふりかえり</p>'
+      + '<h2 class="episode-open-title">まちがえた言葉</h2>'
+      + '<p class="episode-open-note">この' + missed.length + 'つをもう一度見てから、次に進みましょう。</p>'
+      + '<ul class="miss-review-list">' + rows + '</ul>'
+      + '<button class="btn btn-primary" id="btn-miss-next">つぎへ →</button>'
+      + '</div></div>';
+
+    var line = "コン：「今日まちがえた言葉です。意味をもう一度見ておきましょう。」";
+    if(dialogueFlow) dialogueFlow.start(line, false);
+    else $("jp-line").textContent = line;
+    $("romaji-line").textContent = "";
+    $("romaji-line").style.display = "none";
+    $("meaning-line").classList.remove("show");
+    $("narration").textContent = "ふりかえり";
+    setEntranceFoxPose("listen");
+    $("hint-box").textContent = "";
+    $("hint-box").classList.remove("show");
+    $("feedback-row").classList.remove("show");
+    $("next-row").style.display = "none";
+
+    $("btn-miss-next").addEventListener("click", function(event){
+      event.stopImmediatePropagation();
+      stageJobBoard(loc, nextPhase, startIndex);
+    });
+  }
+
   function stageJobBoard(loc, phase, startIndex){
     var meta = loc.getDayMeta ? loc.getDayMeta(phase) : null;
     // The last answer of a day leaves work in flight: Kon's reply is still
@@ -2766,7 +2828,10 @@
     // the speech slot with the request again. Both land after this render and
     // put the finished day's words back on top of the new day's board.
     if(konResponseTimer){ clearTimeout(konResponseTimer); konResponseTimer = null; }
-    var first = phase === "learn" && !Object.keys(state.trainingCorrectWords).length;
+    // The opening board introduces the stage rather than a day: it is now the
+    // first thing shown, before the cold open, so it has no day to name yet.
+    var opening = phase === "coldopen";
+    var first = !Object.keys(state.trainingCorrectWords).length;
     var rows = loc.encounters.map(function(item){
       var done = !!state.trainingCorrectWords[item.focusWord];
       // The job, always. The English sense only on the very first board, where
@@ -2790,11 +2855,14 @@
     }).length;
 
     $("scene").innerHTML = '<div class="episode-open"><div class="episode-open-card job-board">'
-      + '<p class="episode-open-kicker">今日の仕事</p>'
-      + '<h2 class="episode-open-title">' + (meta ? meta.label + " " + meta.mode : "") + '</h2>'
-      + '<p class="episode-open-note">言葉は五つです。' + doneCount + ' / ' + loc.encounters.length + '</p>'
+      + '<p class="episode-open-kicker">' + (opening ? "この宿でおぼえる言葉" : "今日の仕事") + '</p>'
+      + '<h2 class="episode-open-title">' + (opening ? "五つの言葉" : (meta ? meta.label + " " + meta.mode : "")) + '</h2>'
+      + '<p class="episode-open-note">'
+      + (opening ? "三日かけて、この五つを覚えます。" : "言葉は五つです。" + doneCount + " / " + loc.encounters.length)
+      + '</p>'
       + '<ul class="job-board-list">' + rows + '</ul>'
-      + '<button class="btn btn-primary" id="btn-jobs-begin">' + (meta ? meta.label : "") + 'をはじめる</button>'
+      + '<button class="btn btn-primary" id="btn-jobs-begin">'
+      + (opening ? "仕事をはじめる" : (meta ? meta.label : "") + "をはじめる") + '</button>'
       + '</div></div>';
 
     /* Kon introduces the day rather than leaving the previous question's
@@ -2839,6 +2907,9 @@
     state.encounterIndex = startIndex || 0;
     state.answered = false;
     state.encounterMissed = false;
+    // A day's mistakes belong to that day. Cleared as it starts, read as it
+    // ends - see stageMistakeReview.
+    state.dayMisses = {};
     $("feedback-row").classList.remove("show");
     $("next-row").style.display = "none";
     saveStageProgress();
@@ -2861,12 +2932,12 @@
       }
       showMap();
     }else if(state.stagePhase === "learn"){
-      stageJobBoard(loc, "practice");
+      stageMistakeReview(loc, "practice");
     }else if(state.stagePhase === "practice"){
       state.challengeScore = 0;
       state.challengeCorrectWords = {};
       state.challengeMisses = [];
-      stageJobBoard(loc, "challenge");
+      stageMistakeReview(loc, "challenge");
     }else if(state.stagePhase === "challenge"){
       startStagePhase(loc, "review", buildReviewQueue(loc, state.challengeMisses));
     }else{
@@ -2936,7 +3007,17 @@
     $("next-row").style.display = "none";
     $("scene").innerHTML = '<div class="stage-intro-action"><button class="btn btn-primary" id="btn-accept-helper">' + intro.accept + '</button></div>';
     $("btn-accept-helper").addEventListener("click", function(){
-      startStagePhase(loc, state.stageProgress.homeInn ? "learn" : "coldopen");
+      /* The words are named as the stage opens, before any of it is played.
+       *
+       * The board used to sit after the cold open, on the argument that the
+       * cold open works by making the learner feel the need before being
+       * handed the answer. Played, that reads as being dropped into a job with
+       * no idea what the stage is even about. Knowing the five words up front
+       * does not spoil the cold open - it is one task, and knowing a word is
+       * on tonight's list is a long way from knowing which one to use.
+       */
+      var phase = state.stageProgress.homeInn ? "learn" : "coldopen";
+      stageJobBoard(loc, phase);
     });
     speak(intro.jp);
   }
@@ -5918,6 +5999,22 @@
     var stage = getLocation(prompt && prompt.stageKey || state.currentKey);
     var targetId = stage && stage.getTargetId && stage.getTargetId(prompt.focusWord);
     scheduleReview(targetId, false);
+    if(prompt && prompt.focusWord) state.dayMisses[prompt.focusWord] = true;
+
+    /* A wrong answer must still lead somewhere.
+     *
+     * Learn and Practice hand the question back, which was the whole of the
+     * behaviour: no continue button, so a learner who could not work it out
+     * was held on that screen with nothing to press. Reported as questions
+     * that simply do not move forward.
+     *
+     * Trying again is still there and still the better move. But the miss is
+     * already recorded by now - it is scheduled for review, the word will not
+     * tick on the board, and it comes back at the end of the day - so there is
+     * nothing left for the trap to protect.
+     */
+    $("btn-next").textContent = "次の仕事へ →";
+    $("next-row").style.display = "block";
     // scheduleReview only mutates state. The retryable paths do not save
     // afterwards the way answerStage does, so without this the schedule was
     // rebuilt in memory and thrown away when the tab closed.
@@ -5964,6 +6061,9 @@
       rewardCorrect("training:" + prompt.stageKey + ":" + state.stagePhase + ":" + (prompt.id || prompt.focusWord || state.encounterIndex), state.stagePhase);
     }else{
       state.encounterMissed = true;
+      // The single-attempt phases reach here instead of registerStageMiss, and
+      // the end-of-day list should not care which route the miss came by.
+      if(prompt && prompt.focusWord) state.dayMisses[prompt.focusWord] = true;
     }
 
     if(state.stagePhase === "challenge"){

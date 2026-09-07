@@ -1351,6 +1351,28 @@
 .job-row.done .job-state{color:var(--moss);}
 .job-row.done .job-word{color:#3f5a34;}
 
+/* The day's mistakes, with what the words mean. Only the missed ones: a list
+   of all five with four already known is a list you skim. */
+.miss-review{max-width:480px; text-align:left;}
+.miss-review .episode-open-kicker,
+.miss-review .episode-open-title,
+.miss-review .episode-open-note{text-align:center;}
+.miss-review .btn{display:block; margin:0 auto;}
+.miss-review-list{margin:14px 0 18px; padding:0; list-style:none;}
+.miss-row{
+  display:flex; flex-direction:column; gap:2px;
+  padding:9px 10px; margin-bottom:8px;
+  border-left:3px solid var(--momiji);
+  background:rgba(154,95,48,.07); border-radius:0 8px 8px 0;
+}
+.miss-row:last-child{margin-bottom:0;}
+.miss-word{font-family:'Shippori Mincho',serif; font-size:1.08rem; line-height:1.5; color:#2d2926;}
+.miss-word rt{font-size:.46em; color:#7a6752;}
+.miss-sense{color:#4a4038; font-size:.82rem;}
+.miss-note{color:#8a745c; font-size:.72rem;}
+.answer-workspace:has(.miss-review) #hint-btn,
+.answer-workspace:has(.miss-review) #hint-box{display:none!important;}
+
 /* The correction clock is the strictest thing in the game, so it reads as a
    countdown rather than decoration, and turns urgent in the last two seconds. */
 .repair-timer.is-countdown{height:30px;}

@@ -335,6 +335,9 @@ async function enterTheInn(game) {
 
   const accept = game.doc.querySelectorAll("button").find((b) => /\u624b\u4f1d\u3044\u307e\u3059/.test(b.textContent));
   if (accept) { accept.click(); game.clock.advance(4000); }
+  // The five words are named as the stage opens, before anything is played.
+  const openingBoard = game.$("btn-jobs-begin");
+  if (openingBoard) { openingBoard.click(); game.clock.advance(900); }
   await tick();
 }
 
@@ -1168,9 +1171,9 @@ test("the cold open is unscored and hands over to Day 1", async () => {
   assert.equal(game.$("next-row").style.display, "block", "there is a way forward either way");
   game.$("btn-next").click();
   game.clock.advance(500);
-  // The board goes between the cold open and Day 1: the need is felt first,
-  // and only then are the five words named.
-  assert.ok(beginDay(game), "the cold open hands over to the job board");
+  // The board is shown as the stage opens now, so the cold open runs
+  // straight into Day 1 rather than showing it a second time.
+  assert.equal(game.$("btn-jobs-begin"), null, "the board is not shown twice");
   assert.match(game.$("stage-phase-badge").textContent, /一日目/, "it must lead into Day 1");
   assert.equal(game.doc.querySelectorAll(".inn-new-word").length, 1,
     "Day 1 restores the new-word card");
@@ -1193,9 +1196,9 @@ test("a correct cold-open answer does not repeat that task as Day 1's first ques
   game.$("btn-next").click();
   game.clock.advance(500);
 
-  // A correct cold-open guess already ticks its word, so this board opens on
-  // 1 / 5 - and it still skips replaying the task itself.
-  assert.ok(beginDay(game), "the cold open hands over to the job board");
+  // The board was shown as the stage opened; the cold open still skips
+  // replaying the task it just solved.
+  assert.equal(game.$("btn-jobs-begin"), null, "the board is not shown twice");
   assert.match(game.$("stage-phase-badge").textContent, /一日目/, "Day 1 has begun");
   assert.equal(game.$("encounter-progress").textContent, "2",
     "the task just solved cold must not be asked again as question 1");
@@ -1815,25 +1818,29 @@ test("a wrong answer makes a sound of its own, not only a red stamp", () => {
   assert.match(miss.slice(0, 200), /if\(!state\.voiceOn\) return;/);
 });
 
-test("the job board names the five words before the day that asks about them", async () => {
-  // Nothing in the stage ever told the learner what they were learning. Words
+test("the stage opens by naming the five words it will teach", () => {
+  // Nothing used to tell the learner what they were learning. The words
   // arrived one at a time inside tasks, and which ones were still weak was
-  // tracked but never shown - the only signal was a medal colour on the map.
+  // tracked but never shown - the only signal was a medal on the map.
+  //
+  // The board sat after the cold open at first, on the argument that the cold
+  // open works by making the learner feel the need before being handed the
+  // answer. Played, that reads as being dropped into a job with no idea what
+  // the stage is about, so it now opens the stage.
   const game = boot(null, "?skip=1");
-  await enterTheInn(game);
-
-  // Not before the cold open. It works because the need is felt first.
-  assert.equal(game.$("btn-jobs-begin"), null,
-    "the words must not be named before the cold open has been attempted");
-
-  const task = game.$("jp-line").textContent;
-  playRoom(game, task);
+  game.$("btn-start").click();
+  game.clock.advance(600);
+  const inn = game.doc.querySelectorAll(".map-destination")
+    .find((b) => b.textContent.includes("月見宿"));
+  inn.click();
+  game.clock.advance(4000);
+  const accept = game.doc.querySelectorAll("button")
+    .find((b) => /手伝います/.test(b.textContent));
+  accept.click();
   game.clock.advance(1200);
-  game.$("btn-next").click();
-  game.clock.advance(500);
 
-  const board = game.doc.querySelectorAll(".job-board");
-  assert.equal(board.length, 1, "the board stands between the cold open and Day 1");
+  assert.equal(game.doc.querySelectorAll(".job-board").length, 1,
+    "the words are named as the stage opens, before anything is played");
 
   const rows = game.doc.querySelectorAll(".job-row");
   assert.equal(rows.length, 5, "all five words are named");
@@ -1841,14 +1848,9 @@ test("the job board names the five words before the day that asks about them", a
   for (const word of ["揃える", "取り替える", "温める", "調整", "引き受ける"]) {
     assert.ok(text.includes(word), "the board names " + word);
   }
-
-  // A solved cold open ticks its word, so the very first board is not blank.
-  const done = game.doc.querySelectorAll(".job-row.done");
-  assert.equal(done.length, 1, "the word solved cold is already marked done");
-  assert.ok(done[0].textContent.includes("揃える"));
-
-  // Done is stated in words, not colour alone.
-  assert.match(done[0].textContent, /覚えました/);
+  // Nothing is done yet, and "not yet" is said in words, not colour alone.
+  assert.equal(game.doc.querySelectorAll(".job-row.done").length, 0);
+  assert.match(text, /まだ/);
 });
 
 test("the job board is a between-days screen, never reachable during a question", async () => {
@@ -1856,15 +1858,76 @@ test("the job board is a between-days screen, never reachable during a question"
   // the five candidates are exactly the answers.
   const game = boot(null, "?skip=1");
   await enterTheInn(game);
-  playRoom(game, game.$("jp-line").textContent);
-  game.clock.advance(1200);
-  game.$("btn-next").click();
-  game.clock.advance(500);
-  assert.ok(beginDay(game), "the board hands over to the day");
 
   assert.equal(game.doc.querySelectorAll(".job-board").length, 0,
     "the board must be gone once a question is on screen");
   assert.equal(game.$("btn-jobs-begin"), null, "and its control with it");
+});
+
+test("a wrong answer still leads somewhere", async () => {
+  // Learn and Practice hand the question back, which used to be the whole of
+  // it: no continue button, so a learner who could not work it out was held on
+  // that screen with nothing to press. Reported from play as questions that
+  // simply do not move forward. Trying again is still there and still the
+  // better move, but the miss is already recorded by the time this matters.
+  const game = boot(practiceQuestionSave(0));
+  await openResumedInnScheduleChallenge(game);
+
+  const item = practiceItem(game, 0);
+  const wrong = item.options.find((o) => o.key !== item.correct);
+  optionButton(game, wrong.label).click();
+  game.clock.advance(3000);
+
+  assert.equal(game.$("next-row").style.display, "block",
+    "a missed question must not be a dead end");
+  assert.ok(
+    game.doc.querySelectorAll(".reply-option").filter(game.visible).length > 0,
+    "and trying again is still offered",
+  );
+
+  const before = game.$("jp-line").textContent;
+  game.$("btn-next").click();
+  game.clock.advance(1500);
+  assert.notEqual(game.$("jp-line").textContent, before, "pressing on moves to the next question");
+});
+
+test("a day ends by naming only the words that went wrong, with their meanings", async () => {
+  // A miss explained the choice and then the question moved on. What the word
+  // actually means was never restated anywhere the learner could study it.
+  const game = boot(practiceQuestionSave(0), "?skip=1");
+  await openResumedInnScheduleChallenge(game);
+
+  // Miss the first word deliberately, then clear the rest of the day.
+  const item = practiceItem(game, 0);
+  const wrong = item.options.find((o) => o.key !== item.correct);
+  optionButton(game, wrong.label).click();
+  game.clock.advance(3000);
+
+  for (let i = 0; i < 20; i += 1) {
+    if (game.doc.querySelectorAll(".miss-review").length) break;
+    const skip = game.$("btn-skip-question");
+    if (skip && !skip.hidden) skip.click();
+    // A correct answer arms a deferred advance rather than showing the button,
+    // so let the clock carry the day rather than pressing anything.
+    game.clock.advance(6000);
+    const next = game.$("btn-next");
+    if (next && game.$("next-row").style.display !== "none") { next.click(); game.clock.advance(1500); }
+  }
+
+  const card = game.doc.querySelectorAll(".miss-review");
+  assert.equal(card.length, 1, "the day closes on what went wrong");
+
+  const rows = game.doc.querySelectorAll(".miss-row");
+  assert.equal(rows.length, 1, "only the missed word is listed, not all five");
+  assert.ok(rows[0].textContent.includes(item.focusWord), "and it is the word that was missed");
+  const sense = game.doc.querySelectorAll(".miss-sense");
+  assert.equal(sense.length, 1);
+  assert.ok(sense[0].textContent.trim().length > 0, "the meaning is given, not just the word");
+
+  // And it leads on to the next day's board rather than being a dead end.
+  game.$("btn-miss-next").click();
+  game.clock.advance(900);
+  assert.equal(game.doc.querySelectorAll(".job-board").length, 1);
 });
 
 const INN_TARGETS = ["v-soroeru", "v-torikaeru", "v-atatameru-food", "w-chousei", "v-hikiukeru"];
