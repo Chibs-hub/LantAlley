@@ -1046,6 +1046,22 @@
   .answer-workspace .inn-room:has(.inn-replies){min-height:0;background:transparent;border:0;box-shadow:none;overflow:visible}
   .answer-workspace .inn-room:has(.inn-replies):before{display:none}
   .answer-workspace .inn-room:has(.inn-replies) .inn-workspace{min-height:0;padding:0}
+  /* A reply or word-choice screen is a short list of words, not a room, and
+     it was laid out as though it were one: the answers stretched the full
+     eight-column width, so 「揃って」 sat inside an 850px banner, while the
+     question that actually has to be read was squeezed into a 224px bubble
+     in the opposite corner and wrapped four times. Two changes, one idea -
+     give the width to the text that needs it:
+       - the columns split evenly for these screens, so the speech bubble
+         gets ~400px instead of ~224px and the request reads in two lines;
+       - the answers are capped to a readable measure and centred, so they
+         read as choices rather than as full-bleed bars.
+     Room tasks have no .inn-replies and keep the wide answer column they
+     genuinely use for the illustrated room. */
+  .inn-stage .game-layout:has(.inn-replies) .learning-context{grid-column:1/7}
+  .inn-stage .game-layout:has(.inn-replies) .answer-workspace{grid-column:7/-1}
+  .inn-stage .answer-workspace .scene:has(.inn-replies){align-items:center}
+  .inn-stage .answer-workspace .scene:has(.inn-replies) > *{width:min(480px,100%)}
   /* A short reply list or a word-choice question is only a few lines of
      text, but .answer-workspace itself sizes to that short content and then
      sits align-self:end against whatever the room-task column next to it
@@ -1232,6 +1248,17 @@
   #screen-game:not(.entrance-stage) .dialogue{display:block;}
   #screen-game:not(.entrance-stage) .dialogue .speech{width:100%;}
   #screen-game:not(.entrance-stage) .dialogue #avatar-slot{display:block; margin:0 auto 8px;}
+}
+/* ...except once the speech column is wide again. The stack above exists
+   because the fox's column left the card ~200px on a 4-column context; a
+   reply or word-choice screen now splits the row evenly, so the card has
+   ~400px and the fox can stand beside it as designed - which also stops
+   the stack from eating the vertical space that made these screens look
+   half-empty. ID-strength selector because the rule it overrides has one. */
+@media(min-width:1100px){
+  #screen-game.inn-stage .game-layout:has(.inn-replies) .dialogue{display:grid;}
+  #screen-game.inn-stage .game-layout:has(.inn-replies) .dialogue .speech{width:auto;}
+  #screen-game.inn-stage .game-layout:has(.inn-replies) .dialogue #avatar-slot{margin:0;}
 }
 /* Japanese has no spaces, so word-break:keep-all - which I added here - stopped
    the line breaking at all and pushed it out past the card edge. Let it wrap

@@ -1198,3 +1198,27 @@ test("the cold open announces a guest, not Day 1", () => {
   assert.match(line, /お客様/);
   assert.doesNotMatch(line, /一日目/, "the three days start after the cold open, because of it");
 });
+
+test("the day announcement and the situation are spoken as one Kon line", () => {
+  const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  // Both strings are authored as Kon speaking, each with its own
+  // 「コン：「…」」 wrapper. Concatenating them raw put two speaker tags in one
+  // bubble, which reads as two foxes talking over each other.
+  assert.match(app, /joinKonLines\(loc\.getDayAnnouncement\(state\.stagePhase\), prompt\.narration\)/,
+    "the two lines must be merged, not concatenated with a space");
+
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(readFileSync(stageUrl, "utf8"), context);
+  const stage = context.N2HomeInnStage;
+  const announcement = stage.getDayAnnouncement("practice");
+  const narration = stage.getPhaseItems("practice")[0].narration;
+  assert.ok(announcement.endsWith("」"), "the announcement is a closed quote");
+  assert.ok(narration.startsWith("コン：「"), "the situation opens its own quote");
+
+  // The merge itself, applied the way app.js applies it.
+  const merged = announcement.slice(0, -1) + narration.slice("コン：「".length);
+  assert.equal((merged.match(/コン：/g) || []).length, 1, "one speaker tag, not two");
+  assert.equal((merged.match(/「/g) || []).length, 1, "one opening quote");
+  assert.equal((merged.match(/」/g) || []).length, 1, "one closing quote");
+});

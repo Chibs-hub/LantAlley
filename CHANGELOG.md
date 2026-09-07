@@ -5,6 +5,25 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-04 - The word-choice screen, actually composed - and why the two previous attempts could not have worked
+
+Third report on the same screen, and the first one where the whole composition was looked at instead of the last thing that moved. What was actually wrong, measured at a real 1280px viewport:
+
+| | before | after |
+| --- | --- | --- |
+| Speech bubble (the request itself) | 224px, wrapping 4-5 lines | 405px, two lines |
+| Answer buttons | ~850px wide for 「揃って」 | 456px, centred |
+| Instruction bar | full-bleed above narrower buttons | 456px, aligned to them |
+| Column split | 33 / 67 | 50 / 50 |
+
+Four changes. The columns split evenly when the answer is a word list rather than a room (`:has(.inn-replies)`), because a room genuinely needs the wide column and a four-item list does not. The answers and their instruction bar cap at a readable measure and centre, so a three-character answer stops reading as a banner. The fox stands beside the speech card again rather than above it - the `@media(max-width:1400px)` stack that put it there exists because the fox's column used to leave the card ~200px, which stopped being true the moment the column went to 530px. And the day announcement now merges into the situation as one quoted line: both are authored as Kon speaking, so concatenating them raw put 「コン：」 in the bubble twice, reading as two foxes talking over each other.
+
+**Why the two previous attempts reported success and shipped nothing.** Both were "verified" through the Browser pane, which reports `document.documentElement.clientWidth === 0` and `matchMedia('(min-width:761px)').matches === false` unless `resize_window` is called with an explicit width. Every rule inside that media query - including the `.scene{flex:1 1 auto}` that was causing the gap - was simply inactive in the harness, so the layout being measured was never the layout the owner was looking at, and the measurements agreed with themselves while describing the wrong page. **Before trusting any layout check in that pane: call `resize_window` with an explicit width/height, then assert `matchMedia(...).matches` is true.** A screenshot alone cannot catch this - the screenshots looked plausible all three times.
+
+A second harness trap in the same session: the pane serves `index.html` from cache, so a `?v=` bump alone still loads the previous `app.js`. Add a cache-busting param to the document URL (`?cb=…`) when checking a JS change.
+
+`node --test` passes 433/433, including a new test pinning the merged Kon line. Cache is v256.
+
 ### 2026-09-04 - The centering fix only worked in the harness's own narrower test viewport
 
 Reported live again, on a real desktop browser, right after the previous entry's fix shipped: still not fixed. It wasn't - the previous fix centered `.answer-workspace` itself, but a `@media(min-width:761px)` rule (`.inn-stage .answer-workspace .scene{flex:1 1 auto}`) makes `.scene` - a plain block, one level in - the element that actually grows to claim the row's leftover height. Centering its parent did nothing, because the parent no longer had any leftover height left to distribute; `.scene` had already taken it. This session's own test viewport happened to render at an effective width under 761px, so the media query never engaged there and the fix looked correct - a false positive caught only because the owner tested on an actual browser window instead of trusting the harness's.

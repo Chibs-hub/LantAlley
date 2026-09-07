@@ -2650,6 +2650,21 @@
     speak(intro.jp);
   }
 
+  /* The day announcement and the situation are both written as Kon speaking,
+   * each with its own 「コン：「…」」 wrapper. Concatenated raw, one bubble
+   * carried two speaker tags for one continuous line - 「コン：「二日目です。」
+   * コン：「おはようございます。」」 - which reads as two foxes talking. Same
+   * voice, one pair of quotes. */
+  function joinKonLines(announcement, narration){
+    if(!announcement) return narration || "";
+    if(!narration) return announcement;
+    var open = "コン：「";
+    if(announcement.slice(-1) === "」" && narration.indexOf(open) === 0){
+      return announcement.slice(0, -1) + narration.slice(open.length);
+    }
+    return announcement + " " + narration;
+  }
+
   function renderStagePrompt(loc){
     var prompt = getActivePrompt(loc);
     $("btn-skip-question").hidden = !testingSkipEnabled;
@@ -2671,7 +2686,7 @@
       // The day announcement already places the learner, so the welcome-back
       // line on top of it made three Kon greetings before the situation.
       // Prefer the day announcement and drop the resume greeting.
-      storyNarration = loc.getDayAnnouncement(state.stagePhase) + " " + prompt.narration;
+      storyNarration = joinKonLines(loc.getDayAnnouncement(state.stagePhase), prompt.narration);
     }
     $("narration").textContent = storyNarration;
     var writtenPrompt = writeStagePrompt(loc, prompt);
