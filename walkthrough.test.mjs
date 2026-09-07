@@ -1663,3 +1663,134 @@ test("finishing a stage starts its episode once, not twice", async () => {
   assert.equal(game.doc.querySelectorAll(".episode-open").length, 0,
     "the episode restarted itself and threw the learner back to its opening card");
 });
+
+/* A save parked on one Day 2 word choice, with nothing yet credited.
+ *
+ * Day 2 asks a cloze with four labelled buttons, which is the cleanest place
+ * to answer wrongly on purpose: the room has to be reasoned about, but a wrong
+ * word is just the wrong button.
+ */
+function practiceQuestionSave(index) {
+  return {
+    version: 3,
+    playerCharacter: "woman",
+    characterSelected: true,
+    visited: ["entrance"],
+    starred: ["entrance"],
+    stages: {
+      "home-inn": {
+        phase: "practice",
+        question: index,
+        challengeScore: 0,
+        correctWords: [],
+        trainingWords: [],
+        misses: [],
+        mastered: false,
+        declined: false,
+        medal: "bronze"
+      }
+    }
+  };
+}
+
+function practiceItem(game, index) {
+  return game.context.N2HomeInnStage.getPhaseItems("practice")[index];
+}
+
+function optionButton(game, label) {
+  return game.doc.querySelectorAll("button").find((b) => b.textContent.trim() === label);
+}
+
+function savedTrainingWords(game) {
+  const saved = JSON.parse(game.storage.getItem("lanternAlley.v3"));
+  return ((saved.stages || {})["home-inn"] || {}).trainingWords || [];
+}
+
+test("a word guessed on the second try is not credited as known", async () => {
+  // Learn and Practice hand back an unlimited retry on purpose, so a learner
+  // who taps every option in turn always ends on the right one. Crediting that
+  // made the mastery gate unfailable: "answered correctly" meant "eventually
+  // clicked". The retry still teaches; it just no longer counts as evidence.
+  const game = boot(practiceQuestionSave(0));
+  await openResumedInnScheduleChallenge(game);
+
+  const item = practiceItem(game, 0);
+  const wrong = item.options.find((o) => o.key !== item.correct);
+  const right = item.options.find((o) => o.key === item.correct);
+
+  const wrongButton = optionButton(game, wrong.label);
+  assert.ok(wrongButton, "the wrong word is on screen: " + wrong.label);
+  wrongButton.click();
+  game.clock.advance(3000);
+  await tick();
+
+  const rightButton = optionButton(game, right.label);
+  assert.ok(rightButton, "the question is still answerable after a miss");
+  rightButton.click();
+  game.clock.advance(3000);
+  await tick();
+
+  assert.deepEqual(
+    savedTrainingWords(game),
+    [],
+    "a word reached by trial and error was credited as training evidence",
+  );
+});
+
+test("a word answered right the first time is credited", async () => {
+  // The other half of the same rule: gating on the first attempt must not
+  // quietly stop crediting learners who simply knew the answer.
+  const game = boot(practiceQuestionSave(0));
+  await openResumedInnScheduleChallenge(game);
+
+  const item = practiceItem(game, 0);
+  const right = item.options.find((o) => o.key === item.correct);
+  const rightButton = optionButton(game, right.label);
+  assert.ok(rightButton, "the correct word is on screen: " + right.label);
+  rightButton.click();
+  game.clock.advance(3000);
+  await tick();
+
+  assert.deepEqual(
+    savedTrainingWords(game),
+    [item.focusWord],
+    "a first-attempt correct answer must still count",
+  );
+});
+
+test("a miss the learner is allowed to retry still reaches the spaced review engine", async () => {
+  // Every retryable wrong answer returned before answerStage, which is where
+  // scheduleReview lives. So a word missed in Learn or Practice was never
+  // scheduled - only Challenge misses were, because Challenge is
+  // single-attempt. The word a learner actually struggled with was the one
+  // word the engine never heard about.
+  const game = boot(practiceQuestionSave(0));
+  await openResumedInnScheduleChallenge(game);
+
+  const item = practiceItem(game, 0);
+  const wrong = item.options.find((o) => o.key !== item.correct);
+  optionButton(game, wrong.label).click();
+  game.clock.advance(3000);
+  await tick();
+
+  const saved = JSON.parse(game.storage.getItem("lanternAlley.v3"));
+  const scheduled = Object.keys(saved.reviewProgress || {});
+  const targetId = game.context.N2HomeInnStage.getTargetId(item.focusWord);
+  assert.ok(
+    scheduled.includes(targetId),
+    "a Practice miss was not scheduled for review: " + targetId + " not in " + scheduled.join(","),
+  );
+});
+
+test("a wrong answer makes a sound of its own, not only a red stamp", () => {
+  // Correct answers had three instant signals - coin, celebrating fox, green
+  // stamp. A miss had none that arrive without reading, and with the voice off
+  // it was silent. Both outcomes now announce themselves.
+  const app = read("app.js");
+  assert.match(app, /function playMissSound\(\)/);
+  // Wired at showFeedback, the one funnel both the stage and the episodes use.
+  assert.match(app, /if\(!isCorrect\) playMissSound\(\);/);
+  // Following the same switch as the coin, so muting the fox mutes both.
+  const miss = app.slice(app.indexOf("function playMissSound()"));
+  assert.match(miss.slice(0, 200), /if\(!state\.voiceOn\) return;/);
+});

@@ -172,6 +172,11 @@
     answered:false,
     acting:false,
     encounterIndex:0,
+    // Whether the current encounter has already been answered wrongly. Learn
+    // and Practice retry without limit, so without this a learner who taps
+    // every option in turn ends up credited exactly like one who knew the
+    // word - and the credit is what the mastery gate reads.
+    encounterMissed:false,
     stagePhase:"learn",
     phaseItems:null,
     challengeScore:0,
@@ -1281,6 +1286,7 @@
     }
     state.encounterIndex += 1;
     state.answered = false;
+    state.encounterMissed = false;
     state.selected = 0;
     saveStageProgress();
     $("feedback-row").classList.remove("show");
@@ -1587,6 +1593,45 @@
       });
     }catch(err){
       // A browser that refuses audio must not break answering a question.
+    }
+  }
+
+  /* The counterpart to the coin.
+   *
+   * A correct answer had three instant signals - the coin, the fox
+   * celebrating, the green 正解 stamp - and a wrong one had none that arrive
+   * without reading: Kon speaks the correction, and the stamp turns red. So
+   * the two outcomes were not equally legible at a glance, and with the voice
+   * switched off a miss made no sound at all.
+   *
+   * Two falling notes, quieter and shorter than the coin. It has to say "not
+   * that one" without saying "you failed", because in Learn and Practice it
+   * fires on the way to an answer the learner is about to get right.
+   */
+  function playMissSound(){
+    if(!state.voiceOn) return;
+    try{
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      if(!Ctx) return;
+      if(!coinAudio) coinAudio = new Ctx();
+      if(coinAudio.state === "suspended" && coinAudio.resume) coinAudio.resume();
+      var now = coinAudio.currentTime;
+      [[392, 0], [311, 0.09]].forEach(function(note){
+        var osc = coinAudio.createOscillator();
+        var gain = coinAudio.createGain();
+        var at = now + note[1];
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(note[0], at);
+        gain.gain.setValueAtTime(0.0001, at);
+        gain.gain.exponentialRampToValueAtTime(0.11, at + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.16);
+        osc.connect(gain);
+        gain.connect(coinAudio.destination);
+        osc.start(at);
+        osc.stop(at + 0.18);
+      });
+    }catch(err){
+      // Same contract as the coin: audio must never break answering.
     }
   }
 
@@ -2593,6 +2638,7 @@
     state.phaseItems = items || null;
     state.encounterIndex = startIndex || 0;
     state.answered = false;
+    state.encounterMissed = false;
     $("feedback-row").classList.remove("show");
     $("next-row").style.display = "none";
     saveStageProgress();
@@ -4880,6 +4926,7 @@
           return;
         }
         var stage = getLocation(state.currentKey);
+        registerStageMiss(prompt, option.key);
         state.mistakesThisVisit = Math.min(3, state.mistakesThisVisit + 1);
         renderHud();
         showPracticeTranslation(false);
@@ -5279,6 +5326,7 @@
       var near = prompt.options.filter(function(option){ return option.nearMiss; })[0];
       if(isSingleAttemptPhase()) answerStage(false, prompt, near.key);
       else{
+        registerStageMiss(prompt, near.key);
         showKonStageResponse(stage, prompt, false);
         showFeedback(false, near.explanation);
         offerRetry(prompt);
@@ -5289,6 +5337,7 @@
       var missed = prompt.options.filter(function(option){ return option.nearMiss; })[0];
       if(isSingleAttemptPhase()) answerStage(false, prompt, missed.key);
       else{
+        registerStageMiss(prompt, missed.key);
         showKonStageResponse(stage, prompt, false);
         showFeedback(false, "That is a different action from the one the request asked for.");
         setTimeout(function(){ if(!state.answered) renderInnInteraction(prompt, true); }, 900);
@@ -5311,6 +5360,7 @@
       var selectedKey = action.key || (nearMiss && nearMiss.key) || "";
       if(isSingleAttemptPhase()) answerStage(false, prompt, selectedKey);
       else{
+        registerStageMiss(prompt, selectedKey);
         showKonStageResponse(stage, prompt, false, selectedKey);
         if(prompt.replyResponses && prompt.replyResponses[selectedKey]) $("feedback-row").classList.remove("show");
         else showFeedback(false, result.reason);
@@ -5624,6 +5674,35 @@
     line.classList.remove("show");
   }
 
+  /* Record a wrong answer that the learner is allowed to try again.
+   *
+   * Learn and Practice hand the question back instead of scoring it, and every
+   * one of those paths returned early without ever reaching answerStage. Two
+   * things were lost as a result:
+   *
+   *   - the encounter was not marked as missed, so the retry that followed was
+   *     credited exactly like knowing the word, which is what made the mastery
+   *     gate impossible to fail;
+   *   - scheduleReview never saw the miss, so the one word the learner
+   *     actually struggled with was the one word the spaced engine was never
+   *     told about. Only misses in Challenge, which is single-attempt and does
+   *     reach answerStage, were ever scheduled.
+   *
+   * Called from every retryable miss. The single-attempt phases still go
+   * through answerStage, which does both of these itself.
+   */
+  function registerStageMiss(prompt, selectedKey){
+    state.encounterMissed = true;
+    var stage = getLocation(prompt && prompt.stageKey || state.currentKey);
+    var targetId = stage && stage.getTargetId && stage.getTargetId(prompt.focusWord);
+    scheduleReview(targetId, false);
+    // scheduleReview only mutates state. The retryable paths do not save
+    // afterwards the way answerStage does, so without this the schedule was
+    // rebuilt in memory and thrown away when the tab closed.
+    saveStageProgress();
+    return selectedKey;
+  }
+
   function answerStage(isCorrect, prompt, selectedKey){
     showPracticeTranslation(false);
     var stage = getLocation(prompt.stageKey);
@@ -5641,12 +5720,28 @@
     var targetId = stage.getTargetId && stage.getTargetId(prompt.focusWord);
     scheduleReview(targetId, isCorrect);
     if(isCorrect){
-      // Credit the word itself, not just the wallet. The three days teach five
-      // of the Inn's forty catalog words, and answering one correctly here is
-      // the same evidence of understanding as answering it in an episode.
-      if(targetId) markMastered(prompt.stageKey, targetId);
-      state.trainingCorrectWords[prompt.focusWord] = true;
+      /* Credit the word itself, not just the wallet. The three days teach five
+       * of the Inn's forty catalog words, and answering one correctly here is
+       * the same evidence of understanding as answering it in an episode.
+       *
+       * Only on the first attempt, though. Learn and Practice hand back an
+       * unlimited retry on purpose - a wrong answer there should teach, not
+       * end the question - but that means the fourth tap at a four-option
+       * cloze is always right, and crediting it made "answered correctly"
+       * mean "eventually clicked". The mastery gate reads exactly this, so it
+       * was a gate that could not be failed.
+       *
+       * The money is not gated. It is paid once per question id either way,
+       * and charging a learner for needing a second look is a different and
+       * worse lesson than the one this is trying to teach.
+       */
+      if(!state.encounterMissed){
+        if(targetId) markMastered(prompt.stageKey, targetId);
+        state.trainingCorrectWords[prompt.focusWord] = true;
+      }
       rewardCorrect("training:" + prompt.stageKey + ":" + state.stagePhase + ":" + (prompt.id || prompt.focusWord || state.encounterIndex), state.stagePhase);
+    }else{
+      state.encounterMissed = true;
     }
 
     if(state.stagePhase === "challenge"){
@@ -5816,6 +5911,10 @@
   function showFeedback(isCorrect, text){
     var row = $("feedback-row");
     var stamp = $("stamp");
+    // Every wrong answer in the game funnels through here, stage and episode
+    // alike, which is why the tone lives at this call rather than beside the
+    // fox pose in the stage-only path.
+    if(!isCorrect) playMissSound();
     stamp.className = "stamp" + (isCorrect ? " good" : "");
     stamp.textContent = isCorrect ? "正解" : "もう一度";
     stamp.style.animation = "none";
