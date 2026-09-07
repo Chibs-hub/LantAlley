@@ -2000,6 +2000,9 @@
       episodeId: playing ? playing.id : null,
       index: previewState.index,
       missed: previewState.missed.slice(),
+      // Saved beside the question ids because the correction round empties
+      // those, and the hour still has to be able to name what went wrong.
+      missedTargets: (previewState.missedTargets || []).slice(),
       inRepair: !!previewState.repair,
       repairQueue: previewState.repair ? previewState.repair.queue.slice() : []
     };
@@ -2028,6 +2031,7 @@
       list: list,
       answered: false,
       missed: (savedEpisode.missed || []).slice(),
+      missedTargets: (savedEpisode.missedTargets || []).slice(),
       repair: null
     };
     screenTitle.style.display = "none";
@@ -2064,7 +2068,7 @@
     var list = previewQuestions(state.currentKey);
     if(!list.length) return;
     snapshotMastery(state.currentKey);
-    previewState = {index:0, list:list, answered:false, missed:[], repair:null};
+    previewState = {index:0, list:list, answered:false, missed:[], missedTargets:[], repair:null};
     screenTitle.style.display = "none";
     screenMap.style.display = "none";
     screenGame.style.display = "block";
@@ -2130,6 +2134,70 @@
       + '</div></div>';
     $("btn-brief-begin").addEventListener("click", function(event){
       event.stopImmediatePropagation();
+      renderEpisodeWordBoard();
+    });
+  }
+
+  /* The words this hour will ask about, named before the clock starts.
+   *
+   * Episode 1 asks about ten words and the three days teach five. The other
+   * five - 案内, 注文, 掃除, 確認, 断る - had appeared nowhere at all, so the
+   * first time a learner met 断る it was inside a timed question with no
+   * hints, and being asked about a word nobody taught reads as the game being
+   * unfair rather than hard.
+   *
+   * Teaching all ten properly is content work. Naming them is not, and it is
+   * most of the value: the learner can see what the hour covers, and which of
+   * them they already worked through in the three days.
+   */
+  function renderEpisodeWordBoard(){
+    var seen = {};
+    var rows = [];
+    previewState.list.forEach(function(entry){
+      var id = entry.question.target;
+      if(!id || seen[id]) return;
+      seen[id] = true;
+      var item = typeof LanternCurriculumCatalog !== "undefined" && LanternCurriculumCatalog.getItem
+        ? LanternCurriculumCatalog.getItem(id) : null;
+      if(!item) return;
+      var known = ((state.masteredByStage || {})[state.currentKey] || []).indexOf(id) >= 0;
+      var loc = getLocation(state.currentKey);
+      var override = loc && loc.getCardSense ? loc.getCardSense(item.canonical) : null;
+      rows.push({id:id, word:item.canonical, reading:item.reading,
+        sense:override || (item.meanings && item.meanings[0]) || "", known:known});
+    });
+
+    if(!rows.length){ renderPreviewQuestion(); return; }
+
+    var items = rows.map(function(row){
+      return '<li class="job-row' + (row.known ? ' done' : '') + '">'
+        + '<span class="job-mark" aria-hidden="true">' + (row.known ? "済" : "—") + '</span>'
+        + '<span class="job-text">'
+        + '<span class="job-word"><ruby>' + row.word + '<rt>' + row.reading + '</rt></ruby></span>'
+        + '<span class="job-gloss" lang="en">' + row.sense + '</span>'
+        + '</span>'
+        + '<span class="job-state">' + (row.known ? "練習ずみ" : "はじめて") + '</span>'
+        + '</li>';
+    }).join("");
+
+    var known = rows.filter(function(row){ return row.known; }).length;
+    $("stage-phase-badge").textContent = "今夜の言葉";
+    $("jp-line").textContent = "コン：「今夜使う言葉です。三日間で練習した言葉と、初めての言葉があります。」";
+    $("romaji-line").textContent = "";
+    $("meaning-line").textContent = "";
+    $("meaning-line").classList.remove("show");
+    $("feedback-row").classList.remove("show");
+    $("next-row").style.display = "none";
+    $("scene").innerHTML = '<div class="episode-open"><div class="episode-open-card job-board">'
+      + '<p class="episode-open-kicker">今夜の言葉</p>'
+      + '<h2 class="episode-open-title">' + rows.length + '語</h2>'
+      + '<p class="episode-open-note">' + known + 'つは三日間で練習しました。のこりは今夜が初めてです。</p>'
+      + '<ul class="job-board-list">' + items + '</ul>'
+      + '<p class="job-goal">初めての言葉は、間違えても大丈夫です。最後にもう一度出ます。</p>'
+      + '<button class="btn btn-primary" id="btn-words-begin">受付を始めます</button>'
+      + '</div></div>';
+    $("btn-words-begin").addEventListener("click", function(event){
+      event.stopImmediatePropagation();
       renderPreviewQuestion();
     });
   }
@@ -2180,6 +2248,7 @@
         settlePreviewChoices(-1);
         var entry = previewState.list[previewState.index];
         if(previewState.missed.indexOf(entry.question.id) < 0) previewState.missed.push(entry.question.id);
+        rememberMissedTarget(entry.question);
         showFeedback(false, "時間切れです。お客様を待たせました。この問題は最後にもう一度出ます。");
         advancePreviewLater(false);
       }
@@ -2393,6 +2462,7 @@
         previewState.missed.push(question.id);
         rememberEpisode();
       }
+      if(!correct) rememberMissedTarget(question);
       var earned = 0;
       scheduleReview(question.target, correct);
       if(correct){
@@ -2686,7 +2756,16 @@
     $("stage-phase-badge").textContent = "間違い直し";
     $("jp-line").textContent = "コン：「間違えた仕事は全部できました。お疲れさまでした。」";
     speak("間違えた仕事は全部できました。お疲れさまでした。", "correct");
-    $("scene").innerHTML = "";
+    // The hour ends by naming every word that went wrong in it, the same way
+    // each of the three days now does. It used to clear the scene and say
+    // nothing - the correction round drilled the items one card at a time and
+    // then the list was thrown away, so a learner who missed several finished
+    // with no record of which.
+    $("scene").innerHTML = mistakeListMarkup(episodeMistakeRows(), {
+      kicker:"この一時間のふりかえり",
+      title:"まちがえた言葉",
+      note:"つぎの仕事の前に、もう一度見ておきましょう。"
+    });
     showFeedback(true, "All corrections cleared.");
     $("btn-next").textContent = "路地へ戻る →";
     $("next-row").style.display = "block";
@@ -2762,6 +2841,56 @@
     if(next) state.phaseItems.push(next);
   }
 
+  /* One list of words that went wrong, with what they mean.
+   *
+   * Shared by the three days and by the episode, because they are the same
+   * thing said at two scales and a learner should not have to read two
+   * different screens to find out what they got wrong.
+   */
+  function mistakeListMarkup(rows, opts){
+    if(!rows.length) return "";
+    var items = rows.map(function(row){
+      return '<li class="miss-row">'
+        + '<span class="miss-word"><ruby>' + row.word + '<rt>' + (row.reading || "") + '</rt></ruby></span>'
+        + '<span class="miss-sense" lang="en">' + (row.sense || "") + '</span>'
+        + (row.note ? '<span class="miss-note">' + row.note + '</span>' : '')
+        + '</li>';
+    }).join("");
+    return '<div class="episode-open"><div class="episode-open-card miss-review">'
+      + '<p class="episode-open-kicker">' + opts.kicker + '</p>'
+      + '<h2 class="episode-open-title">' + opts.title + '</h2>'
+      + '<p class="episode-open-note">' + opts.note + '</p>'
+      + '<ul class="miss-review-list">' + items + '</ul>'
+      + (opts.buttonId ? '<button class="btn btn-primary" id="' + opts.buttonId + '">' + opts.buttonLabel + '</button>' : '')
+      + '</div></div>';
+  }
+
+  // Episode questions carry a catalog target rather than an Inn focus word, so
+  // the word, its reading and its sense all come from the catalog.
+  function rememberMissedTarget(question){
+    if(!previewState || !question || !question.target) return;
+    if(!previewState.missedTargets) previewState.missedTargets = [];
+    if(previewState.missedTargets.indexOf(question.target) < 0){
+      previewState.missedTargets.push(question.target);
+    }
+  }
+
+  function episodeMistakeRows(){
+    var ids = (previewState && previewState.missedTargets) || [];
+    var rows = [];
+    ids.forEach(function(id){
+      var entry = typeof LanternCurriculumCatalog !== "undefined" && LanternCurriculumCatalog.getItem
+        ? LanternCurriculumCatalog.getItem(id) : null;
+      if(!entry) return;
+      rows.push({
+        word: entry.canonical,
+        reading: entry.reading,
+        sense: (entry.meanings && entry.meanings[0]) || ""
+      });
+    });
+    return rows;
+  }
+
   /* The day's mistakes, with what the words actually mean.
    *
    * Shown between days, before the board for the next one. The board says
@@ -2786,21 +2915,22 @@
 
     var meta = loc.getDayMeta ? loc.getDayMeta(state.stagePhase) : null;
     var rows = missed.map(function(item){
-      return '<li class="miss-row">'
-        + '<span class="miss-word"><ruby>' + item.focusWord + '<rt>' + item.reading + '</rt></ruby></span>'
-        + '<span class="miss-sense" lang="en">' + (wordSense(loc, item.focusWord) || "") + '</span>'
-        + '<span class="miss-note">' + item.label + '</span>'
-        + '</li>';
-    }).join("");
+      return {
+        word:item.focusWord,
+        reading:item.reading,
+        sense:wordSense(loc, item.focusWord) || "",
+        note:item.label
+      };
+    });
 
     if(konResponseTimer){ clearTimeout(konResponseTimer); konResponseTimer = null; }
-    $("scene").innerHTML = '<div class="episode-open"><div class="episode-open-card miss-review">'
-      + '<p class="episode-open-kicker">' + (meta ? meta.label : "") + 'のふりかえり</p>'
-      + '<h2 class="episode-open-title">まちがえた言葉</h2>'
-      + '<p class="episode-open-note">この' + missed.length + 'つをもう一度見てから、次に進みましょう。</p>'
-      + '<ul class="miss-review-list">' + rows + '</ul>'
-      + '<button class="btn btn-primary" id="btn-miss-next">つぎへ →</button>'
-      + '</div></div>';
+    $("scene").innerHTML = mistakeListMarkup(rows, {
+      kicker:(meta ? meta.label : "") + "のふりかえり",
+      title:"まちがえた言葉",
+      note:"この" + missed.length + "つをもう一度見てから、次に進みましょう。",
+      buttonId:"btn-miss-next",
+      buttonLabel:"つぎへ →"
+    });
 
     var line = "コン：「今日まちがえた言葉です。意味をもう一度見ておきましょう。」";
     if(dialogueFlow) dialogueFlow.start(line, false);
@@ -2860,6 +2990,11 @@
       + '<p class="episode-open-note">'
       + (opening ? "三日かけて、この五つを覚えます。" : "言葉は五つです。" + doneCount + " / " + loc.encounters.length)
       + '</p>'
+      // What this part of the stage is actually for. The days differ in how
+      // much help is on screen and nothing said so, so Day 3 arrived with no
+      // warning that the request would not be written down this time - which
+      // reads as the game breaking rather than the difficulty rising.
+      + (loc.getDayGoal ? '<p class="job-goal">' + loc.getDayGoal(phase) + '</p>' : '')
       + '<ul class="job-board-list">' + rows + '</ul>'
       + '<button class="btn btn-primary" id="btn-jobs-begin">'
       + (opening ? "仕事をはじめる" : (meta ? meta.label : "") + "をはじめる") + '</button>'

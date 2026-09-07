@@ -29,6 +29,25 @@
     correctReply:"コン：「よくご存じですね。では、残りの言葉も見ていきましょう。」"
   };
 
+  /* What each part of the stage is for, said before it starts.
+   *
+   * The days differ in how much help is on screen, and nothing said so. A
+   * learner met Day 3 with no warning that the request would not be written
+   * down this time, which reads as the game breaking rather than as the
+   * difficulty rising on purpose.
+   */
+  var DAY_GOALS = {
+    coldopen:"まだ習っていない言葉ばかりです。できなくて大丈夫、今日から一緒に覚えましょう。",
+    learn:"五つの言葉を、意味とローマ字を見ながら覚えます。困ったらヒントを見てください。",
+    practice:"同じ五つを、別の場面で使います。今日はローマ字がありません。文を読んで、正しい形を選びます。",
+    challenge:"同じ五つを、音声だけで聞き取ります。文は画面に出ません。もう一度聞きたいときはスピーカーを押してください。",
+    review:"間違えた言葉だけ、別のやり方でもう一度出します。全部できたら終わりです。"
+  };
+
+  function getDayGoal(phase){
+    return DAY_GOALS[phase] || DAY_GOALS.learn;
+  }
+
   var DAY_ANNOUNCEMENTS = {
     learn:"コン：「一日目です。今日は基礎から始めましょう。」",
     practice:"コン：「二日目です。今日は実際の仕事の中で練習しましょう。」",
@@ -777,6 +796,7 @@
     getEncounter:getEncounter,
     getDayMeta:getDayMeta,
     getDayAnnouncement:getDayAnnouncement,
+    getDayGoal:getDayGoal,
     getPhaseItems:getPhaseItems,
     getReviewItem:getReviewItem,
     getReviewLadderLength:getReviewLadderLength,

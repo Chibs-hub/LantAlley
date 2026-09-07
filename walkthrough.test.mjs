@@ -1335,6 +1335,8 @@ test("?skip=1's skip-question control also works inside Episode 1", async () => 
   game.clock.advance(500);
   game.$("btn-brief-begin").click();
   game.clock.advance(500);
+  game.$("btn-words-begin").click();
+  game.clock.advance(500);
 
   assert.equal(game.$("btn-skip-question").hidden, false,
     "the skip-question control shows once a real episode question is on screen");
@@ -1637,6 +1639,10 @@ test("an episode names its story, not its internal skill taxonomy", async () => 
   game.clock.advance(300);
   game.$("btn-brief-begin").click();
   game.clock.advance(300);
+  // The hour names its ten words before the clock starts - five practised in
+  // the three days, five it is about to introduce.
+  game.$("btn-words-begin").click();
+  game.clock.advance(300);
 
   const label = game.$("scene-label").textContent;
   assert.doesNotMatch(label, /preview/i, "players should not be told they are in a preview");
@@ -1659,6 +1665,10 @@ test("an episode question does not print its citation as Kon's speech", async ()
   game.clock.advance(300);
   game.$("btn-brief-begin").click();
   game.clock.advance(300);
+  // The hour names its ten words before the clock starts - five practised in
+  // the three days, five it is about to introduce.
+  game.$("btn-words-begin").click();
+  game.clock.advance(300);
 
   assert.doesNotMatch(game.$("narration").textContent, /第一話/,
     "the citation belongs on the opening card, not in the character's speech slot");
@@ -1678,6 +1688,10 @@ test("finishing a stage starts its episode once, not twice", async () => {
   game.$("btn-episode-begin").click();
   game.clock.advance(300);
   game.$("btn-brief-begin").click();
+  game.clock.advance(300);
+  // The hour names its ten words before the clock starts - five practised in
+  // the three days, five it is about to introduce.
+  game.$("btn-words-begin").click();
   game.clock.advance(300);
   assert.equal(game.doc.querySelectorAll(".episode-open").length, 0, "a question is on screen");
 
