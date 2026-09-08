@@ -1737,6 +1737,47 @@ test("an episode question does not print its citation as Kon's speech", async ()
     "the citation belongs on the opening card, not in the character's speech slot");
 });
 
+test("Episode audio replay speaks the current Episode request", async () => {
+  // The three-day Challenge leaves its labelled replay button active. Episode
+  // questions reused that DOM without replacing the replay target, so the
+  // first Episode question could replay the old Challenge task instead.
+  const game = boot(null, "?skip=1");
+  await openFirstEpisodeQuestion(game);
+  const question = game.context.N2InnEpisodes.episodes[0].days[0].questions[0];
+
+  assert.equal(game.$("btn-listen-again").hidden, false,
+    "an audio Episode question offers the labelled replay control");
+  const before = game.heard.length;
+  game.$("btn-listen-again").click();
+  await tick();
+  game.clock.advance(600);
+
+  assert.equal(game.heard.length, before + 1);
+  assert.equal(game.lastHeard(), question.prompt.jp,
+    "replay must use the Episode question, not the last three-day task");
+});
+
+test("a written Episode document does not inherit the audio replay control", async () => {
+  // Keeping the Challenge replay active also reserved 46px inside Kon's card
+  // on a mobile reading screen, producing the blank area in the reported UI.
+  const game = boot(null, "?skip=1");
+  await openFirstEpisodeQuestion(game);
+
+  // Questions 1-5 are audio; question 6 is the first written document.
+  for(let index = 0; index < 5; index += 1){
+    game.$("btn-skip-question").click();
+    game.$("btn-next").click();
+    game.clock.advance(100);
+  }
+
+  assert.ok(game.doc.querySelectorAll(".reading-document").length,
+    "the written document is on screen");
+  assert.equal(game.$("btn-listen-again").hidden, true,
+    "a written question must not keep the labelled listening control");
+  assert.equal(game.$("speak-btn").hidden, false,
+    "the ordinary replay remains available for Kon's short direction");
+});
+
 async function openFirstEpisodeQuestion(game) {
   await enterTheInn(game);
   game.$("btn-skip-stage").click();

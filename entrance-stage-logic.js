@@ -32,7 +32,7 @@
   }
 
   function shouldUseTransparentFox(locationKey, hasEncounters){
-    return locationKey === "entrance" || !!hasEncounters;
+    return true;
   }
 
   function getTransparentFoxStyle(){

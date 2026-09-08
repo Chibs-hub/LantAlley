@@ -65,7 +65,8 @@ test("every Kon-led stage keeps the transparent pose system", () => {
 
   assert.equal(logic.shouldUseTransparentFox("entrance", false), true);
   assert.equal(logic.shouldUseTransparentFox("home-inn", true), true);
-  assert.equal(logic.shouldUseTransparentFox("ordinary-stop", false), false);
+  assert.equal(logic.shouldUseTransparentFox("ordinary-stop", false), true,
+    "a future or episode-only location must not fall back to the old circular photo");
 });
 
 test("every Entrance Kon pose uses a transparent production cutout", () => {

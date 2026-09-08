@@ -147,6 +147,26 @@ test("desktop Inn questions align Kon's request and the answer area at the top",
     "mobile must retain its stacked question flow");
 });
 
+test("narrow document questions spend their height on the document", () => {
+  // A written Episode question inherited the generic narrow-screen rule that
+  // stacks Kon above her one-line direction. Together with the stale replay
+  // control this pushed the actual notice and every answer below the fold.
+  // Document screens need the same content, but Kon and that short direction
+  // can share one compact row while the notice keeps one fact per line.
+  assert.match(html,
+    /@media\(max-width:1400px\)\{\s*#screen-game\.inn-stage \.game-layout:has\(\.reading-document\) \.dialogue\.entrance-dialogue\{[^}]*display:grid[^}]*grid-template-columns:64px minmax\(0,1fr\)/,
+    "narrow document questions must keep Kon beside the short direction");
+  assert.match(html,
+    /#screen-game\.inn-stage \.game-layout:has\(\.reading-document\) \.dialogue #avatar-slot\{[^}]*width:64px[^}]*height:76px[^}]*margin:0/,
+    "the compact row must show a recognizable full-body Kon rather than a tiny head badge");
+  assert.match(html,
+    /#screen-game\.inn-stage \.game-layout:has\(\.reading-document\) \.dialogue\.entrance-dialogue::before\{display:none\}/,
+    "the desktop name tab must not float away from the compact document row");
+  assert.match(html,
+    /@media\(max-width:760px\)[\s\S]*?\.reading-document-body\{[^}]*line-height:1\.65/,
+    "mobile notices need compact but readable leading");
+});
+
 test("Moonview Inn mixes visible, object, and social actions", () => {
   const context = {};
   vm.createContext(context);

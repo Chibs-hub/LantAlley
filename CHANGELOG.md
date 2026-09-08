@@ -5,6 +5,18 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-08 - Kon uses one plush transparent art system everywhere
+
+The shared dialogue renderer still contained an older square-photo fallback. Any location not recognized as an Entrance or encounter stage could therefore put that photo inside the generic orange circular avatar, creating the wrong Kon shown in the mobile report. The fallback and its obsolete photo-frame animation are removed; every location now uses the same transparent plush pose set for idle, speech, listening, success and retry feedback.
+
+Compact document questions now reserve a 64x76 full-body area instead of shrinking Kon to a 44px badge. All 175 review questions were rendered in the live browser and every one used an `assets/fox/` transparent pose with no circular crop. The reported reservation-book question, its wrong-answer pose and its next correct transition were checked separately at 575x1248. Cache is v312.
+
+### 2026-09-08 - Written Episode questions keep the notice and answers in view
+
+Build 310 let Episode questions inherit the three-day Challenge's audio state. A written notice could therefore show a labelled `Listen again` control, reserve empty space in Kon's request card, and replay the previous Challenge prompt instead of the current Episode request.
+
+Episode questions now reset their audio control on every render, and replay resolves the active Episode question. At narrow desktop and phone widths, document questions place Kon beside her one-line direction and tighten only the notice's vertical rhythm, leaving the document itself as the visual focus. All 55 Inn question states were inspected at 575x1248 with no horizontal overflow; every document question kept all answer controls within the viewport. Correct and incorrect feedback were separately checked and did not overlap the Next button. Cache is v311.
+
 ### 2026-09-08 - A retryable miss no longer gives contradictory directions
 
 Learn and Practice misses deliberately leave both choices available: the learner can correct the answer in place or use `次の仕事へ →` to continue. The feedback nevertheless stamped every miss `もう一度` and later repeated `もう一度どうぞ。`, making retry sound mandatory while a continue button was visible.

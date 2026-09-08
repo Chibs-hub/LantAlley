@@ -56,11 +56,6 @@
     locations.push({key:key, name:(place && place.name) || key, episodesOnly:true});
   });
 
-  var KON_PHOTO_WAVE_L = "assets/kon/kon-wave-left.webp";
-  var KON_PHOTO_WAVE_R = "assets/kon/kon-wave-right.webp";
-  var KON_PHOTO_WAVE_BOTH = "assets/kon/kon-wave-both.webp";
-  var KON_PHOTO_SRC = "assets/kon/kon-idle.webp";
-
   var PLAYER_ACTION_SPRITES = {
     man:"assets/entrance/player-actions-kimono-man-v2.webp",
     woman:"assets/entrance/player-actions-kimono-woman-v2.webp"
@@ -86,8 +81,6 @@
   // Item chosen by tapping, waiting for a destination tap.
   var roomPick = null;
   var waveTimer = null;
-  var waveFrameIndex = 0;
-  var WAVE_FRAME_SETS = null;
   var entranceSpeechEndPose = "idle";
   var entranceTutorialState = null;
   var konResponseTimer = null;
@@ -105,50 +98,14 @@
 
   function startWave(mode){
     if(!activeFoxImgEl) return;
-    if(usesTransparentFox()){
-      if(waveTimer){ clearInterval(waveTimer); waveTimer = null; }
-      entranceSpeechEndPose = LanternAlleyLogic.getSpeechEndPose(mode);
-      setEntranceFoxPose("talkBase");
-      return;
-    }
-    if(!WAVE_FRAME_SETS){
-      WAVE_FRAME_SETS = {
-        ask:[
-          KON_PHOTO_SRC, KON_PHOTO_SRC,
-          KON_PHOTO_WAVE_R, KON_PHOTO_WAVE_R, KON_PHOTO_WAVE_R,
-          KON_PHOTO_SRC,
-          KON_PHOTO_WAVE_L, KON_PHOTO_WAVE_L, KON_PHOTO_WAVE_L
-        ],
-        correct:[
-          KON_PHOTO_WAVE_BOTH, KON_PHOTO_WAVE_BOTH, KON_PHOTO_WAVE_BOTH,
-          KON_PHOTO_WAVE_R, KON_PHOTO_WAVE_R,
-          KON_PHOTO_WAVE_BOTH, KON_PHOTO_WAVE_BOTH, KON_PHOTO_WAVE_BOTH,
-          KON_PHOTO_WAVE_L, KON_PHOTO_WAVE_L
-        ],
-        wrong:[KON_PHOTO_SRC]
-      };
-    }
     if(waveTimer){ clearInterval(waveTimer); waveTimer = null; }
-    var frames = WAVE_FRAME_SETS[mode] || WAVE_FRAME_SETS.ask;
-    var intervalMs = mode === "correct" ? 240 : (mode === "wrong" ? 260 : 320);
-    waveFrameIndex = 0;
-    var imgEl = activeFoxImgEl;
-    imgEl.src = frames[0];
-    if(frames.length > 1){
-      waveTimer = setInterval(function(){
-        waveFrameIndex = (waveFrameIndex + 1) % frames.length;
-        imgEl.src = frames[waveFrameIndex];
-      }, intervalMs);
-    }
+    entranceSpeechEndPose = LanternAlleyLogic.getSpeechEndPose(mode);
+    setEntranceFoxPose("talkBase");
   }
 
   function stopWave(){
     if(waveTimer){ clearInterval(waveTimer); waveTimer = null; }
-    if(usesTransparentFox()){
-      setEntranceFoxPose(entranceSpeechEndPose);
-    }else if(activeFoxImgEl){
-      activeFoxImgEl.src = KON_PHOTO_SRC;
-    }
+    setEntranceFoxPose(entranceSpeechEndPose);
   }
 
   var LOCATION_KEYS = locations.map(function(l){ return l.key; });
@@ -1646,6 +1603,15 @@
   });
 
   function replayCurrentPrompt(){
+    if(previewState){
+      var entry = previewState.list && previewState.list[previewState.index];
+      var question = entry && entry.question;
+      var episodeLine = question && (question.prompt.audio
+        ? question.prompt.jp
+        : previewSpokenLine(question));
+      if(episodeLine) speak(episodeLine, "ask", true);
+      return;
+    }
     var loc = getLocation(state.currentKey);
     if(!loc) return;
     var prompt = getActivePrompt(loc);
@@ -2692,6 +2658,10 @@
   function renderPreviewQuestion(){
     var entry = previewState.list[previewState.index];
     var question = entry.question;
+    // The episode reuses the Challenge dialogue DOM. Reset its controls for
+    // every question so a written document does not inherit Listen again, and
+    // an audio question replays this question rather than the old stage task.
+    setAudioReplayControl(!!question.prompt.audio);
     /* The wallet is only written by renderHud and by a payout, so a learner
      * resuming a shift read ¥0 until they got something right - their money
      * was there, the HUD simply had never been painted for this screen. */
@@ -3807,7 +3777,7 @@
     dialogueShell.classList.toggle("entrance-dialogue", transparentFox);
     avatarSlot.classList.add("avatar-animated");
     avatarSlot.classList.toggle("entrance-fox", transparentFox);
-    var initialFoxSrc = transparentFox ? ENTRANCE_FOX_POSES.idle : KON_PHOTO_SRC;
+    var initialFoxSrc = ENTRANCE_FOX_POSES.idle;
     avatarSlot.innerHTML = '<div class="kon-photo-wrap"><img class="kon-photo" id="kon-photo-img" src="' + initialFoxSrc + '" alt="Kon the fox spirit"><div class="live-mouth" aria-hidden="true"></div></div>';
     activeFoxEl = avatarSlot;
     activeFoxImgEl = $("kon-photo-img");

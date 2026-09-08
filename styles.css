@@ -972,6 +972,7 @@
     .inn-stage .inn-shift-progress{padding:6px 7px}
     .inn-stage .inn-room-composite{width:100%;margin:0}
     .inn-stage .next-row{margin-left:-7px;margin-right:-7px}
+
   }
 
   /* Episode openings use the same bottom-dock composition as the Entrance.
@@ -1329,6 +1330,25 @@
   #screen-game:not(.entrance-stage) .dialogue .speech{width:100%;}
   #screen-game:not(.entrance-stage) .dialogue #avatar-slot{display:block; margin:0 auto 8px;}
 }
+/* A document is the thing to read here; Kon only gives a one-line direction.
+   Keep those two compactly side by side instead of stacking a centred portrait
+   over a padded card and pushing the notice downward. This also overrides the
+   generic narrow-column stack above, including ordinary browser widths. */
+@media(max-width:1400px){
+  #screen-game.inn-stage .game-layout:has(.reading-document) .dialogue.entrance-dialogue{
+    display:grid;grid-template-columns:64px minmax(0,1fr);align-items:center;gap:8px;padding:7px
+  }
+  #screen-game.inn-stage .game-layout:has(.reading-document) .dialogue.entrance-dialogue::before{display:none}
+  #screen-game.inn-stage .game-layout:has(.reading-document) .dialogue #avatar-slot{
+    display:block;width:64px;height:76px;margin:0
+  }
+  #screen-game.inn-stage .game-layout:has(.reading-document) .dialogue.entrance-dialogue .speech{
+    width:auto;min-height:0;padding:8px 32px 8px 10px
+  }
+}
+@media(max-width:760px){
+  #screen-game.inn-stage .game-layout:has(.reading-document) .learning-context{padding-top:8px}
+}
 /* ...except once the speech column is wide again. The stack above exists
    because the fox's column left the card ~200px on a 4-column context; a
    reply or word-choice screen now splits the row evenly, so the card has
@@ -1620,7 +1640,10 @@ body:has(#update-bar:not([hidden])){padding-bottom:96px;}
 }
 @media(max-width:760px){
   .reading-document{padding:13px 14px;}
-  .reading-document-body{font-size:.95rem; line-height:1.9;}
+  .reading-document-body{font-size:.95rem; line-height:1.65;}
+  .reading-document-body li.is-rule{margin-top:4px;font-size:.9rem;line-height:1.55}
+  .reading-document-heading{margin-bottom:7px;padding-bottom:6px}
+  .reading-document-ask{margin-top:9px;padding-top:8px}
 }
 
 /* Practice sits under the location's own action, as a quieter second option. */
