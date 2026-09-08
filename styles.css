@@ -231,7 +231,17 @@
 
   @media(max-width:700px){
     #screen-map{max-width:680px}
-    .map-top{min-height:48px;padding:8px 12px}
+    /* The header is a row of a title block and a stats row, and it did not
+       wrap. On a phone the stats held their width and the title was squeezed
+       to about 70px, which for Japanese means one character per line: 「路地」
+       and a whole paragraph ran down the left edge as a vertical column.
+       Wrapping gives the title the full width and puts the stats under it. */
+    .map-top{min-height:48px;padding:8px 12px;flex-wrap:wrap;align-items:flex-start}
+    .map-heading{flex:1 1 100%;min-width:0}
+    /* And the counters wrap too. Two of them fit; the third only appears once
+       a review is due, which is why the row read fine until it did not - the
+       screenshot that reported this had 「今日の復習」 cut off at the edge. */
+    .map-progress{flex:1 1 100%;flex-wrap:wrap;row-gap:6px}
     .map-heading h2{font-size:1rem}
     .map-heading span{font-size:.64rem}
     .map-pin{width:29px;height:36px;border-width:2px}
@@ -1043,8 +1053,18 @@
          read as choices rather than as full-bleed bars.
      Room tasks have no .inn-replies and keep the wide answer column they
      genuinely use for the illustrated room. */
-  .inn-stage .game-layout:has(.inn-replies) .learning-context{grid-column:1/7}
-  .inn-stage .game-layout:has(.inn-replies) .answer-workspace{grid-column:7/-1}
+  /* Gated to the two-column layout, and it has to be: these place children
+     into columns 1-7 and 7-13 of a twelve-column grid, but the mobile rule
+     above collapses that grid to a single 1fr track. A grid-column of 1/7
+     against one explicit track does not clamp - it creates five implicit
+     columns to reach seven lines. The bar was then handed the first of them,
+     24px wide, and every label in it wrapped one character per line down the
+     left edge of the phone. Reported from a phone, at 360px; the 375px
+     preset was fifteen pixels too wide to show it. */
+  @media(min-width:761px){
+    .inn-stage .game-layout:has(.inn-replies) .learning-context{grid-column:1/7}
+    .inn-stage .game-layout:has(.inn-replies) .answer-workspace{grid-column:7/-1}
+  }
   .inn-stage .answer-workspace .scene:has(.inn-replies){align-items:center}
   .inn-stage .answer-workspace .scene:has(.inn-replies) > *{width:min(480px,100%)}
   /* A short reply list or a word-choice question is only a few lines of
@@ -1378,15 +1398,19 @@
 /* Install and save controls on the title screen. Quiet by design - they sit
    under the way in, not beside it. */
 .title-utility{display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:10px; margin-top:10px;}
-.install-hint{
-  margin:8px auto 0; max-width:34ch;
-  color:#e8c98f; font-size:.72rem; line-height:1.6; text-align:center;
+.install-steps{
+  margin:14px 0 18px; padding-left:22px;
+  color:#e6d2b2; font-size:.82rem; line-height:1.75; text-align:left;
 }
+.install-steps::marker{color:#e6d2b2;}
+.install-steps li{margin-bottom:6px;}
+#install-panel .about-card{max-width:440px;}
+#install-panel .btn-primary{display:block; margin:0 auto 4px;}
 .save-actions{display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin:14px 0 8px;}
 /* The import control is a label wrapping a hidden file input, so it needs the
    button's own affordances spelled out. */
 .save-actions label.btn{cursor:pointer;}
-.save-status{min-height:1.4em; margin:0 0 14px; color:#5c4a38; font-size:.78rem; text-align:center;}
+.save-status{min-height:1.4em; margin:0 0 14px; color:#e6d2b2; font-size:.78rem; text-align:center;}
 #save-panel .about-card{max-width:460px;}
 
 /* The day's mistakes, with what the words mean. Only the missed ones: a list

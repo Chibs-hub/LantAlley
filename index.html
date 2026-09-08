@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600;800&family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=283">
+<link rel="stylesheet" href="styles.css?v=287">
 </head>
 <body>
 
@@ -58,15 +58,28 @@
            prompt, and the iOS note appears only where there is no prompt to
            wait for. -->
       <div class="title-utility" id="title-utility">
-        <button class="btn btn-ghost" id="btn-install" type="button" hidden>アプリとして入れる</button>
+        <button class="btn btn-ghost" id="btn-install-open" type="button">📲 アプリとして入れる</button>
         <button class="title-about-link" id="btn-save-data" type="button">保存データ</button>
       </div>
-      <p class="install-hint" id="install-hint" hidden></p>
       <button class="title-about-link" id="btn-about" type="button">このゲームについて</button>
     </div>
 
     <!-- The EDRDG licence asks an application for a dedicated attribution
          screen, not just a line in the documentation or on a splash. -->
+    <div class="about-panel" id="install-panel" role="dialog" aria-modal="true"
+         aria-labelledby="install-title" hidden>
+      <div class="about-card">
+        <h2 id="install-title">アプリとして入れる</h2>
+        <p class="about-lead" id="install-lead">
+          ホーム画面から開けるようになります。アイコンがつき、電波がなくても遊べます。
+        </p>
+        <!-- Shown only where the browser has actually offered to install. -->
+        <button class="btn btn-primary" id="btn-install" type="button" hidden>今すぐ入れる</button>
+        <ol class="install-steps" id="install-steps"></ol>
+        <button class="btn btn-ghost" id="btn-install-close" type="button">閉じる</button>
+      </div>
+    </div>
+
     <div class="about-panel" id="save-panel" role="dialog" aria-modal="true"
          aria-labelledby="save-title" hidden>
       <div class="about-card">
@@ -255,30 +268,30 @@
   <footer class="credits">Lantern Alley &middot; a small Japanese story-walk</footer>
 </div>
 
-<script src="curriculum-catalog.js?v=283"></script>
-<script src="learning-content.js?v=283"></script>
-<script src="review-engine.js?v=283"></script>
-<script src="learning-progress.js?v=283"></script>
-<script src="learning-economy.js?v=283"></script>
-    <script src="learning-gloss.js?v=283"></script>
-    <script src="home-room.js?v=283"></script>
-    <script src="home-decor.js?v=283"></script>
-    <script src="home-garden.js?v=283"></script>
-    <script src="home-pet.js?v=283"></script>
-    <script src="daily-practice.js?v=283"></script>
-    <script src="review-mode.js?v=283"></script>
-<script src="question-renderer.js?v=283"></script>
-<script src="catalog-practice.js?v=283"></script>
-<script src="entrance-stage-logic.js?v=283"></script>
-<script src="moonview-inn-interactions.js?v=283"></script>
-<script src="n2-home-inn-stage.js?v=283"></script>
-<script src="n2-inn-episodes.js?v=283"></script>
-    <script src="n2-market-episodes.js?v=283"></script>
-    <script src="n2-teahouse-episodes.js?v=283"></script>
-    <script src="n2-shrine-episodes.js?v=283"></script>
-<script src="audio-index.js?v=283"></script>
-<script src="lantern-map.js?v=283"></script>
-<script src="app.js?v=283"></script>
+<script src="curriculum-catalog.js?v=287"></script>
+<script src="learning-content.js?v=287"></script>
+<script src="review-engine.js?v=287"></script>
+<script src="learning-progress.js?v=287"></script>
+<script src="learning-economy.js?v=287"></script>
+    <script src="learning-gloss.js?v=287"></script>
+    <script src="home-room.js?v=287"></script>
+    <script src="home-decor.js?v=287"></script>
+    <script src="home-garden.js?v=287"></script>
+    <script src="home-pet.js?v=287"></script>
+    <script src="daily-practice.js?v=287"></script>
+    <script src="review-mode.js?v=287"></script>
+<script src="question-renderer.js?v=287"></script>
+<script src="catalog-practice.js?v=287"></script>
+<script src="entrance-stage-logic.js?v=287"></script>
+<script src="moonview-inn-interactions.js?v=287"></script>
+<script src="n2-home-inn-stage.js?v=287"></script>
+<script src="n2-inn-episodes.js?v=287"></script>
+    <script src="n2-market-episodes.js?v=287"></script>
+    <script src="n2-teahouse-episodes.js?v=287"></script>
+    <script src="n2-shrine-episodes.js?v=287"></script>
+<script src="audio-index.js?v=287"></script>
+<script src="lantern-map.js?v=287"></script>
+<script src="app.js?v=287"></script>
 
 <script>
   // Service workers need http(s); opening this file directly with file://

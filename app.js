@@ -877,23 +877,99 @@
    * out and back in.
    */
   (function(){
+    var openButton = $("btn-install-open");
+    var panel = $("install-panel");
+    var close = $("btn-install-close");
     var installButton = $("btn-install");
-    var hint = $("install-hint");
+    var steps = $("install-steps");
+    var lead = $("install-lead");
+    if(!openButton || !panel || !close) return;
+
     var deferredPrompt = null;
 
-    // Chrome fires this instead of prompting, and hands over the prompt to
-    // fire later. Nothing appears until it does, because a button that cannot
-    // install anything is worse than no button.
+    /* Chrome hands over the prompt instead of showing it, and it is the only
+     * one-tap install there is. But it does not fire on iOS at all, and on
+     * Android it can be missed - already installed, or heuristics not met - so
+     * the button that depended on it left some phones with nothing to press.
+     * Reported as not knowing where to press. The entry point is always there
+     * now, and the prompt is a shortcut inside it when it exists.
+     */
     window.addEventListener("beforeinstallprompt", function(event){
       event.preventDefault();
       deferredPrompt = event;
-      if(installButton) installButton.hidden = false;
+      render();
     });
 
     window.addEventListener("appinstalled", function(){
       deferredPrompt = null;
-      if(installButton) installButton.hidden = true;
-      if(hint){ hint.hidden = false; hint.textContent = "入れました。ホーム画面から開けます。"; }
+      render();
+    });
+
+    function installed(){
+      return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches)
+        || !!navigator.standalone;
+    }
+
+    function platformSteps(){
+      var ua = navigator.userAgent || "";
+      if(/iPad|iPhone|iPod/.test(ua)){
+        return [
+          "下の「共有」ボタン（□に↑）を押します。",
+          "メニューを下にたどって「ホーム画面に追加」を選びます。",
+          "右上の「追加」を押します。"
+        ];
+      }
+      if(/Android/.test(ua)){
+        return [
+          "画面右上の「⋮」を押します。",
+          "「アプリをインストール」または「ホーム画面に追加」を選びます。",
+          "確認の画面で「インストール」を押します。"
+        ];
+      }
+      return [
+        "アドレスバーの右にあるインストールのアイコンを押します。",
+        "見つからないときは、ブラウザのメニューから「インストール」を選びます。"
+      ];
+    }
+
+    function render(){
+      var isInstalled = installed();
+      if(installButton) installButton.hidden = !deferredPrompt || isInstalled;
+      if(lead){
+        lead.textContent = isInstalled
+          ? "もう入っています。ホーム画面のアイコンから開けます。"
+          : "ホーム画面から開けるようになります。アイコンがつき、電波がなくても遊べます。";
+      }
+      if(!steps) return;
+      steps.innerHTML = "";
+      if(isInstalled) return;
+      // The written steps stay even when the one-tap button is there: it is
+      // the same three taps either way, and a learner who dismisses the
+      // browser's own dialog still needs to know where it went.
+      platformSteps().forEach(function(line){
+        var item = document.createElement("li");
+        item.textContent = line;
+        steps.appendChild(item);
+      });
+    }
+
+    function show(visible){
+      panel.hidden = !visible;
+      [openButton, $("btn-start"), $("btn-about"), $("btn-save-data")].forEach(function(node){
+        if(!node) return;
+        if(visible) node.setAttribute("inert", "");
+        else node.removeAttribute("inert");
+      });
+      if(visible){ render(); close.focus(); } else openButton.focus();
+    }
+
+    openButton.addEventListener("click", function(){ show(true); });
+    close.addEventListener("click", function(){ show(false); });
+    panel.addEventListener("click", function(event){
+      if(event.target === panel) show(false);
+    });
+    document.addEventListener("keydown", function(event){
+      if(event.key === "Escape" && !panel.hidden) show(false);
     });
 
     if(installButton){
@@ -905,15 +981,7 @@
       });
     }
 
-    /* iOS never fires beforeinstallprompt, so on iPhone there is no button to
-     * show and no event to wait for - only a menu the learner has to be told
-     * about. Said once, on the title screen, and only where it applies. */
-    var standalone = window.matchMedia && window.matchMedia("(display-mode: standalone)").matches;
-    var iOS = /iPad|iPhone|iPod/.test(navigator.userAgent || "");
-    if(hint && iOS && !standalone && !navigator.standalone){
-      hint.hidden = false;
-      hint.textContent = "iPhoneでは、Safariの共有ボタンから「ホーム画面に追加」を選ぶとアプリのように使えます。";
-    }
+    render();
   })();
 
   /* The save panel. */
