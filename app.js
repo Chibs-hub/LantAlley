@@ -6846,10 +6846,12 @@
      * about it.
      */
     if(reply){
-      if(dialogueFlow) dialogueFlow.start(reply, false);
-      else $("jp-line").textContent = reply;
+      // Through speak(), which types it out and plays the clip together - the
+      // same path every other line of hers takes. Started silent, which made
+      // these the only two things she says without a voice.
       $("romaji-line").textContent = "";
       $("romaji-line").style.display = "none";
+      speak(reply, isCorrect ? "correct" : "wrong");
     }
     // Listening, not celebrating and not correcting. The scene is not scored,
     // so the fox does not react as though it were.

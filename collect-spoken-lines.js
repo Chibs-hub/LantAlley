@@ -75,6 +75,12 @@ if (stage.intro) {
   add(stage.intro.context);
   add(stage.intro.accept);
 }
+// Kon's two answers to the cold open. Written to the narration strip once and
+// never spoken, so they were in no list; they are her lines like any other.
+if (stage.coldOpen) {
+  add(stage.coldOpen.wrongReply);
+  add(stage.coldOpen.correctReply);
+}
 innItems.forEach((item) => {
   (item.interaction && item.interaction.replies || []).forEach((reply) => add(reply.label));
   // Kon speaks this when the learner turns the work down, so it needs a clip
