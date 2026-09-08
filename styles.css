@@ -155,8 +155,19 @@
     #screen-title.title-scene{min-height:calc(100svh - 24px);padding:34px 25px 28px;background-position:54% center}
     #screen-title.title-scene h1{font-size:clamp(2.35rem,14vw,3.7rem)}
     .title-kicker{font-size:.62rem}
-    .title-kon{right:-4%;bottom:11%;width:min(55vw,250px)}
+    /* Kon was placed when the panel below her was two buttons tall. It has
+       four rows now - install and save arrived - and she was sitting across
+       all of them, hiding 保存データ entirely. Smaller, lower, and behind. */
+    .title-kon{right:-8%;bottom:0;width:min(40vw,180px);z-index:0}
     .title-entry-panel{width:100%}
+    /* The text controls have no background of their own, so whatever is
+       behind them is what they are read against. On the title screen that is
+       a painted night scene and a fox. Give them their own ground. */
+    .title-scene .title-about-link,
+    .title-scene .app-version{
+      padding:4px 10px; border-radius:999px;
+      background:rgba(9,18,34,.72);
+    }
     .title-scene .title-actions{width:100%;align-items:flex-start;flex-direction:column}
     .title-scene .btn-primary{width:min(68%,250px)}
   }
@@ -331,6 +342,13 @@
   }
   .dialogue.entrance-dialogue .speech{
     background:#faf5f2;
+    /* Painted light here, so it says what colour to read against it here.
+       It did not, and the only rule that set the text dark was scoped to
+       @media(min-width:761px) - so on a phone the card came out cream and the
+       text kept the colour meant for reading against a dark scene. Pale on
+       pale, and it was the question itself. Whichever rule paints a card owns
+       the colour of the text on it. */
+    color:#2d2926;
     border:1px solid rgba(27,42,74,0.12);
     border-radius:12px;
     padding:14px;
@@ -789,6 +807,16 @@
     .learning-context .romaji-toggle{margin-bottom:7px}
     .learning-context .dialogue{position:sticky;top:8px;z-index:8;margin-bottom:12px;padding:10px;background:#f2eadb;box-shadow:0 8px 18px rgba(27,42,74,.16)}
     .learning-context .dialogue.entrance-dialogue{background:rgba(242,235,221,.96);padding:6px}
+    /* The card is light here, and the text colour that goes with it was two
+       hundred lines away inside @media(min-width:761px) - so on a phone the
+       card turned cream and the text kept the colour meant for reading
+       against a dark scene. Pale on pale, and it was the question itself:
+       reported from an Episode 2 screen where the whole prompt was a ghost.
+       Whichever rule paints the card has to set its text colour too. */
+    .learning-context .dialogue,
+    .learning-context .dialogue .speech,
+    .learning-context .dialogue .jp-line{color:#2d2926}
+    .learning-context .dialogue .romaji-line{color:#6b5f4f}
     .avatar.avatar-animated{width:68px;height:68px}
     .jp-line{font-size:1.1rem}
     .romaji-line{font-size:.8rem;line-height:1.35}
@@ -1486,6 +1514,12 @@ body:has(#update-bar:not([hidden])){padding-bottom:96px;}
 }
 .install-steps::marker{color:#e6d2b2;}
 .install-steps li{margin-bottom:6px;}
+.install-warn{
+  margin:12px 0 0; padding:10px 12px;
+  border-left:3px solid var(--momiji); border-radius:0 8px 8px 0;
+  background:rgba(198,93,63,.16);
+  color:#f0d8bc; font-size:.78rem; line-height:1.6; text-align:left;
+}
 #install-panel .about-card{max-width:440px;}
 #install-panel .btn-primary{display:block; margin:0 auto 4px;}
 .save-actions{display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin:14px 0 8px;}

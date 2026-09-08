@@ -1000,6 +1000,35 @@
         || !!navigator.standalone;
     }
 
+    /* Removing it, which the page cannot do itself.
+     *
+     * There is no API for a web app to uninstall itself - the icon belongs to
+     * the operating system, and only the person holding the phone can take it
+     * off. So this says where, and does the one part that is ours: warning
+     * that the progress goes with it unless it is exported first.
+     */
+    function removalSteps(){
+      var ua = navigator.userAgent || "";
+      if(/iPad|iPhone|iPod/.test(ua)){
+        return [
+          "ホーム画面のアイコンを長押しします。",
+          "「アプリを削除」を選びます。",
+          "「ホーム画面から取り除く」ではなく「アプリを削除」を選ぶと、保存データも消えます。"
+        ];
+      }
+      if(/Android/.test(ua)){
+        return [
+          "ホーム画面かアプリ一覧でアイコンを長押しします。",
+          "「アンインストール」を選びます。",
+          "確認の画面で「OK」を押します。"
+        ];
+      }
+      return [
+        "ブラウザのメニューから「言葉の路地をアンインストール」を選びます。",
+        "見つからないときは、アドレスバーの右のアイコンから開けます。"
+      ];
+    }
+
     function platformSteps(){
       var ua = navigator.userAgent || "";
       if(/iPad|iPhone|iPod/.test(ua)){
@@ -1025,18 +1054,27 @@
     function render(){
       var isInstalled = installed();
       if(installButton) installButton.hidden = !deferredPrompt || isInstalled;
+
+      // Once it is in, the panel is about taking it out. Same button, same
+      // place - it just stops offering something already done.
+      var title = $("install-title");
+      if(title) title.textContent = isInstalled ? "アプリを削除する" : "アプリとして入れる";
+      if(openButton) openButton.textContent = isInstalled ? "📲 アプリを削除する" : "📲 アプリとして入れる";
       if(lead){
         lead.textContent = isInstalled
-          ? "もう入っています。ホーム画面のアイコンから開けます。"
+          ? "もう入っています。消すときはホーム画面のアイコンから。消すと、この端末の進み具合もいっしょに消えます。"
           : "ホーム画面から開けるようになります。アイコンがつき、電波がなくても遊べます。";
       }
+      // The one thing worth saying twice: export first, or it is gone.
+      var warn = $("install-warn");
+      if(warn) warn.hidden = !isInstalled;
+
       if(!steps) return;
       steps.innerHTML = "";
-      if(isInstalled) return;
       // The written steps stay even when the one-tap button is there: it is
       // the same three taps either way, and a learner who dismisses the
       // browser's own dialog still needs to know where it went.
-      platformSteps().forEach(function(line){
+      (isInstalled ? removalSteps() : platformSteps()).forEach(function(line){
         var item = document.createElement("li");
         item.textContent = line;
         steps.appendChild(item);
