@@ -762,10 +762,29 @@
     return item.jp;
   }
 
+  /* One speaker, one pair of quotes.
+   *
+   * Both of these glue a greeting in front of the narration, and both are Kon
+   * talking - so joining them with a space produced 「コン：「お帰りなさい。」
+   * コン：「もうすぐ最初のお客様が来ます。」」 in a single bubble, which reads
+   * as two foxes. app.js already merges the day announcement onto a narration
+   * for exactly this reason; the same rule has to hold here, because this is
+   * where these two get glued together.
+   */
+  function joinKonLines(first, second){
+    if(!first) return second || "";
+    if(!second) return first;
+    var open = "コン：「";
+    if(first.slice(-1) === "」" && second.indexOf(open) === 0){
+      return first.slice(0, -1) + second.slice(open.length);
+    }
+    return first + " " + second;
+  }
+
   function getStorySetup(item, resumed, afterDecline){
-    if(afterDecline) return (item.returnReply || "コン：「戻ってきてくれたんですね！」") + " " + item.narration;
+    if(afterDecline) return joinKonLines(item.returnReply || "コン：「戻ってきてくれたんですね！」", item.narration);
     if(!resumed) return item.narration;
-    return "コン：「お帰りなさい。続きから始めましょう。」 " + item.narration;
+    return joinKonLines("コン：「お帰りなさい。続きから始めましょう。」", item.narration);
   }
 
   function getAutoAdvanceDelay(isCorrect){

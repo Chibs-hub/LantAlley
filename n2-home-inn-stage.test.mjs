@@ -441,9 +441,15 @@ test("declining a duty ends the stage and is welcomed back, not marked wrong", (
   assert.match(html, /declined:state\.stageDeclined/);
 
   // Returning replaces the ordinary resume greeting with the welcome back.
+  // The two are merged into one quoted line rather than concatenated, so the
+  // welcome leads and the request follows it inside the same quotes - Kon is
+  // one fox. Compared on content rather than on the exact glue.
   const back = stage.getStorySetup(offer, false, true);
-  assert.ok(back.startsWith(offer.returnReply), "return must lead with the welcome");
-  assert.ok(back.includes(offer.narration));
+  const strip = (line) => line.replace(/^コン：「/, "").replace(/」$/, "");
+  assert.ok(back.startsWith(strip(offer.returnReply).slice(0, 6)) || back.indexOf(strip(offer.returnReply)) > -1,
+    "return must lead with the welcome");
+  assert.ok(back.includes(strip(offer.narration)), "and still carry the request");
+  assert.equal((back.match(/コン：「/g) || []).length, 1, "one speaker, one tag");
   const ordinary = stage.getStorySetup(offer, false, false);
   assert.equal(ordinary, offer.narration);
 });
@@ -1400,4 +1406,29 @@ test("every Day 2 option is something a person could actually do", () => {
         `${item.focusWord} still offers ${option.label}, which nobody would pick`);
     }
   }
+});
+
+test("Kon's greeting and her request are one line, not two speakers", () => {
+  // Both the resume greeting and the welcome-back line are glued in front of
+  // the narration, and both are Kon. Joined with a space they produced
+  // 「コン：「お帰りなさい。」 コン：「もうすぐ最初のお客様が来ます。」」 in one
+  // bubble, which reads as two foxes talking.
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(readFileSync(new URL("./moonview-inn-interactions.js", import.meta.url), "utf8"), context);
+  vm.runInContext(readFileSync(stageUrl, "utf8"), context);
+  const stage = context.N2HomeInnStage;
+
+  for (const item of stage.encounters) {
+    for (const [resumed, declined] of [[true, false], [false, true]]) {
+      const line = stage.getStorySetup(item, resumed, declined);
+      const tags = (line.match(/コン：「/g) || []).length;
+      assert.equal(tags, 1, `one speaker tag, got ${tags}: ${line}`);
+      const closers = (line.match(/」/g) || []).length;
+      assert.equal(closers, 1, `one closing quote, got ${closers}: ${line}`);
+    }
+  }
+
+  // The plain case is untouched: the narration already carries its own tag.
+  assert.equal(stage.getStorySetup(stage.encounters[0], false, false), stage.encounters[0].narration);
 });
