@@ -203,7 +203,12 @@ test("Moonview Inn has evidence-based practice and challenge phases", () => {
   for (const word of words) {
     assert.equal(learned.has(word), true, `${word} has a Learn interaction`);
   }
-  assert.deepEqual(stage.practice.map((item) => item.focusWord), words);
+  // Day 2 walks its own shift - desk, kitchen, dining room, guest room - so
+  // the second day is a different hour of the job rather than the first
+  // replayed with the words moved around. Same five words, different order.
+  assert.deepEqual([...stage.practice.map((item) => item.focusWord)].sort(), [...words].sort());
+  assert.notDeepEqual(stage.practice.map((item) => item.focusWord), words,
+    "Day 2 must not walk the same order as Day 1");
   assert.deepEqual(stage.challenge.map((item) => item.focusWord), words);
   assert.ok(stage.challenge.every((item) => item.romaji === "" && item.hint === ""));
   assert.equal(
@@ -339,8 +344,10 @@ test("Kon gives a contextual Japanese response after every stage answer", () => 
     assert.match(stage.getKonResponse(item, false), /[ぁ-んァ-ヶ一-龠]/, `${item.variant} retry`);
   }
 
+  // In Day 2's own order: the schedule first, then the kitchen, the dining
+  // room, the guest room, and tomorrow's favour last.
   const expectedPracticeResults = [
-    /向き/, /シーツ/, /ごはん/, /グループ/, /朝食/,
+    /グループ/, /ごはん/, /向き/, /シーツ/, /朝食/,
   ];
   stage.practice.forEach((item, index) => {
     assert.match(stage.getKonResponse(item, true), expectedPracticeResults[index], item.variant);
@@ -497,7 +504,9 @@ test("choosing a near-miss returns its specific distinction", () => {
   vm.createContext(context);
   vm.runInContext(readFileSync(stageUrl, "utf8"), context);
   const stage = context.N2HomeInnStage;
-  const item = stage.practice[0];
+  // 揃える specifically, by name rather than by position - Day 2's order is
+  // its own now, so index 0 is the schedule.
+  const item = stage.practice.find((entry) => entry.focusWord === "揃える");
   const nearMiss = item.options.find((option) => option.nearMiss);
   const feedback = stage.getWrongAnswerFeedback(item, nearMiss.key);
   assert.match(feedback, /intransitive/);

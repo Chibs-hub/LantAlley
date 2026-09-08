@@ -82,6 +82,26 @@ innItems.forEach((item) => {
   add(item.declineReply);
 });
 
+/* The review ladder speaks too, and nothing was collecting it.
+ *
+ * A missed word comes back asked a different way each time, and the middle and
+ * last rungs use situations no day puts on screen by itself - so those lines
+ * appeared in no other list and were handed to the device voice, in a
+ * different voice from the question that had just been asked.
+ */
+if (stage.getReviewItem && stage.getReviewLadderLength) {
+  stage.encounters.forEach((item) => {
+    for (let pass = 0; pass < stage.getReviewLadderLength(); pass += 1) {
+      const rung = stage.getReviewItem(item.focusWord, pass);
+      if (!rung) continue;
+      add(rung.jp);
+      add(rung.narration);
+      add(stage.getKonResponse(rung, true));
+      add(stage.getKonResponse(rung, false));
+    }
+  });
+}
+
 // Kon speaks after every answer too. These were falling back to the device
 // voice, so praise and correction sounded like a different character from the
 // request that preceded them.

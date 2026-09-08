@@ -277,7 +277,7 @@
     {
       scene:"errand",
       controlHelp:"Choose your reply.",
-      clue:"The innkeeper has asked you something and is waiting for an answer.",
+      clue:"The entrance needs sweeping before it opens, and the innkeeper is already making breakfast.",
       replies:[
         {key:"accept", label:"はい、引き受けます。"},
         {key:"decline", label:"すみません、引き受けられません。"}
@@ -295,7 +295,15 @@
       clue:"Both dinner start times can move. Leave enough time to serve one group before the next.",
       min:17,max:21,startA:18,startB:18,gap:2,targetA:18,targetB:20,fixedB:false,labelA:"Cグループ夕食",labelB:"Dグループ夕食"
     },
-    guidedInteractions[4]
+    {
+      scene:"errand",
+      controlHelp:"Choose your reply.",
+      clue:"The guests are out at the fireworks, and six rooms still need their futons laid out.",
+      replies:[
+        {key:"accept", label:"はい、引き受けます。"},
+        {key:"decline", label:"すみません、引き受けられません。"}
+      ]
+    }
   ];
 
   var mechanicNames = ["arrange", "replace", "warm", "coordinate", "undertake"];
@@ -310,7 +318,7 @@
     {jp:"汚れたシーツを洗濯かごに入れて、新しいシーツに取り替えてください。", romaji:"Yogoreta shiitsu o sentakukago ni irete, atarashii shiitsu ni torikaete kudasai.", narration:"A marked sheet remains beside the fresh linen.", meaning:"Put the stained sheet in the laundry basket, then replace it with a new one.", successReply:"新しいシーツになりました。これで今夜のお客様を迎えられます。"},
     {jp:"ごはんを電子レンジで温めてください。", romaji:"Gohan o denshi renji de atatamete kudasai.", narration:"The evening meal has gone cold.", meaning:"Please warm the rice in the microwave.", successReply:"ごはんが温まりました。みんなで食事にしましょう。"},
     {jp:"Cグループは18時以降、Dグループは20時までに夕食を始められます。一組の食事には2時間かかります。夕食の開始時刻を調整してください。", romaji:"C guruupu wa juuhachiji ikou, D guruupu wa nijuji made ni yuushoku o hajimeraremasu. Hitokumi no shokuji ni wa nijikan kakarimasu. Yuushoku no kaishi jikoku o chousei shite kudasai.", narration:"Two groups need dinner seatings, with enough time to serve one group before the next.", meaning:"Coordinate the two dinner start times using the stated booking windows.", successReply:"Cグループは18時、Dグループは20時になりました。これで順番に夕食をお出しできます。"},
-    {jp:"朝食の配膳を引き受けてください。", romaji:"Choushoku no haizen o hikiukete kudasai.", narration:"The breakfast shift still needs someone responsible for serving it.", meaning:"Please undertake serving breakfast.", successReply:"ありがとうございます。明日の朝食の配膳をお願いします。"}
+    {jp:"三番から六番のお部屋のお布団を引き受けていただけませんか。", romaji:"Sanban kara rokuban no oheya no ofuton o hikiukete itadakemasen ka.", narration:"Six rooms still need their futons laid out before the guests return.", meaning:"Would you take on the futons for rooms three to six?", successReply:"ありがとうございます。お客様が戻るまでに間に合いました。"}
   ];
 
   var practiceVariantsB = [
@@ -318,16 +326,32 @@
     {jp:"切れた電球を回収箱に入れて、新しい電球に取り替えてください。", romaji:"Kireta denkyuu o kaishuubako ni irete, atarashii denkyuu ni torikaete kudasai.", narration:"A lamp in the hallway has gone dark.", meaning:"Put the burned-out bulb in the recycling box, then replace it with a new one.", successReply:"新しい電球がつきました。これで廊下が明るくなります。"},
     {jp:"スープをコンロで温めてください。", romaji:"Suupu o konro de atatamete kudasai.", narration:"A guest returns late to a counter of cold dishes.", meaning:"Please warm the soup on the stove.", successReply:"スープが温まりました。お客様に出しましょう。"},
     {label:"夕食の時間を決める", jp:"Aグループは18時以降、Bグループは20時までに夕食を始められます。一組の食事には2時間かかります。夕食の開始時刻を調整してください。", romaji:"A guruupu wa juuhachiji ikou, B guruupu wa nijuji made ni yuushoku o hajimeraremasu. Hitokumi no shokuji ni wa nijikan kakarimasu. Yuushoku no kaishi jikoku o chousei shite kudasai.", narration:"Both groups requested the same dinner time. Group A can begin at 18:00 or later, Group B by 20:00, and each meal needs two hours.", meaning:"Coordinate the two dinner start times using the booking windows and meal length.", successReply:"Aグループは18時、Bグループは20時になりました。これで順番に夕食をお出しできます。"},
-    {jp:"荷物を運ぶ仕事を引き受けてください。", romaji:"Nimotsu o hakobu shigoto o hikiukete kudasai.", narration:"The innkeeper needs someone to take responsibility for moving the luggage.", meaning:"Please undertake the job of carrying the luggage.", successReply:"ありがとうございます。明日の朝、荷物をお願いします。"}
+    {jp:"明日の朝、玄関の掃除を引き受けていただけませんか。", romaji:"Ashita no asa, genkan no souji o hikiukete itadakemasen ka.", narration:"The entrance has to be swept before it opens tomorrow.", meaning:"Would you take on sweeping the entrance tomorrow morning?", successReply:"ありがとうございます。これで朝のお客様を気持ちよくお迎えできます。"}
   ];
 
+  /* Day 2's own shift, and deliberately not the same shape as the others.
+   *
+   * Day 1 and Day 3 both open on the cushions and end on a favour, so playing
+   * the second day felt like playing the first again with the words moved
+   * around. This one starts in the office with tonight's plan and works
+   * outward - desk, kitchen, dining room, guest room - which is a different
+   * hour of the same job rather than a re-run of it.
+   *
+   * Indexed by encounter, not by position: the day is played in DAY2_ORDER
+   * below, so 揃える's line is still at index 0 here even though it is asked
+   * third. Keeping the arrays index-aligned is what lets the order change
+   * without every other table having to be reshuffled with it.
+   */
   var evidenceNarrationsA = [
-    "コン：「おはようございます。昨夜はよく眠れましたか。最初の家族が遊んで座布団の向きを乱したので、朝食の前に部屋を整えます。」",
-    "コン：「家族がチェックアウトしました。今夜もこの部屋を使いますが、滞在中にシーツが一枚汚れました。」",
-    "コン：「掃除に予定より時間がかかり、従業員の食事のごはんが冷めてしまいました。」",
-    "コン：「夕食の時間に、ＣグループとＤグループから同じ時刻の希望をいただきました。食事処は一組ずつご案内します。」",
-    "コン：「二つのグループは無事に部屋へ入りました。でも、明日の朝食を配る人がまだ決まっていません。主人が返事を待っています。」"
+    "コン：「食事処を開けます。前の組が使った座布団が、向きばらばらのままです。」",
+    "コン：「お食事の間に客室を回ります。三番のシーツに染みがついていました。」",
+    "コン：「時刻が決まりました。厨房を見てきてください。早く着いたお客様の分のごはんが冷めています。」",
+    "コン：「二日目は帳場から始めます。今夜はＣグループとＤグループが同じ時刻をご希望です。食事処は一組ずつしかご案内できません。」",
+    "コン：「今日はよく回りました。最後にもう一つ、明日の朝食の配膳をお願いしたいのですが。」"
   ];
+
+  // Desk, kitchen, dining room, guest room, then tomorrow's favour.
+  var DAY2_ORDER = [3, 2, 0, 1, 4];
 
   var evidenceNarrationsB = [
     "コン：「次の朝です。朝食のあと、子どもたちが大きさの違う座布団を二つのマットに残しました。」",
@@ -643,7 +667,7 @@
    * harder for hiding romaji, hints and the written request - not for being
    * out of order.
    */
-  var practice = [0, 1, 2, 3, 4].map(function(index){
+  var practice = DAY2_ORDER.map(function(index){
     return phaseItem(index, false, "practice");
   });
 
