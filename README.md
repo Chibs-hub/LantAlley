@@ -9,6 +9,14 @@ Five places, four episodes each, ten questions per episode: **200 authored
 questions teaching 200 distinct words**, plus a generated practice layer of
 **9,097 cards** covering the rest of the vocabulary catalogue.
 
+## Playing it
+
+**https://chibs-hub.github.io/LantAlley/**
+
+Live, installable, and works offline once opened. See **`TESTING.md`** for
+what to hand a tester: how to install it on a phone, how to get a save off the
+device before losing it, and what kind of feedback is actually useful.
+
 ## Running it
 
 No installation, no package manager, no build step.
