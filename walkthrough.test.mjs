@@ -2288,3 +2288,52 @@ test("every scene change says what kind of part it is", () => {
   const shown = (app.match(/class="day-kind"/g) || []).length;
   assert.ok(shown >= 3, `expected the label on several cards, found ${shown}`);
 });
+
+test("a correct answer does not print its own translation twice, in English", async () => {
+  // The meaning line already carries the English above the feedback, so
+  // "Correct! Please place two cushions of the same colour on each mat."
+  // put the same sentence on screen twice - in English, on a screen that is
+  // otherwise Japanese, with an English button under it.
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game);
+  game.$("btn-skip-question").click();
+  game.clock.advance(2000);
+
+  const feedback = game.$("feedback-text").textContent;
+  const meaning = game.$("meaning-line").textContent;
+  assert.doesNotMatch(feedback, /^Correct!/, "the feedback is not an English restatement");
+  if (meaning) {
+    assert.equal(feedback.includes(meaning), false, "and it does not repeat the meaning line");
+  }
+  assert.doesNotMatch(game.$("btn-next").textContent, /Continue/,
+    "the continue button matches the rest of the game's Japanese");
+});
+
+test("the task the cold open lost is reintroduced, not silently repeated", async () => {
+  // A wrong cold open is the common case - the scene exists to produce one -
+  // and Day 1 then opens on that same request, word for word, with the job
+  // board in between. The repetition is the teaching, but nothing said so, so
+  // the first two things a new player is asked looked like a fault.
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game);
+
+  // Miss it: an object into the wrong place.
+  const objects = game.doc.querySelectorAll(".inn-object").filter(game.visible);
+  const zones = game.doc.querySelectorAll(".inn-drop-zone").filter(game.visible);
+  objects[0].click();
+  game.clock.advance(200);
+  zones[zones.length - 1].click();
+  game.clock.advance(3000);
+
+  game.$("btn-next").click();
+  game.clock.advance(600);
+  assert.ok(beginDay(game), "Day 1 announces itself");
+
+  const request = game.$("jp-line").textContent;
+  const narration = game.$("narration").textContent;
+  assert.match(game.$("stage-phase-badge").textContent, /一日目/);
+  assert.match(narration, /もう一度/, "Kon says this is the same job, taught: " + narration);
+  // One speaker, one pair of quotes, even though three lines were joined.
+  assert.equal((narration.match(/コン：「/g) || []).length, 1, narration);
+  assert.ok(request.length > 0);
+});

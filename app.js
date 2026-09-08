@@ -186,6 +186,9 @@
     // that starts Day 1: it tells "learn" to begin one encounter in, so the
     // task the learner just solved is not asked again immediately after.
     coldOpenSkipFirst:false,
+    // Day 1 reopens on the task a failed cold open just lost. Set there,
+    // spent on the first Day 1 render - see getColdOpenRetry.
+    coldOpenRetryPending:false,
     challengeMisses:[],
     // word -> which rung of the review ladder it is on. A word missed again in
     // review climbs a rung rather than being asked the same way twice.
@@ -3602,6 +3605,16 @@
       // line on top of it made three Kon greetings before the situation.
       // Prefer the day announcement and drop the resume greeting.
       storyNarration = joinKonLines(loc.getDayAnnouncement(state.stagePhase), prompt.narration);
+      /* And when Day 1 is reopening on the very task the cold open just lost,
+       * say so. Otherwise the first two things a new player is asked are
+       * word-for-word identical, with a board between them, and it reads as
+       * the game repeating itself rather than as the teaching arriving.
+       * Spent here so it is said once, on that one screen.
+       */
+      if(state.coldOpenRetryPending && state.stagePhase === "learn" && loc.getColdOpenRetry){
+        state.coldOpenRetryPending = false;
+        storyNarration = joinKonLines(loc.getColdOpenRetry(), storyNarration);
+      }
     }
     $("narration").textContent = storyNarration;
     var writtenPrompt = writeStagePrompt(loc, prompt);
@@ -6712,14 +6725,20 @@
         showFeedback(true, "復習が終わりました。間違えた言葉をすべて思い出せました。");
         $("btn-next").textContent = "路地へ戻る →";
       }else if(isFinalEncounter && state.stagePhase === "learn"){
-        showFeedback(true, prompt.completionFeedback || "Learn phase complete. Now retrieve the same words in changed situations.");
-        $("btn-next").textContent = prompt.completionNextLabel || "Start practice →";
+        showFeedback(true, prompt.completionFeedback || "一日目が終わりました。二日目は同じ言葉を別の場面で使います。");
+        $("btn-next").textContent = prompt.completionNextLabel || "二日目へ →";
       }else if(isFinalEncounter && state.stagePhase === "practice"){
         showFeedback(true, "二日目の仕事が終わりました。三日目は音声だけで挑戦します。");
         $("btn-next").textContent = "三日目へ →";
       }else{
-        showFeedback(true, prompt.meaning ? "Correct! " + prompt.meaning : "正解です。");
-        $("btn-next").textContent = "Continue →";
+        /* The English translation is already on screen, in the meaning line
+         * directly above - printing it again here put the same sentence twice
+         * on a correct answer, in English, on a screen that is otherwise
+         * Japanese. Kon's own reply says what happened; this only needs to
+         * say it was right.
+         */
+        showFeedback(true, "正解です。");
+        $("btn-next").textContent = "次の仕事へ →";
       }
       $("next-row").style.display = "block";
       saveStageProgress();
@@ -6778,6 +6797,9 @@
   function resolveColdOpen(isCorrect, stage, prompt){
     state.answered = true;
     state.coldOpenSkipFirst = false;
+    // A correct answer skips the replay; a wrong one gets it again, taught -
+    // and Kon has to say that, or the same request twice reads as a fault.
+    state.coldOpenRetryPending = !isCorrect;
     if(isCorrect && prompt && prompt.focusWord){
       state.trainingCorrectWords[prompt.focusWord] = true;
       state.coldOpenSkipFirst = true;
