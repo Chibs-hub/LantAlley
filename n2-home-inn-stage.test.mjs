@@ -361,10 +361,13 @@ test("non-dialogue harder items have exactly one explained N2 near-miss", () => 
   // 代わる was the near miss while the swap taught 代える. The swap now teaches
   // 取り替える, so the mistake worth drilling is 代える itself: the learner who
   // reaches for the person-substitution verb to swap an object.
-  // Day 2 states its options in the form its blank requires, so the same near
-  // miss appears as 揃う on Day 3 and 揃って on Day 2.
+  // Each day states its options in the form its own question requires, so one
+  // near miss wears three shapes: 揃う where the option is a bare verb, 揃って
+  // where it drops into Day 2's blank, and 温まります。 where Day 3 speaks a
+  // whole request and the answer has to be a whole sentence back.
   const verifiedNearMisses = [
     "揃う", "揃って", "代える", "代えて", "温まる", "温まって", "調節する", "調節して",
+    "温まります。",
   ];
 
   for (const item of [...stage.practice, ...stage.challenge].filter((entry) => entry.mechanic !== "undertake")) {
@@ -1337,5 +1340,55 @@ test("Day 3 tests warming and accepting by listening, not by a guessable room ac
 
   for (const word of ["揃える", "取り替える", "調整"]) {
     assert.equal(challenge.find((item) => item.focusWord === word).format, "task");
+  }
+});
+
+test("the final test cannot be passed on a coin flip", () => {
+  // 引き受ける's Day 3 task was a two-button accept/decline, so half the time a
+  // learner who knew nothing cleared the word that gates the episode. It is a
+  // decision, not an action, and 温める turns on food versus a room - neither
+  // is demonstrated by working the room. Both are asked by name instead.
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(readFileSync(new URL("./moonview-inn-interactions.js", import.meta.url), "utf8"), context);
+  vm.runInContext(readFileSync(stageUrl, "utf8"), context);
+  const stage = context.N2HomeInnStage;
+
+  for (const item of stage.challenge) {
+    assert.ok(item.options.length >= 3,
+      `${item.focusWord} offers only ${item.options.length} answers on the day that decides the stage`);
+  }
+
+  const spoken = stage.challenge.filter((item) => item.format === "choice");
+  assert.equal(spoken.length, 2, "温める and 引き受ける are asked by name");
+  for (const item of spoken) {
+    // A question cannot read out the word it is asking for.
+    assert.ok(!item.jp.includes(item.focusWord.slice(0, 2)),
+      `${item.focusWord}'s spoken prompt gives the answer away: ${item.jp}`);
+    // Heard aloud, the answer to a whole request has to be a whole sentence.
+    for (const option of item.options) {
+      assert.match(option.label, /。$/,
+        `${item.focusWord} answers a spoken question with a fragment: ${option.label}`);
+    }
+  }
+});
+
+test("every Day 2 option is something a person could actually do", () => {
+  // Two of the four used to be jokes - scattering the cushions, ignoring the
+  // dinner times - so four choices behaved like two and half the item could be
+  // solved by spotting nonsense rather than knowing the word.
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(readFileSync(new URL("./moonview-inn-interactions.js", import.meta.url), "utf8"), context);
+  vm.runInContext(readFileSync(stageUrl, "utf8"), context);
+  const stage = context.N2HomeInnStage;
+
+  const retired = ["散らかして", "放置して", "そのままにして", "冷やして"];
+  for (const item of stage.practice) {
+    assert.equal(item.options.length, 4);
+    for (const option of item.options) {
+      assert.equal(retired.includes(option.label), false,
+        `${item.focusWord} still offers ${option.label}, which nobody would pick`);
+    }
   }
 });

@@ -365,8 +365,8 @@
       options:[
         {key:"arrange", label:"揃えて"},
         {key:"sorou", label:"揃って", nearMiss:true},
-        {key:"scatter", label:"散らかして"},
-        {key:"tidy", label:"片付けて"}
+        {key:"line-up", label:"並べて"},
+        {key:"stack", label:"重ねて"}
       ],
       successReply:"はい、座布団の向きを自分の手で同じにするので「揃える」です。"
     },
@@ -376,8 +376,8 @@
       options:[
         {key:"replace", label:"取り替えて"},
         {key:"kaeru", label:"代えて", nearMiss:true},
-        {key:"leave", label:"そのままにして"},
-        {key:"wash", label:"洗って"}
+        {key:"wash", label:"洗って"},
+        {key:"flip", label:"裏返して"}
       ],
       successReply:"はい、汚れたシーツを別の物と交換するので「取り替える」です。"
     },
@@ -387,8 +387,8 @@
       options:[
         {key:"warm", label:"温めて"},
         {key:"atatamaru", label:"温まって", nearMiss:true},
-        {key:"cool", label:"冷やして"},
-        {key:"grill", label:"焼いて"}
+        {key:"grill", label:"焼いて"},
+        {key:"steam", label:"蒸して"}
       ],
       successReply:"はい、冷めたごはんを自分で温かくするので「温める」です。"
     },
@@ -398,8 +398,8 @@
       options:[
         {key:"adjust", label:"調整して"},
         {key:"chousetsu", label:"調節して", nearMiss:true},
-        {key:"leave", label:"放置して"},
-        {key:"cancel", label:"中止して"}
+        {key:"change", label:"変更して"},
+        {key:"confirm", label:"確認して"}
       ],
       successReply:"はい、Cグループは18時、Dグループは20時にしました。条件を合わせるのが「調整」です。"
     },
@@ -409,8 +409,8 @@
       options:[
         {key:"accept", label:"引き受けて"},
         {key:"hikitomeru", label:"引き止めて", nearMiss:true},
-        {key:"hikidasu", label:"引き出して"},
-        {key:"hikikaesu", label:"引き返して"}
+        {key:"help", label:"手伝って"},
+        {key:"substitute", label:"代わって"}
       ],
       successReply:"はい、明日の朝食の配膳をお願いします。責任を持って受けるのが「引き受ける」です。"
     }
@@ -422,11 +422,30 @@
   var challengeListening = {
     2:{
       jp:"お客様：「このお茶、冷めてしまいました。同じものを温かくしていただけますか。」",
-      successReply:"温かいお茶をお出しできました。飲み物には「温める」を使います。"
+      successReply:"温かいお茶をお出しできました。飲み物には「温める」を使います。",
+      options:[
+        {key:"warm", label:"温めます。"},
+        {key:"atatamaru", label:"温まります。", nearMiss:true},
+        // The room-and-air spelling of this verb would be the sharpest
+        // distractor here, but the whole file is guarded against that
+        // character - including in comments - so a collocation error cannot
+        // creep into a request or a reply. Episode 1 draws that contrast
+        // instead, where the wrong option carries an explanation. Boiling the
+        // tea is the next best thing: a real action, and wrong for a reason
+        // the learner has to know.
+        {key:"boil", label:"沸かします。"},
+        {key:"cool", label:"冷やします。"}
+      ]
     },
     4:{
       jp:"コン：「明日の朝、駅までお客様を送る仕事があります。お願いできますか。」",
-      successReply:"任せました。責任を持ってやると決めるのが「引き受ける」です。"
+      successReply:"任せました。責任を持ってやると決めるのが「引き受ける」です。",
+      options:[
+        {key:"accept", label:"はい、引き受けます。"},
+        {key:"hikitomeru", label:"はい、引き止めます。", nearMiss:true},
+        {key:"uketoru", label:"はい、受け取ります。"},
+        {key:"hikikaesu", label:"はい、引き返します。"}
+      ]
     }
   };
 
@@ -459,7 +478,18 @@
     replace:"to swap an item for another of the same kind", fold:"to fold the robe", hide:"to hide the luggage",
     warm:"to heat something up", pour:"to pour it away", cool:"to make it colder",
     adjust:"to reconcile several conditions", lock:"to control a temperature", leave:"to walk out of the room",
-    accept:"to agree to do it", decline:"to turn it down"
+    accept:"to agree to do it", decline:"to turn it down",
+    // The Day 2 word choices. Each is a real thing to do in that room, which
+    // is the point - the learner has to know the word rather than spot the
+    // one absurd option.
+    "line-up":"to lay them out in a row", stack:"to stack them up",
+    wash:"to wash it", flip:"to turn it over",
+    grill:"to grill it", steam:"to steam it",
+    change:"to change it to something else", confirm:"to check it",
+    help:"to help with it", substitute:"to take someone's place",
+    // Day 3's spoken questions.
+    boil:"to boil it", uketoru:"to receive an object",
+    hikikaesu:"to turn back the way you came"
   };
 
   var requiredActions = [
@@ -551,7 +581,7 @@
     var choiceContent = phase === "challenge" && challengeListening[index]
       ? challengeListening[index] : practiceWordChoice[index];
     var options = format === "choice"
-      ? practiceWordChoice[index].options.map(function(option){
+      ? (choiceContent.options || practiceWordChoice[index].options).map(function(option){
           return {
             key:option.key,
             emoji:"",
