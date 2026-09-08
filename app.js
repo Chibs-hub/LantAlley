@@ -963,7 +963,7 @@
       state.stagePhase = parts[1];
       state.encounterIndex = Number(parts[2]) || 0;
       state.phaseItems = null;
-      startStagePhase(state.stagePhase, true);
+      startStagePhase(getLocation("home-inn"), state.stagePhase, null, state.encounterIndex);
     }
   }
 
@@ -5461,7 +5461,7 @@
         renderHud();
         showPracticeTranslation(false);
         showKonStageResponse(stage, prompt, false, option.key);
-        showFeedback(false, option.explanation || stage.getWrongAnswerFeedback(prompt, option.key));
+        showFeedback(false, option.explanation || stage.getWrongAnswerFeedback(prompt, option.key), "不正解");
         offerRetry(prompt);
       });
       host.appendChild(button);
@@ -5858,7 +5858,7 @@
       else{
         registerStageMiss(prompt, near.key);
         showKonStageResponse(stage, prompt, false);
-        showFeedback(false, near.explanation);
+        showFeedback(false, near.explanation, "不正解");
         offerRetry(prompt);
       }
       return;
@@ -5869,7 +5869,7 @@
       else{
         registerStageMiss(prompt, missed.key);
         showKonStageResponse(stage, prompt, false);
-        showFeedback(false, "That is a different action from the one the request asked for.");
+        showFeedback(false, "That is a different action from the one the request asked for.", "不正解");
         setTimeout(function(){ if(!state.answered) renderInnInteraction(prompt, true); }, 900);
       }
       return;
@@ -5893,7 +5893,7 @@
         registerStageMiss(prompt, selectedKey);
         showKonStageResponse(stage, prompt, false, selectedKey);
         if(prompt.replyResponses && prompt.replyResponses[selectedKey]) $("feedback-row").classList.remove("show");
-        else showFeedback(false, result.reason);
+        else showFeedback(false, result.reason, "不正解");
         setTimeout(function(){ if(!state.answered) renderInnInteraction(prompt, true); }, 900);
       }
       return;
@@ -6439,7 +6439,7 @@
       if(state.currentKey !== "home-inn") return;
       renderInnInteraction(prompt, true);
       showPracticeTranslation(true);
-      $("inn-status").textContent = "もう一度どうぞ。";
+      $("inn-status").textContent = "Try again, or continue to the next task.";
     }, 900);
   }
 
@@ -6472,7 +6472,7 @@
     }, delay + 2500);
   }
 
-  function showFeedback(isCorrect, text){
+  function showFeedback(isCorrect, text, stampText){
     var row = $("feedback-row");
     var stamp = $("stamp");
     // Every wrong answer in the game funnels through here, stage and episode
@@ -6480,7 +6480,7 @@
     // fox pose in the stage-only path.
     if(!isCorrect) playMissSound();
     stamp.className = "stamp" + (isCorrect ? " good" : "");
-    stamp.textContent = isCorrect ? "正解" : "もう一度";
+    stamp.textContent = stampText !== undefined ? stampText : (isCorrect ? "正解" : "もう一度");
     stamp.style.animation = "none";
     void stamp.offsetWidth;
     stamp.style.animation = "";

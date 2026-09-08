@@ -128,6 +128,25 @@ test("episode openings form one aligned bottom dock instead of floating boxes", 
   assert.match(html, /\.inn-stage \.episode-open-card\{[^}]*background:rgba/);
 });
 
+test("desktop Inn questions align Kon's request and the answer area at the top", () => {
+  // The stage row can be much taller than a short question. Bottom-aligning
+  // either column created hundreds of pixels of empty space above the part
+  // the learner actually needs to read. Keep this desktop-only: mobile uses
+  // a deliberately stacked flow instead of two aligned columns.
+  assert.match(html,
+    /@media\(min-width:761px\)\{[\s\S]*?\.inn-stage \.learning-context\{[^}]*justify-content:flex-start[^}]*\}[\s\S]*?\.inn-stage \.answer-workspace\{[^}]*align-self:start[^}]*\}/,
+    "desktop Inn columns must start at the top of the question row");
+  assert.match(html,
+    /\.inn-stage \.game-layout:has\(\.episode-open\) \.learning-context\{[^}]*align-self:start[^}]*\}/,
+    "the episode word board must not pin Kon below a tall blank area");
+  assert.match(html,
+    /\.inn-stage \.answer-workspace:has\(\.inn-replies\)\{[^}]*justify-content:flex-start[^}]*\}/,
+    "short answer lists must start beside the request instead of floating in the middle");
+  assert.match(html,
+    /@media\(max-width:760px\)[^{]*\{[\s\S]*?\.inn-stage \.game-layout\{[^}]*grid-template-columns:1fr[^}]*\}/,
+    "mobile must retain its stacked question flow");
+});
+
 test("Moonview Inn mixes visible, object, and social actions", () => {
   const context = {};
   vm.createContext(context);

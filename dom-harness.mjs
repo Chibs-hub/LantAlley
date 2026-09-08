@@ -152,6 +152,11 @@ class FakeElement {
     }
   }
   get firstChild() { return this.childNodes[0] || null; }
+  get options() {
+    return this.tagName === "SELECT"
+      ? this.childNodes.filter((node) => node instanceof FakeElement && node.tagName === "OPTION")
+      : undefined;
+  }
   contains(node) {
     let cur = node;
     while (cur) { if (cur === this) return true; cur = cur.parentNode; }

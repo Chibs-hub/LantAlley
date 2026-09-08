@@ -2051,6 +2051,10 @@ test("a wrong answer still leads somewhere", async () => {
   optionButton(game, wrong.label).click();
   game.clock.advance(3000);
 
+  assert.equal(game.$("stamp").textContent, "不正解",
+    "the result label must describe the miss instead of ordering a retry");
+  assert.equal(game.$("inn-status").textContent, "Try again, or continue to the next task.",
+    "retry must be presented as an option when continuing is also available");
   assert.equal(game.$("next-row").style.display, "block",
     "a missed question must not be a dead end");
   assert.ok(
@@ -2212,4 +2216,14 @@ test("a word missed in review comes back asked a different way, not handed strai
   assert.equal(game.doc.querySelectorAll(".reply-option").filter(game.visible).length, 0,
     "and asked a different way - the second rung is the task, not the cloze");
   assert.ok(game.doc.querySelectorAll(".inn-object").length > 0, "the second rung puts the learner in the room");
+});
+
+test("review mode opens the first three-day Inn question without a broken stage object", () => {
+  const game = boot(null, "?review=1");
+  game.clock.advance(3000);
+
+  assert.deepEqual(game.errors, [], "opening the review question must not throw");
+  assert.doesNotMatch(game.$("scene-label").textContent, /undefined/i);
+  assert.match(game.$("jp-line").textContent, /揃/,
+    "the first indexed Inn question should render its real request");
 });

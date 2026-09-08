@@ -5,6 +5,20 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-08 - A retryable miss no longer gives contradictory directions
+
+Learn and Practice misses deliberately leave both choices available: the learner can correct the answer in place or use `次の仕事へ →` to continue. The feedback nevertheless stamped every miss `もう一度` and later repeated `もう一度どうぞ。`, making retry sound mandatory while a continue button was visible.
+
+Retryable Inn misses now use the descriptive result `不正解`, followed by `Try again, or continue to the next task.` The answer controls stay active and the next-task button remains available. Other feedback paths keep their existing verdicts. A walkthrough regression test checks both messages and the continue path. Live verification reproduced a wrong Practice answer, waited for the retry controls, and confirmed the coherent label, instruction, next button, and zero console errors. Cache is v280.
+
+### 2026-09-08 - Inn requests and answers start together instead of floating vertically
+
+All 55 Inn question states were measured at a 1440x900 desktop viewport. The empty area above Kon ranged from 241px to 620px, 48 questions exceeded 300px, and 20 exceeded 500px. The shared grid was stretching Kon's column and then bottom-aligning her request, while short answer lists were independently centered or bottom-aligned. The Episode word board made the same defect look worse by stretching its brown panel across the full row.
+
+Desktop Inn questions now top-align Kon's request and the answer workspace. Short answer lists also begin at the top, and the Episode word-board panel no longer leaves a huge empty area above Kon. The illustrated rooms, content sizes, and the mobile stacked flow are unchanged. A regression test protects all three desktop alignment rules and the mobile layout boundary.
+
+The all-question review exposed an older QA-only failure at the same time: its 15 three-day Inn entries called `startStagePhase` with the obsolete argument order. They showed an `UNDEFINED` header and threw before a reliable render. Review mode now passes the real Inn location, phase, and item index. The DOM harness now models a select element's `options` collection so this path is exercised rather than source-matched. Cache is v278.
+
 ### 2026-09-07 - Mobile home scenes are tall, pannable cameras
 
 The yard and room previously kept their full 16:9 painting inside the phone width, leaving only about 211px of scene height at 375px. Enlarging or cropping that picture directly would move or hide the percentage-positioned plants, furniture, cat, and door controls. Mobile now places the unchanged 16:9 scene inside a 300px to 390px-tall horizontal camera. A short `Swipe to look around` cue explains the gesture, while the scrollbar track stays out of the artwork.

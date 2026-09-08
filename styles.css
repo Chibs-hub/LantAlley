@@ -1058,6 +1058,19 @@
      have no .inn-replies and are unaffected by this selector. */
   .inn-stage .answer-workspace:has(.inn-replies){align-self:stretch;display:flex;flex-direction:column;justify-content:center}
 
+  /* Keep the two numbered actions in one reading band on desktop. The grid
+     row is often taller than a short question, so bottom/centre alignment
+     left hundreds of empty pixels above Kon and the answer controls. The
+     episode opening also opts out of inherited bottom placement so Kon does
+     not sit below a tall blank wall. */
+  @media(min-width:761px){
+    .inn-stage .learning-context{justify-content:flex-start}
+    .inn-stage .answer-workspace{align-self:start}
+    .inn-stage .game-layout:has(.episode-open) .learning-context{align-self:start}
+    .inn-stage .answer-workspace:has(.inn-replies){justify-content:flex-start}
+    .inn-stage .answer-workspace .scene:has(.inn-replies){justify-content:flex-start}
+  }
+
   /* Illustrated room: fixtures live in the background; answer objects do not. */
   .inn-room-illustrated{min-height:0;overflow:visible;border:0;background:transparent;box-shadow:none}
   .inn-room-illustrated:before{display:none}
