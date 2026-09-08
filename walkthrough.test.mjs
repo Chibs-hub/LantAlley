@@ -2227,3 +2227,38 @@ test("review mode opens the first three-day Inn question without a broken stage 
   assert.match(game.$("jp-line").textContent, /揃/,
     "the first indexed Inn question should render its real request");
 });
+
+test("the title screen names the build a tester is looking at", () => {
+  // The first thing to ask someone reporting a bug is which build they were
+  // on, and an installed player runs the version already on their phone -
+  // which may be a launch behind whatever was shipped last.
+  const game = boot();
+  const label = game.$("app-version");
+  assert.ok(label, "the version line exists");
+  assert.match(label.textContent, /beta 1\.0/, "the release is named");
+  assert.match(label.textContent, /build \d+/, "and the build that identifies the code");
+
+  // Read off app.js's own ?v= stamp rather than written down a second time,
+  // so it cannot drift from the version the cache is keyed on.
+  const html = readFileSync(new URL("./index.html", import.meta.url), "utf8");
+  const stamped = /app\.js\?v=(\d+)/.exec(html);
+  assert.ok(stamped, "app.js carries a version stamp");
+  assert.ok(label.textContent.includes(stamped[1]),
+    `shown build should be ${stamped[1]}, got "${label.textContent}"`);
+});
+
+test("an update is offered rather than forced", () => {
+  const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  const html = readFileSync(new URL("./index.html", import.meta.url), "utf8");
+
+  assert.match(html, /id="update-bar"/);
+  assert.match(html, /id="btn-update-now"/);
+  assert.match(html, /id="btn-update-later"/);
+
+  // Reloading someone mid-question is its own bug, so the reload happens on a
+  // press and never on its own.
+  assert.match(app, /now\.addEventListener\("click", function\(\)\{ window\.location\.reload\(\); \}\);/);
+  assert.match(app, /controllerchange/);
+  // Not on a first install, where there was no previous version running.
+  assert.match(app, /if\(!hadController\) return;/);
+});

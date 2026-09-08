@@ -867,6 +867,96 @@
     if(!state.visited.entrance) enterLocation("entrance");
     else showMap();
   });
+  /* Which build a tester is looking at, and telling them when it changes.
+   *
+   * The release name is what someone says out loud - "beta 1.0". The build
+   * number is what identifies the code, and it is read off app.js's own ?v=
+   * stamp rather than written down twice, so it cannot drift from the version
+   * the cache is actually keyed on.
+   */
+  var APP_RELEASE = "beta 1.0";
+
+  // Any versioned asset will do - they all carry the same stamp, and taking
+  // it from the page means it cannot drift from the version the cache is
+  // keyed on. Scripts first, then stylesheets: a DOM that did not parse the
+  // script tags still has the link.
+  function appBuild(){
+    var sources = [];
+    var scripts = document.querySelectorAll('script[src]');
+    var links = document.querySelectorAll('link[href]');
+    var i;
+    for(i = 0; i < scripts.length; i++) sources.push(scripts[i].getAttribute("src"));
+    for(i = 0; i < links.length; i++) sources.push(links[i].getAttribute("href"));
+    for(i = 0; i < sources.length; i++){
+      var match = /[?&]v=(\d+)/.exec(sources[i] || "");
+      if(match) return match[1];
+    }
+    return "";
+  }
+
+  (function(){
+    var label = $("app-version");
+    if(label){
+      var build = appBuild();
+      label.textContent = APP_RELEASE + (build ? " (build " + build + ")" : "");
+    }
+
+    var bar = $("update-bar");
+    var now = $("btn-update-now");
+    var later = $("btn-update-later");
+    // Checked for a value, not for the key: file:// has no worker at all, and
+    // the test harness defines the property as undefined - "in" is true for
+    // both, and reading .controller off it throws before the game can boot.
+    if(!bar || !now || !later || !navigator.serviceWorker) return;
+
+    /* An installed player runs the version already on the phone, and the new
+     * one downloads behind them - so they are one launch behind. Measured on
+     * the live site: ship a build, reopen, and the old one still runs while
+     * the new one installs; reopen again and the new one is there.
+     *
+     * That is the right default - it opens instantly and works offline - but a
+     * tester who reports a bug that was fixed yesterday is reporting on
+     * yesterday's build. So when the new worker takes over, say so and offer
+     * the reload. Offer rather than perform: reloading someone in the middle
+     * of a question is its own bug.
+     */
+    var hadController = !!navigator.serviceWorker.controller;
+    var dismissed = false;
+
+    function offer(){
+      if(dismissed || !bar.hidden) return;
+      bar.hidden = false;
+    }
+
+    navigator.serviceWorker.addEventListener("controllerchange", function(){
+      // Not on the very first install, where there was no previous version to
+      // have been running.
+      if(!hadController) return;
+      offer();
+    });
+
+    navigator.serviceWorker.getRegistration && navigator.serviceWorker.getRegistration().then(function(reg){
+      if(!reg) return;
+      reg.addEventListener("updatefound", function(){
+        var incoming = reg.installing;
+        if(!incoming) return;
+        incoming.addEventListener("statechange", function(){
+          if(incoming.state === "installed" && hadController) offer();
+        });
+      });
+      // A phone left on the title screen for an hour should still notice.
+      document.addEventListener("visibilitychange", function(){
+        if(document.visibilityState === "visible" && reg.update) reg.update();
+      });
+    }).catch(function(){});
+
+    now.addEventListener("click", function(){ window.location.reload(); });
+    later.addEventListener("click", function(){
+      dismissed = true;
+      bar.hidden = true;
+    });
+  })();
+
   /* Installing the game, and moving a save off the device.
    *
    * Both exist because progress lives in this browser's storage and nowhere
