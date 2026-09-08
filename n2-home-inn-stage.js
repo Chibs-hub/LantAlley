@@ -48,6 +48,27 @@
     return DAY_GOALS[phase] || DAY_GOALS.learn;
   }
 
+  /* What kind of thing this part is, in three words.
+   *
+   * The days already carried story names - 基礎, 実践, 挑戦 - which say where
+   * the learner is in the shift but not what they are being asked to do.
+   * Reported from play: it was not clear whether a part was teaching new
+   * words, drilling ones already met, or testing them. The goal sentence says
+   * it in full; this is the label that says it at a glance, and it is the same
+   * vocabulary everywhere so the three read as a set.
+   */
+  var DAY_KINDS = {
+    coldopen:"ためし",
+    learn:"新しい言葉を覚える",
+    practice:"覚えた言葉を練習する",
+    challenge:"覚えた言葉をテストする",
+    review:"間違えた言葉を復習する"
+  };
+
+  function getDayKind(phase){
+    return DAY_KINDS[phase] || DAY_KINDS.learn;
+  }
+
   var DAY_ANNOUNCEMENTS = {
     learn:"コン：「一日目です。今日は基礎から始めましょう。」",
     practice:"コン：「二日目です。今日は実際の仕事の中で練習しましょう。」",
@@ -389,7 +410,7 @@
       options:[
         {key:"arrange", label:"揃えて"},
         {key:"sorou", label:"揃って", nearMiss:true},
-        {key:"line-up", label:"並べて"},
+        {key:"air", label:"干して"},
         {key:"stack", label:"重ねて"}
       ],
       successReply:"はい、座布団の向きを自分の手で同じにするので「揃える」です。"
@@ -412,7 +433,7 @@
         {key:"warm", label:"温めて"},
         {key:"atatamaru", label:"温まって", nearMiss:true},
         {key:"grill", label:"焼いて"},
-        {key:"steam", label:"蒸して"}
+        {key:"remove", label:"取り出して"}
       ],
       successReply:"はい、冷めたごはんを自分で温かくするので「温める」です。"
     },
@@ -422,8 +443,8 @@
       options:[
         {key:"adjust", label:"調整して"},
         {key:"chousetsu", label:"調節して", nearMiss:true},
-        {key:"change", label:"変更して"},
-        {key:"confirm", label:"確認して"}
+        {key:"record", label:"記録して"},
+        {key:"tell", label:"知らせて"}
       ],
       successReply:"はい、Cグループは18時、Dグループは20時にしました。条件を合わせるのが「調整」です。"
     },
@@ -511,10 +532,10 @@
     // The Day 2 word choices. Each is a real thing to do in that room, which
     // is the point - the learner has to know the word rather than spot the
     // one absurd option.
-    "line-up":"to lay them out in a row", stack:"to stack them up",
+    air:"to air them out", stack:"to stack them up",
     wash:"to wash it", flip:"to turn it over",
-    grill:"to grill it", steam:"to steam it",
-    change:"to change it to something else", confirm:"to check it",
+    grill:"to grill it", remove:"to take it out",
+    record:"to write them down", tell:"to pass them on", confirm:"to check it",
     substitute:"to take someone's place",
     // Day 3's spoken questions.
     boil:"to boil it", uketoru:"to receive an object",
@@ -875,6 +896,7 @@
     getDayMeta:getDayMeta,
     getDayAnnouncement:getDayAnnouncement,
     getDayGoal:getDayGoal,
+    getDayKind:getDayKind,
     getPhaseItems:getPhaseItems,
     getReviewItem:getReviewItem,
     getReviewLadderLength:getReviewLadderLength,

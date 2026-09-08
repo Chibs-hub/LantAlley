@@ -1233,9 +1233,10 @@ test("the cold open is unscored and hands over to Day 1", async () => {
   assert.equal(game.$("next-row").style.display, "block", "there is a way forward either way");
   game.$("btn-next").click();
   game.clock.advance(500);
-  // The board is shown as the stage opens now, so the cold open runs
-  // straight into Day 1 rather than showing it a second time.
-  assert.equal(game.$("btn-jobs-begin"), null, "the board is not shown twice");
+  // Day 1 opens on its own board. It is not the same screen as the one that
+  // opened the stage: that introduced the place and its five words, this
+  // names the day and says what the day is for.
+  assert.ok(beginDay(game), "Day 1 announces itself before it starts");
   assert.match(game.$("stage-phase-badge").textContent, /一日目/, "it must lead into Day 1");
   assert.equal(game.doc.querySelectorAll(".inn-new-word").length, 1,
     "Day 1 restores the new-word card");
@@ -1258,9 +1259,9 @@ test("a correct cold-open answer does not repeat that task as Day 1's first ques
   game.$("btn-next").click();
   game.clock.advance(500);
 
-  // The board was shown as the stage opened; the cold open still skips
-  // replaying the task it just solved.
-  assert.equal(game.$("btn-jobs-begin"), null, "the board is not shown twice");
+  // Day 1 still announces itself, and still skips replaying the task the
+  // cold open just solved.
+  assert.ok(beginDay(game), "Day 1 announces itself before it starts");
   assert.match(game.$("stage-phase-badge").textContent, /一日目/, "Day 1 has begun");
   assert.equal(game.$("encounter-progress").textContent, "2",
     "the task just solved cold must not be asked again as question 1");
@@ -2261,4 +2262,29 @@ test("an update is offered rather than forced", () => {
   assert.match(app, /controllerchange/);
   // Not on a first install, where there was no previous version running.
   assert.match(app, /if\(!hadController\) return;/);
+});
+
+test("every scene change says what kind of part it is", () => {
+  // The day names - 基礎, 実践, 挑戦 - say where you are in the shift but not
+  // what you are being asked to do. Reported from play as not knowing whether
+  // a part was teaching new words, drilling ones already met, or testing them.
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(readFileSync(new URL("./moonview-inn-interactions.js", import.meta.url), "utf8"), context);
+  vm.runInContext(readFileSync(new URL("./n2-home-inn-stage.js", import.meta.url), "utf8"), context);
+  const stage = context.N2HomeInnStage;
+
+  const kinds = ["learn", "practice", "challenge", "review"].map((p) => stage.getDayKind(p));
+  // Each names the activity, and they are all different from each other.
+  assert.equal(new Set(kinds).size, kinds.length, "each part is described differently");
+  assert.match(stage.getDayKind("learn"), /新しい言葉/, "Day 1 teaches new words");
+  assert.match(stage.getDayKind("practice"), /練習/, "Day 2 drills them");
+  assert.match(stage.getDayKind("challenge"), /テスト/, "Day 3 tests them");
+  assert.match(stage.getDayKind("review"), /復習/, "review revisits the missed ones");
+
+  // And it reaches the screen, at every card that opens a part.
+  const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  assert.match(app, /class="day-kind"/);
+  const shown = (app.match(/class="day-kind"/g) || []).length;
+  assert.ok(shown >= 3, `expected the label on several cards, found ${shown}`);
 });

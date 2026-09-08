@@ -1391,11 +1391,18 @@
     if(state.stagePhase === "coldopen" && loc && loc.encounters){
       var skipFirst = state.coldOpenSkipFirst;
       state.coldOpenSkipFirst = false;
-      // The board has already been seen - it opens the stage now - so the
-      // cold open runs straight into Day 1 rather than showing it twice.
-      // startIndex still carries the skip: a correctly guessed cold-open task
-      // is not replayed as Day 1's first question. See resolveColdOpen.
-      startStagePhase(loc, "learn", null, skipFirst ? 1 : 0);
+      /* Day 1 opens on its own board, even though the stage already opened
+       * on one. They are not the same screen: the first introduces the place
+       * and its five words, and this one names the day and says what the day
+       * is for - 新しい言葉を覚える. Skipping it left Day 1 as the only part
+       * of the stage that never announced itself, which is exactly the
+       * confusion this label exists to remove. The cold open sits between
+       * them, so they are not shown back to back.
+       *
+       * startIndex still carries the skip: a correctly guessed cold-open task
+       * is not replayed as Day 1's first question. See resolveColdOpen.
+       */
+      stageJobBoard(loc, "learn", skipFirst ? 1 : 0);
       return;
     }
     if(loc && loc.encounters){
@@ -2522,6 +2529,7 @@
     $("scene").innerHTML = '<div class="episode-open"><div class="episode-open-card job-board">'
       + '<p class="episode-open-kicker">今夜の言葉</p>'
       + '<h2 class="episode-open-title">' + rows.length + '語</h2>'
+      + '<p class="day-kind">覚えた言葉を本番で使う</p>'
       + '<p class="episode-open-note">' + known + 'つは三日間で練習しました。のこりは今夜が初めてです。</p>'
       + '<ul class="job-board-list">' + items + '</ul>'
       + '<p class="job-goal">初めての言葉は、間違えても大丈夫です。最後にもう一度出ます。</p>'
@@ -2952,6 +2960,7 @@
 
     $("scene").innerHTML = '<div class="episode-open"><div class="episode-open-card episode-brief">'
       + '<p class="episode-open-kicker">間違い直し</p>'
+      + '<p class="day-kind">間違えた言葉をもう一度テストする</p>'
       + '<ul class="episode-brief-list">'
       + '<li>' + count + ' 問だけ、もう一度出ます。</li>'
       + '<li>一問ごとに制限時間があります。短い問題は五秒です。</li>'
@@ -3099,6 +3108,7 @@
     $("scene").innerHTML = mistakeListMarkup(episodeMistakeRows(), {
       kicker:"この一時間のふりかえり",
       title:"まちがえた言葉",
+      kind:"間違えた言葉を確認する",
       note:"つぎの仕事の前に、もう一度見ておきましょう。"
     });
     showFeedback(true, "All corrections cleared.");
@@ -3194,6 +3204,7 @@
     return '<div class="episode-open"><div class="episode-open-card miss-review">'
       + '<p class="episode-open-kicker">' + opts.kicker + '</p>'
       + '<h2 class="episode-open-title">' + opts.title + '</h2>'
+      + (opts.kind ? '<p class="day-kind">' + opts.kind + '</p>' : '')
       + '<p class="episode-open-note">' + opts.note + '</p>'
       + '<ul class="miss-review-list">' + items + '</ul>'
       + (opts.buttonId ? '<button class="btn btn-primary" id="' + opts.buttonId + '">' + opts.buttonLabel + '</button>' : '')
@@ -3281,6 +3292,7 @@
     $("scene").innerHTML = mistakeListMarkup(rows, {
       kicker:(meta ? meta.label : "") + "のふりかえり",
       title:"まちがえた言葉",
+      kind:"間違えた言葉を確認する",
       note:"この" + missed.length + "つをもう一度見てから、次に進みましょう。",
       buttonId:"btn-miss-next",
       buttonLabel:"つぎへ →"
@@ -3341,6 +3353,7 @@
     $("scene").innerHTML = '<div class="episode-open"><div class="episode-open-card job-board">'
       + '<p class="episode-open-kicker">' + (opening ? "この宿でおぼえる言葉" : "今日の仕事") + '</p>'
       + '<h2 class="episode-open-title">' + (opening ? "五つの言葉" : (meta ? meta.label + " " + meta.mode : "")) + '</h2>'
+      + (loc.getDayKind ? '<p class="day-kind">' + (opening ? "はじめての場所" : loc.getDayKind(phase)) + '</p>' : '')
       + '<p class="episode-open-note">'
       + (opening ? "三日かけて、この五つを覚えます。" : "言葉は五つです。" + doneCount + " / " + loc.encounters.length)
       + '</p>'

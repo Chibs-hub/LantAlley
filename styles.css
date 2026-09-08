@@ -1424,6 +1424,25 @@
 .job-row.done .job-state{color:var(--moss);}
 .job-row.done .job-word{color:#3f5a34;}
 
+/* What kind of part this is, in three words, under the day it belongs to.
+   The day names - 基礎, 実践, 挑戦 - say where you are in the shift but not
+   what you are being asked to do, which was reported as not knowing whether a
+   part was teaching, drilling or testing. */
+.day-kind{
+  display:inline-block; margin:0 auto 12px; padding:4px 12px;
+  border:1px solid rgba(154,95,48,.4); border-radius:999px;
+  background:rgba(154,95,48,.12);
+  color:#8a5a2b; font-size:.72rem; font-weight:800; letter-spacing:.03em;
+}
+.job-board .day-kind,
+.miss-review .day-kind,
+.episode-brief .day-kind{display:block; width:max-content; margin-left:auto; margin-right:auto;}
+/* The dark cards only. The job board and the mistake list are cream, and
+   giving them the light-on-dark chip made the label almost invisible on the
+   very screen it exists to explain. */
+#install-panel .day-kind,
+#save-panel .day-kind{border-color:rgba(230,178,96,.42); background:rgba(230,178,96,.14); color:#e8c98f;}
+
 /* The build a tester is looking at. Quiet, but readable - it is the first
    thing to ask for when someone reports something already fixed. */
 .app-version{
