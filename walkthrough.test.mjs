@@ -2329,11 +2329,58 @@ test("the task the cold open lost is reintroduced, not silently repeated", async
   game.clock.advance(600);
   assert.ok(beginDay(game), "Day 1 announces itself");
 
-  const request = game.$("jp-line").textContent;
   const narration = game.$("narration").textContent;
   assert.match(game.$("stage-phase-badge").textContent, /一日目/);
-  assert.match(narration, /もう一度/, "Kon says this is the same job, taught: " + narration);
-  // One speaker, one pair of quotes, even though three lines were joined.
+  // The banner carries this, not Kon - saying it in both places made her line
+  // four sentences long before the request arrived.
+  assert.equal(game.$("retry-flag").hidden, false, "the repeat is marked");
+  assert.match(game.$("retry-flag-text").textContent, /さっきできなかった/);
+  // And she is still one fox: one speaker tag, one pair of quotes.
   assert.equal((narration.match(/コン：「/g) || []).length, 1, narration);
-  assert.ok(request.length > 0);
+});
+
+test("a question only comes round again after a miss, and says so when it does", async () => {
+  // The rule was already there - a correct answer moves on to the next word,
+  // a missed one comes back - but nothing on screen said so, so the same
+  // request twice read as the game repeating itself.
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game);
+
+  // First time asked: no retry marker anywhere.
+  assert.equal(game.$("retry-flag").hidden, true, "a first asking is not marked as a repeat");
+
+  // Miss the cold open, which is what that scene is for.
+  const objects = game.doc.querySelectorAll(".inn-object").filter(game.visible);
+  const zones = game.doc.querySelectorAll(".inn-drop-zone").filter(game.visible);
+  objects[0].click();
+  game.clock.advance(200);
+  zones[zones.length - 1].click();
+  game.clock.advance(3000);
+  game.$("btn-next").click();
+  game.clock.advance(600);
+  assert.ok(beginDay(game));
+
+  // Same request, now marked and explained.
+  assert.equal(game.$("retry-flag").hidden, false, "the repeat is marked");
+  assert.match(game.$("retry-flag").textContent, /もう一度/);
+  assert.match(game.$("retry-flag-text").textContent, /さっきできなかった/);
+});
+
+test("solving it first time moves on instead of asking again", async () => {
+  // The other half of the same rule: nothing is replayed that was not missed.
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game);
+  const asked = game.$("jp-line").textContent;
+
+  // Solved for real, not with the skip aid - that aid jumps straight into
+  // Day 1 and would not exercise the path a player takes.
+  assert.ok(playRoom(game, asked), "the cold open is solvable");
+  game.clock.advance(2500);
+  game.$("btn-next").click();
+  game.clock.advance(600);
+  assert.ok(beginDay(game), "Day 1 still announces itself");
+
+  assert.notEqual(game.$("jp-line").textContent, asked,
+    "a task answered correctly is not asked a second time");
+  assert.equal(game.$("retry-flag").hidden, true, "and nothing is marked as a repeat");
 });

@@ -807,20 +807,6 @@
     return first + " " + second;
   }
 
-  /* Said when Day 1 opens on the task the cold open just failed.
-   *
-   * It is deliberately the same job - the point is that the learner could not
-   * do it a moment ago and now has the word, the reading and a hint. But
-   * nothing said so, so the first two things a new player is asked are
-   * word-for-word identical with a board in between, and it reads as the game
-   * repeating itself rather than as teaching.
-   */
-  var coldOpenRetry = "コン：「さっきの座布団を、もう一度やってみましょう。今度は言葉の意味も一緒に見ていきます。」";
-
-  function getColdOpenRetry(){
-    return coldOpenRetry;
-  }
-
   function getStorySetup(item, resumed, afterDecline){
     if(afterDecline) return joinKonLines(item.returnReply || "コン：「戻ってきてくれたんですね！」", item.narration);
     if(!resumed) return item.narration;
@@ -919,7 +905,6 @@
     isFocusedReviewComplete:isFocusedReviewComplete,
     getWrittenPrompt:getWrittenPrompt,
     getStorySetup:getStorySetup,
-    getColdOpenRetry:getColdOpenRetry,
     getAutoAdvanceDelay:getAutoAdvanceDelay,
     getKonResponse:getKonResponse,
     getWrongAnswerFeedback:getWrongAnswerFeedback,

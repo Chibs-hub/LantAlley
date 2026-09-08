@@ -1457,6 +1457,22 @@
 .job-row.done .job-state{color:var(--moss);}
 .job-row.done .job-word{color:#3f5a34;}
 
+/* A question being asked again because it was missed says so, plainly and
+   before the request. The same task twice with nothing marking it is the
+   thing that reads as a bug. */
+.retry-flag{
+  display:flex; flex-wrap:wrap; align-items:center; gap:8px;
+  margin:0 0 9px; padding:7px 11px;
+  border-left:3px solid var(--lantern-bright); border-radius:0 8px 8px 0;
+  background:rgba(230,178,96,.16);
+  color:#f0dcb6; font-size:.74rem; line-height:1.5;
+}
+.retry-flag-tag{
+  padding:2px 9px; border-radius:999px;
+  background:var(--lantern-bright); color:#3a2412;
+  font-size:.68rem; font-weight:900; letter-spacing:.04em;
+}
+
 /* What kind of part this is, in three words, under the day it belongs to.
    The day names - 基礎, 実践, 挑戦 - say where you are in the shift but not
    what you are being asked to do, which was reported as not knowing whether a

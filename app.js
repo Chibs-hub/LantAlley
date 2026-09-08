@@ -187,7 +187,7 @@
     // task the learner just solved is not asked again immediately after.
     coldOpenSkipFirst:false,
     // Day 1 reopens on the task a failed cold open just lost. Set there,
-    // spent on the first Day 1 render - see getColdOpenRetry.
+    // spent on the first Day 1 render, where it raises the もう一度 banner.
     coldOpenRetryPending:false,
     challengeMisses:[],
     // word -> which rung of the review ladder it is on. A word missed again in
@@ -3600,6 +3600,25 @@
     // Resolve the greeting once. Calling stageNarrationFor twice consumed the
     // resume flag on the first call and produced a different line on the second.
     var storyNarration = stageNarrationFor(loc, prompt);
+    /* Why this question is on screen again, when it is.
+     *
+     * A task only comes round a second time because it was missed - a correct
+     * answer moves on to the next word instead. That rule was already there;
+     * what was missing was any sign of it, so the same request twice read as
+     * the game repeating itself. Empty for every question being asked for the
+     * first time, which is nearly all of them.
+     */
+    var retryReason = "";
+    /* Review is the other place a word comes back, and for the same reason -
+     * it was missed on Day 3. Each rung asks it a different way, so without
+     * saying so it reads as a new question about a word already answered.
+     */
+    if(state.stagePhase === "review"){
+      var rung = (state.reviewPasses && state.reviewPasses[prompt.focusWord]) || 0;
+      retryReason = rung === 0
+        ? "三日目で間違えた言葉です。今度は別のやり方で出します。"
+        : "まだ間違えている言葉です。もう一度、別のやり方で出します。";
+    }
     if(state.encounterIndex === 0 && loc.getDayAnnouncement){
       // The day announcement already places the learner, so the welcome-back
       // line on top of it made three Kon greetings before the situation.
@@ -3611,12 +3630,22 @@
        * the game repeating itself rather than as the teaching arriving.
        * Spent here so it is said once, on that one screen.
        */
-      if(state.coldOpenRetryPending && state.stagePhase === "learn" && loc.getColdOpenRetry){
+      if(state.coldOpenRetryPending && state.stagePhase === "learn"){
         state.coldOpenRetryPending = false;
-        storyNarration = joinKonLines(loc.getColdOpenRetry(), storyNarration);
+        /* The banner above the bubble says this, so Kon does not say it too.
+         * She had an acknowledgement here first; with the banner as well it
+         * was the same point twice and pushed her line to four sentences
+         * before the request even arrived.
+         */
+        retryReason = "さっきできなかった仕事です。今度は言葉の意味とヒントが出ます。";
       }
     }
     $("narration").textContent = storyNarration;
+    var retryFlag = $("retry-flag");
+    if(retryFlag){
+      retryFlag.hidden = !retryReason;
+      $("retry-flag-text").textContent = retryReason;
+    }
     var writtenPrompt = writeStagePrompt(loc, prompt);
     $("romaji-line").textContent = prompt.romaji;
     $("romaji-line").style.display = state.romajiOn && !isSingleAttemptPhase() ? "block" : "none";
