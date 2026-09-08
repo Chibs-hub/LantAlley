@@ -1375,6 +1375,20 @@
 .job-row.done .job-state{color:var(--moss);}
 .job-row.done .job-word{color:#3f5a34;}
 
+/* Install and save controls on the title screen. Quiet by design - they sit
+   under the way in, not beside it. */
+.title-utility{display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:10px; margin-top:10px;}
+.install-hint{
+  margin:8px auto 0; max-width:34ch;
+  color:#e8c98f; font-size:.72rem; line-height:1.6; text-align:center;
+}
+.save-actions{display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin:14px 0 8px;}
+/* The import control is a label wrapping a hidden file input, so it needs the
+   button's own affordances spelled out. */
+.save-actions label.btn{cursor:pointer;}
+.save-status{min-height:1.4em; margin:0 0 14px; color:#5c4a38; font-size:.78rem; text-align:center;}
+#save-panel .about-card{max-width:460px;}
+
 /* The day's mistakes, with what the words mean. Only the missed ones: a list
    of all five with four already known is a list you skim. */
 .miss-review{max-width:480px; text-align:left;}

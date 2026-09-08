@@ -867,6 +867,162 @@
     if(!state.visited.entrance) enterLocation("entrance");
     else showMap();
   });
+  /* Installing the game, and moving a save off the device.
+   *
+   * Both exist because progress lives in this browser's storage and nowhere
+   * else. Installed, it keeps its own icon and works with no network; but the
+   * storage is still the browser's, and on iOS a web app's data has been
+   * cleared before now after a stretch of not being opened. A learner losing a
+   * garden they spent a week on is a real loss, so there is a way to carry it
+   * out and back in.
+   */
+  (function(){
+    var installButton = $("btn-install");
+    var hint = $("install-hint");
+    var deferredPrompt = null;
+
+    // Chrome fires this instead of prompting, and hands over the prompt to
+    // fire later. Nothing appears until it does, because a button that cannot
+    // install anything is worse than no button.
+    window.addEventListener("beforeinstallprompt", function(event){
+      event.preventDefault();
+      deferredPrompt = event;
+      if(installButton) installButton.hidden = false;
+    });
+
+    window.addEventListener("appinstalled", function(){
+      deferredPrompt = null;
+      if(installButton) installButton.hidden = true;
+      if(hint){ hint.hidden = false; hint.textContent = "入れました。ホーム画面から開けます。"; }
+    });
+
+    if(installButton){
+      installButton.addEventListener("click", function(){
+        if(!deferredPrompt) return;
+        deferredPrompt.prompt();
+        deferredPrompt = null;
+        installButton.hidden = true;
+      });
+    }
+
+    /* iOS never fires beforeinstallprompt, so on iPhone there is no button to
+     * show and no event to wait for - only a menu the learner has to be told
+     * about. Said once, on the title screen, and only where it applies. */
+    var standalone = window.matchMedia && window.matchMedia("(display-mode: standalone)").matches;
+    var iOS = /iPad|iPhone|iPod/.test(navigator.userAgent || "");
+    if(hint && iOS && !standalone && !navigator.standalone){
+      hint.hidden = false;
+      hint.textContent = "iPhoneでは、Safariの共有ボタンから「ホーム画面に追加」を選ぶとアプリのように使えます。";
+    }
+  })();
+
+  /* The save panel. */
+  (function(){
+    var panel = $("save-panel");
+    var open = $("btn-save-data");
+    var close = $("btn-save-close");
+    var exportButton = $("btn-save-export");
+    var importInput = $("save-import-file");
+    var status = $("save-status");
+    if(!panel || !open || !close) return;
+
+    function show(visible){
+      panel.hidden = !visible;
+      // Same reason as the about panel: aria-modal hides the page behind it
+      // from a screen reader, but not from Tab.
+      [open, $("btn-start"), $("btn-about"), $("btn-install")].forEach(function(node){
+        if(!node) return;
+        if(visible) node.setAttribute("inert", "");
+        else node.removeAttribute("inert");
+      });
+      if(visible) close.focus(); else open.focus();
+      if(status) status.textContent = "";
+    }
+
+    open.addEventListener("click", function(){ show(true); });
+    close.addEventListener("click", function(){ show(false); });
+    panel.addEventListener("click", function(event){
+      if(event.target === panel) show(false);
+    });
+    document.addEventListener("keydown", function(event){
+      if(event.key === "Escape" && !panel.hidden) show(false);
+    });
+
+    // Everything the game keeps, in one file. Written as a wrapper with a
+    // version and a date rather than the bare save, so a file picked up months
+    // later can still say what it is.
+    function currentSave(){
+      try{
+        return {
+          app:"lantern-alley",
+          format:1,
+          savedAt:new Date().toISOString(),
+          v3: JSON.parse(localStorage.getItem(STORAGE_KEY_V3) || "null"),
+          v2: JSON.parse(localStorage.getItem(STORAGE_KEY) || "null")
+        };
+      }catch(err){
+        return null;
+      }
+    }
+
+    if(exportButton){
+      exportButton.addEventListener("click", function(){
+        var data = currentSave();
+        if(!data || (!data.v3 && !data.v2)){
+          if(status) status.textContent = "まだ保存データがありません。";
+          return;
+        }
+        var blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
+        var url = URL.createObjectURL(blob);
+        var link = document.createElement("a");
+        var stamp = data.savedAt.slice(0, 10);
+        link.href = url;
+        link.download = "lantern-alley-save-" + stamp + ".json";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        // Revoked on a timer rather than immediately: Safari has been known to
+        // cancel a download whose blob URL is released in the same tick.
+        setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+        if(status) status.textContent = "書き出しました。";
+      });
+    }
+
+    if(importInput){
+      importInput.addEventListener("change", function(){
+        var file = importInput.files && importInput.files[0];
+        if(!file) return;
+        var reader = new FileReader();
+        reader.onload = function(){
+          var parsed = null;
+          try{ parsed = JSON.parse(String(reader.result)); }catch(err){ parsed = null; }
+          if(!parsed || parsed.app !== "lantern-alley" || !parsed.v3){
+            if(status) status.textContent = "このファイルは読み込めません。";
+            importInput.value = "";
+            return;
+          }
+          try{
+            localStorage.setItem(STORAGE_KEY_V3, JSON.stringify(parsed.v3));
+            if(parsed.v2) localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed.v2));
+          }catch(err){
+            if(status) status.textContent = "保存できませんでした。";
+            importInput.value = "";
+            return;
+          }
+          // Reloaded rather than merged into the running game: progress is read
+          // once at startup and then owned in memory, so anything written
+          // underneath a live session is overwritten by its next save.
+          if(status) status.textContent = "読み込みました。もう一度開きます。";
+          setTimeout(function(){ window.location.reload(); }, 700);
+        };
+        reader.onerror = function(){
+          if(status) status.textContent = "このファイルは読み込めません。";
+        };
+        reader.readAsText(file);
+      });
+    }
+  })();
+
   /* The attribution screen. Required rather than decorative: the EDRDG licence
    * covering JMdict and KANJIDIC2 asks an application to carry acknowledgement
    * on a dedicated screen - an About menu rather than a splash. The catalogue
