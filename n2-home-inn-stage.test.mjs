@@ -1432,3 +1432,22 @@ test("Kon's greeting and her request are one line, not two speakers", () => {
   // The plain case is untouched: the narration already carries its own tag.
   assert.equal(stage.getStorySetup(stage.encounters[0], false, false), stage.encounters[0].narration);
 });
+
+test("a wrong option is a different action, not a later one", () => {
+  // 手伝って sat among 引き受ける's choices, and 引き受けてから手伝う is an
+  // ordinary sequence - so it was not wrong, only vaguer than the answer.
+  // An option like that teaches the learner to pick the more specific word
+  // rather than to know what the word means. Reported by a native speaker.
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(readFileSync(new URL("./moonview-inn-interactions.js", import.meta.url), "utf8"), context);
+  vm.runInContext(readFileSync(stageUrl, "utf8"), context);
+  const stage = context.N2HomeInnStage;
+
+  const undertake = stage.practice.find((item) => item.focusWord === "引き受ける");
+  const labels = undertake.options.map((option) => option.label);
+  assert.equal(labels.includes("手伝って"), false,
+    "helping is what you do after taking a job on, so it cannot be the wrong answer to taking it on");
+  assert.equal(undertake.options.length, 4);
+  assert.equal(undertake.options.filter((option) => option.nearMiss).length, 1);
+});

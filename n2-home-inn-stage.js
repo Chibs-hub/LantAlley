@@ -433,7 +433,12 @@
       options:[
         {key:"accept", label:"引き受けて"},
         {key:"hikitomeru", label:"引き止めて", nearMiss:true},
-        {key:"help", label:"手伝って"},
+        // 手伝って was here and had to go: it is not a different action from
+        // 引き受ける, it is one that follows it. 引き受けてから手伝う is an
+        // ordinary sequence, so the option was not wrong, only vaguer than the
+        // answer - which teaches nothing except that the vaguer word loses.
+        // Checking the arrangements is a genuinely different job.
+        {key:"confirm", label:"確認して"},
         {key:"substitute", label:"代わって"}
       ],
       successReply:"はい、明日の朝食の配膳をお願いします。責任を持って受けるのが「引き受ける」です。"
@@ -510,7 +515,7 @@
     wash:"to wash it", flip:"to turn it over",
     grill:"to grill it", steam:"to steam it",
     change:"to change it to something else", confirm:"to check it",
-    help:"to help with it", substitute:"to take someone's place",
+    substitute:"to take someone's place",
     // Day 3's spoken questions.
     boil:"to boil it", uketoru:"to receive an object",
     hikikaesu:"to turn back the way you came"

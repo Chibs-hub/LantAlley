@@ -62,8 +62,17 @@ anything.
 |---|---|---|---|
 | correct | 引き受けて | 引き受けて | |
 | near-miss | 引き止めて | 引き止めて | keep one compound, so the family is still tested |
-| | 引き返して | **手伝って** | to help - plausible and nearly right, but weaker than taking it on |
+| | 引き返して | ~~手伝って~~ → **確認して** | see the note below |
 | | 引き出して | **代わって** | to take someone's place - very close, different relationship |
+
+**Correction after review.** 手伝って was rejected: 引き受けてから手伝う is an
+ordinary sequence, so it is not a different action from the answer, it is one
+that follows it. An option like that is not wrong - only vaguer - and it
+teaches a learner to pick the more specific word rather than to know what the
+word means. Replaced with 確認して, which is a genuinely different job.
+
+The same question was asked of 代わって and it survives: taking someone's place
+is a different relationship to a task, not a later step in the same one.
 
 **Audio cost: none.** Options are read, never spoken.
 
