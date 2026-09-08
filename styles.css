@@ -731,6 +731,35 @@
       background:linear-gradient(180deg, rgba(228,217,194,0) 0%, var(--washi-dim) 38%);
     }
     .next-row .btn{width:100%; max-width:340px;}
+
+    /* The correction is pinned with it, and for the same reason.
+       The button was pinned and the explanation was not, so on an 800px phone
+       a wrong answer put its continue button on screen and its explanation
+       five hundred pixels below the fold - the game looked like it had simply
+       accepted the answer and moved on. That explanation names the word the
+       learner reached for instead of the one they wanted, which is the most
+       useful thing the stage says, and on a phone nobody had ever seen it.
+       Pinned rather than scrolled to: the retry re-renders the room a moment
+       later, which undid any scrolling. */
+    .answer-workspace #feedback-row.show{
+      position:sticky;
+      /* Clear of the pinned button rather than on top of it: both were stuck
+         to bottom:0 and landed in the same place. 72px is that button's own
+         height, measured: a 50px button inside 10px of padding either side, and the
+         safe-area inset is added because the button's padding carries it too,
+         so on a phone with a home indicator it grows and this must grow with
+         it. */
+      bottom:calc(72px + env(safe-area-inset-bottom, 0px));
+      z-index:11;
+      margin:10px -22px 0;
+      padding:10px 22px;
+      border-radius:0;
+      background:var(--washi-dim);
+      box-shadow:0 -6px 14px rgba(0,0,0,.22);
+    }
+    /* Stacked, the continue button sits under the correction rather than
+       overlapping it. */
+    .answer-workspace:has(#feedback-row.show) .next-row{margin-top:0}
   }
 
   footer.credits{

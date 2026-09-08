@@ -6710,6 +6710,41 @@
     stamp.style.animation = "";
     $("feedback-text").innerHTML = text;
     row.classList.add("show");
+    bringIntoView(row);
+  }
+
+  /* Put the correction where it can be read.
+   *
+   * On a phone the layout stacks - bar, then the request, then the whole
+   * answer workspace - and the page runs to about 1500px. The feedback row
+   * sits at the bottom of that, so a wrong answer on an 800px screen wrote its
+   * explanation some five hundred pixels below the fold. The continue button
+   * is pinned and stayed visible, so the game looked like it had simply
+   * accepted the answer and moved on.
+   *
+   * That explanation is the single most useful thing the stage says - it names
+   * the word the learner reached for instead of the one they wanted - and on a
+   * phone nobody had ever seen it.
+   *
+   * Only when it is actually out of view, so the wide layout, where it is
+   * already on screen beside the room, does not jump.
+   */
+  function bringIntoView(node){
+    if(!node || !node.scrollIntoView) return;
+    var run = function(){
+      var box = node.getBoundingClientRect();
+      var height = window.innerHeight || document.documentElement.clientHeight || 0;
+      if(box.top >= 0 && box.bottom <= height) return;
+      var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      try{
+        node.scrollIntoView({block:"center", behavior: reduced ? "auto" : "smooth"});
+      }catch(err){
+        node.scrollIntoView(false);
+      }
+    };
+    // After layout, or the box measured is the one from before .show.
+    if(window.requestAnimationFrame) window.requestAnimationFrame(run);
+    else setTimeout(run, 16);
   }
 
 })();
