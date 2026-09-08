@@ -1450,6 +1450,13 @@
 @media(max-width:420px){
   .update-bar-text{flex:1 1 100%; text-align:center;}
 }
+/* The bar is fixed, so it sits on top of whatever is at the foot of the page -
+   here the version line and the about link, both of which a tester reporting a
+   problem is being asked to read. Give the page room for it. */
+body:has(#update-bar:not([hidden])){padding-bottom:96px;}
+@media(max-width:420px){
+  body:has(#update-bar:not([hidden])){padding-bottom:132px;}
+}
 
 /* Install and save controls on the title screen. Quiet by design - they sit
    under the way in, not beside it. */

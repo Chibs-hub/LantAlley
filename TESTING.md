@@ -54,6 +54,21 @@ be played without it.
 
 ---
 
+## Updates, and which version you are on
+
+The title screen shows something like **beta 1.0 (build 296)** at the bottom.
+**Please include that when you report anything** — an installed copy runs the
+version already on your phone, so you can be a launch behind whatever was
+fixed most recently.
+
+When a new build is ready you will see **新しいバージョンがあります** with an
+**更新する** button. Pressing it reloads into the new version; **あとで** keeps
+you where you are. Your progress is not affected either way.
+
+Nothing needs reinstalling, ever. Updates arrive on their own.
+
+---
+
 ## Telling us what happened
 
 The useful thing is not "it was good" — it is where you got stuck, bored, or
