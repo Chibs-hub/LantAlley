@@ -2410,8 +2410,11 @@ test("the cold open answers in Kon's own voice, whichever way it went", async ()
 
   const spoken = game.$("jp-line").textContent;
   assert.notEqual(spoken, request, "the bubble no longer just repeats the request");
-  assert.ok(spoken.includes("大丈夫"), "Kon reassures rather than saying nothing: " + spoken);
-  assert.ok(coldOpen.wrongReply.includes("大丈夫"), "and that is her written line");
+  // Says plainly that it was wrong, and then that it is about to be taught -
+  // the scene is unscored, not unspoken.
+  assert.ok(spoken.includes("間違い"), "Kon names the miss rather than saying nothing: " + spoken);
+  assert.ok(spoken.includes("一緒に覚えて"), "and points at what happens next");
+  assert.equal(spoken, coldOpen.wrongReply, "the bubble carries her written line");
 
   // Still unscored: no stamp either way, because the scene is not marked.
   assert.equal(game.$("stamp").textContent, "");

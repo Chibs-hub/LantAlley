@@ -25,7 +25,7 @@
    * recorded - and the correct branch exists so a learner who already knows
    * 揃える is not sent away to practise it. */
   var coldOpen = {
-    wrongReply:"コン：「大丈夫ですよ。お客様は私が。三日ありますから、一緒に覚えていきましょう。」",
+    wrongReply:"コン：「間違いです。でもこれから一緒に覚えていきましょう。」",
     correctReply:"コン：「よくご存じですね。では、残りの言葉も見ていきましょう。」"
   };
 
