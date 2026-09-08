@@ -157,8 +157,13 @@
     .title-kicker{font-size:.62rem}
     /* Kon was placed when the panel below her was two buttons tall. It has
        four rows now - install and save arrived - and she was sitting across
-       all of them, hiding 保存データ entirely. Smaller, lower, and behind. */
-    .title-kon{right:-8%;bottom:0;width:min(40vw,180px);z-index:0}
+       all of them, hiding 保存データ entirely.
+       Moved out of the corner and up into the empty stretch of scene between
+       the title and the buttons, which is the only part of this screen with
+       nothing in it. Anchored to the top so she stays under the title as the
+       panel below grows; the corner was the thing that kept colliding with
+       it. */
+    .title-kon{right:6%;top:27%;bottom:auto;width:min(40vw,180px);z-index:0}
     .title-entry-panel{width:100%}
     /* The text controls have no background of their own, so whatever is
        behind them is what they are read against. On the title screen that is
