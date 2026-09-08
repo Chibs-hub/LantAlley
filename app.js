@@ -6836,14 +6836,35 @@
     var reply = stage && stage.coldOpen
       ? (isCorrect ? stage.coldOpen.correctReply : stage.coldOpen.wrongReply)
       : "";
-    $("narration").textContent = reply;
+    /* Kon answers in her speech bubble, where she answers everything else.
+     *
+     * This went into the narration line instead - the small grey strip above
+     * the bubble - while the bubble itself kept showing the request. So a
+     * learner who put the wrong thing down saw no reaction at all, just a
+     * button appearing: reported as nothing happening. The one moment in the
+     * stage that exists to be failed was the one moment that said nothing
+     * about it.
+     */
+    if(reply){
+      if(dialogueFlow) dialogueFlow.start(reply, false);
+      else $("jp-line").textContent = reply;
+      $("romaji-line").textContent = "";
+      $("romaji-line").style.display = "none";
+    }
+    // Listening, not celebrating and not correcting. The scene is not scored,
+    // so the fox does not react as though it were.
+    setEntranceFoxPose(isCorrect ? "celebrate" : "listen");
     showFeedback(true, isCorrect ? "けっこうです。" : "ここからが練習です。");
     /* No stamp either way. 「もう一度」 would punish the stumble this scene
      * exists to produce, and 「正解」 on a wrong answer is simply false - the
      * first version of this stamped 正解 on a miss. The scene is not marked,
      * so it shows no mark. */
+    // Hidden, not merely emptied: the stamp carries a border and a rounded
+    // outline, so an empty one draws a blank oval beside the text that reads
+    // as a picture that failed to load.
     $("stamp").textContent = "";
     $("stamp").className = "stamp";
+    $("stamp").hidden = true;
     $("btn-next").textContent = "一日目をはじめる →";
     $("next-row").style.display = "block";
   }
@@ -6895,6 +6916,9 @@
     // alike, which is why the tone lives at this call rather than beside the
     // fox pose in the stage-only path.
     if(!isCorrect) playMissSound();
+    // Every other outcome is marked, so the stamp comes back after the cold
+    // open hid it.
+    stamp.hidden = false;
     stamp.className = "stamp" + (isCorrect ? " good" : "");
     stamp.textContent = stampText !== undefined ? stampText : (isCorrect ? "正解" : "もう一度");
     stamp.style.animation = "none";

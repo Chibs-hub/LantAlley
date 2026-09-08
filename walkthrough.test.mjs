@@ -2384,3 +2384,63 @@ test("solving it first time moves on instead of asking again", async () => {
     "a task answered correctly is not asked a second time");
   assert.equal(game.$("retry-flag").hidden, true, "and nothing is marked as a repeat");
 });
+
+test("the cold open answers in Kon's own voice, whichever way it went", async () => {
+  // The reply went to the narration strip while the bubble kept showing the
+  // request, so putting the wrong thing down produced no visible reaction at
+  // all - just a button appearing. The one moment in the stage that exists to
+  // be failed was the one moment that said nothing about failing it.
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(readFileSync(new URL("./moonview-inn-interactions.js", import.meta.url), "utf8"), context);
+  vm.runInContext(readFileSync(new URL("./n2-home-inn-stage.js", import.meta.url), "utf8"), context);
+  const coldOpen = context.N2HomeInnStage.coldOpen;
+
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game);
+  const request = game.$("jp-line").textContent;
+
+  // Put something in the wrong place.
+  const objects = game.doc.querySelectorAll(".inn-object").filter(game.visible);
+  const zones = game.doc.querySelectorAll(".inn-drop-zone").filter(game.visible);
+  objects[0].click();
+  game.clock.advance(200);
+  zones[zones.length - 1].click();
+  game.clock.advance(3000);
+
+  const spoken = game.$("jp-line").textContent;
+  assert.notEqual(spoken, request, "the bubble no longer just repeats the request");
+  assert.ok(spoken.includes("大丈夫"), "Kon reassures rather than saying nothing: " + spoken);
+  assert.ok(coldOpen.wrongReply.includes("大丈夫"), "and that is her written line");
+
+  // Still unscored: no stamp either way, because the scene is not marked.
+  assert.equal(game.$("stamp").textContent, "");
+  assert.equal(game.$("next-row").style.display, "block");
+});
+
+test("the unscored scene shows no mark, and the next one still does", async () => {
+  // The cold open is deliberately not marked - 「もう一度」 would punish the
+  // stumble the scene exists to produce, and 正解 on a miss is simply false.
+  // But emptying the stamp left its border and rounded outline behind, so a
+  // blank oval sat beside the text like an image that failed to load.
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game);
+
+  const objects = game.doc.querySelectorAll(".inn-object").filter(game.visible);
+  const zones = game.doc.querySelectorAll(".inn-drop-zone").filter(game.visible);
+  objects[0].click();
+  game.clock.advance(200);
+  zones[zones.length - 1].click();
+  game.clock.advance(3000);
+
+  assert.equal(game.$("stamp").hidden, true, "no mark on a scene that is not marked");
+
+  // And Day 1, which is marked, gets it back.
+  game.$("btn-next").click();
+  game.clock.advance(600);
+  assert.ok(beginDay(game));
+  game.$("btn-skip-question").click();
+  game.clock.advance(2000);
+  assert.equal(game.$("stamp").hidden, false, "a scored answer is marked again");
+  assert.match(game.$("stamp").textContent, /正解/);
+});
