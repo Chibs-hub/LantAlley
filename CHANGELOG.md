@@ -5,6 +5,14 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-09 - Moonview Inn now has a visible finish line and earned home rewards
+
+Moonview Inn used to mix its three-day training and its story shifts into one long run. The broad question total in the HUD made that feel endless, while the home already contained rewards before the learner had earned anything and the cat could be seen from the first visit.
+
+The Inn now shows five fixed stops: three-day training and four named episodes. One compact journey strip marks the current stop, completed work and locked rewards. Completing training earns a floor cushion and a small coin bonus; Episodes 1 through 3 earn a camellia seed, hanging scroll and floor lantern; only completing Episode 4 unlocks the cat. Each reward is presented in a dedicated centered card with a quiet lantern glow, a clear next action and a route to the home. The follow-on timer is paused while that choice is on screen, so it cannot silently start the next episode.
+
+Fresh homes begin empty and offer one useful action: continue the Inn to earn the next home item. Older saves keep their existing cat without fabricating past reward claims. Daily practice now names its bounded session size instead of displaying the whole catalog count. The reward view has a reduced-motion fallback and was checked live at desktop and narrow layouts. Cache is v313; `node --test` passes.
+
 ### 2026-09-08 - Kon uses one plush transparent art system everywhere
 
 The shared dialogue renderer still contained an older square-photo fallback. Any location not recognized as an Entrance or encounter stage could therefore put that photo inside the generic orange circular avatar, creating the wrong Kon shown in the mobile report. The fallback and its obsolete photo-frame animation are removed; every location now uses the same transparent plush pose set for idle, speech, listening, success and retry feedback.

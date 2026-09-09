@@ -47,6 +47,12 @@
       starterCushionClaimed: false,
       activeWallpaper: "wallpaper-plain",
       garden: emptyGarden(),
+      // The earned Inn route is independent from home inventory. A fresh save
+      // begins with its rewards and cat locked; a legacy save is normalized
+      // below so it keeps the cat that older builds always showed.
+      innJourney: root.LanternInnJourney ? root.LanternInnJourney.fresh() : {
+        version:1, claimed:{}, catUnlocked:false
+      },
       // Which shifts are finished, which places have been walked into, and any
       // shift left half-done. These are written by saveProgress and were being
       // dropped here, so every one of them was lost on reload.
@@ -87,6 +93,15 @@
   function migrateProgress(stored){
     var next = emptyProgress();
     if(!stored) return next;
+
+    var hasJourney = Object.prototype.hasOwnProperty.call(stored, "innJourney");
+    if(root.LanternInnJourney){
+      next.innJourney = root.LanternInnJourney.normalize(stored.innJourney, !hasJourney);
+    }else if(hasJourney && stored.innJourney){
+      next.innJourney = clone(stored.innJourney);
+    }else{
+      next.innJourney = {version:1, claimed:{}, catUnlocked:true};
+    }
 
     next.visited = (stored.visited || []).slice();
     next.starred = (stored.starred || []).slice();

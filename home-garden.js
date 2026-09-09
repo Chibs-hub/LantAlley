@@ -120,6 +120,20 @@
     return {ok:true, reason:null, garden:next, instanceId:instanceId};
   }
 
+  // Unlike claimStarter(), an episode reward is not the home's free starter
+  // gift. It creates one plant without setting the starter flag, and never
+  // duplicates a type the player already owns.
+  function grantPlant(garden, typeId){
+    var type = getType(typeId);
+    if(!type) return {ok:false, reason:"unknown", garden:garden, instanceId:null};
+    var next = normalized(garden);
+    if(next.plants.some(function(plant){ return plant.typeId === typeId; })){
+      return {ok:false, reason:"owned", garden:next, instanceId:null};
+    }
+    var instanceId = newInstance(next, typeId);
+    return {ok:true, reason:null, garden:next, instanceId:instanceId};
+  }
+
   function claimStarterScenery(garden){
     if(garden && garden.starterSceneryClaimed === true){
       return {ok:false, reason:"claimed", garden:garden};
@@ -249,6 +263,7 @@
     normalize:normalized,
     catalogue:catalogue,
     claimStarter:claimStarter,
+    grantPlant:grantPlant,
     claimStarterScenery:claimStarterScenery,
     buy:buy,
     plant:plant,

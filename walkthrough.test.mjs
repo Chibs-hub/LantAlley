@@ -687,6 +687,15 @@ function enterHome(game) {
   game.clock.advance(50);
 }
 
+function startEpisodeAfterTraining(game) {
+  game.$("btn-skip-stage").click();
+  game.$("btn-next").click();
+  game.clock.advance(500);
+  assert.ok(game.$("inn-reward"), "training completion shows its reward first");
+  game.$("btn-reward-next").click();
+  game.clock.advance(300);
+}
+
 test("home lighting is automatic and has no manual controls", () => {
   const game = boot(plantedCamelliaSave());
   enterHome(game);
@@ -914,7 +923,7 @@ function plantedCamelliaSave(extra) {
     episodesDone: [], stageStarted: [], items: {}, mistakes: [], repairQueue: [],
     money: 100, paidAnswers: [], masteredByStage: {}, reviewProgress: {},
     homeTutorialComplete: true, starterSeedClaimed: true, starterCushionClaimed: true,
-    home: { owned: [], placed: {} }, homeVisited: true,
+    home: { owned: ["floor-cushion-navy"], placed: {} }, homeVisited: true,
     garden: {
       plants: [{ id: "p1", typeId: "camellia", slotId: "garden-left-2",
                  growthPoints: 0, stage: "planted", pendingAnimation: false }],
@@ -935,44 +944,24 @@ function freshHomeSave() {
       plants: [], usedCreditIds: [], starterClaimed: false,
       starterSceneryClaimed: false, nextInstanceId: 1,
     },
+    innJourney: { version: 1, claimed: {}, catUnlocked: false },
   });
 }
 
-test("first home visit starts with an unplanted seed in garden stock", () => {
+test("a fresh home waits for earned Inn rewards instead of granting starter items", () => {
   const game = boot(freshHomeSave());
   enterHome(game);
 
   const plants = gardenOf(game).plants;
-  assert.equal(plants.length, 1);
-  assert.equal(plants[0].typeId, "camellia");
-  assert.equal(plants[0].stage, "planted");
-  assert.equal(plants[0].slotId, null, "the learner chooses where to plant it");
-
-  game.doc.querySelectorAll("[data-home-decorate]")[0].click();
-  const stock = game.doc.querySelectorAll("[data-pick-plant]")[0];
-  assert.ok(stock, "the free camellia seed is already in garden stock");
-  const image = stock.querySelector("img");
-  assert.match(image.getAttribute("src"), /camellia-planted-gravel-v2\.webp$/,
-    "stock must show the planted stage, not a mature bush");
-});
-
-test("first home visit starts with an unplaced cushion in indoor stock", () => {
-  const game = boot(freshHomeSave());
-  enterHome(game);
-  let saved = JSON.parse(game.storage.getItem("lanternAlley.v3"));
-  assert.deepEqual(saved.home.owned, ["floor-cushion-navy"]);
-  assert.deepEqual(saved.home.placed, {});
-  assert.equal(saved.starterCushionClaimed, true);
-
-  game.doc.querySelectorAll("[data-home-decorate]")[0].click();
-  game.doc.querySelectorAll("[data-pick-plant]")[0].click();
-  game.doc.querySelectorAll(".home-target")[0].click();
-  game.doc.querySelectorAll("[data-enter-house]")[0].click();
-  game.doc.querySelectorAll("[data-home-decorate]")[0].click();
-  assert.ok(game.doc.querySelectorAll('[data-pick="floor-cushion-navy"]')[0],
-    "the cushion is waiting in indoor stock");
-  saved = JSON.parse(game.storage.getItem("lanternAlley.v3"));
-  assert.deepEqual(saved.home.placed, {}, "the learner chooses where to place it");
+  assert.equal(plants.length, 0, "Episode 1 earns the first seed");
+  const saved = JSON.parse(game.storage.getItem("lanternAlley.v3"));
+  assert.deepEqual(saved.home.owned, [], "Inn Training earns the first cushion");
+  assert.equal(game.doc.querySelectorAll(".home-pet").length, 0,
+    "the final Inn reward, not a fresh home visit, unlocks the cat");
+  assert.equal(game.doc.querySelectorAll("[data-home-inn]").length, 1,
+    "the empty home gives one clear route back to the Inn");
+  assert.equal(game.doc.querySelectorAll("[data-home-decorate], [data-home-shop]").length, 0,
+    "an empty home does not compete with its one next-step action");
 });
 
 test("finishing a shift grows the garden, and replaying it does not", async () => {
@@ -1337,6 +1326,51 @@ test("?skip=1 also reveals per-question and whole-stage skip controls in the Inn
     "skipping the whole stage finishes it, mastered, without solving anything");
 });
 
+test("the Inn shows a five-stop journey with one clear current stop", async () => {
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game);
+
+  const journey = game.$("inn-journey");
+  assert.ok(journey, "the Inn has a persistent journey landmark");
+  const stops = journey.querySelectorAll(".inn-journey-stop");
+  assert.equal(stops.length, 5, "training and four episodes are always visible");
+  assert.equal(stops.filter((stop) => stop.classList.contains("is-current")).length, 1,
+    "only one next job competes for the learner's attention");
+  assert.equal(stops.filter((stop) => stop.classList.contains("is-locked")).length, 4,
+    "future story rewards are visible but not selectable");
+});
+
+test("finishing Inn Training awards its cushion before Episode 1 begins", async () => {
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game);
+
+  game.$("btn-skip-stage").click();
+  game.$("btn-next").click();
+
+  const reward = game.$("inn-reward");
+  assert.ok(reward, "training completion pauses on a named reward");
+  assert.match(reward.textContent, /Floor cushion/);
+  const saved = JSON.parse(game.storage.getItem("lanternAlley.v3") || "{}");
+  assert.ok(saved.home.owned.includes("floor-cushion-navy"),
+    "the earned cushion is persisted before the learner leaves the reveal");
+  assert.equal(saved.innJourney.claimed.training, true);
+});
+
+test("a training reward waits for the learner to choose the next step", async () => {
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game);
+  game.$("btn-skip-stage").click();
+  game.$("btn-next").click();
+  assert.ok(game.$("inn-reward"), "the reward is visible before waiting");
+
+  game.clock.advance(30000);
+  assert.ok(game.$("inn-reward"), "a delayed stage timer skipped past the reward");
+  assert.equal(game.$("next-row").style.display, "none",
+    "a delayed fallback must not put a second continue button under the reward");
+  assert.equal(game.$("btn-episode-begin"), null,
+    "the episode must not start until the reward action is pressed");
+});
+
 /* enterLocation() has its own, separate rendering for resuming an
  * in-progress stage after a real reload - the comment right next to it says
  * renderStagePrompt "never ran" on that path, and it still does not. The two
@@ -1388,9 +1422,7 @@ test("without ?skip=1, the Inn's skip controls never appear", async () => {
 test("?skip=1's skip-question control also works inside Episode 1", async () => {
   const game = boot(null, "?skip=1");
   await enterTheInn(game);
-  game.$("btn-skip-stage").click();
-  game.$("btn-next").click(); // "路地へ戻る →": mastered, so this starts Episode 1.
-  game.clock.advance(500);
+  startEpisodeAfterTraining(game);
 
   const begin = game.$("btn-episode-begin");
   assert.ok(begin, "the episode's opening card is on screen");
@@ -1695,9 +1727,7 @@ test("an episode names its story, not its internal skill taxonomy", async () => 
   // line a player reads to know where they are.
   const game = boot(null, "?skip=1");
   await enterTheInn(game);
-  game.$("btn-skip-stage").click();
-  game.$("btn-next").click();
-  game.clock.advance(500);
+  startEpisodeAfterTraining(game);
   game.$("btn-episode-begin").click();
   game.clock.advance(300);
   game.$("btn-brief-begin").click();
@@ -1721,9 +1751,7 @@ test("an episode question does not print its citation as Kon's speech", async ()
   // the episode-open card and the scene label already say the same thing.
   const game = boot(null, "?skip=1");
   await enterTheInn(game);
-  game.$("btn-skip-stage").click();
-  game.$("btn-next").click();
-  game.clock.advance(500);
+  startEpisodeAfterTraining(game);
   game.$("btn-episode-begin").click();
   game.clock.advance(300);
   game.$("btn-brief-begin").click();
@@ -1780,9 +1808,7 @@ test("a written Episode document does not inherit the audio replay control", asy
 
 async function openFirstEpisodeQuestion(game) {
   await enterTheInn(game);
-  game.$("btn-skip-stage").click();
-  game.$("btn-next").click();
-  game.clock.advance(500);
+  startEpisodeAfterTraining(game);
   game.$("btn-episode-begin").click();
   game.clock.advance(300);
   game.$("btn-brief-begin").click();
@@ -1843,9 +1869,7 @@ test("finishing a stage starts its episode once, not twice", async () => {
   // back on the opening card partway through question one.
   const game = boot(null, "?skip=1");
   await enterTheInn(game);
-  game.$("btn-skip-stage").click();
-  game.$("btn-next").click();
-  game.clock.advance(500);
+  startEpisodeAfterTraining(game);
   game.$("btn-episode-begin").click();
   game.clock.advance(300);
   game.$("btn-brief-begin").click();

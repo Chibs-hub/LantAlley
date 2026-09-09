@@ -57,6 +57,27 @@ test("home scenes use the production raster asset paths", () => {
 
 const empty = () => ({owned: [], placed: {}});
 
+test("a story reward enters decor storage once without charging coins", () => {
+  const first = decor.grant(empty(), "scroll");
+  assert.equal(first.ok, true);
+  assert.equal(first.reason, null);
+  assert.deepEqual(first.home.owned, ["scroll"]);
+  assert.equal(Object.keys(first.home.placed).length, 0);
+
+  const replay = decor.grant(first.home, "scroll");
+  assert.equal(replay.ok, false);
+  assert.equal(replay.reason, "owned");
+  assert.deepEqual(replay.home.owned, ["scroll"]);
+});
+
+test("an unknown story reward leaves home state untouched", () => {
+  const home = {owned:["floor-cushion-navy"], placed:{"floor-left":"floor-cushion-navy"}};
+  const result = decor.grant(home, "missing");
+  assert.equal(result.ok, false);
+  assert.equal(result.reason, "unknown");
+  assert.equal(result.home, home);
+});
+
 test("every catalogue item can actually go somewhere in the room", () => {
   const kinds = new Set(slots.map(s => s.kind));
   for(const item of decor.catalogue()){

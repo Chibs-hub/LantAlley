@@ -7,6 +7,7 @@ function load() {
   const context = {};
   context.self = context;
   vm.createContext(context);
+  vm.runInContext(readFileSync(new URL("./inn-journey.js", import.meta.url), "utf8"), context);
   vm.runInContext(readFileSync(new URL("./learning-progress.js", import.meta.url), "utf8"), context);
   return context.LanternProgress;
 }
@@ -34,6 +35,28 @@ test("empty progress includes independent home and garden reward defaults", () =
 
   first.garden.plants.push({ id: "plant-1" });
   assert.deepEqual([...second.garden.plants], []);
+});
+
+test("a fresh save starts with every Inn journey reward locked", () => {
+  const out = load().emptyProgress();
+  assert.equal(out.innJourney.catUnlocked, false);
+  assert.deepEqual(Object.keys(out.innJourney.claimed), []);
+});
+
+test("a saved pre-journey player keeps the cat that was already visible", () => {
+  const out = load().migrateProgress({version:3, stages:{}, home:{owned:[], placed:{}}});
+  assert.equal(out.innJourney.catUnlocked, true);
+  assert.deepEqual(Object.keys(out.innJourney.claimed), []);
+});
+
+test("journey reward claims survive a v3 reload", () => {
+  const out = load().migrateProgress({
+    version:3,
+    stages:{},
+    innJourney:{claimed:{"inn-e02":true}, catUnlocked:false}
+  });
+  assert.equal(out.innJourney.claimed["inn-e02"], true);
+  assert.equal(out.innJourney.catUnlocked, false);
 });
 
 test("legacy reward progress preserves money and home while adding starter state", () => {

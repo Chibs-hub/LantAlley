@@ -171,7 +171,9 @@
     starterSeedClaimed:false,
     starterCushionClaimed:false,
     activeWallpaper:"wallpaper-plain",
-    garden:emptyGardenState()
+    garden:emptyGardenState(),
+    innJourney:typeof LanternInnJourney !== "undefined" ? LanternInnJourney.fresh()
+      : {version:1, claimed:{}, catUnlocked:false}
   };
 
   var jpVoice = null;
@@ -369,6 +371,7 @@
         pendingStarterCushionClaimed = v3.starterCushionClaimed === true;
         pendingActiveWallpaper = v3.activeWallpaper || "wallpaper-plain";
         pendingGarden = v3.garden || emptyGardenState();
+        pendingInnJourney = v3.innJourney || null;
         pendingLastPlace = v3.lastPlace || null;
         pendingReviewProgress = v3.reviewProgress || {};
         pendingDaily = {
@@ -394,6 +397,7 @@
       pendingStarterCushionClaimed = migrated.starterCushionClaimed === true;
       pendingActiveWallpaper = migrated.activeWallpaper || "wallpaper-plain";
       pendingGarden = migrated.garden || emptyGardenState();
+      pendingInnJourney = migrated.innJourney || null;
       savedEpisode = null;
       migratedFromV2 = true;
       return legacyViewOf(migrated);
@@ -509,6 +513,8 @@
         ,starterCushionClaimed: state.starterCushionClaimed === true
         ,activeWallpaper: state.activeWallpaper || "wallpaper-plain"
         ,garden: state.garden || emptyGardenState()
+        ,innJourney: state.innJourney || (typeof LanternInnJourney !== "undefined"
+          ? LanternInnJourney.fresh() : {version:1, claimed:{}, catUnlocked:false})
         ,lastPlace: state.lastPlace || null
       }));
     }catch(e){ /* storage unavailable, progress just won't persist */ }
@@ -531,6 +537,8 @@
       state.starterCushionClaimed = false;
       state.activeWallpaper = "wallpaper-plain";
       state.garden = emptyGardenState();
+      state.innJourney = typeof LanternInnJourney !== "undefined" ? LanternInnJourney.fresh()
+        : {version:1, claimed:{}, catUnlocked:false};
       state.lastPlace = null;
       state.itemStates = {};
       state.episodesDone = {};
@@ -725,6 +733,7 @@
   var pendingStarterCushionClaimed = false;
   var pendingActiveWallpaper = "wallpaper-plain";
   var pendingGarden = emptyGardenState();
+  var pendingInnJourney = null;
   var pendingLegacyMasteryHydration = false;
   var mapDetailAction = $("map-detail-action");
 
@@ -758,6 +767,11 @@
   state.starterCushionClaimed = pendingStarterCushionClaimed;
   state.activeWallpaper = pendingActiveWallpaper;
   state.garden = pendingGarden;
+  if(pendingInnJourney){
+    state.innJourney = typeof LanternInnJourney !== "undefined"
+      ? LanternInnJourney.normalize(pendingInnJourney, false)
+      : pendingInnJourney;
+  }
   state.lastPlace = pendingLastPlace;
   // Open the map where the learner actually was, not on a fixed default.
   if(state.lastPlace && LanternAlleyMap.getDestination(state.lastPlace)){
@@ -1482,13 +1496,9 @@
     var canPractise = typeof LanternCatalogPractice !== "undefined" && openKeys.length > 0;
     practiceBtn.hidden = !canPractise;
     if(canPractise){
-      var pool = [];
-      openKeys.forEach(function(key){
-        LanternCurriculumCatalog.getPartition(key).forEach(function(item){ pool.push(item); });
-      });
-      var known = 0;
-      pool.forEach(function(item){ if((state.itemStates || {})[item.id]) known += 1; });
-      practiceBtn.textContent = "コンの稽古　" + known + " / " + pool.length;
+      var sessionSize = typeof LanternDailyPractice !== "undefined"
+        ? LanternDailyPractice.SESSION_SIZE : 20;
+      practiceBtn.textContent = "Daily practice - " + sessionSize + " questions";
     }
     renderMapDetail();
   }
@@ -1560,7 +1570,11 @@
     var waiting = unfinishedPlace();
     if(waiting){
       resume.hidden = false;
-      resume.textContent = "「" + waiting.name + "」の仕事の続き →";
+      if(waiting.key === "home-inn" && innJourneyStep()){
+        resume.textContent = "Continue Inn - " + innJourneyStep().label;
+      }else{
+        resume.textContent = "「" + waiting.name + "」の仕事の続き →";
+      }
       resume.setAttribute("data-resume-key", waiting.key);
     }else{
       resume.hidden = true;
@@ -2184,11 +2198,11 @@
     // own Learn/Practice/Challenge/Review flow, which this is not.
     $("btn-skip-question").hidden = true;
     $("btn-skip-stage").hidden = true;
-    $("stage-phase-badge").textContent = "コンの稽古";
+    $("stage-phase-badge").textContent = "Daily practice";
     $("encounter-status").style.display = "block";
     $("encounter-progress").textContent = String(practiceState.index + 1);
     $("encounter-total").textContent = String(practiceState.cards.length);
-    $("scene-label").textContent = "月見宿 - 言葉の稽古";
+    $("scene-label").textContent = "Moonview Inn - Daily practice";
     $("narration").textContent = card.sourceNote;
     $("romaji-line").textContent = "";
     $("meaning-line").textContent = "";
@@ -2412,6 +2426,7 @@
     if(key) state.currentKey = key;
     var list = previewQuestions(state.currentKey);
     if(!list.length) return;
+    setInnFocusCues(false);
     snapshotMastery(state.currentKey);
     previewState = {index:0, list:list, answered:false, missed:[], missedTargets:[], repair:null};
     screenTitle.style.display = "none";
@@ -2662,6 +2677,7 @@
     // every question so a written document does not inherit Listen again, and
     // an audio question replays this question rather than the old stage task.
     setAudioReplayControl(!!question.prompt.audio);
+    setInnFocusCues(state.currentKey === "home-inn");
     /* The wallet is only written by renderHud and by a payout, so a learner
      * resuming a shift read ¥0 until they got something right - their money
      * was there, the HUD simply had never been painted for this screen. */
@@ -2926,6 +2942,7 @@
     }
     previewState = null;
     forgetEpisode();
+    if(finished && finished.id.indexOf("inn-e") === 0 && showInnReward(finished.id)) return;
     showMap();
   }
 
@@ -3440,6 +3457,7 @@
       // training for. Finishing the days used to drop the learner back on the
       // map, so the episode existed but nothing led to it.
       if(typeof N2InnEpisodes !== "undefined" && loc.key === "home-inn"){
+        if(showInnReward("training")) return;
         startEpisode();
         return;
       }
@@ -3918,7 +3936,7 @@
       state.garden = LanternHomeGarden.normalize(gardenState());
       if(state.garden.plants.length !== beforePlantCount) saveProgress();
     }
-    if(!state.homeTutorialComplete) grantHomeStarterStock();
+    grantHomeStarterStock();
     $("stage-phase-row").style.display = "none";
     $("encounter-status").style.display = "none";
     $("hint-btn").style.display = "none";
@@ -3936,7 +3954,7 @@
      * also said here - the learner would be greeted twice. With nothing to say,
      * the speech panel is an empty box and a mute button holding a hundred
      * pixels above the yard, so it is taken out rather than left blank. */
-    if(!state.homeTutorialComplete){
+    if(!state.homeTutorialComplete && homeTutorialCanStart()){
       $("jp-line").textContent = "";
       $("dialogue-shell").classList.add("is-silent");
       startHomeTutorial(false);
@@ -4474,6 +4492,7 @@
 
   function homePetMarkup(scene){
     if(typeof LanternHomePet === "undefined") return "";
+    if(!state.innJourney || !state.innJourney.catUnlocked) return "";
     if(!homePetState){
       // The very first sighting of the cat this visit: let it arrive through
       // the door, as if walking in to greet the player.
@@ -4887,12 +4906,26 @@
     return '<p class="home-goal">お店のものは全部そろいました。</p>';
   }
 
+  function homeFirstRewardPanel(){
+    if(homeTutorialCanStart()) return "";
+    var hasCushion = typeof LanternHomeDecor !== "undefined"
+      && LanternHomeDecor.owns(homeState(), STARTER_DECOR);
+    var message = hasCushion
+      ? "Complete Episode 1 to earn your camellia seed."
+      : "Finish Inn Training to earn your first home item.";
+    return '<aside class="home-first-reward" aria-label="Next home reward">'
+      + '<p class="home-first-reward-kicker">Next home reward</p>'
+      + '<p>' + message + '</p>'
+      + '<button type="button" class="btn btn-primary" data-home-inn="1">Go to Moonview Inn</button>'
+      + '</aside>';
+  }
+
   /* ---- Kon's first visit ----
    *
    * A learner arriving at an empty yard with a wallet and no explanation will
    * read it as scenery. The tutorial exists to make them do each thing once:
-   * plant the seed already in stock, go inside, place the cushion already in
-   * stock, and move it. After
+   * plant the seed earned from Episode 1, go inside, place the cushion earned
+   * from Inn Training, and move it. After
    * that the house explains itself.
    *
    * Two rules shape the whole thing.
@@ -4901,8 +4934,8 @@
    * clicked through teaches nothing, and this one is short enough that doing
    * the step is faster than reading about it.
    *
-   * Replaying it gives nothing away twice. The first entry grants both starter
-   * items directly to storage; 「使いかた」 only walks through using them.
+   * Replaying it gives nothing away twice. The tutorial only begins once both
+   * earned starter items are in storage; it never grants them itself.
    *
    * Kon speaks Japanese because he always has. The one English line is the
    * mechanical instruction - which thing to press - kept separate from the
@@ -4970,32 +5003,30 @@
     return found;
   }
 
+  function homeTutorialCanStart(){
+    var hasCushion = typeof LanternHomeDecor !== "undefined"
+      && LanternHomeDecor.owns(homeState(), STARTER_DECOR);
+    var hasCamellia = (gardenState().plants || []).some(function(plant){
+      return plant.typeId === STARTER_PLANT;
+    });
+    return hasCushion && hasCamellia;
+  }
+
   function grantHomeStarterStock(){
     var changed = false;
-    if(!state.starterSeedClaimed && typeof LanternHomeGarden !== "undefined"){
-      var claim = LanternHomeGarden.claimStarter(gardenState());
-      state.garden = claim.garden;
-      state.starterSeedClaimed = true;
-      var seed = claim.instanceId ? findPlant(claim.instanceId) : null;
-      if(!seed){
-        seed = (gardenState().plants || []).filter(function(plant){
-          return plant.typeId === STARTER_PLANT;
-        })[0] || null;
-      }
-      starterSeedInstance = seed ? seed.id : null;
+    var storedSeed = (gardenState().plants || []).filter(function(plant){
+      return plant.typeId === STARTER_PLANT;
+    })[0] || null;
+    starterSeedInstance = storedSeed ? storedSeed.id : null;
+    var seedClaimed = !!storedSeed;
+    var cushionClaimed = typeof LanternHomeDecor !== "undefined"
+      && LanternHomeDecor.owns(homeState(), STARTER_DECOR);
+    if(state.starterSeedClaimed !== seedClaimed){
+      state.starterSeedClaimed = seedClaimed;
       changed = true;
-    }else if(!starterSeedInstance){
-      var storedSeed = (gardenState().plants || []).filter(function(plant){
-        return plant.typeId === STARTER_PLANT;
-      })[0];
-      starterSeedInstance = storedSeed ? storedSeed.id : null;
     }
-
-    if(!state.starterCushionClaimed){
-      state.starterCushionClaimed = true;
-      if(!LanternHomeDecor.owns(homeState(), STARTER_DECOR)){
-        state.home = {owned:homeState().owned.concat([STARTER_DECOR]), placed:homeState().placed};
-      }
+    if(state.starterCushionClaimed !== cushionClaimed){
+      state.starterCushionClaimed = cushionClaimed;
       changed = true;
     }
     if(changed) saveProgress();
@@ -5033,39 +5064,8 @@
     paintHome();
   }
 
-  /* The free gifts. Both flags and current holdings are checked, because the
-   * flag is the record of the promise and the holding is the truth. */
   function claimHomeStarter(kind){
-    if(homeTutorialReplay) return false;
-    if(kind === "plant"){
-      if(state.starterSeedClaimed) return false;
-      if(typeof LanternHomeGarden === "undefined") return false;
-      var claim = LanternHomeGarden.claimStarter(gardenState());
-      state.garden = claim.garden;
-      state.starterSeedClaimed = true;
-      saveProgress();
-      if(!claim.ok) return false;          // already had one; the flag is now honest
-      starterSeedInstance = claim.instanceId;
-      homeSelected = {kind:"plant", id:claim.instanceId};
-      homeView = homeReturnView;
-      homeDecorating = true;
-      homeTab = "garden";
-      return true;
-    }
-    if(state.starterCushionClaimed) return false;
-    state.starterCushionClaimed = true;
-    if(LanternHomeDecor.owns(homeState(), STARTER_DECOR)){
-      saveProgress();
-      return false;
-    }
-    state.home = {owned: homeState().owned.concat([STARTER_DECOR]),
-                  placed: homeState().placed};
-    homeSelected = {kind:"decor", id:STARTER_DECOR};
-    homeView = homeReturnView;
-    homeDecorating = true;
-    homeTab = "storage";
-    saveProgress();
-    return true;
+    return false;
   }
 
   function tutorialPanel(){
@@ -5248,6 +5248,10 @@
     state.homeTutorialComplete = true;
     state.starterSeedClaimed = true;
     state.starterCushionClaimed = true;
+    if(typeof LanternInnJourney !== "undefined"){
+      state.innJourney = LanternInnJourney.normalize(state.innJourney, false);
+      state.innJourney.catUnlocked = true;
+    }
 
     saveProgress();
     homeNotice = "テスト用: " + report.furniture + " furniture, "
@@ -5281,6 +5285,7 @@
     // No leading space now that this is a line of its own rather than a tail.
     var hint = homeSelected
       ? '<span class="home-hint">置きたい場所をえらんでください</span>' : '';
+    var homeReady = homeTutorialCanStart();
 
     var homeArea = homeView === "yard" ? "yard" : "interior";
     $("scene").innerHTML = '<div class="home-room">'
@@ -5294,25 +5299,27 @@
       + '</div>'
       /* The wallet is already in the HUD a few pixels above; printing it again
        * under the picture was the same number twice. What is left is the line
-       * that says something the HUD cannot: what to do next. */
+      * that says something the HUD cannot: what to do next. */
       + '<div class="home-scene-controls">'
-      + (hint ? '<p class="home-room-note">' + hint + '</p>' : '')
-      + homeGoalLine()
-      + '<div class="home-main-menu" role="group" aria-label="わが家のメニュー">'
-      + '<button type="button" data-home-decorate="1" class="home-menu-button'
-      + (homeDecorating ? ' is-on' : '') + '" aria-pressed="' + homeDecorating + '">飾る</button>'
-      + '<button type="button" data-home-shop="1" class="home-menu-button">店</button>'
-      + (homeView === "yard" ? '<details class="home-yard-more"><summary aria-label="庭のその他の操作">•••</summary>'
-          + '<div><button type="button" data-clear-yard="1">庭を空にする</button>'
-          + '<button type="button" data-restore-yard="1">最初の配置に戻す</button></div></details>' : '')
-      + '</div>'
-      + (homeDecorating ? '<div class="home-tabs" role="tablist">' + tabs.map(function(t){
-          return '<button type="button" class="home-tab' + (homeTab === t[0] ? " is-on" : "")
-            + '" data-tab="' + t[0] + '" aria-pressed="' + (homeTab === t[0]) + '">' + t[1] + '</button>';
-        }).join("") + '</div>' : '') + '</div>'
-      + (homeDecorating ? '<div class="home-shelf" id="home-shelf">' + homeDock() + '</div>' : '')
-      + (tutorialRunning() ? '' :
-          '<button type="button" class="home-howto" data-howto="1">使いかた</button>')
+      + (homeReady
+        ? (hint ? '<p class="home-room-note">' + hint + '</p>' : '')
+          + homeGoalLine()
+          + '<div class="home-main-menu" role="group" aria-label="わが家のメニュー">'
+          + '<button type="button" data-home-decorate="1" class="home-menu-button'
+          + (homeDecorating ? ' is-on' : '') + '" aria-pressed="' + homeDecorating + '">飾る</button>'
+          + '<button type="button" data-home-shop="1" class="home-menu-button">店</button>'
+          + (homeView === "yard" ? '<details class="home-yard-more"><summary aria-label="庭のその他の操作">•••</summary>'
+              + '<div><button type="button" data-clear-yard="1">庭を空にする</button>'
+              + '<button type="button" data-restore-yard="1">最初の配置に戻す</button></div></details>' : '')
+          + '</div>'
+          + (homeDecorating ? '<div class="home-tabs" role="tablist">' + tabs.map(function(t){
+              return '<button type="button" class="home-tab' + (homeTab === t[0] ? " is-on" : "")
+                + '" data-tab="' + t[0] + '" aria-pressed="' + (homeTab === t[0]) + '">' + t[1] + '</button>';
+            }).join("") + '</div>' : '')
+        : homeFirstRewardPanel()) + '</div>'
+      + (homeReady && homeDecorating ? '<div class="home-shelf" id="home-shelf">' + homeDock() + '</div>' : '')
+      + (homeReady && !tutorialRunning()
+          ? '<button type="button" class="home-howto" data-howto="1">使いかた</button>' : '')
       + '</div>'
       + tutorialPanel();
     homeNotice = "";
@@ -5364,6 +5371,11 @@
 
     if(event.target.closest("[data-home-map]")){
       showMap();
+      return;
+    }
+
+    if(event.target.closest("[data-home-inn]")){
+      enterLocation("home-inn");
       return;
     }
 
@@ -5634,6 +5646,114 @@
     $("hud-mastery-value").textContent = mastery + "%";
     $("hud-mastery-fill").style.width = mastery + "%";
     $("hud-money").textContent = String(state.money || 0);
+    renderInnJourney();
+  }
+
+  function innJourneyStep(){
+    if(typeof LanternInnJourney === "undefined") return null;
+    return LanternInnJourney.current(state.stageProgress.homeInn, state.episodesDone || {});
+  }
+
+  function renderInnJourney(){
+    var host = $("inn-journey");
+    if(!host) return;
+    var active = state.currentKey === "home-inn" && !practiceState
+      && typeof LanternInnJourney !== "undefined";
+    host.hidden = !active;
+    if(!active){ host.innerHTML = ""; return; }
+
+    var steps = LanternInnJourney.steps();
+    var current = innJourneyStep();
+    var stage = state.stageProgress.homeInn;
+    var trainingDone = !!(stage && stage.mastered);
+    var routeComplete = LanternInnJourney.isComplete(state.episodesDone || {});
+    var currentIndex = current ? steps.map(function(step){ return step.id; }).indexOf(current.id) : -1;
+    var rows = steps.map(function(step, index){
+      var completed = step.id === "training" ? trainingDone : !!((state.episodesDone || {})[step.id]);
+      var isCurrent = !routeComplete && index === currentIndex;
+      var locked = !completed && !isCurrent;
+      var stateName = completed ? " is-complete" : (isCurrent ? " is-current" : " is-locked");
+      var label = completed ? "Complete" : (isCurrent ? "Current" : "Locked");
+      return '<li class="inn-journey-stop' + stateName + '" aria-label="'
+        + step.label + ': ' + label + '">'
+        + '<span class="inn-journey-lamp" aria-hidden="true"></span>'
+        + '<span class="inn-journey-label">' + (index === 0 ? 'Training' : String(index)) + '</span>'
+        + '<span class="inn-journey-reward">' + (locked ? 'Reward locked' : step.reward.name) + '</span>'
+        + '</li>';
+    }).join("");
+    var status = routeComplete ? "Inn story complete. Your cat is home."
+      : "Current: " + current.label + " - " + current.detail;
+    host.innerHTML = '<p class="inn-journey-status">' + status + '</p>'
+      + '<ol class="inn-journey-stops">' + rows + '</ol>';
+  }
+
+  function claimInnReward(id){
+    if(typeof LanternInnJourney === "undefined") return {granted:false, reward:null};
+    var result = LanternInnJourney.claim(state.innJourney, id);
+    state.innJourney = result.journey;
+    if(!result.granted) return result;
+    var reward = result.reward;
+    if(reward.kind === "decor" && typeof LanternHomeDecor !== "undefined"){
+      var decorResult = LanternHomeDecor.grant(homeState(), reward.item);
+      if(decorResult.ok) state.home = decorResult.home;
+    }else if(reward.kind === "plant" && typeof LanternHomeGarden !== "undefined"){
+      var gardenResult = LanternHomeGarden.grantPlant(gardenState(), reward.plant);
+      if(gardenResult.ok) state.garden = gardenResult.garden;
+    }
+    if(reward.coins) state.money = (state.money || 0) + reward.coins;
+    saveProgress();
+    return result;
+  }
+
+  function showInnReward(id){
+    var result = claimInnReward(id);
+    if(!result.granted) return false;
+    var reward = result.reward;
+    var finalReward = reward.kind === "cat";
+    setInnScene(finalReward ? "courtyard" : "lobby");
+    setInnFocusCues(false);
+    $("dialogue-shell").classList.add("is-silent");
+    $("stage-phase-row").style.display = "none";
+    $("encounter-status").style.display = "none";
+    $("hint-btn").style.display = "none";
+    $("hint-box").classList.remove("show");
+    $("feedback-row").classList.remove("show");
+    $("next-row").style.display = "none";
+    $("scene-label").textContent = finalReward ? "Moonview Inn complete" : "Reward earned";
+    $("narration").textContent = "";
+    $("jp-line").textContent = "";
+    $("romaji-line").textContent = "";
+    $("meaning-line").textContent = "";
+    $("meaning-line").classList.remove("show");
+    $("scene").innerHTML = '<section class="inn-reward" id="inn-reward" aria-label="Reward earned">'
+      + '<span class="inn-reward-spark inn-reward-spark-one" aria-hidden="true"></span>'
+      + '<span class="inn-reward-spark inn-reward-spark-two" aria-hidden="true"></span>'
+      + '<img class="inn-reward-image" src="' + reward.image + '" alt="' + reward.name + '">'
+      + '<p class="inn-reward-kicker">' + (finalReward ? 'Moonview Inn complete' : 'New home reward') + '</p>'
+      + '<h2>' + reward.name + '</h2>'
+      + '<p>' + (finalReward
+        ? 'You completed every Inn episode. Your cat is waiting at home.'
+        : reward.name + ' is now waiting in your home storage.') + '</p>'
+      + (reward.coins ? '<p class="inn-reward-coins">Bonus: +' + reward.coins + ' yen</p>' : '')
+      + '<div class="inn-reward-actions">'
+      + '<button type="button" class="btn btn-primary" id="btn-reward-next">'
+      + (finalReward ? 'Go home with your cat' : (id === "training" ? 'Begin Episode 1' : 'Continue the story')) + '</button>'
+      + (finalReward ? '' : '<button type="button" class="btn btn-ghost" id="btn-reward-home">Visit home</button>')
+      + '</div></section>';
+    renderHud();
+    $("btn-reward-next").addEventListener("click", function(event){
+      event.stopImmediatePropagation();
+      $("dialogue-shell").classList.remove("is-silent");
+      if(finalReward){ enterLocation("home"); return; }
+      setInnFocusCues(true);
+      startEpisode("home-inn");
+    });
+    var homeButton = $("btn-reward-home");
+    if(homeButton) homeButton.addEventListener("click", function(event){
+      event.stopImmediatePropagation();
+      enterLocation("home");
+    });
+    return true;
   }
 
   var ICON_SVGS = {
@@ -6862,6 +6982,7 @@
     function go(){
       if(state.currentKey !== stage.key || !state.answered) return;
       if(state.stagePhase !== expectedPhase || state.encounterIndex !== expectedIndex) return;
+      if($("inn-reward")) return;
       // An episode may already have begun in the meantime, by the learner
       // pressing the continue button rather than waiting for this.
       if(previewState) return;
@@ -6877,6 +6998,7 @@
     setTimeout(function(){
       if(state.currentKey !== stage.key || !state.answered) return;
       if(state.stagePhase !== expectedPhase || state.encounterIndex !== expectedIndex) return;
+      if($("inn-reward")) return;
       $("next-row").style.display = "block";
     }, delay + 2500);
   }

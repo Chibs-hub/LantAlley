@@ -85,6 +85,28 @@ test("starter claim is free and cannot duplicate a starter camellia", () => {
   assert.equal(migrated.garden.plants.length, 1);
 });
 
+test("a story plant reward grants one camellia without using the starter claim", () => {
+  const first = garden.grantPlant(garden.emptyGarden(), "camellia");
+  assert.equal(first.ok, true);
+  assert.equal(first.reason, null);
+  assert.equal(first.garden.starterClaimed, false);
+  assert.equal(first.garden.plants.length, 1);
+  assert.equal(first.garden.plants[0].typeId, "camellia");
+
+  const replay = garden.grantPlant(first.garden, "camellia");
+  assert.equal(replay.ok, false);
+  assert.equal(replay.reason, "owned");
+  assert.equal(replay.garden.plants.length, 1);
+});
+
+test("an unknown story plant reward leaves the garden untouched", () => {
+  const state = garden.emptyGarden();
+  const result = garden.grantPlant(state, "missing");
+  assert.equal(result.ok, false);
+  assert.equal(result.reason, "unknown");
+  assert.equal(result.garden, state);
+});
+
 test("garden species use individual scene widths instead of one global size", () => {
   const widths = Object.fromEntries(garden.catalogue().map(item => [item.id, item.sceneWidth]));
   /* The numbers come from the yard's own doorway: it is 7.00% of the scene

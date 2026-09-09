@@ -350,6 +350,21 @@
     return {ok:true, reason:null, home:next, money:wallet - item.price, spent:item.price};
   }
 
+  // Story rewards enter the same storage as a purchased object, but never
+  // touch the wallet. The reward ledger decides when this may be called; this
+  // helper still refuses a duplicate so an interrupted reveal cannot clone an
+  // item into the player's inventory.
+  function grant(home, id){
+    var item = getItem(id);
+    if(!item) return {ok:false, reason:"unknown", home:home};
+    if(owns(home, id)) return {ok:false, reason:"owned", home:{
+      owned:((home && home.owned) || []).slice(), placed:copyPlaced(home)
+    }};
+    return {ok:true, reason:null, home:{
+      owned:((home && home.owned) || []).concat([id]), placed:copyPlaced(home)
+    }};
+  }
+
   function copyPlaced(home){
     var placed = {};
     Object.keys((home && home.placed) || {}).forEach(function(slot){ placed[slot] = home.placed[slot]; });
@@ -428,6 +443,7 @@
     owns: owns,
     canAfford: canAfford,
     buy: buy,
+    grant: grant,
     place: place,
     remove: remove,
     inStorage: inStorage,
