@@ -2534,3 +2534,43 @@ test("the unscored scene shows no mark, and the next one still does", async () =
   assert.equal(game.$("stamp").hidden, false, "a scored answer is marked again");
   assert.match(game.$("stamp").textContent, /正解/);
 });
+
+/* A phone must not have to scroll to see what it is choosing between.
+ *
+ * Measured on a 393x851 phone, a word-choice question came to about 1009px:
+ * the first answer sat at y=719 and the rest were below the fold, so every
+ * question began with a scroll before the options were even visible. Two
+ * things paid for that, and both are asserted here because both look like
+ * harmless spacing until you are on a phone.
+ *
+ * The dialogue stack is the big one. Kon above the speech is correct in the
+ * narrow context COLUMN of the split desktop layout, where side by side left
+ * the sentence about 200px - but a phone has no such column, the layout is a
+ * single block, and stacked it cost 184px for what fits in 88.
+ *
+ * The reorder is the quiet one. The place name and the question number are
+ * 143px and 57px inside a 324px row, but the phase chips sit between them in
+ * the markup and flex wraps in DOM order, so each was taking a row of its
+ * own. `order` pairs them without touching the HTML.
+ */
+test("a phone shows a whole question without scrolling for the answers", () => {
+  const css = read("styles.css");
+  const phone = css.slice(css.indexOf("...but not on a phone, where the stack costs a screenful"));
+  assert.ok(phone, "the phone block that buys back the screenful must exist");
+
+  assert.match(phone, /@media\(max-width:760px\)/);
+  assert.match(phone,
+    /#screen-game:not\(\.entrance-stage\) \.dialogue\{\s*display:grid;/,
+    "Kon sits beside the speech on a phone, not stacked above it");
+  assert.match(phone, /\.inn-stage \.stage-meta \.scene-label\{order:1\}/);
+  assert.match(phone, /\.inn-stage \.stage-meta \.encounter-status\{order:2\}/,
+    "the question number pairs with the place name instead of taking its own row");
+  assert.match(phone, /\.inn-stage \.stage-meta \.stage-phase-row\{order:3\}/,
+    "the phase chips move out from between them");
+
+  /* Desktop keeps the stack. The rule this block overrides is still there and
+   * still unconditional below 1400px, so a narrow desktop column is unchanged;
+   * only the phone breakpoint reverses it. */
+  assert.match(css, /#screen-game:not\(\.entrance-stage\) \.dialogue\{display:block;\}/,
+    "the desktop stack the phone rule overrides must remain");
+});

@@ -1437,6 +1437,54 @@
   #screen-game:not(.entrance-stage) .dialogue .speech{width:100%;}
   #screen-game:not(.entrance-stage) .dialogue #avatar-slot{display:block; margin:0 auto 8px;}
 }
+/* ...but not on a phone, where the stack costs a screenful.
+ *
+ * The rule above exists for the narrow context COLUMN of the split desktop
+ * layout, where a fox beside the speech left the sentence about 200px. A
+ * phone has no such column - the layout is a single block, so the dialogue
+ * already spans the whole card - and stacked, the portrait and the speech
+ * came to 184px of a 851px screen for two things that fit side by side in 88.
+ *
+ * That mattered because the whole question did not fit: measured on a 393x851
+ * phone the page came to about 1009px, so the first answer sat at y=719 and
+ * the rest were below the fold. Every question needed a scroll before the
+ * learner could see what they were choosing between, which is the one thing
+ * this screen exists to show. These rules and the trims below buy that back.
+ *
+ * Same selector as the rule above, so it wins on source order alone; keep it
+ * after that block. */
+@media(max-width:760px){
+  #screen-game:not(.entrance-stage) .dialogue{
+    display:grid; grid-template-columns:64px minmax(0,1fr);
+    align-items:center; gap:9px;
+  }
+  #screen-game:not(.entrance-stage) .dialogue #avatar-slot{margin:0;}
+  #screen-game:not(.entrance-stage) .dialogue .speech{width:auto;}
+  .inn-stage .avatar.avatar-animated{width:64px; height:64px;}
+  /* The two step cues are scaffolding, not content: they say which half of
+     the screen to look at. They keep their words and give back their padding. */
+  .inn-stage .inn-focus-cue{padding:3px 8px 3px 5px; margin-bottom:4px; font-size:.7rem;}
+  /* The HUD wraps to two rows on a phone - the back link and stars, then the
+     gauge and the wallet. Both rows stay; the air between them goes. */
+  .inn-stage .hud{gap:2px 10px;}
+  .inn-stage .learning-context .narration{padding:5px 9px; margin-bottom:5px;}
+  .inn-stage .learning-context .dialogue{margin-bottom:8px;}
+  /* The place and the question number are a few characters each and were
+     taking a row apiece. Sharing one costs nothing - the row still wraps if
+     a longer place name needs it - and buys a line back for the answers. */
+  .inn-stage .stage-meta .scene-label{width:auto;}
+  /* The place is 143px and the question number 57 in a 324px row, but the
+     phase chips sit between them in the markup and flex wraps in DOM order,
+     so each was taking a row of its own. Reordering pairs the two short ones
+     without moving anything in the HTML - and "月見宿・N2 - 問題 5 / 5" is the
+     more natural reading anyway. */
+  .inn-stage .stage-meta .scene-label{order:1}
+  .inn-stage .stage-meta .encounter-status{order:2}
+  .inn-stage .stage-meta .stage-phase-row{order:3}
+  .inn-stage .stage-meta #inn-journey{order:4}
+  .inn-stage #inn-journey{padding-top:2px;}
+  .inn-stage .inn-journey-status{margin-bottom:1px;}
+}
 /* A document is the thing to read here; Kon only gives a one-line direction.
    Keep those two compactly side by side instead of stacking a centred portrait
    over a padded card and pushing the notice downward. This also overrides the

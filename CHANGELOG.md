@@ -5,6 +5,14 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-09 - A phone shows the whole question, answers included, without scrolling
+
+Measured on a 393x851 phone, a word-choice question came to about 1009px. The first answer sat at y=719 and the rest were below the fold, so every question opened with a scroll before the learner could see what they were choosing between - on the screen whose entire job is to show exactly that.
+
+Two things paid for it, and both had looked like harmless spacing. The larger was the dialogue stack: Kon above the speech is right in the narrow context **column** of the split desktop layout, where side by side left the sentence about 200px, but a phone has no such column - its layout is a single block and the dialogue already spans the whole card - so the stack was costing 184px for what fits in 88. The smaller was a wrap order: the place name (143px) and the question number (57px) fit together in a 324px row, but the phase chips sit between them in the markup and flex wraps in DOM order, so each was taking a row of its own. `order` pairs them without touching the HTML, and 「月見宿・N2 - 問題 5 / 5」 reads better as one line anyway. The step cues, HUD gaps, narration padding and journey padding gave back the rest.
+
+The stage bar is now 208px rather than 243, the page 916px rather than 1009, and the last of four options ends at y=820 with 31px to spare. Room questions still scroll and cannot not: they need the header, the request, a room picture and an item tray. Their prompt is already `position:sticky` on a phone, so Kon's instruction stays pinned while the learner works in the room below it. The Entrance keeps its own dock layout untouched, and above 760px nothing changed - the desktop stack the phone rule overrides is still there, and a test asserts it stays. Cache is v320; `node --test` passes (499).
+
 ### 2026-09-09 - The empty third of a phone screen, actually fixed this time
 
 Two builds claimed to fix this and did not, both for reasons a desktop browser cannot show.
