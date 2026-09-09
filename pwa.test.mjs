@@ -91,6 +91,17 @@ test("the page links the manifest, iOS tags, and registers the worker", () => {
   assert.match(html, /location\.protocol\.indexOf\("http"\) === 0/);
 });
 
+test("every launch asks the registration to check for a new build", () => {
+  const html = read("index.html");
+
+  // The browser's own check is throttled to about once a day, so a player
+  // who opens the app several times in an hour could go all day without it
+  // ever looking. update() forces a real check on this launch instead of
+  // waiting for the browser to decide it is due for one.
+  assert.match(html, /register\("sw\.js"\)\.then\(function\(reg\)\{/);
+  assert.match(html, /reg\.update\(\)\.catch\(/);
+});
+
 test("every pre-rendered audio clip exists and is reachable offline", () => {
   const map = audioIndex().LanternAlleyAudio;
   const lines = Object.keys(map);

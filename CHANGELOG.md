@@ -5,6 +5,10 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-09 - Every launch checks for a new build, not just the ones the browser got around to
+
+The browser throttles its own service-worker update check to about once a day, so a player who opened the app several times in a session could go the whole day on an old build with nothing prompting a check. Registration now calls `reg.update()` itself right after registering - one small fetch of sw.js, not the shell - so every launch asks. It only starts the download; the new worker still takes over on the launch after this one, same as always, and the existing update bar still does the telling. Cache is v316; `node --test` passes (498).
+
 ### 2026-09-09 - The map and the house no longer leave a third of a phone screen empty
 
 Neither `#screen-map` nor the home stage ever had a height rule, so each sized to its own content and stopped there. On a wide desktop window that content happens to reach close to the bottom; on a tall phone it left roughly a quarter to a third of the screen as bare starfield below the card - reported as "almost 1/3 is space in the bottom is open."
