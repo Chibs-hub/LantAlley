@@ -720,7 +720,16 @@ test("the mobile home uses a tall, pannable camera without moving scene coordina
   const css = read("styles.css");
   const mobile = css.slice(css.indexOf("Mobile home camera"));
   assert.match(mobile, /@media\(max-width:620px\)/);
-  assert.match(mobile, /height:clamp\(300px,46svh,390px\)/);
+  /* Declared twice on purpose: the dvh line is the real one and the vh line
+     is what an engine without dvh keeps. svh was wrong here - it is the
+     viewport at its smallest, measured with the phone's toolbar showing, so
+     once that toolbar slid away the picture stopped short of the space.
+     The scene's width is asserted against the same clamp as the height,
+     because that pairing is what holds every percentage-placed object on its
+     mark while the camera grows. Let them drift apart and the objects do. */
+  assert.match(mobile, /height:clamp\(300px,50vh,480px\)/);
+  assert.match(mobile, /height:clamp\(300px,50dvh,480px\)/);
+  assert.match(mobile, /width:calc\(clamp\(300px,50dvh,480px\) \* 16 \/ 9\)/);
   assert.match(mobile, /overflow-x:auto/);
   assert.match(mobile, /touch-action:pan-x/);
   assert.match(mobile, /\.home-scene-chrome \.home-scene-back\{display:block\}/,
@@ -803,7 +812,10 @@ test("the yard has a scene-painted way out, not just the corner text link", () =
   const exit = game.doc.querySelectorAll("[data-home-map]").find((b) => b.className.includes("home-house-hotspot"));
   assert.ok(exit, "the yard scene has its own exit hotspot, styled like the house hotspot");
   exit.click();
-  assert.equal(game.$("screen-map").style.display, "block", "clicking it returns to the map");
+  // Shown, not hidden - the map is revealed as a flex column so its detail
+  // sheet can take the height the picture cannot. What matters here is that
+  // it is visible at all, so this asserts that rather than the layout mode.
+  assert.notEqual(game.$("screen-map").style.display, "none", "clicking it returns to the map");
 });
 
 /* The interior had the same asymmetry one level in: a house hotspot to walk
@@ -1285,8 +1297,18 @@ test("the ?skip=1 flag lands on the map without playing the Entrance", () => {
 
   game.$("btn-start").click();
   game.clock.advance(200);
-  assert.equal(game.$("screen-map").style.display, "block",
+  assert.notEqual(game.$("screen-map").style.display, "none",
     "start goes straight to the map, not the Entrance or character select");
+
+  /* Specifically a column, because the stylesheet hides this section and the
+   * reveal here is the declaration that lands. The map picture cannot absorb
+   * a tall phone's spare height - its pins sit at percentages over a `cover`
+   * background, so a taller box crops the artwork sideways and slides every
+   * pin off the building it points at - so the sheet beneath it grows
+   * instead, which only works while the section is a flex column. Going back
+   * to "block" would silently restore the empty third of a phone screen. */
+  assert.equal(game.$("screen-map").style.display, "flex",
+    "the map is revealed as a column so its detail sheet can take the height");
 });
 
 /* Skipping the two gates still left every Learn/Practice/Challenge question

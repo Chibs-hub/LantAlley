@@ -86,7 +86,9 @@
 
   /* ---------- title screen ---------- */
   #screen-title{width:100%;max-width:900px;margin-inline:auto}
-  #screen-map{width:100%;max-width:min(1100px,calc((100vh - 220px)*1.5));margin-inline:auto}
+  /* showMap() reveals this with an inline display:flex - the stylesheet
+     hides it below - so the direction is set here to keep both in one place. */
+  #screen-map{width:100%;max-width:min(1100px,calc((100vh - 220px)*1.5));margin-inline:auto;flex-direction:column}
   #screen-title.title-scene{
     min-height:min(640px,calc(100svh - 36px));
     overflow:hidden;
@@ -244,6 +246,18 @@
   .map-detail-story{margin:5px 0 3px;font-family:'Shippori Mincho',serif;font-size:.88rem;line-height:1.5;color:#4b3c32}
   .map-detail-focus{margin:0;color:#786c61;font-size:.72rem;line-height:1.4}
   .map-detail-action{min-width:142px;justify-content:center;padding:11px 17px;font-size:.85rem}
+  /* Full width on its own row in both the phone's two-column grid and the
+     desktop three-column one, so it reads as a rule under the description
+     rather than a third thing competing beside it. */
+  .map-detail-progress{grid-column:1/-1;display:grid;gap:5px}
+  .map-detail-progress-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+  .map-detail-progress-label{color:#7a5a3d;font-size:.7rem;font-weight:800;letter-spacing:.1em}
+  .map-detail-progress-value{color:#8a4a2c;font-size:.9rem;font-weight:900;font-variant-numeric:tabular-nums}
+  .map-detail-progress-track{height:8px;border-radius:99px;background:rgba(93,60,38,.16);overflow:hidden}
+  .map-detail-progress-fill{display:block;height:100%;width:0;border-radius:99px;
+    background:linear-gradient(90deg,#e8963c,#f7c877);transition:width .45s cubic-bezier(.22,1,.36,1)}
+  .map-detail-progress-words{margin:0;color:#786c61;font-size:.72rem;line-height:1.4}
+  @media(prefers-reduced-motion:reduce){.map-detail-progress-fill{transition:none}}
 
   @media(max-width:700px){
     #screen-map{max-width:680px}
@@ -631,7 +645,11 @@
   .stage-phase-row{display:none;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
   .stage-intro-action{display:flex;justify-content:center;padding:24px 12px}
   .stage-phase-badge{display:inline-flex;align-items:center;border-radius:999px;padding:5px 10px;background:var(--ai-indigo);color:var(--washi);font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+  /* A coarse pointer needs something to land on: at 5px of padding this chip
+     came out 28px tall, well under the 44px touch minimum the rest of the
+     game's controls keep. Height only - the label stays the same size. */
   .stage-restart{padding:5px 10px;font-size:.72rem}
+  @media(pointer:coarse){.stage-restart{min-height:44px;padding-inline:12px}}
   .encounter-status{
     display:none; margin:-3px 0 10px; color:var(--momiji);
     font-size:0.72rem; font-weight:700; letter-spacing:0.08em;
@@ -808,7 +826,36 @@
        filling the card here cannot push a target further from the thumb.
        Without this, a portrait phone showed the map or the house as a short
        card with a third of the screen left as bare background beneath it. */
-    #screen-map,#screen-game.home-stage{min-height:calc(100svh - 26px)}
+    /* dvh, not svh. svh is the viewport at its SMALLEST - measured with the
+       phone browser's toolbar showing - so once that toolbar slid away on
+       scroll the visible area grew past the card and left the same gap this
+       rule exists to close. dvh tracks the real visible height as the
+       toolbar moves. A desktop browser has no toolbar that collapses, so
+       there svh and dvh are identical and only a real phone shows the
+       difference. The plain vh line is the fallback for engines with
+       neither; overshooting by a toolbar's height there costs a little
+       scroll, which is the better way to be wrong. */
+    #screen-map,#screen-game.home-stage{min-height:calc(100vh - 26px)}
+    #screen-map,#screen-game.home-stage{min-height:calc(100dvh - 26px)}
+    /* Making the card tall only moved the empty space inside it. Something
+       has to actually take the height.
+       The map picture cannot: its pins are placed at percentages over a
+       background sized `cover`, so a taller box crops the artwork sideways
+       and every pin slides off the building it points at. The picture keeps
+       its 3/2, and the sheet under it grows instead - which is the half
+       worth growing anyway, since that is where the story text and the
+       button that starts the place live. */
+    .map-scene{flex:0 0 auto}
+    /* space-between, not center: centring left the sheet's content floating
+       in the middle of a cream void. Pushed apart, the place's name and story
+       sit at the top where reading starts and the button that enters it sits
+       at the bottom, which is both where the layout wants a base and where a
+       thumb already is. */
+    /* One gap, not two. The name, the story and the progress belong together
+       as a single block at the top; only the button wants the bottom, so the
+       last row takes the slack and the button sits at the end of it. */
+    .map-detail{flex:1 1 auto;grid-template-rows:auto auto 1fr;row-gap:12px}
+    .map-detail-action{align-self:end}
     .game-layout{display:block}
     .stage-bar{margin-bottom:10px}
     .stage-bar .hud{padding-bottom:7px;margin-bottom:7px}
@@ -2077,15 +2124,25 @@ body:has(#update-bar:not([hidden])){padding-bottom:96px;}
   /* Mobile home camera: keep the painting and every percentage-based object
      intact, but give it enough height to read and let a thumb pan across it. */
   @media(max-width:620px){
+    /* The house, unlike the map, is safe to grow: the scene's width is
+       derived from its height and every object sits at a percentage of the
+       scene, so it scales as one picture and nothing drifts. That makes the
+       artwork itself the thing that takes the leftover height on a tall
+       phone - a bigger house to look at rather than a bigger empty box.
+       Capped so the 飾る and 店 buttons underneath stay on screen without
+       scrolling. Each height is declared twice: the dvh line is the real
+       one, the vh line is what an engine without dvh keeps. */
     .home-scene-viewport{
-      height:clamp(300px,46svh,390px);overflow-x:auto;overflow-y:hidden;
+      height:clamp(300px,50vh,480px);overflow-x:auto;overflow-y:hidden;
       touch-action:pan-x;overscroll-behavior-x:contain;scrollbar-width:none;
     }
+    .home-scene-viewport{height:clamp(300px,50dvh,480px)}
     .home-scene-viewport::-webkit-scrollbar{display:none}
     .home-scene-viewport .home-scene{
-      width:calc(clamp(300px,46svh,390px) * 16 / 9);height:100%;max-width:none;
+      width:calc(clamp(300px,50vh,480px) * 16 / 9);height:100%;max-width:none;
       aspect-ratio:16/9;
     }
+    .home-scene-viewport .home-scene{width:calc(clamp(300px,50dvh,480px) * 16 / 9)}
     .home-pan-hint{
       display:block;margin:0;padding:5px 10px;pointer-events:none;text-align:center;
       white-space:nowrap;color:#fff0cf;background:#25160d;

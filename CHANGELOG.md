@@ -5,6 +5,16 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-09 - The empty third of a phone screen, actually fixed this time
+
+Two builds claimed to fix this and did not, both for reasons a desktop browser cannot show.
+
+First, `svh` was the wrong unit. It is the viewport at its **smallest**, measured with the phone browser's toolbar showing, so the moment that toolbar slid away on scroll the visible area grew past the card and the gap came back. A desktop browser has no toolbar that collapses, so there `svh`, `lvh` and `dvh` are identical and the emulator could never reproduce it. Every viewport-height rule touched here is now declared twice: a plain `vh` line for engines without the newer units, then the real `dvh` line, which tracks the visible height as the toolbar moves.
+
+Second, and worse, making the card taller only moved the empty space inside it. Something has to actually take the height. The map picture cannot: its pins sit at percentages over a background sized `cover`, so a taller box crops the artwork sideways and slides every pin off the building it points at. So the map keeps its 3/2 and the sheet beneath it grows instead - the place's name, story and the button that enters it, with the button at the bottom where a thumb already is. The house is the opposite case and grows safely, because the scene's width is derived from its height and every object sits at a percentage of the scene: it scales as one picture, so the artwork itself takes the space, 390px to at most 480px, capped so 飾る and 店 stay on screen.
+
+The map's sheet also gained the thing the 灯り counter never said: a 理解度 bar and 覚えた言葉 N / M for the selected place, so the space now answers how far the next lantern is. `showMap` reveals the section as a flex column rather than a block, since the stylesheet hides it and that inline declaration is the one that lands; a test pins it, because reverting it silently restores the gap. Separately, 学ぶからやり直す was 28px tall against a 44px touch minimum, now fixed on coarse pointers. Audited at 393x851: map, home yard, interior and shop show no horizontal overflow, no clipped text and no undersized controls. Cache is v317; `node --test` passes (498).
+
 ### 2026-09-09 - Every launch checks for a new build, not just the ones the browser got around to
 
 The browser throttles its own service-worker update check to about once a day, so a player who opened the app several times in a session could go the whole day on an old build with nothing prompting a check. Registration now calls `reg.update()` itself right after registering - one small fetch of sw.js, not the shell - so every launch asks. It only starts the download; the new worker still takes over on the launch after this one, same as always, and the existing update bar still does the telling. Cache is v316; `node --test` passes (498).

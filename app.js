@@ -1429,7 +1429,11 @@
     screenCharacter.hidden = true;
     screenTitle.style.display = "none";
     screenGame.style.display = "none";
-    screenMap.style.display = "block";
+    // flex, not block: the screen is hidden by a stylesheet display:none and
+    // revealed from here, so this inline value is the one that lands. The
+    // column lets the detail sheet take the height the map picture cannot -
+    // see the .map-detail rule in styles.css.
+    screenMap.style.display = "flex";
     window.scrollTo({top:0,left:0,behavior:"auto"});
     renderMap();
   }
@@ -1562,6 +1566,30 @@
     $("map-detail-focus").textContent = unlocked ? place.focus : "前の場所を100%理解すると開きます。";
     mapDetailAction.style.display = action ? "inline-flex" : "none";
     mapDetailAction.textContent = action ? action.label : "";
+
+    /* The place's own progress, which nothing on the map said before: the
+     * counter at the top reports lanterns lit, not how far the next one is.
+     * Hidden for a locked place - a bar reading 0% beside 未開放 says the
+     * same thing twice - and for the home, which has no words to master. */
+    var progressBox = $("map-detail-progress");
+    if(progressBox){
+      var material = stageMaterial(place.key);
+      var seen = {};
+      material.forEach(function(id){ seen[id] = true; });
+      var total = Object.keys(seen).length;
+      var known = ((state.masteredByStage || {})[place.key] || []).length;
+      var showProgress = unlocked && total > 0;
+      progressBox.hidden = !showProgress;
+      if(showProgress){
+        var percent = stageMastery(place.key);
+        $("map-detail-percent").textContent = percent + "%";
+        $("map-detail-bar").style.width = percent + "%";
+        // Clamped: a save can hold a target the stage no longer asks for, and
+        // "6 / 5 words" reads as a bug even when the percentage is right.
+        $("map-detail-words").textContent =
+          "覚えた言葉 " + Math.min(known, total) + " / " + total;
+      }
+    }
 
     /* An unfinished shift is the single most useful thing the map can say, so
      * it is said on the map itself rather than left for the learner to
