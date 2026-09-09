@@ -802,6 +802,13 @@
     body{padding:8px 8px 18px}
     .stage{max-width:680px}
     .frame{padding:14px 14px 18px}
+    /* Neither screen has anything worth reaching near its own bottom edge -
+       the map's pins sit in its fixed-ratio picture and the home menu sits
+       right under the scene - so unlike the entrance and the Inn's room,
+       filling the card here cannot push a target further from the thumb.
+       Without this, a portrait phone showed the map or the house as a short
+       card with a third of the screen left as bare background beneath it. */
+    #screen-map,#screen-game.home-stage{min-height:calc(100svh - 26px)}
     .game-layout{display:block}
     .stage-bar{margin-bottom:10px}
     .stage-bar .hud{padding-bottom:7px;margin-bottom:7px}

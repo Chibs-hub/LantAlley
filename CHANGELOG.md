@@ -5,6 +5,12 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-09 - The map and the house no longer leave a third of a phone screen empty
+
+Neither `#screen-map` nor the home stage ever had a height rule, so each sized to its own content and stopped there. On a wide desktop window that content happens to reach close to the bottom; on a tall phone it left roughly a quarter to a third of the screen as bare starfield below the card - reported as "almost 1/3 is space in the bottom is open."
+
+The Inn's own room screen deliberately avoids a forced min-height on mobile, because a tall minimum once pushed its drop targets out of comfortable thumb reach. That risk does not apply here: the map's pins live in a fixed-ratio picture and the home menu sits right under the scene, so nothing near the bottom gets pushed further away when the card grows. Both now get `min-height:calc(100svh - 26px)` on phone widths, matching the body's own mobile padding, so a short screen's worth of content fills a short screen instead of leaving background showing. Cache is v315; `node --test` passes (497).
+
 ### 2026-09-09 - The bulb hotspot got its width back, and a cushion earned is a cushion placeable
 
 The mobile CSS that restores a room hotspot's touch-target floor only restored `min-height`, never `min-width`, so the ceiling bulb fixture - 11% of the room's width - rendered as a 34x44px sliver instead of a square. Both are now restored together.
