@@ -5,7 +5,11 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
-### 2026-09-09 - Moonview Inn now has a visible finish line and earned home rewards
+### 2026-09-09 - The bulb hotspot got its width back, and a cushion earned is a cushion placeable
+
+The mobile CSS that restores a room hotspot's touch-target floor only restored `min-height`, never `min-width`, so the ceiling bulb fixture - 11% of the room's width - rendered as a 34x44px sliver instead of a square. Both are now restored together.
+
+The new finite Inn journey (2026-09-09, above) reused the guided tutorial's "both starter items owned" check to gate the entire home menu, not just the tutorial. A learner who finished the three-day training got a cushion the game said was "waiting in your home storage" with no 飾る or 店 button to reach it until Episode 1 also paid out a camellia. The menu now opens as soon as either item is owned; the pending-reward notice stays visible until both are, and the guided tutorial still waits for both before it starts. Cache is v314; `node --test` passes (497).
 
 Moonview Inn used to mix its three-day training and its story shifts into one long run. The broad question total in the HUD made that feel endless, while the home already contained rewards before the learner had earned anything and the cat could be seen from the first visit.
 

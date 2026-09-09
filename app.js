@@ -5012,6 +5012,21 @@
     return hasCushion && hasCamellia;
   }
 
+  /* Whether there is anything at all to open the menu for. The guided
+   * tutorial waits for both starter items so it can teach planting and
+   * placing together (see the block above), but a learner who has earned
+   * only the cushion still has a cushion to place - shutting the whole menu
+   * until Episode 1 also pays out left it earned but unreachable, with
+   * nothing in the house to do in between. */
+  function homeMenuReady(){
+    var hasCushion = typeof LanternHomeDecor !== "undefined"
+      && LanternHomeDecor.owns(homeState(), STARTER_DECOR);
+    var hasCamellia = (gardenState().plants || []).some(function(plant){
+      return plant.typeId === STARTER_PLANT;
+    });
+    return hasCushion || hasCamellia;
+  }
+
   function grantHomeStarterStock(){
     var changed = false;
     var storedSeed = (gardenState().plants || []).filter(function(plant){
@@ -5285,7 +5300,7 @@
     // No leading space now that this is a line of its own rather than a tail.
     var hint = homeSelected
       ? '<span class="home-hint">置きたい場所をえらんでください</span>' : '';
-    var homeReady = homeTutorialCanStart();
+    var homeReady = homeMenuReady();
 
     var homeArea = homeView === "yard" ? "yard" : "interior";
     $("scene").innerHTML = '<div class="home-room">'
@@ -5303,6 +5318,9 @@
       + '<div class="home-scene-controls">'
       + (homeReady
         ? (hint ? '<p class="home-room-note">' + hint + '</p>' : '')
+          // Still returns "" once both starter items are in, so this is only
+          // seen in the gap between the first reward and the second.
+          + homeFirstRewardPanel()
           + homeGoalLine()
           + '<div class="home-main-menu" role="group" aria-label="わが家のメニュー">'
           + '<button type="button" data-home-decorate="1" class="home-menu-button'

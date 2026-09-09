@@ -1247,7 +1247,11 @@
   .inn-room-illustrated .mat-items .inn-sprite{width:48%;height:auto;aspect-ratio:1}
   .inn-room-illustrated .inn-placed-object{position:relative;width:min(78%,74px);height:auto;aspect-ratio:1;flex:0 0 auto}
   .answer-workspace .inn-room-illustrated .inn-drop-zone > .inn-placed-object{width:min(78%,74px);height:auto;min-width:0;min-height:0}
-  .answer-workspace .inn-room-illustrated .inn-drop-zone:has(.inn-placed-object){min-height:44px}
+  /* A zone narrower than it is tall - the bulb's ceiling fixture is 11% of
+     the room's width - lost its width floor here along with the height one,
+     leaving a squeezed sliver too small to read or tap on mobile. Restore
+     both, matching the height floor that already existed. */
+  .answer-workspace .inn-room-illustrated .inn-drop-zone:has(.inn-placed-object){min-width:44px;min-height:44px}
   .inn-room-illustrated button.inn-placed-object{padding:2px;border:1px solid transparent;background:rgba(255,250,240,.08);box-shadow:none}
   .inn-room-illustrated [data-key="install-sheet"] .inn-placed-object{width:100%;max-width:145px;overflow:visible;background:transparent}
   .inn-room-illustrated .inn-heated-object{width:72%;max-width:74px}
