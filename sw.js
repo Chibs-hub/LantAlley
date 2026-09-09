@@ -7,7 +7,7 @@
  * Bump CACHE_VERSION whenever any shell file changes, or returning players
  * will keep the old build.
  */
-var CACHE_VERSION = "lantern-alley-v320";
+var CACHE_VERSION = "lantern-alley-v323";
 
 // audio-index.js assigns to `self`, so the worker and the page share one list
 // of clip paths. Importing it here means new lines are cached automatically
@@ -18,6 +18,8 @@ var SHELL = [
   "./",
   "./index.html",
   "./styles.css",
+  "./telemetry-config.js",
+  "./telemetry.js",
   "./app.js",
   "./entrance-stage-logic.js",
   "./moonview-inn-interactions.js",
@@ -252,3 +254,4 @@ self.addEventListener("fetch", function(event){
     })
   );
 });
+

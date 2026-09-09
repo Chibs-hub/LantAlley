@@ -34,7 +34,19 @@ test("opening is a cinematic Japanese entry into the illustrated alley", () => {
   assert.match(html, /id="progress-note"[^>]*hidden/);
   assert.match(html, /路地へ戻る/);
   assert.match(html, /id="btn-restart"[^>]*hidden>最初から<\/button>/);
-  assert.match(html, /btn-restart"\)\.addEventListener\("click", function\(\)\{[\s\S]*?enterLocation\("entrance"\);/);
+  /* 最初から asks first. It used to wipe the save on the press itself, which
+     put a one-tap, unrecoverable deletion of every word learned and every
+     home item earned directly beside 路地へ戻る on the title screen. The
+     press now opens a confirmation whose safe option takes focus, and only
+     the destructive option reaches the reset. Assert the wiring rather than
+     the old immediate call - what matters is that restart still works and
+     that nothing between the button and the reset went missing. */
+  assert.match(html, /\$\("btn-restart"\)\.addEventListener\("click", openResetConfirmation\);/);
+  assert.match(html, /\$\("reset-confirm-action"\)\.addEventListener\("click", confirmReset\);/);
+  assert.match(html, /function confirmReset\(\)\{[\s\S]*?applyProgress\(null\);/,
+    "the destructive option is the only path that clears the save");
+  assert.match(html, /function openResetConfirmation\(\)\{[\s\S]*?\$\("reset-cancel"\)\.focus\(\);/,
+    "the safe option takes focus, so a stray Enter cancels rather than deletes");
   assert.doesNotMatch(html, /Dusk falls over a Tokyo backstreet/);
 });
 

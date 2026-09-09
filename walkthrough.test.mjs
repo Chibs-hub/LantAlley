@@ -21,14 +21,14 @@ const read = (name) => readFileSync(new URL("./" + name, import.meta.url), "utf8
 /* `seed` is written before the app initialises, because it reads storage once
  * on DOMContentLoaded and then owns it. Setting it afterwards seeds nothing:
  * the first save overwrites it. */
-function boot(seed, search) {
+function boot(seed, search, options) {
   const html = read("index.html");
   const body = html.slice(html.indexOf("<body"), html.lastIndexOf("</body>"));
   const doc = new FakeDocument();
   parseInto(doc, doc.body, body.slice(body.indexOf(">") + 1));
 
   const clock = new FakeClock();
-  const storage = new FakeStorage();
+  const storage = options && options.storage ? options.storage : new FakeStorage();
   // app.js reads progress while its IIFE runs, not on DOMContentLoaded, so a
   // seed written any later is read after the game has already started empty.
   if (seed) storage.setItem("lanternAlley.v3", JSON.stringify(seed));
@@ -65,12 +65,14 @@ function boot(seed, search) {
   context.window = context;
   context.self = context;
   context.globalThis = context;
+  if (options && options.telemetry) context.LanternTelemetry = options.telemetry;
   vm.createContext(context);
 
   // The page stamps a cache version onto each URL; the file on disk has no
   // query, so strip it before reading.
   const scripts = [...html.matchAll(/src="([^"?]+\.js)(\?v=\d+)?"/g)].map((m) => m[1]);
   for (const src of scripts) {
+    if (options && options.telemetry && (src === "telemetry-config.js" || src === "telemetry.js")) continue;
     vm.runInContext(read(src), context, { filename: src });
   }
   // app.js binds on DOMContentLoaded in the browser; nothing has fired here.
@@ -112,6 +114,29 @@ function boot(seed, search) {
   }
 
   return { doc, clock, storage, errors, heard, $, clickable, visible, tapScreen, context, lastHeard };
+}
+
+class ThrowingWriteStorage extends FakeStorage {
+  setItem() { throw new Error("storage blocked"); }
+}
+
+function bootWithThrowingStorage(search) {
+  return boot(null, search, { storage: new ThrowingWriteStorage() });
+}
+
+function bootTelemetryGame(seed, search) {
+  const events = [];
+  let enabled = true;
+  const telemetry = {
+    track(name, properties) { if (enabled) events.push({ name, properties }); },
+    setEnabled(value) { enabled = !!value; },
+    isConfigured() { return true; },
+    isEnabled() { return enabled; },
+    setContext() {},
+  };
+  const game = boot(seed, search, { telemetry });
+  game.telemetry = { events, isEnabled: () => enabled };
+  return game;
 }
 
 /* Plays one room task the way the sentence tells the player to.
@@ -242,6 +267,98 @@ test("the page boots without throwing and shows a way in", () => {
   assert.deepEqual(game.errors, [], "nothing logged an error during boot");
   assert.ok(game.$("btn-start"), "the start button exists");
   assert.ok(game.clickable().length > 0, "there is something to click on the title screen");
+});
+
+test("restart does not erase saved progress until the player confirms", () => {
+  const game = boot(null, "?skip=1");
+  const before = game.storage.getItem("lanternAlley.v3");
+  game.$("btn-restart").click();
+
+  assert.ok(game.$("reset-confirm"), "the confirmation dialog is rendered");
+  assert.equal(game.$("reset-confirm").hidden, false, "the confirmation dialog is open");
+  assert.equal(game.storage.getItem("lanternAlley.v3"), before, "progress survives opening the dialog");
+
+  game.$("reset-cancel").click();
+  assert.equal(game.storage.getItem("lanternAlley.v3"), before, "Cancel preserves progress");
+});
+
+test("a storage write failure stays visible without stopping play", () => {
+  const game = bootWithThrowingStorage("?skip=1");
+  const warning = game.$("storage-warning");
+
+  assert.ok(warning, "a save warning is rendered");
+  assert.equal(warning.hidden, false, "the save warning is visible");
+  assert.match(warning.textContent, /not being saved/i);
+
+  game.$("btn-start").click();
+  assert.notEqual(game.$("screen-map").style.display, "none", "the player can continue to the map");
+});
+
+test("feedback sends one chosen category with current game context", async () => {
+  const game = bootTelemetryGame(resumedScheduleChallengeSave(), "?skip=1");
+  await openResumedInnScheduleChallenge(game);
+  game.$("btn-feedback").click();
+  game.$("feedback-confusing").click();
+
+  const report = game.telemetry.events.find((event) => event.name === "feedback_submitted");
+  assert.ok(report, "the chosen feedback category is reported");
+  assert.equal(report.properties.category, "confusing");
+  assert.equal(report.properties.location, "home-inn");
+  assert.equal("answer" in report.properties, false, "no answer text leaves the game");
+});
+
+test("turning anonymous testing data off stops further capture", () => {
+  const game = bootTelemetryGame(null, "?skip=1");
+  game.telemetry.events.length = 0;
+  game.$("btn-about").click();
+  game.$("analytics-toggle").click();
+  game.$("btn-start").click();
+
+  assert.equal(game.telemetry.isEnabled(), false);
+  assert.deepEqual(game.telemetry.events, []);
+});
+
+test("the optional analytics switch stays out of an unconfigured test build", () => {
+  const game = boot(null, "?skip=1");
+  game.$("btn-about").click();
+
+  assert.ok(game.$("analytics-setting"), "the analytics setting has a dedicated wrapper");
+  assert.equal(game.$("analytics-setting").hidden, true,
+    "a player cannot turn on collection until a public project key is configured");
+});
+
+test("the game records the complete tester funnel at its real milestones", () => {
+  const app = read("app.js");
+  for (const name of [
+    "app_opened", "new_player_selected", "entrance_started", "entrance_completed",
+    "inn_training_started", "inn_training_completed", "episode_started",
+    "episode_completed", "reward_claimed", "home_visited", "progress_reset",
+    "storage_failed",
+  ]) {
+    assert.match(app, new RegExp('trackTelemetry\\("' + name + '"'));
+  }
+});
+
+test("global application errors use the bounded telemetry error path", () => {
+  const app = read("app.js");
+  assert.match(app, /function reportAppError\(error, source\)/);
+  assert.match(app, /window\.addEventListener\("error", function\(event\)/);
+  assert.match(app, /window\.addEventListener\("unhandledrejection", function\(event\)/);
+  assert.match(app, /telemetry\.reportError\(error, source, telemetryContext\(\)\)/);
+});
+
+test("tester controls remain touch-sized and cannot sit beneath the update bar", () => {
+  const css = read("styles.css");
+  assert.match(css, /\.feedback-card \.feedback-choice\{[^}]*min-height:44px/);
+  assert.match(css, /\.feedback-open\{[^}]*min-height:44px/);
+  assert.match(css, /\.storage-warning\{[^}]*position:fixed/);
+  assert.match(css, /\.storage-warning\{[^}]*z-index:[1-9][0-9]{2,}/);
+  assert.match(css, /\.feedback-open\{[^}]*z-index:[1-9][0-9]{2,}/);
+});
+
+test("dark modal secondary buttons remain legible", () => {
+  const css = read("styles.css");
+  assert.match(css, /\.about-card \.btn-ghost\{[^}]*color:#fff0cf/);
 });
 
 test("a new or unconfirmed learner must choose a character and the chosen pose renders", () => {
@@ -2573,4 +2690,54 @@ test("a phone shows a whole question without scrolling for the answers", () => {
    * only the phone breakpoint reverses it. */
   assert.match(css, /#screen-game:not\(\.entrance-stage\) \.dialogue\{display:block;\}/,
     "the desktop stack the phone rule overrides must remain");
+});
+
+test("a phone gives compact Inn targets a forgiving tap area and names them after selection", () => {
+  // In a live 390px check, the stove, microwave, bin, and bulb targets were
+  // only 18-43px high. Their artwork must stay at its natural size, but a
+  // finger needs a larger invisible target and every available place needs a
+  // visible name once an object has been chosen.
+  const css = read("styles.css");
+  const phone = css.slice(css.lastIndexOf("@media(max-width:760px)"));
+
+  assert.match(phone,
+    /\.inn-room-illustrated \.inn-hotspot::before\{content:"";position:absolute;inset:-10px;/,
+    "compact scene targets have 10px of invisible finger padding on every side");
+  assert.match(phone,
+    /\.inn-scene-zones\.awaiting-drop \.inn-hotspot > \.inn-caption\{opacity:1;/,
+    "once an object is selected, every available destination says what it is");
+  assert.match(phone,
+    /\[data-key="remove-recycle"\] > \.inn-caption\{top:calc\(100% \+ 5px\);bottom:auto\}/,
+    "the recycle-bin label moves below its target instead of overlapping the laundry basket");
+});
+
+/* A test build must not thank a tester for a report it threw away.
+ *
+ * track() is a no-op until the owner fills in a project key, and the shipped
+ * telemetry-config.js has an empty one - so the keyless build is the normal
+ * case, not the edge case. It used to answer every tap with "your note was
+ * sent". A tester would believe the bug was filed and stop mentioning it, and
+ * the resulting silence would read back as "nobody found anything" - the one
+ * conclusion a test must never reach by accident.
+ */
+test("feedback only claims it was sent when it could be sent", () => {
+  const off = bootTelemetryGame(null, "?skip=1");
+  off.$("analytics-toggle") && null;
+  // Turn capture off, which is the same inert state a missing key produces.
+  off.$("btn-about").click();
+  off.$("analytics-toggle").click();
+  off.$("btn-about-close").click();
+
+  off.$("btn-feedback").click();
+  off.$("feedback-bug").click();
+  const quiet = off.$("feedback-status").textContent;
+  assert.doesNotMatch(quiet, /was sent/,
+    "a build that cannot send must not say it sent anything");
+  assert.match(quiet, /cannot send/i, "and it should say so plainly");
+
+  const on = bootTelemetryGame(null, "?skip=1");
+  on.$("btn-feedback").click();
+  on.$("feedback-bug").click();
+  assert.match(on.$("feedback-status").textContent, /was sent/,
+    "a configured build still confirms the send");
 });

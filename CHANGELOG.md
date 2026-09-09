@@ -5,6 +5,18 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-09 - Safety rails for a tester release, and two things that would have spoiled it
+
+Four pieces, built for handing the build to people who are not in the room: an optional telemetry adapter, a one-tap feedback button, a confirmation before 最初から, and a visible warning when local storage stops accepting writes.
+
+The telemetry adapter is inert until an owner puts a PostHog project key in `telemetry-config.js`, and the shipped key is empty - with no key it builds no vendor global, injects no script and sends nothing at all. When a key is present it is still deliberately narrow: autocapture, session recording, heatmaps, surveys and exception capture are all off, and both the event names and their properties are allow-listed, so anything not on the list is dropped rather than trimmed. Verified by feeding it `answerText`, a player name and Japanese response text with a key configured: all three were stripped, and an event not on the list never left the adapter. The opt-out appears only once a key exists, because a switch for something that is not running is just a worry.
+
+`最初から` sat one tap away from 路地へ戻る on the title screen and deleted every word learned and every home item earned on the press itself. It now asks, with Cancel holding focus so a stray Enter cancels rather than deletes, and Escape and a backdrop click both leave the save alone. Only the destructive option reaches the reset.
+
+Two things were caught before this shipped. `entrance-stage.test.mjs` still asserted the old immediate wipe, so the suite failed; the assertion now covers the confirmation wiring instead, including which button holds focus. And the feedback button answered every tap with "Thank you. Your note was sent." while `track()` was a no-op - so in the keyless build, which is what actually deploys, a tester would believe a bug was filed, stop mentioning it, and the silence would read back as "nobody found anything". It now says plainly when it cannot send, and a test holds both halves of that.
+
+Note for whoever runs the test: with an empty key there is no telemetry and no feedback delivery - taps only print a message. Collecting anything needs a key, and the design spec asks for a privacy notice before a broad audience. Cache is v323; `node --test` passes (516).
+
 ### 2026-09-09 - A phone shows the whole question, answers included, without scrolling
 
 Measured on a 393x851 phone, a word-choice question came to about 1009px. The first answer sat at y=719 and the rest were below the fold, so every question opened with a scroll before the learner could see what they were choosing between - on the screen whose entire job is to show exactly that.

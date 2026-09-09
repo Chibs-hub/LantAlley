@@ -1698,8 +1698,28 @@
    problem is being asked to read. Give the page room for it. */
 body:has(#update-bar:not([hidden])){padding-bottom:96px;}
 @media(max-width:420px){
-  body:has(#update-bar:not([hidden])){padding-bottom:132px;}
+body:has(#update-bar:not([hidden])){padding-bottom:132px;}
 }
+
+/* Tester safety controls are fixed because a save failure can happen on any
+   screen. They sit above the update bar, and the feedback button moves up
+   while that bar is visible so neither action hides the other. */
+.storage-warning{
+  position:fixed; top:max(10px,env(safe-area-inset-top,0px)); left:50%; z-index:120;
+  width:min(560px,calc(100% - 28px)); margin:0; padding:10px 14px;
+  transform:translateX(-50%); border:1px solid #ffd27a; border-radius:12px;
+  background:#4a2718; box-shadow:0 8px 22px rgba(0,0,0,.38);
+  color:#fff0cf; font-size:.82rem; font-weight:800; line-height:1.4; text-align:center;
+}
+.feedback-open{
+  position:fixed; right:max(14px,env(safe-area-inset-right,0px)); bottom:max(14px,env(safe-area-inset-bottom,0px)); z-index:110;
+  min-height:44px; padding:10px 16px; border:1px solid rgba(255,218,156,.8); border-radius:999px;
+  background:#2b1c11; box-shadow:0 6px 18px rgba(0,0,0,.34);
+  color:#fff0cf; font:800 .8rem 'Zen Maru Gothic',sans-serif; cursor:pointer;
+}
+.feedback-open:hover,.feedback-open:focus-visible{background:#4a2d19;outline:3px solid var(--lantern-bright);outline-offset:2px}
+body:has(#update-bar:not([hidden])) .feedback-open{bottom:calc(104px + env(safe-area-inset-bottom,0px));}
+@media(max-width:420px){body:has(#update-bar:not([hidden])) .feedback-open{bottom:calc(138px + env(safe-area-inset-bottom,0px));}}
 
 /* Install and save controls on the title screen. Quiet by design - they sit
    under the way in, not beside it. */
@@ -2001,7 +2021,7 @@ body:has(#update-bar:not([hidden])){padding-bottom:96px;}
   }
   .title-about-link:hover,.title-about-link:focus-visible{opacity:1}
   .about-panel{
-    position:fixed; inset:0; z-index:60; display:flex;
+    position:fixed; inset:0; z-index:130; display:flex;
     align-items:center; justify-content:center; padding:16px;
     background:rgba(12,7,3,.72);
   }
@@ -2020,6 +2040,17 @@ body:has(#update-bar:not([hidden])){padding-bottom:96px;}
   .about-caveat{opacity:.9; border-left:3px solid var(--wood-edge); padding-left:10px}
   .about-card a{color:#ffd489}
   .about-card .btn{margin-top:16px}
+  .about-card .btn-ghost{color:#fff0cf;border-color:rgba(255,218,156,.46);}
+  .about-card .btn-ghost:hover{background:rgba(255,218,156,.13);}
+  .reset-confirm-card{max-width:420px;}
+  .reset-confirm-actions{margin:16px 0 0;}
+  .reset-confirm-actions .btn{margin-top:0;}
+  .feedback-card{width:min(440px,100%);}
+  .feedback-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:16px 0;}
+  .feedback-card .feedback-choice{min-height:44px;margin:0;padding:10px 8px;color:#fff0cf;border-color:rgba(255,218,156,.46);}
+  .feedback-card .feedback-choice:hover,.feedback-card .feedback-choice:focus-visible{background:rgba(255,218,156,.13);}
+  .feedback-status{min-height:1.5em;color:#ffe4a0;font-size:.82rem;text-align:center;}
+  @media(max-width:390px){.feedback-choices{grid-template-columns:1fr;}.feedback-card{padding:18px 16px;}}
 
   /* Review mode: a working bar, deliberately plain. */
   .review-bar{
@@ -2633,4 +2664,14 @@ body:has(#update-bar:not([hidden])){padding-bottom:96px;}
     min-width:44px;
     min-height:44px;
   }
+}
+
+/* Illustrated room targets follow the artwork's proportions, so some are
+   smaller than a finger on a phone. Keep their visual footprint, but extend
+   the button's hit area invisibly. Once an object is chosen, name every valid
+   place so the learner can act without guessing what a small drawing means. */
+@media(max-width:760px){
+  .inn-room-illustrated .inn-hotspot::before{content:"";position:absolute;inset:-10px;z-index:-1}
+  .inn-room-illustrated .inn-scene-zones.awaiting-drop .inn-hotspot > .inn-caption{opacity:1;transform:translate(-50%,0)}
+  .inn-room-illustrated [data-key="remove-recycle"] > .inn-caption{top:calc(100% + 5px);bottom:auto}
 }

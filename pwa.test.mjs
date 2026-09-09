@@ -33,6 +33,19 @@ test("every file the service worker pre-caches actually exists", () => {
   }
 });
 
+test("optional telemetry modules load before the game and work offline", () => {
+  const html = read("index.html");
+  const sw = read("sw.js");
+  const configAt = html.indexOf('src="telemetry-config.js');
+  const telemetryAt = html.indexOf('src="telemetry.js');
+  const appAt = html.indexOf('src="app.js');
+  assert.ok(configAt >= 0, "the public telemetry configuration is loaded");
+  assert.ok(telemetryAt > configAt, "the adapter follows its configuration");
+  assert.ok(appAt > telemetryAt, "the game starts after its optional adapter");
+  assert.match(sw, /"\.\/telemetry-config\.js"/);
+  assert.match(sw, /"\.\/telemetry\.js"/);
+});
+
 test("painted home time variants are not re-tinted as if they shared one sunset image", () => {
   const css = read("styles.css");
   for(const period of ["morning", "day", "evening", "night"]){

@@ -16,13 +16,34 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600;800&family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=320">
+<link rel="stylesheet" href="styles.css?v=323">
 </head>
 <body>
 
 <div class="glow-orb a"></div>
 <div class="glow-orb b"></div>
 <div class="glow-orb c"></div>
+
+<p class="storage-warning" id="storage-warning" role="status" aria-live="polite" hidden>
+  Progress is not being saved. Keep this tab open while you play.
+</p>
+<button class="feedback-open" id="btn-feedback" type="button">Feedback</button>
+
+<div class="about-panel feedback-panel" id="feedback-panel" role="dialog" aria-modal="true"
+     aria-labelledby="feedback-title" hidden>
+  <div class="about-card feedback-card">
+    <h2 id="feedback-title">Feedback</h2>
+    <p class="about-lead">One tap is enough. What happened?</p>
+    <div class="feedback-choices">
+      <button class="btn btn-ghost feedback-choice" id="feedback-bug" type="button">Bug</button>
+      <button class="btn btn-ghost feedback-choice" id="feedback-confusing" type="button">Confusing</button>
+      <button class="btn btn-ghost feedback-choice" id="feedback-too-hard" type="button">Too hard</button>
+      <button class="btn btn-ghost feedback-choice" id="feedback-liked" type="button">I liked this</button>
+    </div>
+    <p class="feedback-status" id="feedback-status" role="status"></p>
+    <button class="btn btn-ghost" id="feedback-close" type="button">Close</button>
+  </div>
+</div>
 
 <div class="stage">
 
@@ -138,7 +159,25 @@
           広く使われている有志のリストによる目安です。試験そのものの中身ではありません。
         </p>
 
+        <div id="analytics-setting" hidden>
+          <h3>Anonymous test data</h3>
+          <p class="about-caveat">This test build can send anonymous progress events. It never sends answers or records your screen.</p>
+          <button class="btn btn-ghost" id="analytics-toggle" type="button" aria-pressed="false"></button>
+        </div>
+
         <button class="btn btn-primary" id="btn-about-close" type="button">閉じる</button>
+      </div>
+    </div>
+
+    <div class="about-panel" id="reset-confirm" role="dialog" aria-modal="true"
+         aria-labelledby="reset-confirm-title" hidden>
+      <div class="about-card reset-confirm-card">
+        <h2 id="reset-confirm-title">最初からやり直しますか？</h2>
+        <p class="about-lead">このブラウザにある進み具合と、わが家の持ち物が消えます。</p>
+        <div class="save-actions reset-confirm-actions">
+          <button class="btn btn-ghost" id="reset-cancel" type="button">キャンセル</button>
+          <button class="btn btn-primary" id="reset-confirm-action" type="button">最初から</button>
+        </div>
       </div>
     </div>
   </section>
@@ -294,37 +333,39 @@
   <footer class="credits">Lantern Alley &middot; a small Japanese story-walk</footer>
 </div>
 
-<script src="curriculum-catalog.js?v=320"></script>
-<script src="learning-content.js?v=320"></script>
-<script src="review-engine.js?v=320"></script>
-<script src="inn-journey.js?v=320"></script>
-<script src="learning-progress.js?v=320"></script>
-<script src="learning-economy.js?v=320"></script>
-    <script src="learning-gloss.js?v=320"></script>
-    <script src="home-room.js?v=320"></script>
-    <script src="home-decor.js?v=320"></script>
-    <script src="home-garden.js?v=320"></script>
-    <script src="home-pet.js?v=320"></script>
-    <script src="daily-practice.js?v=320"></script>
-    <script src="review-mode.js?v=320"></script>
-<script src="question-renderer.js?v=320"></script>
-<script src="catalog-practice.js?v=320"></script>
-<script src="entrance-stage-logic.js?v=320"></script>
-<script src="moonview-inn-interactions.js?v=320"></script>
-<script src="n2-home-inn-stage.js?v=320"></script>
-<script src="n2-inn-episodes.js?v=320"></script>
-    <script src="n2-market-episodes.js?v=320"></script>
-    <script src="n2-teahouse-episodes.js?v=320"></script>
-    <script src="n2-shrine-episodes.js?v=320"></script>
-<script src="audio-index.js?v=320"></script>
-<script src="lantern-map.js?v=320"></script>
+<script src="curriculum-catalog.js?v=323"></script>
+<script src="learning-content.js?v=323"></script>
+<script src="review-engine.js?v=323"></script>
+<script src="inn-journey.js?v=323"></script>
+<script src="learning-progress.js?v=323"></script>
+<script src="learning-economy.js?v=323"></script>
+    <script src="learning-gloss.js?v=323"></script>
+    <script src="home-room.js?v=323"></script>
+    <script src="home-decor.js?v=323"></script>
+    <script src="home-garden.js?v=323"></script>
+    <script src="home-pet.js?v=323"></script>
+    <script src="daily-practice.js?v=323"></script>
+    <script src="review-mode.js?v=323"></script>
+<script src="question-renderer.js?v=323"></script>
+<script src="catalog-practice.js?v=323"></script>
+<script src="entrance-stage-logic.js?v=323"></script>
+<script src="moonview-inn-interactions.js?v=323"></script>
+<script src="n2-home-inn-stage.js?v=323"></script>
+<script src="n2-inn-episodes.js?v=323"></script>
+    <script src="n2-market-episodes.js?v=323"></script>
+    <script src="n2-teahouse-episodes.js?v=323"></script>
+    <script src="n2-shrine-episodes.js?v=323"></script>
+<script src="audio-index.js?v=323"></script>
+<script src="lantern-map.js?v=323"></script>
 <div class="update-bar" id="update-bar" role="status" hidden>
   <span class="update-bar-text">新しいバージョンがあります。</span>
   <button class="btn btn-primary" id="btn-update-now" type="button">更新する</button>
   <button class="update-bar-later" id="btn-update-later" type="button">あとで</button>
 </div>
 
-<script src="app.js?v=320"></script>
+<script src="telemetry-config.js?v=323"></script>
+<script src="telemetry.js?v=323"></script>
+<script src="app.js?v=323"></script>
 
 <script>
   // Service workers need http(s); opening this file directly with file://
@@ -349,3 +390,4 @@
 
 </body>
 </html>
+

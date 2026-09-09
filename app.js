@@ -401,7 +401,10 @@
       savedEpisode = null;
       migratedFromV2 = true;
       return legacyViewOf(migrated);
-    }catch(e){ return null; }
+    }catch(e){
+      setStorageFailure("Progress could not be read. Keep this tab open while you play.");
+      return null;
+    }
   }
 
   // The day flow reads state.stageProgress.homeInn. v3 stores the same facts
@@ -517,7 +520,12 @@
           ? LanternInnJourney.fresh() : {version:1, claimed:{}, catUnlocked:false})
         ,lastPlace: state.lastPlace || null
       }));
-    }catch(e){ /* storage unavailable, progress just won't persist */ }
+      clearStorageFailure();
+      return true;
+    }catch(e){
+      setStorageFailure("Progress is not being saved. Keep this tab open while you play.");
+      return false;
+    }
   }
   function applyProgress(data){
     state.visited = {};
@@ -561,6 +569,20 @@
   }
 
   var $ = function(id){ return document.getElementById(id); };
+
+  function setStorageFailure(message){
+    var warning = $("storage-warning");
+    if(!warning) return;
+    var firstFailure = warning.hidden;
+    warning.textContent = message || "Progress is not being saved. Keep this tab open while you play.";
+    warning.hidden = false;
+    if(firstFailure) trackTelemetry("storage_failed");
+  }
+
+  function clearStorageFailure(){
+    var warning = $("storage-warning");
+    if(warning) warning.hidden = true;
+  }
 
   function setAudioReplayControl(active){
     $("btn-listen-again").hidden = !active;
@@ -867,6 +889,69 @@
     }
     return "";
   }
+
+  function telemetryContext(){
+    var screen = "title";
+    if(screenGame && screenGame.style.display !== "none") screen = previewState ? "episode"
+      : (state.currentKey === "home-inn" ? "inn" : (state.currentKey || "game"));
+    else if(screenMap && screenMap.style.display !== "none") screen = "map";
+    else if(screenCharacter && !screenCharacter.hidden) screen = "character";
+    var episode = previewState && currentEpisode ? currentEpisode() : null;
+    var prompt = state.phaseItems && state.phaseItems[state.encounterIndex];
+    var questionId = episode && previewState && previewState.list[previewState.index]
+      && previewState.list[previewState.index].question
+      ? previewState.list[previewState.index].question.id
+      : (prompt && (prompt.id || prompt.targetId || prompt.focusWord) ? (prompt.id || prompt.targetId || prompt.focusWord) : null);
+    var width = Number(window.innerWidth) || 1024;
+    return {
+      build:appBuild(),
+      screen:screen,
+      location:state.currentKey || null,
+      section:episode ? episode.id : (state.currentKey === "home-inn" ? "training" : null),
+      question_id:questionId,
+      device_class:width < 600 ? "phone" : (width < 1024 ? "tablet" : "desktop")
+    };
+  }
+
+  function trackTelemetry(name, properties){
+    var telemetry = window.LanternTelemetry;
+    if(!telemetry || typeof telemetry.track !== "function") return;
+    var props = telemetryContext();
+    var key;
+    for(key in properties || {}) props[key] = properties[key];
+    try{ telemetry.track(name, props); }catch(e){}
+  }
+
+  function reportAppError(error, source){
+    var telemetry = window.LanternTelemetry;
+    if(!telemetry || typeof telemetry.reportError !== "function") return;
+    try{ telemetry.reportError(error, source, telemetryContext()); }catch(e){}
+  }
+
+  window.addEventListener("error", function(event){
+    reportAppError(event && (event.error || event.message), event && event.filename);
+  });
+  window.addEventListener("unhandledrejection", function(event){
+    reportAppError(event && event.reason, "unhandledrejection");
+  });
+
+  function paintAnalyticsToggle(){
+    var button = $("analytics-toggle");
+    var setting = $("analytics-setting");
+    var telemetry = window.LanternTelemetry;
+    var configured = !!(telemetry && telemetry.isConfigured && telemetry.isConfigured());
+    if(setting) setting.hidden = !configured;
+    if(!button || !configured) return;
+    var enabled = !!(telemetry && telemetry.isEnabled && telemetry.isEnabled());
+    button.textContent = "Anonymous test data: " + (enabled ? "On" : "Off");
+    button.setAttribute("aria-pressed", enabled ? "true" : "false");
+  }
+
+  if(window.LanternTelemetry && window.LanternTelemetry.setContext){
+    window.LanternTelemetry.setContext(telemetryContext);
+  }
+  paintAnalyticsToggle();
+  trackTelemetry("app_opened");
 
   (function(){
     var label = $("app-version");
@@ -1348,14 +1433,78 @@
     reviewShow(0);
   }, 0);
 
-  $("btn-restart").addEventListener("click", function(){
+  function openResetConfirmation(){
+    var panel = $("reset-confirm");
+    if(!panel) return;
+    panel.hidden = false;
+    $("reset-cancel").focus();
+  }
+
+  function closeResetConfirmation(){
+    var panel = $("reset-confirm");
+    if(panel) panel.hidden = true;
+    $("btn-restart").focus();
+  }
+
+  function confirmReset(){
+    var panel = $("reset-confirm");
+    if(panel) panel.hidden = true;
     applyProgress(null);
     state.currentKey = null;
     saveProgress();
     $("progress-note").hidden = true;
     $("btn-restart").hidden = true;
     $("btn-start").textContent = "路地へ入る";
+    trackTelemetry("progress_reset");
     showCharacterSelection();
+  }
+
+  $("btn-restart").addEventListener("click", openResetConfirmation);
+  $("reset-cancel").addEventListener("click", closeResetConfirmation);
+  $("reset-confirm-action").addEventListener("click", confirmReset);
+  $("reset-confirm").addEventListener("click", function(event){
+    if(event.target === this) closeResetConfirmation();
+  });
+  document.addEventListener("keydown", function(event){
+    if(event.key === "Escape" && !$("reset-confirm").hidden) closeResetConfirmation();
+  });
+  function openFeedback(){
+    $("feedback-status").textContent = "";
+    $("feedback-panel").hidden = false;
+    $("feedback-bug").focus();
+  }
+  function closeFeedback(){
+    $("feedback-panel").hidden = true;
+    $("btn-feedback").focus();
+  }
+  function submitFeedback(category){
+    trackTelemetry("feedback_submitted", {category:category});
+    /* Only say it was sent when it was. track() is a no-op until the owner
+     * sets a project key, so a keyless build - which is what ships until
+     * someone fills in telemetry-config.js - was thanking a tester for a
+     * report that went nowhere. They would think the bug was filed and stop
+     * mentioning it, and the silence would read as "nobody found anything",
+     * which is the one conclusion a test must never draw by accident. */
+    var telemetry = window.LanternTelemetry;
+    var sent = !!(telemetry && telemetry.isEnabled && telemetry.isEnabled());
+    $("feedback-status").textContent = sent
+      ? "Thank you. Your note was sent."
+      : "Thank you. This build cannot send it, so please tell me directly too.";
+  }
+  $("btn-feedback").addEventListener("click", openFeedback);
+  $("feedback-close").addEventListener("click", closeFeedback);
+  $("feedback-panel").addEventListener("click", function(event){
+    if(event.target === this) closeFeedback();
+  });
+  ["bug", "confusing", "too-hard", "liked"].forEach(function(category){
+    $("feedback-" + category).addEventListener("click", function(){ submitFeedback(category); });
+  });
+  $("analytics-toggle").addEventListener("click", function(){
+    var telemetry = window.LanternTelemetry;
+    if(telemetry && telemetry.setEnabled && telemetry.isEnabled){
+      telemetry.setEnabled(!telemetry.isEnabled());
+    }
+    paintAnalyticsToggle();
   });
   function showCharacterSelection(){
     screenTitle.style.display = "none";
@@ -1370,6 +1519,7 @@
       state.playerCharacter = button.getAttribute("data-character");
       state.characterSelected = true;
       saveProgress();
+      trackTelemetry("new_player_selected");
       screenCharacter.hidden = true;
       enterLocation("entrance");
     });
@@ -2457,6 +2607,8 @@
     setInnFocusCues(false);
     snapshotMastery(state.currentKey);
     previewState = {index:0, list:list, answered:false, missed:[], missedTargets:[], repair:null};
+    var episode = currentEpisode();
+    trackTelemetry("episode_started", {episode_id:episode ? episode.id : null});
     screenTitle.style.display = "none";
     screenMap.style.display = "none";
     screenGame.style.display = "block";
@@ -2965,6 +3117,7 @@
       if(!state.episodesDone) state.episodesDone = {};
       creditGardenFor(finished);
       state.episodesDone[finished.id] = true;
+      trackTelemetry("episode_completed", {episode_id:finished.id});
       // The lantern lights when the whole place is done, not one shift of it.
       if(stageComplete(state.currentKey) && stageMastery(state.currentKey) === 100) state.visited[state.currentKey] = true;
     }
@@ -3576,8 +3729,11 @@
        * no idea what the stage is even about. Knowing the five words up front
        * does not spoil the cold open - it is one task, and knowing a word is
        * on tonight's list is a long way from knowing which one to use.
-       */
+      */
       var phase = state.stageProgress.homeInn ? "learn" : "coldopen";
+      if(loc.key === "home-inn" && !state.stageProgress.homeInn){
+        trackTelemetry("inn_training_started");
+      }
       stageJobBoard(loc, phase);
     });
     speak(intro.jp);
@@ -3744,6 +3900,7 @@
     $("entrance-progress").hidden = loc.key !== "entrance";
 
     state.currentKey = key;
+    if(key === "entrance") trackTelemetry("entrance_started");
     // The three days run about fifteen minutes and the episode follows them
     // immediately, so ask for that stage's audio on the way in rather than at
     // the episode's first question.
@@ -3956,6 +4113,7 @@
     if(!state.homeVisited){
       state.homeVisited = true;
       saveProgress();
+      trackTelemetry("home_visited");
     }
     screenGame.classList.remove("entrance-stage", "inn-stage");
     screenGame.classList.add("home-stage");
@@ -5748,6 +5906,7 @@
     }
     if(reward.coins) state.money = (state.money || 0) + reward.coins;
     saveProgress();
+    trackTelemetry("reward_claimed", {reward_id:id});
     return result;
   }
 
@@ -6638,6 +6797,7 @@
         state.starred[loc.key] = true;
       }
       saveProgress();
+      trackTelemetry("entrance_completed");
       renderHud();
 
       var msg = "正しく行動できました。";
@@ -6853,6 +7013,7 @@
         var trainingWords = Object.keys(state.trainingCorrectWords);
         state.stageMastered = stage.isChallengeMastered(state.challengeScore, trainingWords);
         if(state.stageMastered){
+          trackTelemetry("inn_training_completed");
           var already = !!state.starred[stage.key];
           state.visited[stage.key] = true;
           if(state.mistakesThisVisit === 0 && !already) state.starred[stage.key] = true;
