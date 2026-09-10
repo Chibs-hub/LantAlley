@@ -117,6 +117,18 @@
     {id:"daruma", name:"だるま", kind:"shelf", price:180, category:"棚",
      image:"assets/home/decor/daruma-red-v1.webp",
      svg:'<ellipse cx="0" cy="2" rx="28" ry="34" fill="#a9342c" stroke="#67231f" stroke-width="3"/><ellipse cx="0" cy="-8" rx="20" ry="15" fill="#efe0bd"/>'},
+    /* The second display shelf, for the left fusuma. The room comes with one
+       against the right wall; this is the one that is earned, and buying it
+       is what brings its two planks into existence - see `requires` on those
+       slots in home-room.js. Priced above every small object it will hold, so
+       it reads as the furniture purchase it is rather than another trinket. */
+    {id:"display-shelf", name:"違い棚", kind:"cabinet", price:420, category:"床",
+     image:"assets/home/decor/display-shelf-staggered-v1.webp",
+     svg:'<g fill="none" stroke="#6b4a2c" stroke-width="6">'
+       + '<path d="M-46 -30 H30 M-46 -2 H46 M-30 26 H46 M-46 34 H46"/>'
+       + '<path d="M-46 -34 V34 M46 -6 V34 M30 -34 V-2 M-30 -2 V34"/>'
+       + '</g>'},
+
     {id:"sakura-bonsai", name:"桜の盆栽", kind:"shelf", price:320, category:"棚",
      image:"assets/home/decor/sakura-bonsai-v1.webp",
      svg:'<rect x="-24" y="14" width="48" height="12" rx="4" fill="#3c5260"/><path d="M0 14 Q-12 -8 5 -30" stroke="#68452d" stroke-width="6" fill="none"/><circle cx="6" cy="-32" r="22" fill="#e4a9ba"/>'},
@@ -235,14 +247,33 @@
     daruma:                {width:4, anchorY:100},
     "sakura-bonsai":      {width:7.5, anchorY:100},
     "pine-bonsai":        {width:7.5, anchorY:100},
+    /* 20.3 because the slot it goes in scales by 0.74, and 20.3 x 0.74 is the
+       15% the fixture on the right is drawn at - the two shelves are the same
+       piece of furniture and must come out the same size.
+
+       `flipX` mirrors it. The photograph is taken from slightly off one end,
+       so it shows one side face; against the right wall the viewer stands to
+       its left and that is what they should see, but the same image against
+       the left wall shows the far side and the piece reads as turned the
+       wrong way in the room. Mirroring costs nothing and fixes the angle
+       without a second photograph. The left plank slots are mirrored to
+       match - a mirrored staggered shelf has its high plank on the other
+       side. */
+    "display-shelf":      {width:20.3, anchorY:100, flipX:true},
     "sill-plant":         {width:14, anchorY:100},
     "wind-chime":         {width:4, anchorY:0, offsetY:0}
   };
 
+  /* Rebuilds the row rather than returning it, so callers cannot mutate the
+     table - which also means a field added above and not added here is
+     silently absent at the far end rather than missing. `flipX` was exactly
+     that: set on the shelf, dropped here, and the mirrored art simply never
+     appeared with no error to explain why. */
   function presentationFor(id){
     var row = PRESENTATION[id] || {width:10, anchorY:100};
     return {width:row.width, anchorY:row.anchorY,
-            scaleY:row.scaleY || 1, offsetY:row.offsetY || 0};
+            scaleY:row.scaleY || 1, offsetY:row.offsetY || 0,
+            flipX:!!row.flipX};
   }
 
   /* Five petals around a centre. Written once rather than five times per
@@ -401,11 +432,27 @@
             home:{owned:((home && home.owned) || []).slice(), placed:placed}};
   }
 
-  function remove(home, slotId){
+  /* Taking a thing away takes down whatever was standing on it.
+   *
+   * A plank slot names the furniture it belongs to in `requires`. Carrying
+   * the shelf out of the room while a teapot sits on it should not leave the
+   * teapot hanging in the air, and should not lose it either - it goes back
+   * to storage like anything else put away, and comes back the moment the
+   * shelf does. The evicted ids are returned so the room can say so; a thing
+   * that vanishes without a word reads as a bug even when it is not. */
+  function remove(home, slotId, slots){
     var placed = copyPlaced(home);
     var was = placed[slotId] || null;
     delete placed[slotId];
-    return {ok:!!was, removed:was, home:{owned:((home && home.owned) || []).slice(), placed:placed}};
+    var evicted = [];
+    (slots || []).forEach(function(slot){
+      if(!slot || slot.requires !== slotId) return;
+      if(!placed[slot.id]) return;
+      evicted.push(placed[slot.id]);
+      delete placed[slot.id];
+    });
+    return {ok:!!was, removed:was, evicted:evicted,
+            home:{owned:((home && home.owned) || []).slice(), placed:placed}};
   }
 
   // Owned but not currently in the room.

@@ -5,6 +5,16 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-10 - A second shelf to buy, mirrored so it faces the right way
+
+Two things, both reported. The room could display two of the catalogue's six `shelf` pieces, so four had nowhere to go; and a floor object placed at the back-right landed inside the shelf's footprint, because `floor-back-right` sits at the foot of the back wall and so, now, does a piece of furniture. Both back-floor slots moved five percent nearer the viewer, which puts a plant in front of the shelf where one actually stands. The x did not change - the depth was what was wrong.
+
+The second shelf is bought rather than given: 違い棚, in 家具, priced above every small object it holds so it reads as furniture. The room keeps the right-hand shelf as a fixture, so there is always somewhere to put something, and the left one is the upgrade. Its two planks carry `requires`, which is the point of them - they are places on a piece of furniture, not places in the room, so they are not offered, not drawn into, and not left holding anything while the furniture is absent. Carrying the shelf out returns what was on it to storage and says so: 「違い棚」と、のせていた「だるま」「松の盆栽」を持ち物にもどしました。Something that disappears without a word reads as a bug even when it is not.
+
+It is also mirrored. The photograph is taken slightly off one end, so it shows one side face; against the right wall the viewer stands to its left and that is the face they should see, but the same image against the left wall shows the far side and the piece reads as turned the wrong way in the room. `flipX` costs nothing and removes the need for a second photograph. Its plank slots are mirrored to match, because a mirrored staggered shelf has its high plank on the other side.
+
+Two silent-omission traps on the way, both the shape this codebase already warns about for `skew`: `cloneSlots` rebuilds slot objects field by field and would have dropped `requires` and `z` in transit, and `presentationFor` does the same and did drop `flipX` - the mirror never appeared, with nothing to say why. Both now carry the fields. And a note for the next test written here: `home-decor.js` runs inside a `vm` context, so an array it returns carries that realm's `Array.prototype` and `deepStrictEqual` fails against an identical-looking literal, printing `['teapot']` against `['teapot']` with no visible difference. Cache is v331; `node --test` passes (526).
+
 ### 2026-09-10 - The shelf stands on the floor now, not above it
 
 Reported as "position is off", and it was: the shelf's foot sat at image y=461 while the tatami it is supposed to rest on starts at y=487. Twenty-six pixels of daylight under a piece of furniture, which is exactly the kind of thing that reads as wrong before anyone can say why.

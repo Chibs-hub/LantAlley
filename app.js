@@ -4723,6 +4723,27 @@
     return LanternHomeDecor.presentationFor(item && item.id).scaleY;
   }
 
+  // Mirrored art, for a piece whose photograph shows one side face and is
+  // used on the other side of the room. See `flipX` in home-decor.js.
+  function decorSceneFlip(item){
+    return LanternHomeDecor.presentationFor(item && item.id).flipX ? " scaleX(-1)" : "";
+  }
+
+  /* A slot on a piece of furniture exists only while that furniture does.
+   * `requires` names the slot the furniture stands in; if nothing is in it,
+   * this plank is not a place in the room and must not be offered, drawn
+   * into, or left holding anything. */
+  function slotAvailable(slot, placed){
+    return !slot || !slot.requires || !!(placed || {})[slot.requires];
+  }
+
+  /* Furniture sorts by its own foot unless it says otherwise. A shelf's base
+   * is lower in the picture than the planks it holds, so sorting it by y
+   * would draw it in front of its own contents. */
+  function slotDepthZ(slot){
+    return homeDepthZ(slot && slot.z != null ? slot.z : (slot && slot.y));
+  }
+
   function homeDepthZ(y){
     return 20 + Math.round(Number(y) || 0);
   }
@@ -4977,15 +4998,17 @@
       interior.slots.forEach(function(slot){
         var here = home.placed[slot.id];
         if(!here) return;
+        if(!slotAvailable(slot, home.placed)) return;
         var item = decor.getItem(here) || {name:""};
         var placedSlot = {x:slot.x, y:decorSceneTop(item, slot)};
         html += positioned("home-item", placedSlot, decorArt(here, item.name),
           ' data-slot-item="' + slot.id + '" role="button" tabindex="0"'
             + ' data-item-kind="' + (item.kind || "") + '"'
             + ' aria-label="' + item.name + ' をかたづける"',
-          'width:' + decorSceneWidth(item, slot) + '%;z-index:' + homeDepthZ(slot.y)
+          'width:' + decorSceneWidth(item, slot) + '%;z-index:' + slotDepthZ(slot)
             + ';transform:translate(-50%,-'
             + decorSceneAnchor(item) + '%) scaleY(' + decorSceneScaleY(item) + ')'
+            + decorSceneFlip(item)
             /* A thing hung on a receding wall lies on that wall. The angle is
              * the slot's, because it is a property of the wall rather than of
              * the object: the same scroll is square on the back wall and
@@ -4995,6 +5018,7 @@
       if(picked){
         interior.slots.forEach(function(slot){
           if(slot.kind !== picked.kind) return;
+          if(!slotAvailable(slot, home.placed)) return;
           html += targetButton(slot, !!home.placed[slot.id]);
         });
       }
@@ -5922,15 +5946,24 @@
 
     var placedItem = event.target.closest("[data-slot-item]");
     if(placedItem){
-      var gone = decor.remove(homeState(), placedItem.getAttribute("data-slot-item"));
+      var interiorSlots = (homeScenes() && homeScenes().interior.slots) || [];
+      var gone = decor.remove(homeState(), placedItem.getAttribute("data-slot-item"), interiorSlots);
       if(!gone.ok) return;
       state.home = gone.home;
       if(gone.removed === STARTER_DECOR) homeTutorialMoved = true;
       saveProgress();
       advanceHomeTutorial();
       paintHome();
-      homeSay("「" + (decor.getItem(gone.removed) || {name:""}).name
-        + "」を持ち物にもどしました。");
+      var name = (decor.getItem(gone.removed) || {name:""}).name;
+      // Say what came down with it, rather than letting things disappear
+      // quietly off a shelf that was carried away.
+      var alsoDown = (gone.evicted || []).map(function(id){
+        return (decor.getItem(id) || {name:""}).name;
+      }).filter(Boolean);
+      homeSay(alsoDown.length
+        ? "「" + name + "」と、のせていた「" + alsoDown.join("」「")
+            + "」を持ち物にもどしました。"
+        : "「" + name + "」を持ち物にもどしました。");
     }
   });
 

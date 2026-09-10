@@ -312,6 +312,10 @@ test("every object declares the surface it actually belongs on", () => {
     // rests on a raised surface rather than the floor
     "teapot": "shelf", "books": "shelf", "cat-figure": "shelf",
     "daruma": "shelf", "sakura-bonsai": "shelf", "pine-bonsai": "shelf",
+    // stands against a wall and is itself a surface: the only piece whose
+    // presence creates places for other pieces, which is why it has a kind
+    // of its own rather than being one more thing on the floor
+    "display-shelf": "cabinet",
     // stands on the veranda boards
     "sill-plant": "sill",
     // hangs from a beam, resting on nothing
@@ -338,4 +342,41 @@ test("every object declares the surface it actually belongs on", () => {
   const chime = decor.presentationFor("wind-chime");
   assert.equal(chime.anchorY, 0, "a hanging object is anchored at its top");
   assert.equal(chime.offsetY, 0, "a hanging object needs no offset from a surface");
+});
+
+/* A plank is a place on a piece of furniture, not a place in the room.
+ *
+ * The left shelf is bought, so its two planks only exist while it is
+ * standing there. Carrying it out with a teapot on it must not leave the
+ * teapot in mid-air, and must not quietly lose it either - it goes back to
+ * storage like anything else put away, and the room is told what came down
+ * so it can say so.
+ */
+test("taking away a shelf brings down what was standing on it", () => {
+  const roomSlots = slots;
+  const plank = roomSlots.find(s => s.requires === "cabinet-left");
+  assert.ok(plank, "the bought shelf's planks declare what they stand on");
+
+  let home = {owned:["display-shelf", "teapot"], placed:{}};
+  home = decor.place(home, "display-shelf", "cabinet-left", roomSlots).home;
+  home = decor.place(home, "teapot", plank.id, roomSlots).home;
+  assert.equal(home.placed[plank.id], "teapot", "the teapot is on the plank");
+
+  const gone = decor.remove(home, "cabinet-left", roomSlots);
+  assert.equal(gone.removed, "display-shelf");
+  /* Copied into this realm before comparing. home-decor.js is run inside a
+     vm context, so an array it creates carries that context's
+     Array.prototype, and deepStrictEqual compares prototypes - two identical
+     ['teapot'] arrays fail against each other with no visible difference in
+     the output. The existing tests never hit this because the arrays they
+     compare are grown from ones the test passed in. */
+  assert.deepEqual([...gone.evicted], ["teapot"], "the teapot comes down with it");
+  assert.equal(gone.home.placed[plank.id], undefined, "and is not left in mid-air");
+  assert.ok(gone.home.owned.includes("teapot"), "and is still owned, not lost");
+
+  // Putting an ordinary object away disturbs nothing else.
+  let plain = {owned:["floor-cushion-navy"], placed:{}};
+  plain = decor.place(plain, "floor-cushion-navy", "floor-left", roomSlots).home;
+  const one = decor.remove(plain, "floor-left", roomSlots);
+  assert.deepEqual([...one.evicted], [], "nothing stands on a cushion");
 });

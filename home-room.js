@@ -147,17 +147,44 @@
   var SLOTS = [
     {id:"floor-left",   x:22, y:80, scale:0.89, kind:"floor", label:"床の左"},
     {id:"floor-right",  x:78, y:80, scale:0.89, kind:"floor", label:"床の右"},
-    {id:"floor-back-left", x:36, y:73, scale:0.72, kind:"floor", label:"床の奥左"},
-    {id:"floor-back-right", x:64, y:73, scale:0.72, kind:"floor", label:"床の奥右"},
+    /* These two used to sit at y:73, which is the foot of the back wall - and
+       is now the foot of a shelf. A floor object placed there stood on the
+       same ground line as the furniture and inside its footprint, so a bonsai
+       came out looking like it had been posted through the shelf rather than
+       set down in the room. Five percent nearer the viewer puts it in front
+       of the shelf, where a plant on the floor beside a piece of furniture
+       actually stands. The x stays: it is the depth that was wrong. */
+    {id:"floor-back-left", x:36, y:78, scale:0.74, kind:"floor", label:"床の奥左"},
+    {id:"floor-back-right", x:64, y:78, scale:0.74, kind:"floor", label:"床の奥右"},
     {id:"floor-front", x:50, y:88, scale:1.00, kind:"floor", label:"床の手前"},
     {id:"wall-left",    x:5,  y:32, scale:0.92, skew:12.8,  kind:"wall",  label:"壁の左"},
     {id:"wall-right",   x:95, y:32, scale:0.92, skew:-12.8, kind:"wall",  label:"壁の右"},
     {id:"post-left",    x:25, y:32, scale:0.88, kind:"post",  label:"柱の左"},
     {id:"post-right",   x:75, y:32, scale:0.88, kind:"post",  label:"柱の右"},
     {id:"eave", x:15, y:30, scale:0.80, kind:"eave", label:"軒下"},
-    {id:"shelf",        x:61, y:55, scale:0.52, kind:"shelf", label:"棚の上"},
+    {id:"shelf",        x:61, y:55, scale:0.52, kind:"shelf", label:"右棚の上段"},
     {id:"window-sill",  x:12, y:78, scale:0.80, kind:"sill",  label:"窓辺"},
-    {id:"tokonoma", x:70, y:68, scale:0.52, kind:"shelf", label:"棚の下"}
+    {id:"tokonoma", x:70, y:68, scale:0.52, kind:"shelf", label:"右棚の下段"},
+    /* Where the second shelf goes if the learner buys one. `z` sorts it with
+       the fixtures rather than by its own foot: whatever stands on its planks
+       has a higher y than the shelf's base, so without this the shelf would
+       draw in front of the things it is holding. */
+    {id:"cabinet-left", x:32.5, y:73, scale:0.74, z:38, kind:"cabinet", label:"左の壁際"},
+
+    /* Its two planks. `requires` is the whole point: these are not places in
+       the room, they are places on a piece of furniture, so they exist only
+       while that furniture does. Nothing offers them as targets, and nothing
+       renders anything left in them, until `cabinet-left` is filled - and
+       emptying it puts whatever was on the planks back in storage rather than
+       leaving a teapot in mid-air.
+
+       The x values are the right shelf's, mirrored inside the shelf's own
+       width, because the left shelf is drawn mirrored - see `flipX` in
+       home-decor.js. Its top plank is therefore the right-hand one. */
+    {id:"shelf-left", x:37, y:55, scale:0.52, kind:"shelf",
+     requires:"cabinet-left", label:"左棚の上段"},
+    {id:"tokonoma-left", x:28, y:68, scale:0.52, kind:"shelf",
+     requires:"cabinet-left", label:"左棚の下段"}
   ];
 
   /* Furniture the room owns rather than the player.
@@ -196,7 +223,11 @@
    * failed the reachability rule. */
   var INTERIOR_FIXTURES = [
     {id:"display-shelf", image:"assets/home/decor/display-shelf-staggered-v1.webp",
-     x:65.5, y:73, width:15, z:38, label:"違い棚"}
+     x:65.5, y:73, width:15, z:38, label:"違い棚"},
+    /* There is deliberately no second fixture. The left fusuma has a slot for
+       a shelf - `cabinet-left` below - and the shelf that goes in it is
+       bought, so the room starts with one display piece and the other is
+       something to earn. */
   ];
 
   /* The eight beds, measured off the painting rather than estimated from it.
@@ -269,7 +300,13 @@
   function cloneSlots(source){
     return source.map(function(slot){
       return {id:slot.id, x:slot.x, y:slot.y, scale:slot.scale || 1,
-              skew:slot.skew || 0, kind:slot.kind, label:slot.label};
+              skew:slot.skew || 0, kind:slot.kind, label:slot.label,
+              // Same trap as `skew` above: a field left out here is not a
+              // missing field at the far end, it is a silently absent one.
+              // `z` decides whether a shelf draws behind what stands on it,
+              // and `requires` decides whether a plank exists at all.
+              z:(slot.z == null ? null : slot.z),
+              requires:slot.requires || null};
     });
   }
 
