@@ -5,6 +5,70 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-10 - Three shell files that would have 404'd on the live site
+
+`sw.js` pre-cached `debug-mode.js`, `assets/branding/lantern-mark-v1.png` and `assets/social/lantern-alley-share-v1.jpg`, none of which had been committed. Every check passed, because every check asked the filesystem and the files were sitting right there. The deployed site is the repository, though, so all three would have 404'd - and install throws on any non-200 on purpose, to avoid a half-cached shell. The install would therefore have failed on every load: no offline, and worse, the new worker would never have taken over, pinning every existing tester to the build already on their phone with no route forward. That is the update-delivery failure of v313-v317 again, in a form that does not resolve itself.
+
+The three files are committed. The two paper-panel mask SVGs came out of the shell instead: v325 embedded them into `styles.css` as data URIs, so nothing requests them any more, and they stay under `assets/` as editable source for the geometry. The shell test now asks `git ls-files` rather than `existsSync`, which is the distinction that was missing - it found all three itself, one after another, and it is what stops the next one. (It matches on path, not URL: several shell entries carry the `?v=` stamp, and the old disk check only appeared to agree with them because `new URL()` drops the query before it reaches the filesystem.)
+
+Verified live in a browser, which v326 had not been: wallpaper designs render on the paper panels on desktop and at 393x851; Debug Mode's save stays separate from the normal one through entry and exit, both intact afterwards; Inn acceptance leads to one Day 1 board and 問題 1 / 5 with no cold attempt and no duplicated task; a wrong action stamps 不正解, says why, and still offers the way forward. Cache stays v326; `node --test` passes (525).
+
+### 2026-09-10 - v326 adds isolated Debug Mode and starts the Inn with teaching
+
+The opening menu can enable Debug Mode without a hand-edited testing URL. Its
+own v3 save starts at character selection and the Entrance, receives all catalog
+decor, wallpaper, the cat and planted/mature versions of all garden species,
+and keeps its placements on reload. The existing skip controls are enabled.
+An always-visible banner offers Exit debug; reset and exports use the active
+save namespace, and debug exports cannot overwrite normal progress. Analytics
+are disabled for debug sessions without changing the normal consent preference.
+Set available=false in debug-mode.js to remove the mode from a future build.
+
+The Inn now goes from accepting the job to the Day 1 board and guided first
+task. It no longer inserts an unsupported cold attempt and then repeats it.
+Old cold-start saves resume with Day 1 help. Existing authored audio is retained.
+Tests that required the retired trial were replaced with guided opening,
+correct-answer advance, missed-answer recovery and legacy resume coverage.
+
+Wallpaper mask SVGs are embedded in CSS so a missing external mask request
+cannot make every wallpaper invisible. Selection, purchase and returning to
+plain wallpaper pass the interaction test. The user's report that all designs
+are invisible still needs a live check on their exact URL/build; do not claim
+the browser rendering issue is resolved from those tests alone.
+
+Verification: final node --test passes 525/525; syntax and diff checks pass.
+Review caught normal-save imports lacking debug stock; reload now merges
+missing stock while retaining placements, plant IDs and selected wallpaper.
+
+Follow-up: the room has two nominal shelf slots but no drawn shelf beneath
+them. Existing display-shelf-staggered-v1.webp and display-cabinet-kiri-v1.webp
+were inspected and are suitable candidates. New shelf-top placement and object
+scale changes are not implemented yet. All changes remain local and unpushed.
+
+### 2026-09-10 - v325 confines home wallpaper to sliding-door paper
+
+The old 70%-height overlay painted across the ceiling, beams, windows and open doorways. Two small SVG alpha masks now follow the six solid paper panels, with transparent handle cutouts and separate daylight/evening geometry. Both wallpaper patterns use the same mask; shop swatches remain unmasked. The mask uses the same cover sizing and centered alignment as the room background, including the mobile pan camera. Both mask assets are cached offline; shell and icon URL stamps are v325.
+
+Verification: 73 targeted home-decor, wallpaper-boundary and PWA tests pass. The boundary regression failed on the old overlay. Production-mask alpha pixels and offline composited day/evening previews were inspected. This is not a live-browser or physical-phone verification; the local server remains unavailable. No commit or push made.
+
+### 2026-09-10 - v324 review corrected the installed icon and title utility flow
+
+A review pass caught two release-facing icon defects before deployment. The maskable generator had padded the already-safe master to 60%, making the lantern much too small at home-screen size; maskable exports now keep the readable full-bleed composition. The manifest icon URLs now carry `?v=324`, because changing only the bytes at an unchanged URL does not reliably tell an installed Chromium app that its icon changed. The normal, maskable, Apple touch, and social images were inspected at their native dimensions after regeneration.
+
+Save data and About returned keyboard focus to their now-hidden Menu actions, while the reset dialog left title controls active behind the modal. All three dialogs now make the title controls inert and return focus to the visible Menu trigger. Closing the Menu by clicking outside also returns focus safely. Save data's runtime status and error messages now follow the panel's English interface language.
+
+`node --test` passes 523/523, `node --check app.js` passes, and `git diff --check` is clean. A served visual pass of the current title layout and mobile feedback placement is still open; direct local-file rendering was blocked and port 8743 was not serving this working tree.
+
+### 2026-09-09 - v324 pre-beta polish gives the tester build one coherent identity
+
+The title screen now has one clear entry action. Install app appears only where installation is genuinely available; Save data, About, and Start over sit behind an accessible Menu button. Start over still opens the existing confirmation, and keyboard focus returns to the visible Menu button when that confirmation is cancelled.
+
+The PWA icon family and public share preview now use the project's own lantern, alley-map, and floor-lantern artwork. The small app mark is a warm paper lantern against the existing navy alley; the 1200 x 630 share image uses the same map and lantern rather than an unrelated generated illustration. The service worker caches both source assets and the generated icon variants.
+
+Tester-facing utility labels now use English while Japanese remains in the game world and lesson material. The floating feedback control yields to active phone feedback, Continue, and update docks instead of covering the current task. Current Google Fonts remain hosted: their official OFL licenses are compatible, but full Japanese coverage for the six existing static weights measured 36.3 MB, which is not a practical offline shell payload without a custom glyph-subsetting build.
+
+Automated verification is green: `node --test`, the PWA identity test, whitespace check, and a read-only temporary-copy run of `research/balance-answers.mjs` (200 questions: 25% / 25% / 25% / 25%; repairs: 50% / 50%). The remaining release check is a served-browser pass at desktop and three phone sizes; the local server was unavailable during this work, so that visual check is intentionally not claimed as complete. Cache is v324.
+
 ### 2026-09-09 - Safety rails for a tester release, and two things that would have spoiled it
 
 Four pieces, built for handing the build to people who are not in the room: an optional telemetry adapter, a one-tap feedback button, a confirmation before 最初から, and a visible warning when local storage stops accepting writes.

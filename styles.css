@@ -170,11 +170,6 @@
     /* The text controls have no background of their own, so whatever is
        behind them is what they are read against. On the title screen that is
        a painted night scene and a fox. Give them their own ground. */
-    .title-scene .title-about-link,
-    .title-scene .app-version{
-      padding:4px 10px; border-radius:999px;
-      background:rgba(9,18,34,.72);
-    }
     .title-scene .title-actions{width:100%;align-items:flex-start;flex-direction:column}
     .title-scene .btn-primary{width:min(68%,250px)}
   }
@@ -1720,10 +1715,34 @@ body:has(#update-bar:not([hidden])){padding-bottom:132px;}
 .feedback-open:hover,.feedback-open:focus-visible{background:#4a2d19;outline:3px solid var(--lantern-bright);outline-offset:2px}
 body:has(#update-bar:not([hidden])) .feedback-open{bottom:calc(104px + env(safe-area-inset-bottom,0px));}
 @media(max-width:420px){body:has(#update-bar:not([hidden])) .feedback-open{bottom:calc(138px + env(safe-area-inset-bottom,0px));}}
+/* Feedback is a utility, not the current task. On a phone it yields to the
+   sticky correction and Continue docks rather than covering either one. */
+@media(max-width:760px){
+  body:has(#screen-game[style*="display: block"] #next-row[style*="display: block"]) .feedback-open{bottom:calc(76px + env(safe-area-inset-bottom,0px));}
+  body:has(#screen-game[style*="display: block"] #feedback-row.show) .feedback-open{bottom:calc(152px + env(safe-area-inset-bottom,0px));}
+  body:has(#update-bar:not([hidden])):has(#screen-game[style*="display: block"] #next-row[style*="display: block"]) .feedback-open{bottom:calc(214px + env(safe-area-inset-bottom,0px));}
+  body:has(#update-bar:not([hidden])):has(#screen-game[style*="display: block"] #feedback-row.show) .feedback-open{bottom:calc(290px + env(safe-area-inset-bottom,0px));}
+}
+/* A modal owns the screen and already offers a close or response action. */
+body:has(.about-panel:not([hidden])) .feedback-open{visibility:hidden;pointer-events:none}
 
 /* Install and save controls on the title screen. Quiet by design - they sit
    under the way in, not beside it. */
-.title-utility{display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:10px; margin-top:10px;}
+.title-utility{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:10px;}
+.title-menu-wrap{position:relative;}
+.title-menu{
+  position:absolute;left:0;bottom:calc(100% + 8px);z-index:8;
+  display:grid;min-width:190px;padding:7px;border:1px solid rgba(247,215,159,.48);
+  border-radius:12px;background:rgba(17,12,14,.96);box-shadow:0 12px 28px rgba(0,0,0,.45);
+}
+.title-menu[hidden]{display:none}
+.title-menu-action{
+  min-height:40px;padding:8px 10px;border:0;border-radius:8px;background:transparent;
+  color:#fff0cf;text-align:left;font:700 .8rem 'Zen Maru Gothic',sans-serif;cursor:pointer;
+}
+.title-menu-action:hover,.title-menu-action:focus-visible{background:rgba(247,200,119,.16);outline:2px solid var(--lantern-bright);outline-offset:1px}
+.title-menu-danger{color:#ffd4c5}
+.title-menu .app-version{margin:5px 4px 1px;padding-top:6px;border-top:1px solid rgba(247,215,159,.2);text-align:left;}
 .install-steps{
   margin:14px 0 18px; padding-left:22px;
   color:#e6d2b2; font-size:.82rem; line-height:1.75; text-align:left;
@@ -2560,14 +2579,36 @@ body:has(#update-bar:not([hidden])) .feedback-open{bottom:calc(104px + env(safe-
   }
   .home-howto:hover{background:#3a2819}
 
-  /* Wallpaper sits over the walls of the painted room, not over the tatami, and
-     multiplies into the picture rather than covering it - the room keeps its
-     own light and shadow and simply gains a pattern. */
+  /* Trace paper panels, not a rectangle over the upper room. The mask uses
+     the painting's aspect ratio and cover sizing, just like .home-scene-bg,
+     so it remains aligned when the mobile camera scales and pans the room. */
   .home-wallpaper{
-    position:absolute; left:0; right:0; top:0; height:70%;
+    position:absolute; inset:0;
     pointer-events:none; mix-blend-mode:multiply; opacity:.55;
+    -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%221200%22%20height%3D%22669%22%20viewBox%3D%220%200%201200%20669%22%3E%20%3Cdefs%3E%20%3Cmask%20id%3D%22paper-handles%22%20maskUnits%3D%22userSpaceOnUse%22%20x%3D%220%22%20y%3D%220%22%20width%3D%221200%22%20height%3D%22669%22%20style%3D%22mask-type%3Aluminance%22%3E%20%3Crect%20width%3D%221200%22%20height%3D%22669%22%20fill%3D%22white%22%2F%3E%20%3Cg%20fill%3D%22black%22%3E%20%3Cellipse%20cx%3D%2299%22%20cy%3D%22333%22%20rx%3D%228%22%20ry%3D%2214%22%2F%3E%20%3Cellipse%20cx%3D%22325%22%20cy%3D%22343%22%20rx%3D%223%22%20ry%3D%228%22%2F%3E%20%3Cellipse%20cx%3D%22458%22%20cy%3D%22344%22%20rx%3D%227%22%20ry%3D%228%22%2F%3E%20%3Cellipse%20cx%3D%22741%22%20cy%3D%22344%22%20rx%3D%227%22%20ry%3D%228%22%2F%3E%20%3Cellipse%20cx%3D%22912%22%20cy%3D%22343%22%20rx%3D%223%22%20ry%3D%2210%22%2F%3E%20%3Cellipse%20cx%3D%221101%22%20cy%3D%22335%22%20rx%3D%228%22%20ry%3D%2214%22%2F%3E%20%3C%2Fg%3E%20%3C%2Fmask%3E%20%3C%2Fdefs%3E%20%3Cg%20fill%3D%22white%22%20mask%3D%22url(%23paper-handles)%22%3E%20%3Cpolygon%20points%3D%220%2C0%20115%2C65%20114%2C547%200%2C587%22%2F%3E%20%3Cpolygon%20points%3D%22281%2C166%20329%2C190%20329%2C460%20281%2C477%22%2F%3E%20%3Cpolygon%20points%3D%22351%2C193%20472%2C193%20472%2C456%20351%2C456%22%2F%3E%20%3Cpolygon%20points%3D%22727%2C193%20849%2C193%20849%2C456%20727%2C456%22%2F%3E%20%3Cpolygon%20points%3D%22872%2C189%20917%2C166%20917%2C477%20872%2C460%22%2F%3E%20%3Cpolygon%20points%3D%221088%2C65%201200%2C0%201200%2C587%201088%2C547%22%2F%3E%20%3C%2Fg%3E%20%3C%2Fsvg%3E");
+    mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%221200%22%20height%3D%22669%22%20viewBox%3D%220%200%201200%20669%22%3E%20%3Cdefs%3E%20%3Cmask%20id%3D%22paper-handles%22%20maskUnits%3D%22userSpaceOnUse%22%20x%3D%220%22%20y%3D%220%22%20width%3D%221200%22%20height%3D%22669%22%20style%3D%22mask-type%3Aluminance%22%3E%20%3Crect%20width%3D%221200%22%20height%3D%22669%22%20fill%3D%22white%22%2F%3E%20%3Cg%20fill%3D%22black%22%3E%20%3Cellipse%20cx%3D%2299%22%20cy%3D%22333%22%20rx%3D%228%22%20ry%3D%2214%22%2F%3E%20%3Cellipse%20cx%3D%22325%22%20cy%3D%22343%22%20rx%3D%223%22%20ry%3D%228%22%2F%3E%20%3Cellipse%20cx%3D%22458%22%20cy%3D%22344%22%20rx%3D%227%22%20ry%3D%228%22%2F%3E%20%3Cellipse%20cx%3D%22741%22%20cy%3D%22344%22%20rx%3D%227%22%20ry%3D%228%22%2F%3E%20%3Cellipse%20cx%3D%22912%22%20cy%3D%22343%22%20rx%3D%223%22%20ry%3D%2210%22%2F%3E%20%3Cellipse%20cx%3D%221101%22%20cy%3D%22335%22%20rx%3D%228%22%20ry%3D%2214%22%2F%3E%20%3C%2Fg%3E%20%3C%2Fmask%3E%20%3C%2Fdefs%3E%20%3Cg%20fill%3D%22white%22%20mask%3D%22url(%23paper-handles)%22%3E%20%3Cpolygon%20points%3D%220%2C0%20115%2C65%20114%2C547%200%2C587%22%2F%3E%20%3Cpolygon%20points%3D%22281%2C166%20329%2C190%20329%2C460%20281%2C477%22%2F%3E%20%3Cpolygon%20points%3D%22351%2C193%20472%2C193%20472%2C456%20351%2C456%22%2F%3E%20%3Cpolygon%20points%3D%22727%2C193%20849%2C193%20849%2C456%20727%2C456%22%2F%3E%20%3Cpolygon%20points%3D%22872%2C189%20917%2C166%20917%2C477%20872%2C460%22%2F%3E%20%3Cpolygon%20points%3D%221088%2C65%201200%2C0%201200%2C587%201088%2C547%22%2F%3E%20%3C%2Fg%3E%20%3C%2Fsvg%3E");
+    -webkit-mask-size:cover; mask-size:cover;
+    -webkit-mask-position:center; mask-position:center;
+    -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
+    mask-mode:alpha;
+  }
+  .light-evening .home-wallpaper,
+  .light-night .home-wallpaper{
+    -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%221200%22%20height%3D%22669%22%20viewBox%3D%220%200%201200%20669%22%3E%20%3Cdefs%3E%20%3Cmask%20id%3D%22paper-handles%22%20maskUnits%3D%22userSpaceOnUse%22%20x%3D%220%22%20y%3D%220%22%20width%3D%221200%22%20height%3D%22669%22%20style%3D%22mask-type%3Aluminance%22%3E%20%3Crect%20width%3D%221200%22%20height%3D%22669%22%20fill%3D%22white%22%2F%3E%20%3Cg%20fill%3D%22black%22%3E%20%3Cellipse%20cx%3D%2299%22%20cy%3D%22346%22%20rx%3D%228%22%20ry%3D%2214%22%2F%3E%20%3Cellipse%20cx%3D%22325%22%20cy%3D%22356%22%20rx%3D%223%22%20ry%3D%228%22%2F%3E%20%3Cellipse%20cx%3D%22458%22%20cy%3D%22357%22%20rx%3D%227%22%20ry%3D%228%22%2F%3E%20%3Cellipse%20cx%3D%22741%22%20cy%3D%22357%22%20rx%3D%227%22%20ry%3D%228%22%2F%3E%20%3Cellipse%20cx%3D%22912%22%20cy%3D%22356%22%20rx%3D%223%22%20ry%3D%2210%22%2F%3E%20%3Cellipse%20cx%3D%221101%22%20cy%3D%22348%22%20rx%3D%228%22%20ry%3D%2214%22%2F%3E%20%3C%2Fg%3E%20%3C%2Fmask%3E%20%3C%2Fdefs%3E%20%3Cg%20fill%3D%22white%22%20mask%3D%22url(%23paper-handles)%22%3E%20%3Cpolygon%20points%3D%220%2C16%20115%2C79%20114%2C560%200%2C599%22%2F%3E%20%3Cpolygon%20points%3D%22281%2C179%20329%2C203%20329%2C473%20281%2C490%22%2F%3E%20%3Cpolygon%20points%3D%22351%2C206%20472%2C206%20472%2C469%20351%2C469%22%2F%3E%20%3Cpolygon%20points%3D%22727%2C206%20849%2C206%20849%2C469%20727%2C469%22%2F%3E%20%3Cpolygon%20points%3D%22872%2C202%20917%2C179%20917%2C490%20872%2C473%22%2F%3E%20%3Cpolygon%20points%3D%221088%2C79%201200%2C16%201200%2C599%201088%2C560%22%2F%3E%20%3C%2Fg%3E%20%3C%2Fsvg%3E");
+    mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%221200%22%20height%3D%22669%22%20viewBox%3D%220%200%201200%20669%22%3E%20%3Cdefs%3E%20%3Cmask%20id%3D%22paper-handles%22%20maskUnits%3D%22userSpaceOnUse%22%20x%3D%220%22%20y%3D%220%22%20width%3D%221200%22%20height%3D%22669%22%20style%3D%22mask-type%3Aluminance%22%3E%20%3Crect%20width%3D%221200%22%20height%3D%22669%22%20fill%3D%22white%22%2F%3E%20%3Cg%20fill%3D%22black%22%3E%20%3Cellipse%20cx%3D%2299%22%20cy%3D%22346%22%20rx%3D%228%22%20ry%3D%2214%22%2F%3E%20%3Cellipse%20cx%3D%22325%22%20cy%3D%22356%22%20rx%3D%223%22%20ry%3D%228%22%2F%3E%20%3Cellipse%20cx%3D%22458%22%20cy%3D%22357%22%20rx%3D%227%22%20ry%3D%228%22%2F%3E%20%3Cellipse%20cx%3D%22741%22%20cy%3D%22357%22%20rx%3D%227%22%20ry%3D%228%22%2F%3E%20%3Cellipse%20cx%3D%22912%22%20cy%3D%22356%22%20rx%3D%223%22%20ry%3D%2210%22%2F%3E%20%3Cellipse%20cx%3D%221101%22%20cy%3D%22348%22%20rx%3D%228%22%20ry%3D%2214%22%2F%3E%20%3C%2Fg%3E%20%3C%2Fmask%3E%20%3C%2Fdefs%3E%20%3Cg%20fill%3D%22white%22%20mask%3D%22url(%23paper-handles)%22%3E%20%3Cpolygon%20points%3D%220%2C16%20115%2C79%20114%2C560%200%2C599%22%2F%3E%20%3Cpolygon%20points%3D%22281%2C179%20329%2C203%20329%2C473%20281%2C490%22%2F%3E%20%3Cpolygon%20points%3D%22351%2C206%20472%2C206%20472%2C469%20351%2C469%22%2F%3E%20%3Cpolygon%20points%3D%22727%2C206%20849%2C206%20849%2C469%20727%2C469%22%2F%3E%20%3Cpolygon%20points%3D%22872%2C202%20917%2C179%20917%2C490%20872%2C473%22%2F%3E%20%3Cpolygon%20points%3D%221088%2C79%201200%2C16%201200%2C599%201088%2C560%22%2F%3E%20%3C%2Fg%3E%20%3C%2Fsvg%3E");
   }
   .home-wallpaper-art{width:100%; height:100%; display:block}
+  .debug-banner{
+    display:flex; flex-wrap:wrap; align-items:center; justify-content:center;
+    gap:6px 16px; padding:6px 12px; color:#fff0cf; background:#442809;
+    border-bottom:2px solid #e9ad4c; font:14px/1.4 system-ui,sans-serif;
+  }
+  .debug-banner[hidden]{display:none}
+  .debug-banner button{
+    min-height:44px; padding:6px 14px; border:1px solid #e9ad4c;
+    border-radius:8px; color:#fff0cf; background:#281907; cursor:pointer;
+    font:inherit;
+  }
   /* A third of the wall per repeat. See wallpaperSvg in home-decor.js: the
      sheet holds about thirteen motifs, so this lands them near life size
      instead of one sheet stretched across the whole room. */

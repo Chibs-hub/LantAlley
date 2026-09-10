@@ -189,7 +189,7 @@ test("the app stores v3 and reads v2 only to migrate it", () => {
 
   // v2 had nowhere to put an episode, so a reload mid-shift threw the hour
   // away: previewState was memory-only and repairQueue was never persisted.
-  assert.match(app, /var STORAGE_KEY_V3 = "lanternAlley\.v3";/);
+  // Normal/debug key isolation is exercised through real saves in walkthrough.test.mjs.
   assert.match(app, /localStorage\.setItem\(STORAGE_KEY_V3/);
   assert.match(app, /LanternProgress\.migrateProgress\(JSON\.parse\(raw\)\)/);
 

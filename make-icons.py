@@ -1,4 +1,4 @@
-"""Generate the PWA icon set from lantern-alley.ico.
+"""Generate the PWA icon set from the finished Lantern Alley lantern mark.
 
 Two kinds are needed:
   - "any"      : the icon as-is, used in most places.
@@ -6,35 +6,41 @@ Two kinds are needed:
                  middle 80% can be cut off, so the art is padded onto a solid
                  background with a safe margin.
 """
-import os
+from pathlib import Path
 
 from PIL import Image
 
-SRC = 'lantern-alley.ico'
-OUT_DIR = 'icons'
+
+ROOT = Path(__file__).resolve().parent
+SRC = ROOT / "assets" / "branding" / "lantern-mark-v1.png"
+OUT_DIR = ROOT / "icons"
 BG = (14, 24, 48, 255)  # --ai-indigo-deep, matches the page and theme-color
 SIZES = [192, 512]
+RESAMPLE = Image.Resampling.LANCZOS
 
-os.makedirs(OUT_DIR, exist_ok=True)
+OUT_DIR.mkdir(parents=True, exist_ok=True)
 master = Image.open(SRC).convert('RGBA')
 
 for size in SIZES:
-    plain = master.resize((size, size), Image.LANCZOS)
-    plain.save(os.path.join(OUT_DIR, 'icon-%d.png' % size), format='PNG')
+    plain = master.resize((size, size), RESAMPLE)
+    plain.save(OUT_DIR / ('icon-%d.png' % size), format='PNG')
 
-    # Maskable: art occupies the middle 60%, leaving a generous safe zone.
-    canvas = Image.new('RGBA', (size, size), BG)
-    inner = int(size * 0.6)
-    art = master.resize((inner, inner), Image.LANCZOS)
-    offset = (size - inner) // 2
-    canvas.paste(art, (offset, offset), art)
-    canvas.save(os.path.join(OUT_DIR, 'icon-%d-maskable.png' % size), format='PNG')
+    # The master already has a full-bleed navy background and keeps the lantern
+    # well inside the maskable safe zone. Padding the whole master again made
+    # the lantern unreadably small on a phone home screen.
+    maskable = master.resize((size, size), RESAMPLE)
+    maskable.save(OUT_DIR / ('icon-%d-maskable.png' % size), format='PNG')
 
 # iOS ignores the manifest and uses this; it must not be transparent.
 apple = Image.new('RGBA', (180, 180), BG)
-art = master.resize((150, 150), Image.LANCZOS)
+art = master.resize((150, 150), RESAMPLE)
 apple.paste(art, (15, 15), art)
-apple.convert('RGB').save(os.path.join(OUT_DIR, 'apple-touch-icon.png'), format='PNG')
+apple.convert('RGB').save(OUT_DIR / 'apple-touch-icon.png', format='PNG')
 
-for name in sorted(os.listdir(OUT_DIR)):
-    print('  %-28s %5.1f KB' % (name, os.path.getsize(os.path.join(OUT_DIR, name)) / 1024))
+# Browsers still ask for the favicon before they read the web manifest.
+# Keep it derived from the same master image rather than preserving an older,
+# visually unrelated mark.
+master.convert('RGBA').save(ROOT / 'lantern-alley.ico', format='ICO', sizes=[(16, 16), (32, 32), (48, 48), (64, 64)])
+
+for path in sorted(OUT_DIR.iterdir()):
+    print('  %-28s %5.1f KB' % (path.name, path.stat().st_size / 1024))

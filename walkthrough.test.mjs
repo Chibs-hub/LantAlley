@@ -59,6 +59,7 @@ function boot(seed, search, options) {
     addEventListener() {},
     removeEventListener() {},
     navigator: { serviceWorker: undefined, language: "ja" },
+    URL,
     location: { href: "http://localhost/" + (search || ""), search: search || "" },
     fetch: () => Promise.reject(new Error("no network in tests")),
   };
@@ -74,6 +75,10 @@ function boot(seed, search, options) {
   for (const src of scripts) {
     if (options && options.telemetry && (src === "telemetry-config.js" || src === "telemetry.js")) continue;
     vm.runInContext(read(src), context, { filename: src });
+    if (src === "debug-mode.js" && options && options.disableDebug) {
+      context.LanternDebug.available = false;
+      context.LanternDebug.enabled = false;
+    }
   }
   // app.js binds on DOMContentLoaded in the browser; nothing has fired here.
   doc.dispatchEvent(new FakeEvent("DOMContentLoaded", { bubbles: false }));
@@ -115,6 +120,167 @@ function boot(seed, search, options) {
 
   return { doc, clock, storage, errors, heard, $, clickable, visible, tapScreen, context, lastHeard };
 }
+
+test("debug menu starts at the opening and keeps normal progress isolated", () => {
+  const normal = {version:3, stages:{}, money:321, visited:["entrance"], characterSelected:true, playerCharacter:"woman"};
+  const game = boot(normal);
+  const original = game.storage.getItem("lanternAlley.v3");
+  game.$("btn-title-menu").click();
+  assert.ok(game.$("btn-debug-mode"), "opening menu offers debug mode");
+  game.$("btn-debug-mode").click();
+  assert.equal(new URL(game.context.location.href).searchParams.get("debug"), "1");
+  const debug = boot(null, "?debug=1", {storage:game.storage});
+  assert.equal(debug.storage.getItem("lanternAlley.v3"), original);
+  const saved = JSON.parse(debug.storage.getItem("lanternAlley.debug.v3"));
+  assert.equal(saved.characterSelected, false);
+  assert.deepEqual(saved.visited, []);
+  assert.equal(debug.$("debug-banner").hidden, false);
+  debug.$("btn-start").click();
+  assert.equal(debug.$("screen-character").hidden, false);
+  debug.$("btn-debug-exit").click();
+  const restored = boot(null, "", {storage:game.storage});
+  assert.equal(restored.storage.getItem("lanternAlley.v3"), original);
+  restored.$("btn-start").click();
+  assert.equal(restored.$("screen-character").hidden, true, "normal character selection is retained");
+});
+
+test("debug inventory includes every decor item and mature plant without resetting placement on reload", () => {
+  const game = boot(null, "?debug=1");
+  const raw = game.storage.getItem("lanternAlley.debug.v3");
+  assert.ok(raw, "debug has its own save");
+  const saved = JSON.parse(raw);
+  const decor = game.context.LanternHomeDecor;
+  for (const item of [...decor.catalogue(), ...decor.wallpapers()]) {
+    if(item.id !== "wallpaper-plain") assert.ok(saved.home.owned.includes(item.id), item.id);
+  }
+  for (const type of game.context.LanternHomeGarden.catalogue()) {
+    assert.ok(saved.garden.plants.some(p => p.typeId === type.id && p.stage === "mature" && p.growthPoints >= type.matureAt), type.id);
+  }
+  assert.equal(saved.innJourney.catUnlocked, true);
+  const count = saved.garden.plants.length;
+  saved.garden.plants[0].slotId = "garden-right-1";
+  game.storage.setItem("lanternAlley.debug.v3", JSON.stringify(saved));
+  const reloaded = boot(null, "?debug=1", {storage:game.storage});
+  const after = JSON.parse(reloaded.storage.getItem("lanternAlley.debug.v3"));
+  assert.equal(after.garden.plants.length, count);
+  assert.equal(after.garden.plants[0].slotId, "garden-right-1");
+  reloaded.$("btn-debug-exit").click();
+  assert.equal(new URL(reloaded.context.location.href).searchParams.has("debug"), false);
+});
+
+test("debug release switch hides the entry and ignores debug URLs", () => {
+  const game = boot(null, "?debug=1", {disableDebug:true});
+  assert.ok(game.$("btn-debug-mode"));
+  assert.equal(game.$("btn-debug-mode").hidden, true);
+  assert.equal(game.$("debug-banner").hidden, true);
+  assert.equal(game.storage.getItem("lanternAlley.debug.v3"), null);
+});
+
+test("guided Inn begins with help and advances after the first correct task without a second opening", async () => {
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game);
+  assert.equal(game.$("encounter-progress").textContent, "1");
+  assert.equal(game.$("encounter-status").style.display, "block");
+  assert.equal(game.$("romaji-toggle").hidden, false);
+  assert.ok(game.doc.querySelectorAll(".inn-new-word").length, "teaching arrives before the first attempt");
+  assert.ok(playRoom(game, game.$("jp-line").textContent));
+  game.clock.advance(7000);
+  game.$("btn-next").click();
+  game.clock.advance(500);
+  assert.equal(game.$("btn-jobs-begin"), null, "no second introduction");
+  assert.equal(game.$("encounter-progress").textContent, "2");
+});
+
+test("debug exposes working skip controls during guided training", async () => {
+  const game = boot(null, "?debug=1");
+  await enterTheInn(game);
+  assert.equal(game.$("btn-skip-question").hidden, false);
+  assert.equal(game.$("btn-skip-stage").hidden, false);
+  game.$("btn-skip-question").click();
+  game.clock.advance(7000);
+  game.$("btn-next").click();
+  game.clock.advance(500);
+  assert.equal(game.$("encounter-progress").textContent, "2");
+  assert.equal(game.storage.getItem("lanternAlley.v3"), null);
+});
+
+test("guided first task keeps a missed attempt on screen with help instead of replaying the opening", async () => {
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game);
+  const objects = game.doc.querySelectorAll(".inn-object").filter(game.visible);
+  const zones = game.doc.querySelectorAll(".inn-drop-zone").filter(game.visible);
+  objects[0].click();
+  zones[zones.length - 1].click();
+  game.clock.advance(4000);
+  assert.equal(game.$("encounter-progress").textContent, "1");
+  assert.equal(game.$("btn-jobs-begin"), null);
+  assert.ok(game.$("feedback-row").classList.contains("show"));
+  assert.ok(game.doc.querySelectorAll(".inn-new-word").length);
+  game.$("btn-next").click();
+  game.clock.advance(500);
+  assert.equal(game.$("encounter-progress").textContent, "2");
+});
+
+test("debug reset restores inventory without resetting the normal save", () => {
+  const game = boot({version:3, money:321}, "?debug=1");
+  const original = game.storage.getItem("lanternAlley.v3");
+  game.$("btn-restart").click();
+  game.$("reset-confirm-action").click();
+  const saved = JSON.parse(game.storage.getItem("lanternAlley.debug.v3"));
+  assert.ok(saved.home.owned.length > 10);
+  assert.equal(saved.innJourney.catUnlocked, true);
+  assert.equal(game.storage.getItem("lanternAlley.v3"), original);
+});
+
+test("an imported normal save gains debug stock without losing placed items", () => {
+  const storage = new FakeStorage();
+  storage.setItem("lanternAlley.debug.v3", JSON.stringify({version:3, stages:{},
+    home:{owned:["low-table"], placed:{"floor-front":"low-table"}},
+    activeWallpaper:"wallpaper-asanoha",
+    garden:{nextInstanceId:8, plants:[{id:"plant-7",typeId:"camellia",stage:"mature",growthPoints:4,slotId:"garden-right-1"}]}}));
+  const game = boot(null, "?debug=1", {storage});
+  const saved = JSON.parse(storage.getItem("lanternAlley.debug.v3"));
+  assert.ok(saved.home.owned.length > 10);
+  assert.equal(saved.home.placed["floor-front"], "low-table");
+  assert.equal(saved.activeWallpaper, "wallpaper-asanoha");
+  assert.equal(saved.garden.plants.find(p => p.id === "plant-7").slotId, "garden-right-1");
+  assert.equal(new Set(saved.garden.plants.map(p => p.id)).size, saved.garden.plants.length);
+  assert.equal(saved.innJourney.catUnlocked, true);
+});
+
+test("legacy cold-start saves resume with the guided first lesson", async () => {
+  const game = boot({version:3, visited:["entrance"], characterSelected:true, playerCharacter:"woman",
+    stages:{"home-inn":{phase:"coldopen", question:0}}}, "?skip=1");
+  await enterTheInn(game);
+  assert.equal(game.$("romaji-toggle").hidden, false);
+  assert.ok(game.doc.querySelectorAll(".inn-new-word").length);
+  assert.equal(game.$("encounter-status").style.display, "block");
+});
+
+test("wallpaper selections replace the room layer and survive reload", () => {
+  const game = boot(null, "?skip=1&unlockall=1");
+  enterHome(game);
+  game.doc.querySelector("[data-enter-house]").click();
+  game.doc.querySelector("[data-home-decorate]").click();
+  game.doc.querySelector('[data-tab="wallpaper"]').click();
+  const layers = [];
+  for(const id of ["wallpaper-asanoha", "wallpaper-sakura", "wallpaper-plain"]){
+    const pick = game.doc.querySelector('[data-wallpaper="' + id + '"]')
+      || game.doc.querySelector('[data-buy-wallpaper="' + id + '"]');
+    assert.ok(pick, id);
+    pick.click();
+    assert.equal(JSON.parse(game.storage.getItem("lanternAlley.v3")).activeWallpaper, id);
+    const layer = game.doc.querySelector(".home-wallpaper");
+    layers.push(layer?.querySelector(".home-wallpaper-art")?.getAttribute("style")
+      || layer?.querySelector("pattern")?.id || "");
+  }
+  assert.notEqual(layers[0], layers[1]);
+  assert.equal(layers[2], "");
+  const reloaded = boot(null, "", {storage:game.storage});
+  enterHome(reloaded);
+  reloaded.doc.querySelector("[data-enter-house]").click();
+  assert.equal(reloaded.doc.querySelector(".home-wallpaper"), null);
+});
 
 class ThrowingWriteStorage extends FakeStorage {
   setItem() { throw new Error("storage blocked"); }
@@ -282,6 +448,114 @@ test("restart does not erase saved progress until the player confirms", () => {
   assert.equal(game.storage.getItem("lanternAlley.v3"), before, "Cancel preserves progress");
 });
 
+test("the title menu keeps maintenance actions behind one deliberate control", () => {
+  const game = boot(null, "?skip=1");
+  const menu = game.$("title-menu");
+  const trigger = game.$("btn-title-menu");
+
+  assert.ok(menu, "the compact title menu exists");
+  assert.ok(trigger, "the title menu has an explicit trigger");
+  assert.equal(menu.hidden, true, "maintenance actions do not compete with Enter");
+  assert.equal(game.visible(game.$("btn-start")), true, "the entry action remains visible");
+  assert.equal(game.visible(game.$("btn-save-data")), false, "Save Data stays in the closed menu");
+  assert.equal(game.visible(game.$("btn-restart")), false, "Start Over stays in the closed menu");
+  assert.equal(game.$("btn-install-open").hidden, true,
+    "an unsupported browser does not advertise an unavailable installation action");
+
+  trigger.click();
+  assert.equal(menu.hidden, false, "Menu reveals the secondary actions on request");
+  assert.equal(trigger.getAttribute("aria-expanded"), "true", "the trigger exposes its state");
+  assert.equal(game.visible(game.$("btn-save-data")), true, "Save Data is reachable from Menu");
+  assert.equal(game.visible(game.$("btn-restart")), true, "Start Over is reachable from Menu");
+
+  game.$("btn-restart").click();
+  assert.equal(menu.hidden, true, "choosing a menu action closes Menu behind its dialog");
+  assert.equal(game.$("reset-confirm").hidden, false, "Start Over retains its confirmation");
+
+  game.$("reset-cancel").click();
+  assert.equal(trigger.focused, true,
+    "cancelling Start Over returns keyboard focus to the visible Menu trigger");
+});
+
+test("title dialogs keep background controls inert and return focus to the visible Menu button", () => {
+  for(const entry of [
+    {open:"btn-save-data", panel:"save-panel", close:"btn-save-close"},
+    {open:"btn-about", panel:"about-panel", close:"btn-about-close"},
+    {open:"btn-restart", panel:"reset-confirm", close:"reset-cancel"},
+  ]){
+    const game = boot(null, "?skip=1");
+    const trigger = game.$("btn-title-menu");
+    trigger.click();
+    game.$(entry.open).click();
+
+    assert.equal(game.$(entry.panel).hidden, false, `${entry.panel} opens`);
+    assert.equal(trigger.hasAttribute("inert"), true, `${entry.panel} owns keyboard focus`);
+
+    game.$(entry.close).click();
+    assert.equal(trigger.hasAttribute("inert"), false, `${entry.panel} releases the title controls`);
+    assert.equal(trigger.focused, true, `${entry.panel} returns focus to the visible Menu button`);
+  }
+});
+
+test("dismissing the title menu outside it does not leave focus in hidden content", () => {
+  const game = boot(null, "?skip=1");
+  const trigger = game.$("btn-title-menu");
+
+  trigger.click();
+  assert.equal(game.$("title-menu").hidden, false);
+  game.doc.dispatchEvent(new FakeEvent("click", {bubbles:false}));
+
+  assert.equal(game.$("title-menu").hidden, true);
+  assert.equal(trigger.focused, true, "focus returns to the visible disclosure button");
+});
+
+test("save-status messages follow the panel's English interface language", () => {
+  const app = read("app.js");
+
+  for(const message of [
+    "No save data yet.",
+    "Save exported.",
+    "This file cannot be imported.",
+    "Could not save progress.",
+    "Save imported. Reloading...",
+  ]) assert.ok(app.includes(message), message);
+});
+
+test("title utility chrome uses English while the alley entry remains Japanese", () => {
+  const game = boot(null, "?skip=1");
+
+  assert.equal(game.$("btn-start").textContent, "路地へ戻る",
+    "a returning player keeps the Japanese alley destination wording");
+  assert.equal(game.$("btn-title-menu").textContent, "Menu");
+  assert.equal(game.$("btn-install-open").textContent, "Install app");
+  assert.equal(game.$("update-bar").querySelectorAll("span")[0].textContent, "A new version is available.");
+  assert.equal(game.$("btn-update-now").textContent, "Update now");
+  assert.equal(game.$("btn-update-later").textContent, "Later");
+
+  game.$("btn-title-menu").click();
+  assert.equal(game.$("btn-save-data").textContent, "Save data");
+  assert.equal(game.$("btn-about").textContent, "About");
+  assert.equal(game.$("btn-restart").textContent, "Start over");
+
+  game.$("btn-save-data").click();
+  assert.equal(game.$("save-title").textContent, "Save data");
+  assert.equal(game.$("btn-save-export").textContent, "Export save");
+  assert.equal(game.$("btn-save-close").textContent, "Close");
+  game.$("btn-save-close").click();
+
+  game.$("btn-title-menu").click();
+  game.$("btn-about").click();
+  assert.equal(game.$("about-title").textContent, "About Lantern Alley");
+  assert.equal(game.$("btn-about-close").textContent, "Close");
+  game.$("btn-about-close").click();
+
+  game.$("btn-title-menu").click();
+  game.$("btn-restart").click();
+  assert.equal(game.$("reset-confirm-title").textContent, "Start over?");
+  assert.equal(game.$("reset-cancel").textContent, "Cancel");
+  assert.equal(game.$("reset-confirm-action").textContent, "Start over");
+});
+
 test("a storage write failure stays visible without stopping play", () => {
   const game = bootWithThrowingStorage("?skip=1");
   const warning = game.$("storage-warning");
@@ -354,6 +628,20 @@ test("tester controls remain touch-sized and cannot sit beneath the update bar",
   assert.match(css, /\.storage-warning\{[^}]*position:fixed/);
   assert.match(css, /\.storage-warning\{[^}]*z-index:[1-9][0-9]{2,}/);
   assert.match(css, /\.feedback-open\{[^}]*z-index:[1-9][0-9]{2,}/);
+});
+
+test("feedback moves clear of active phone action docks and modal dialogs", () => {
+  const css = read("styles.css");
+
+  assert.match(css,
+    /body:has\(#screen-game\[style\*="display: block"\] #next-row\[style\*="display: block"\]\) \.feedback-open\{bottom:calc\(76px/,
+    "an active Continue dock lifts Feedback above its button");
+  assert.match(css,
+    /body:has\(#screen-game\[style\*="display: block"\] #feedback-row\.show\) \.feedback-open\{bottom:calc\(152px/,
+    "an answer explanation gets its own clearance above Continue");
+  assert.match(css,
+    /body:has\(\.about-panel:not\(\[hidden\]\)\) \.feedback-open\{visibility:hidden;pointer-events:none\}/,
+    "a modal owns the screen instead of competing with the floating feedback button");
 });
 
 test("dark modal secondary buttons remain legible", () => {
@@ -1308,102 +1596,6 @@ test("finishing the Inn puts its words into the delayed-review schedule", async 
     "a word answered correctly should be due later, not immediately");
 });
 
-/* The Inn used to open with three days of preparation for a shift the
- * learner had never seen. The cold open puts the first guest in front of
- * them before any teaching, with every support withheld, so the three days
- * answer a problem they have just felt. Nothing here is scored. */
-test("the cold open shows the request with every support withheld", async () => {
-  const game = boot(null, "?skip=1");
-  await enterTheInn(game);
-
-  assert.equal(game.$("stage-phase-badge").textContent.indexOf("一日目"), -1,
-    "the cold open must not claim to be Day 1");
-  assert.equal(game.doc.querySelectorAll(".inn-new-word").length, 0,
-    "the new-word card is the main support and must be absent");
-  assert.equal(game.$("romaji-line").style.display, "none", "romaji must be withheld");
-  assert.equal(game.$("hint-btn").style.display, "none", "the hint button must be withheld");
-  assert.equal(game.$("encounter-status").style.display, "none",
-    "the cold open is one unscored task, not question 1 of 5");
-});
-
-test("the cold open is unscored and hands over to Day 1", async () => {
-  const game = boot(null, "?skip=1");
-  await enterTheInn(game);
-
-  const moneyBefore = JSON.parse(game.storage.getItem("lanternAlley.v3") || "{}").money;
-
-  // Answer wrongly on purpose: this is the moment the learner cannot do it.
-  const objects = game.doc.querySelectorAll(".inn-object").filter(game.visible);
-  const zones = game.doc.querySelectorAll(".inn-drop-zone").filter(game.visible);
-  assert.ok(objects.length && zones.length, "the cold open renders its room");
-  objects[0].click();
-  game.clock.advance(150);
-  zones[zones.length - 1].click();
-  game.clock.advance(4000);
-
-  const saved = JSON.parse(game.storage.getItem("lanternAlley.v3") || "{}");
-  // Not zero: the Entrance's bow already paid ¥10 before the Inn. What must
-  // not change is the balance across the cold open itself.
-  assert.equal(saved.money, moneyBefore, "the cold open must not pay");
-  assert.equal(Object.keys(saved.reviewProgress || {}).length, 0,
-    "the cold open is a demonstration, not evidence, and must not be scheduled");
-
-  assert.equal(game.$("next-row").style.display, "block", "there is a way forward either way");
-  game.$("btn-next").click();
-  game.clock.advance(500);
-  // Day 1 opens on its own board. It is not the same screen as the one that
-  // opened the stage: that introduced the place and its five words, this
-  // names the day and says what the day is for.
-  assert.ok(beginDay(game), "Day 1 announces itself before it starts");
-  assert.match(game.$("stage-phase-badge").textContent, /一日目/, "it must lead into Day 1");
-  assert.equal(game.doc.querySelectorAll(".inn-new-word").length, 1,
-    "Day 1 restores the new-word card");
-});
-
-/* Played live, solving the cold open's cushion task and then being asked the
- * identical task again as "Day 1, question 1" read as a mistake, not a
- * lesson - Kon's own correct reply already says "let's look at the rest",
- * not "let's do that again". A correct guess should not be asked twice; a
- * wrong one still needs the real, taught pass. */
-test("a correct cold-open answer does not repeat that task as Day 1's first question", async () => {
-  const game = boot(null, "?skip=1");
-  await enterTheInn(game);
-
-  const task = game.$("jp-line").textContent;
-  assert.ok(playRoom(game, task), "the cold open's room task is solvable");
-  game.clock.advance(1200);
-  assert.equal(game.$("next-row").style.display, "block", "there is a way forward");
-
-  game.$("btn-next").click();
-  game.clock.advance(500);
-
-  // Day 1 still announces itself, and still skips replaying the task the
-  // cold open just solved.
-  assert.ok(beginDay(game), "Day 1 announces itself before it starts");
-  assert.match(game.$("stage-phase-badge").textContent, /一日目/, "Day 1 has begun");
-  assert.equal(game.$("encounter-progress").textContent, "2",
-    "the task just solved cold must not be asked again as question 1");
-  assert.equal(game.$("encounter-total").textContent, "5", "the day still has all five questions");
-});
-
-test("a wrong cold-open answer still teaches that task for real as Day 1's first question", async () => {
-  const game = boot(null, "?skip=1");
-  await enterTheInn(game);
-
-  const objects = game.doc.querySelectorAll(".inn-object").filter(game.visible);
-  const zones = game.doc.querySelectorAll(".inn-drop-zone").filter(game.visible);
-  objects[0].click();
-  game.clock.advance(150);
-  zones[zones.length - 1].click();
-  game.clock.advance(4000);
-
-  game.$("btn-next").click();
-  game.clock.advance(500);
-
-  assert.equal(game.$("encounter-progress").textContent, "1",
-    "a word never demonstrated correctly must still be taught, not skipped");
-});
-
 test("the ?skip=1 flag lands on the map without playing the Entrance", () => {
   const game = boot(null, "?skip=1");
   game.clock.advance(50);
@@ -1440,11 +1632,6 @@ test("?skip=1 also reveals per-question and whole-stage skip controls in the Inn
   assert.equal(game.$("btn-skip-question").hidden, false,
     "the skip-question control shows once a real Learn question is on screen");
   assert.equal(game.$("btn-skip-stage").hidden, false, "the skip-stage control shows too");
-
-  // The first skip steps out of the cold open, which is a scene rather than a
-  // question. The second skips a real Day 1 question.
-  game.$("btn-skip-question").click();
-  game.clock.advance(200);
 
   const firstEncounter = game.$("encounter-progress").textContent;
   game.$("btn-skip-question").click();
@@ -1822,43 +2009,8 @@ test("the map explains what its lantern count means, until it doesn't need to", 
   assert.equal(typeof after.$("map-goal-note").hidden, "boolean");
 });
 
-test("the romaji switch cannot reveal romaji during the cold open", async () => {
-  // The switch wrote romaji-line's display directly, so it overrode the
-  // phase gate that withholds romaji in the cold open and in Challenge.
-  const game = boot(null, "?skip=1");
-  await enterTheInn(game);
-  assert.equal(game.$("romaji-line").style.display, "none", "withheld to begin with");
-  game.$("romaji-switch").click();
-  assert.equal(game.$("romaji-line").style.display, "none", "and still withheld after toggling");
-});
 
-test("the cold open marks the attempt neither right nor wrong", async () => {
-  // 「もう一度」 would punish the stumble this scene exists to produce, and
-  // 「正解」 on a miss is false - the first version stamped 正解 on a wrong
-  // answer because the branch reused showFeedback(true, ...).
-  const game = boot(null, "?skip=1");
-  await enterTheInn(game);
-  const objects = game.doc.querySelectorAll(".inn-object").filter(game.visible);
-  const zones = game.doc.querySelectorAll(".inn-drop-zone").filter(game.visible);
-  objects[0].click();
-  game.clock.advance(150);
-  zones[zones.length - 1].click();
-  game.clock.advance(1200);
 
-  assert.equal(game.$("stamp").textContent, "", "the cold open carries no verdict stamp");
-});
-
-test("the romaji switch is not offered when it cannot do anything", async () => {
-  // Challenge and the cold open withhold romaji whatever the switch says, so
-  // showing it lit and in the on position promised help that never came.
-  const game = boot(null, "?skip=1");
-  await enterTheInn(game);
-  assert.equal(game.$("romaji-toggle").hidden, true, "hidden during the cold open");
-
-  game.$("btn-skip-question").click();
-  game.clock.advance(300);
-  assert.equal(game.$("romaji-toggle").hidden, false, "offered again on Day 1, where it works");
-});
 
 test("an episode names its story, not its internal skill taxonomy", async () => {
   // The label read "Episode 1 preview - quick-response": the word preview,
@@ -2513,144 +2665,10 @@ test("a correct answer does not print its own translation twice, in English", as
     "the continue button matches the rest of the game's Japanese");
 });
 
-test("the task the cold open lost is reintroduced, not silently repeated", async () => {
-  // A wrong cold open is the common case - the scene exists to produce one -
-  // and Day 1 then opens on that same request, word for word, with the job
-  // board in between. The repetition is the teaching, but nothing said so, so
-  // the first two things a new player is asked looked like a fault.
-  const game = boot(null, "?skip=1");
-  await enterTheInn(game);
 
-  // Miss it: an object into the wrong place.
-  const objects = game.doc.querySelectorAll(".inn-object").filter(game.visible);
-  const zones = game.doc.querySelectorAll(".inn-drop-zone").filter(game.visible);
-  objects[0].click();
-  game.clock.advance(200);
-  zones[zones.length - 1].click();
-  game.clock.advance(3000);
 
-  game.$("btn-next").click();
-  game.clock.advance(600);
-  assert.ok(beginDay(game), "Day 1 announces itself");
 
-  const narration = game.$("narration").textContent;
-  assert.match(game.$("stage-phase-badge").textContent, /一日目/);
-  // The banner carries this, not Kon - saying it in both places made her line
-  // four sentences long before the request arrived.
-  assert.equal(game.$("retry-flag").hidden, false, "the repeat is marked");
-  assert.match(game.$("retry-flag-text").textContent, /さっきできなかった/);
-  // And she is still one fox: one speaker tag, one pair of quotes.
-  assert.equal((narration.match(/コン：「/g) || []).length, 1, narration);
-});
 
-test("a question only comes round again after a miss, and says so when it does", async () => {
-  // The rule was already there - a correct answer moves on to the next word,
-  // a missed one comes back - but nothing on screen said so, so the same
-  // request twice read as the game repeating itself.
-  const game = boot(null, "?skip=1");
-  await enterTheInn(game);
-
-  // First time asked: no retry marker anywhere.
-  assert.equal(game.$("retry-flag").hidden, true, "a first asking is not marked as a repeat");
-
-  // Miss the cold open, which is what that scene is for.
-  const objects = game.doc.querySelectorAll(".inn-object").filter(game.visible);
-  const zones = game.doc.querySelectorAll(".inn-drop-zone").filter(game.visible);
-  objects[0].click();
-  game.clock.advance(200);
-  zones[zones.length - 1].click();
-  game.clock.advance(3000);
-  game.$("btn-next").click();
-  game.clock.advance(600);
-  assert.ok(beginDay(game));
-
-  // Same request, now marked and explained.
-  assert.equal(game.$("retry-flag").hidden, false, "the repeat is marked");
-  assert.match(game.$("retry-flag").textContent, /もう一度/);
-  assert.match(game.$("retry-flag-text").textContent, /さっきできなかった/);
-});
-
-test("solving it first time moves on instead of asking again", async () => {
-  // The other half of the same rule: nothing is replayed that was not missed.
-  const game = boot(null, "?skip=1");
-  await enterTheInn(game);
-  const asked = game.$("jp-line").textContent;
-
-  // Solved for real, not with the skip aid - that aid jumps straight into
-  // Day 1 and would not exercise the path a player takes.
-  assert.ok(playRoom(game, asked), "the cold open is solvable");
-  game.clock.advance(2500);
-  game.$("btn-next").click();
-  game.clock.advance(600);
-  assert.ok(beginDay(game), "Day 1 still announces itself");
-
-  assert.notEqual(game.$("jp-line").textContent, asked,
-    "a task answered correctly is not asked a second time");
-  assert.equal(game.$("retry-flag").hidden, true, "and nothing is marked as a repeat");
-});
-
-test("the cold open answers in Kon's own voice, whichever way it went", async () => {
-  // The reply went to the narration strip while the bubble kept showing the
-  // request, so putting the wrong thing down produced no visible reaction at
-  // all - just a button appearing. The one moment in the stage that exists to
-  // be failed was the one moment that said nothing about failing it.
-  const context = {};
-  vm.createContext(context);
-  vm.runInContext(readFileSync(new URL("./moonview-inn-interactions.js", import.meta.url), "utf8"), context);
-  vm.runInContext(readFileSync(new URL("./n2-home-inn-stage.js", import.meta.url), "utf8"), context);
-  const coldOpen = context.N2HomeInnStage.coldOpen;
-
-  const game = boot(null, "?skip=1");
-  await enterTheInn(game);
-  const request = game.$("jp-line").textContent;
-
-  // Put something in the wrong place.
-  const objects = game.doc.querySelectorAll(".inn-object").filter(game.visible);
-  const zones = game.doc.querySelectorAll(".inn-drop-zone").filter(game.visible);
-  objects[0].click();
-  game.clock.advance(200);
-  zones[zones.length - 1].click();
-  game.clock.advance(3000);
-
-  const spoken = game.$("jp-line").textContent;
-  assert.notEqual(spoken, request, "the bubble no longer just repeats the request");
-  // Says plainly that it was wrong, and then that it is about to be taught -
-  // the scene is unscored, not unspoken.
-  assert.ok(spoken.includes("間違い"), "Kon names the miss rather than saying nothing: " + spoken);
-  assert.ok(spoken.includes("一緒に覚えて"), "and points at what happens next");
-  assert.equal(spoken, coldOpen.wrongReply, "the bubble carries her written line");
-
-  // Still unscored: no stamp either way, because the scene is not marked.
-  assert.equal(game.$("stamp").textContent, "");
-  assert.equal(game.$("next-row").style.display, "block");
-});
-
-test("the unscored scene shows no mark, and the next one still does", async () => {
-  // The cold open is deliberately not marked - 「もう一度」 would punish the
-  // stumble the scene exists to produce, and 正解 on a miss is simply false.
-  // But emptying the stamp left its border and rounded outline behind, so a
-  // blank oval sat beside the text like an image that failed to load.
-  const game = boot(null, "?skip=1");
-  await enterTheInn(game);
-
-  const objects = game.doc.querySelectorAll(".inn-object").filter(game.visible);
-  const zones = game.doc.querySelectorAll(".inn-drop-zone").filter(game.visible);
-  objects[0].click();
-  game.clock.advance(200);
-  zones[zones.length - 1].click();
-  game.clock.advance(3000);
-
-  assert.equal(game.$("stamp").hidden, true, "no mark on a scene that is not marked");
-
-  // And Day 1, which is marked, gets it back.
-  game.$("btn-next").click();
-  game.clock.advance(600);
-  assert.ok(beginDay(game));
-  game.$("btn-skip-question").click();
-  game.clock.advance(2000);
-  assert.equal(game.$("stamp").hidden, false, "a scored answer is marked again");
-  assert.match(game.$("stamp").textContent, /正解/);
-});
 
 /* A phone must not have to scroll to see what it is choosing between.
  *

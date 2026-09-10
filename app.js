@@ -1,11 +1,12 @@
 (function(){
   "use strict";
 
-  var STORAGE_KEY = "lanternAlley.v2";
+  var debugEnabled = !!(window.LanternDebug && window.LanternDebug.enabled);
+  var STORAGE_KEY = debugEnabled ? "lanternAlley.debug.v2" : "lanternAlley.v2";
   // Version 3 is the record that is written from now on. The v2 key is still
   // read once, so a learner who left mid-stage before this change keeps their
   // medal and their place.
-  var STORAGE_KEY_V3 = "lanternAlley.v3";
+  var STORAGE_KEY_V3 = debugEnabled ? "lanternAlley.debug.v3" : "lanternAlley.v3";
 
   var locations = [
     {
@@ -471,6 +472,7 @@
       var inn = state.stageProgress.homeInn;
       localStorage.setItem(STORAGE_KEY_V3, JSON.stringify({
         version: LanternProgress.VERSION,
+        debug:debugEnabled,
         playerCharacter: state.playerCharacter,
         characterSelected: state.characterSelected,
         visited: Object.keys(state.visited),
@@ -811,7 +813,9 @@
    * species and took the rest of the module down with it, which presented as
    * the flag silently doing nothing. */
   window.lanternUnlockAll = unlockEverythingForTesting;
-  if(/[?&]unlockall=1(&|$)/.test(window.location.search)){
+  if(debugEnabled){
+    setTimeout(function(){ unlockEverythingForTesting({includeUnpainted:true, preserveExisting:true}); }, 0);
+  }else if(!debugEnabled && /[?&]unlockall=1(&|$)/.test(window.location.search)){
     var treeCount = /[?&]trees=(\d+)/.exec(window.location.search);
     var unlockOptions = {matureTrees: treeCount ? Number(treeCount[1]) : 0};
     setTimeout(function(){ unlockEverythingForTesting(unlockOptions); }, 0);
@@ -828,8 +832,8 @@
    * Inn itself - see btn-skip-question and btn-skip-stage below - since
    * skipping the two gates still left every Learn/Practice/Challenge
    * question in between to solve for real on every test pass. */
-  var testingSkipEnabled = /[?&]skip=1(&|$)/.test(window.location.search);
-  if(testingSkipEnabled){
+  var testingSkipEnabled = debugEnabled || /[?&]skip=1(&|$)/.test(window.location.search);
+  if(testingSkipEnabled && !debugEnabled){
     state.characterSelected = true;
     state.playerCharacter = state.playerCharacter || "woman";
     state.visited.entrance = true;
@@ -863,6 +867,69 @@
     if(!state.visited.entrance) enterLocation("entrance");
     else showMap();
   });
+
+  /* The title screen has one job: enter the alley. Save management, credits,
+   * build information, and the destructive restart belong behind one compact
+   * menu so they cannot compete with the first action. */
+  (function(){
+    var trigger = $("btn-title-menu");
+    var menu = $("title-menu");
+    if(!trigger || !menu) return;
+
+    function show(visible, restoreFocus){
+      menu.hidden = !visible;
+      trigger.setAttribute("aria-expanded", visible ? "true" : "false");
+      if(visible){
+        var first = $("btn-save-data");
+        if(first) first.focus();
+      }else if(restoreFocus){
+        trigger.focus();
+      }
+    }
+
+    trigger.addEventListener("click", function(){ show(menu.hidden, false); });
+    ["btn-save-data", "btn-about", "btn-restart"].forEach(function(id){
+      var action = $(id);
+      if(action) action.addEventListener("click", function(){ show(false, false); });
+    });
+    document.addEventListener("click", function(event){
+      if(menu.hidden || menu.contains(event.target) || trigger.contains(event.target)) return;
+      show(false, true);
+    });
+    document.addEventListener("keydown", function(event){
+      if(event.key === "Escape" && !menu.hidden) show(false, true);
+    });
+  })();
+
+  function setTitleModalBackgroundInert(visible){
+    [$("btn-start"), $("btn-title-menu"), $("btn-install-open")].forEach(function(node){
+      if(!node) return;
+      if(visible) node.setAttribute("inert", "");
+      else node.removeAttribute("inert");
+    });
+  }
+
+  function switchDebugMode(enabled){
+    if(!window.LanternDebug || !window.LanternDebug.available) return;
+    var url = new URL(window.location.href);
+    ["debug", "skip", "unlockall", "trees", "review"].forEach(function(key){ url.searchParams.delete(key); });
+    if(enabled) url.searchParams.set("debug", "1");
+    url.hash = "";
+    window.location.href = url.href;
+  }
+  $("btn-debug-mode").hidden = !(window.LanternDebug && window.LanternDebug.available);
+  $("btn-debug-mode").textContent = "Debug Mode: " + (debugEnabled ? "On" : "Off");
+  $("btn-debug-mode").setAttribute("aria-pressed", String(debugEnabled));
+  $("btn-debug-mode").addEventListener("click", function(){ switchDebugMode(!debugEnabled); });
+  $("debug-banner").hidden = !debugEnabled;
+  $("btn-debug-exit").addEventListener("click", function(){ switchDebugMode(false); });
+
+  function restoreTitleMenuFocus(fallback){
+    var menu = $("title-menu");
+    var trigger = $("btn-title-menu");
+    if(menu && menu.hidden && trigger) trigger.focus();
+    else if(fallback) fallback.focus();
+  }
   /* Which build a tester is looking at, and telling them when it changes.
    *
    * The release name is what someone says out loud - "beta 1.0". The build
@@ -914,6 +981,7 @@
   }
 
   function trackTelemetry(name, properties){
+    if(debugEnabled) return;
     var telemetry = window.LanternTelemetry;
     if(!telemetry || typeof telemetry.track !== "function") return;
     var props = telemetryContext();
@@ -923,6 +991,7 @@
   }
 
   function reportAppError(error, source){
+    if(debugEnabled) return;
     var telemetry = window.LanternTelemetry;
     if(!telemetry || typeof telemetry.reportError !== "function") return;
     try{ telemetry.reportError(error, source, telemetryContext()); }catch(e){}
@@ -1040,8 +1109,8 @@
      * one-tap install there is. But it does not fire on iOS at all, and on
      * Android it can be missed - already installed, or heuristics not met - so
      * the button that depended on it left some phones with nothing to press.
-     * Reported as not knowing where to press. The entry point is always there
-     * now, and the prompt is a shortcut inside it when it exists.
+     * Reported as not knowing where to press. iOS gets written steps; other
+     * browsers show this entry point only after they offer installation.
      */
     window.addEventListener("beforeinstallprompt", function(event){
       event.preventDefault();
@@ -1059,6 +1128,11 @@
         || !!navigator.standalone;
     }
 
+    function canShowInstall(){
+      var ua = navigator.userAgent || "";
+      return !installed() && (!!deferredPrompt || /iPad|iPhone|iPod/.test(ua));
+    }
+
     /* Removing it, which the page cannot do itself.
      *
      * There is no API for a web app to uninstall itself - the icon belongs to
@@ -1070,21 +1144,21 @@
       var ua = navigator.userAgent || "";
       if(/iPad|iPhone|iPod/.test(ua)){
         return [
-          "ホーム画面のアイコンを長押しします。",
-          "「アプリを削除」を選びます。",
-          "「ホーム画面から取り除く」ではなく「アプリを削除」を選ぶと、保存データも消えます。"
+          "Press and hold the icon on your Home Screen.",
+          "Choose \"Remove App.\"",
+          "Choose \"Delete App,\" not \"Remove from Home Screen.\" Deleting the app also deletes its local save."
         ];
       }
       if(/Android/.test(ua)){
         return [
-          "ホーム画面かアプリ一覧でアイコンを長押しします。",
-          "「アンインストール」を選びます。",
-          "確認の画面で「OK」を押します。"
+          "Press and hold the icon on your Home Screen or app list.",
+          "Choose \"Uninstall.\"",
+          "Confirm with \"OK.\""
         ];
       }
       return [
-        "ブラウザのメニューから「言葉の路地をアンインストール」を選びます。",
-        "見つからないときは、アドレスバーの右のアイコンから開けます。"
+        "Choose \"Uninstall Lantern Alley\" from your browser menu.",
+        "If you cannot find it, open the icon beside the address bar."
       ];
     }
 
@@ -1092,37 +1166,38 @@
       var ua = navigator.userAgent || "";
       if(/iPad|iPhone|iPod/.test(ua)){
         return [
-          "下の「共有」ボタン（□に↑）を押します。",
-          "メニューを下にたどって「ホーム画面に追加」を選びます。",
-          "右上の「追加」を押します。"
+          "Tap Share (the square with an upward arrow).",
+          "Scroll down and choose \"Add to Home Screen.\"",
+          "Tap \"Add\" in the upper-right."
         ];
       }
       if(/Android/.test(ua)){
         return [
-          "画面右上の「⋮」を押します。",
-          "「アプリをインストール」または「ホーム画面に追加」を選びます。",
-          "確認の画面で「インストール」を押します。"
+          "Tap ⋮ in the upper-right.",
+          "Choose \"Install app\" or \"Add to Home screen.\"",
+          "Confirm with \"Install.\""
         ];
       }
       return [
-        "アドレスバーの右にあるインストールのアイコンを押します。",
-        "見つからないときは、ブラウザのメニューから「インストール」を選びます。"
+        "Press the install icon beside the address bar.",
+        "If you cannot find it, choose \"Install\" from the browser menu."
       ];
     }
 
     function render(){
       var isInstalled = installed();
+      if(openButton) openButton.hidden = !canShowInstall();
       if(installButton) installButton.hidden = !deferredPrompt || isInstalled;
 
       // Once it is in, the panel is about taking it out. Same button, same
       // place - it just stops offering something already done.
       var title = $("install-title");
-      if(title) title.textContent = isInstalled ? "アプリを削除する" : "アプリとして入れる";
-      if(openButton) openButton.textContent = isInstalled ? "📲 アプリを削除する" : "📲 アプリとして入れる";
+      if(title) title.textContent = isInstalled ? "Remove app" : "Install app";
+      if(openButton) openButton.textContent = isInstalled ? "Remove app" : "Install app";
       if(lead){
         lead.textContent = isInstalled
-          ? "もう入っています。消すときはホーム画面のアイコンから。消すと、この端末の進み具合もいっしょに消えます。"
-          : "ホーム画面から開けるようになります。アイコンがつき、電波がなくても遊べます。";
+          ? "Lantern Alley is installed. Removing it from the Home Screen also removes progress stored on this device."
+          : "Open Lantern Alley from your home screen, with its own icon and offline play.";
       }
       // The one thing worth saying twice: export first, or it is gone.
       var warn = $("install-warn");
@@ -1142,12 +1217,10 @@
 
     function show(visible){
       panel.hidden = !visible;
-      [openButton, $("btn-start"), $("btn-about"), $("btn-save-data")].forEach(function(node){
-        if(!node) return;
-        if(visible) node.setAttribute("inert", "");
-        else node.removeAttribute("inert");
-      });
-      if(visible){ render(); close.focus(); } else openButton.focus();
+      setTitleModalBackgroundInert(visible);
+      if(visible){ render(); close.focus(); }
+      else if(openButton && !openButton.hidden) openButton.focus();
+      else restoreTitleMenuFocus(openButton);
     }
 
     openButton.addEventListener("click", function(){ show(true); });
@@ -1185,12 +1258,8 @@
       panel.hidden = !visible;
       // Same reason as the about panel: aria-modal hides the page behind it
       // from a screen reader, but not from Tab.
-      [open, $("btn-start"), $("btn-about"), $("btn-install")].forEach(function(node){
-        if(!node) return;
-        if(visible) node.setAttribute("inert", "");
-        else node.removeAttribute("inert");
-      });
-      if(visible) close.focus(); else open.focus();
+      setTitleModalBackgroundInert(visible);
+      if(visible) close.focus(); else restoreTitleMenuFocus(open);
       if(status) status.textContent = "";
     }
 
@@ -1211,6 +1280,7 @@
         return {
           app:"lantern-alley",
           format:1,
+          debug:debugEnabled,
           savedAt:new Date().toISOString(),
           v3: JSON.parse(localStorage.getItem(STORAGE_KEY_V3) || "null"),
           v2: JSON.parse(localStorage.getItem(STORAGE_KEY) || "null")
@@ -1224,7 +1294,7 @@
       exportButton.addEventListener("click", function(){
         var data = currentSave();
         if(!data || (!data.v3 && !data.v2)){
-          if(status) status.textContent = "まだ保存データがありません。";
+          if(status) status.textContent = "No save data yet.";
           return;
         }
         var blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
@@ -1239,7 +1309,7 @@
         // Revoked on a timer rather than immediately: Safari has been known to
         // cancel a download whose blob URL is released in the same tick.
         setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
-        if(status) status.textContent = "書き出しました。";
+        if(status) status.textContent = "Save exported.";
       });
     }
 
@@ -1252,7 +1322,12 @@
           var parsed = null;
           try{ parsed = JSON.parse(String(reader.result)); }catch(err){ parsed = null; }
           if(!parsed || parsed.app !== "lantern-alley" || !parsed.v3){
-            if(status) status.textContent = "このファイルは読み込めません。";
+            if(status) status.textContent = "This file cannot be imported.";
+            importInput.value = "";
+            return;
+          }
+          if(!debugEnabled && (parsed.debug || parsed.v3.debug)){
+            if(status) status.textContent = "Debug saves can only be imported in Debug Mode.";
             importInput.value = "";
             return;
           }
@@ -1260,18 +1335,18 @@
             localStorage.setItem(STORAGE_KEY_V3, JSON.stringify(parsed.v3));
             if(parsed.v2) localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed.v2));
           }catch(err){
-            if(status) status.textContent = "保存できませんでした。";
+            if(status) status.textContent = "Could not save progress.";
             importInput.value = "";
             return;
           }
           // Reloaded rather than merged into the running game: progress is read
           // once at startup and then owned in memory, so anything written
           // underneath a live session is overwritten by its next save.
-          if(status) status.textContent = "読み込みました。もう一度開きます。";
+          if(status) status.textContent = "Save imported. Reloading...";
           setTimeout(function(){ window.location.reload(); }, 700);
         };
         reader.onerror = function(){
-          if(status) status.textContent = "このファイルは読み込めません。";
+          if(status) status.textContent = "This file cannot be imported.";
         };
         reader.readAsText(file);
       });
@@ -1294,12 +1369,8 @@
        * in the tab order underneath, so a keyboard could walk out of a modal
        * it could not see. inert takes them out of reach and out of the
        * accessibility tree together. */
-      [open, document.getElementById("btn-start")].forEach(function(node){
-        if(!node) return;
-        if(visible) node.setAttribute("inert", "");
-        else node.removeAttribute("inert");
-      });
-      if(visible) close.focus(); else open.focus();
+      setTitleModalBackgroundInert(visible);
+      if(visible) close.focus(); else restoreTitleMenuFocus(open);
     }
     open.addEventListener("click", function(){ show(true); });
     close.addEventListener("click", function(){ show(false); });
@@ -1437,20 +1508,24 @@
     var panel = $("reset-confirm");
     if(!panel) return;
     panel.hidden = false;
+    setTitleModalBackgroundInert(true);
     $("reset-cancel").focus();
   }
 
   function closeResetConfirmation(){
     var panel = $("reset-confirm");
     if(panel) panel.hidden = true;
-    $("btn-restart").focus();
+    setTitleModalBackgroundInert(false);
+    restoreTitleMenuFocus($("btn-restart"));
   }
 
   function confirmReset(){
     var panel = $("reset-confirm");
     if(panel) panel.hidden = true;
+    setTitleModalBackgroundInert(false);
     applyProgress(null);
     state.currentKey = null;
+    if(debugEnabled) unlockEverythingForTesting({includeUnpainted:true});
     saveProgress();
     $("progress-note").hidden = true;
     $("btn-restart").hidden = true;
@@ -3721,16 +3796,9 @@
     $("next-row").style.display = "none";
     $("scene").innerHTML = '<div class="stage-intro-action"><button class="btn btn-primary" id="btn-accept-helper">' + intro.accept + '</button></div>';
     $("btn-accept-helper").addEventListener("click", function(){
-      /* The words are named as the stage opens, before any of it is played.
-       *
-       * The board used to sit after the cold open, on the argument that the
-       * cold open works by making the learner feel the need before being
-       * handed the answer. Played, that reads as being dropped into a job with
-       * no idea what the stage is even about. Knowing the five words up front
-       * does not spoil the cold open - it is one task, and knowing a word is
-       * on tonight's list is a long way from knowing which one to use.
-      */
-      var phase = state.stageProgress.homeInn ? "learn" : "coldopen";
+      // One Day 1 board, then the guided task. The old unscaffolded trial
+      // repeated that task after a miss and made the opening feel stuck.
+      var phase = "learn";
       if(loc.key === "home-inn" && !state.stageProgress.homeInn){
         trackTelemetry("inn_training_started");
       }
@@ -3936,7 +4004,7 @@
     }
     if(loc.encounters && state.stageProgress.homeInn){
       var resumed = state.stageProgress.homeInn;
-      state.stagePhase = resumed.phase || "learn";
+      state.stagePhase = resumed.phase === "coldopen" ? "learn" : (resumed.phase || "learn");
       // Resuming into review rebuilt the identical Day 3 questions, which is
       // the behaviour the ladder replaced. Rebuild it the same way starting it
       // fresh does, so closing the tab does not quietly undo the redesign.
@@ -4853,7 +4921,7 @@
     return html + '</div>';
   }
 
-  /* The chosen wallpaper, over the upper part of the room only.
+  /* The chosen wallpaper, masked to the room's solid paper panels only.
    *
    * The room is a painting, so the pattern is laid over the walls rather than
    * replacing them - it tints and textures what is already there, and stops
@@ -5389,28 +5457,33 @@
      * stand-ins, which made the test room a mix of finished art and green
      * geometry and made it hard to judge what the reward actually looks like.
      * The shop already refuses to sell a drawing; the unlock now matches it. */
-    var owned = [];
+    var previousHome = settings.preserveExisting ? homeState() : {owned:[], placed:{}};
+    var owned = previousHome.owned.slice();
     LanternHomeDecor.catalogue().forEach(function(item){
-      if(!shopHasArtFor(item.id)){ report.skippedUnpainted.push(item.id); return; }
-      owned.push(item.id);
+      if(!settings.includeUnpainted && !shopHasArtFor(item.id)){ report.skippedUnpainted.push(item.id); return; }
+      if(owned.indexOf(item.id) < 0) owned.push(item.id);
       report.furniture += 1;
     });
     LanternHomeDecor.wallpapers().forEach(function(paper){
       if(paper.id === "wallpaper-plain") return;   // the room already is this
-      if(!wallpaperHasArt(paper.id)){ report.skippedUnpainted.push(paper.id); return; }
-      owned.push(paper.id);
+      if(!settings.includeUnpainted && !wallpaperHasArt(paper.id)){ report.skippedUnpainted.push(paper.id); return; }
+      if(owned.indexOf(paper.id) < 0) owned.push(paper.id);
       report.wallpapers += 1;
     });
-    state.home = {owned:owned, placed:{}};
-    state.activeWallpaper = "wallpaper-plain";
+    state.home = {owned:owned, placed:Object.assign({}, previousHome.placed)};
+    if(!settings.preserveExisting) state.activeWallpaper = "wallpaper-plain";
 
     // --- one of every species at each end of its growth --------------------
-    var garden = LanternHomeGarden.emptyGarden();
+    var garden = settings.preserveExisting
+      ? LanternHomeGarden.normalize(gardenState()) : LanternHomeGarden.emptyGarden();
     garden.starterClaimed = true;
     garden.starterSceneryClaimed = true;
     LanternHomeGarden.catalogue().forEach(function(type){
-      if(!plantHasArt(type.id)){ report.skippedUnpainted.push(type.id); return; }
+      if(!settings.includeUnpainted && !plantHasArt(type.id)){ report.skippedUnpainted.push(type.id); return; }
       [["planted", 0], ["mature", type.matureAt]].forEach(function(pair){
+        if(settings.preserveExisting && garden.plants.some(function(plant){
+          return plant.typeId === type.id && plant.stage === pair[0];
+        })) return;
         garden.plants.push({id:"plant-" + garden.nextInstanceId, typeId:type.id,
           slotId:null, growthPoints:pair[1], stage:pair[0], pendingAnimation:false});
         garden.nextInstanceId += 1;

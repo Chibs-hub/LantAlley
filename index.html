@@ -5,18 +5,29 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0e1830">
 <meta name="description" content="A small Japanese story-walk for JLPT N2 action verbs.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Lantern Alley">
+<meta property="og:description" content="A Japanese story-walk for JLPT N2 action verbs.">
+<meta property="og:url" content="https://chibs-hub.github.io/LantAlley/">
+<meta property="og:image" content="https://chibs-hub.github.io/LantAlley/assets/social/lantern-alley-share-v1.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Lantern Alley">
+<meta name="twitter:description" content="A Japanese story-walk for JLPT N2 action verbs.">
+<meta name="twitter:image" content="https://chibs-hub.github.io/LantAlley/assets/social/lantern-alley-share-v1.jpg">
 <title>Lantern Alley</title>
-<link rel="icon" href="lantern-alley.ico">
+<link rel="icon" href="lantern-alley.ico?v=326">
 <link rel="manifest" href="manifest.webmanifest">
 <!-- iOS ignores the manifest, so it needs its own tags. -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Lantern Alley">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=326">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600;800&family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=323">
+<link rel="stylesheet" href="styles.css?v=326">
 </head>
 <body>
 
@@ -46,6 +57,10 @@
 </div>
 
 <div class="stage">
+  <aside id="debug-banner" class="debug-banner" hidden>
+    <span><strong>DEBUG MODE</strong> - separate test save</span>
+    <button id="btn-debug-exit" type="button">Exit debug</button>
+  </aside>
 
   <!-- Review mode. Only reachable with ?review=1; a learner never sees it. -->
   <div class="review-bar" id="review-bar" hidden>
@@ -72,18 +87,25 @@
       <div id="progress-note" class="progress-note" hidden></div>
       <div class="title-actions">
         <button class="btn btn-primary" id="btn-start">路地へ入る</button>
-        <button class="btn btn-ghost" id="btn-restart" hidden>最初から</button>
       </div>
       <!-- Install and save handling. Both are hidden until they can do
            something: the install button waits for the browser to offer the
            prompt, and the iOS note appears only where there is no prompt to
            wait for. -->
       <div class="title-utility" id="title-utility">
-        <button class="btn btn-ghost" id="btn-install-open" type="button">📲 アプリとして入れる</button>
-        <button class="title-about-link" id="btn-save-data" type="button">保存データ</button>
+        <button class="btn btn-ghost" id="btn-install-open" type="button" hidden>Install app</button>
+        <div class="title-menu-wrap">
+          <button class="btn btn-ghost" id="btn-title-menu" type="button"
+                  aria-expanded="false" aria-controls="title-menu">Menu</button>
+          <div class="title-menu" id="title-menu" hidden>
+            <button class="title-menu-action" id="btn-save-data" type="button">Save data</button>
+            <button class="title-menu-action" id="btn-about" type="button">About</button>
+            <button class="title-menu-action" id="btn-debug-mode" type="button" hidden>Debug Mode: Off</button>
+            <button class="title-menu-action title-menu-danger" id="btn-restart" type="button" hidden>Start over</button>
+            <p class="app-version" id="app-version"></p>
+          </div>
+        </div>
       </div>
-      <button class="title-about-link" id="btn-about" type="button">このゲームについて</button>
-      <p class="app-version" id="app-version"></p>
     </div>
 
     <!-- The EDRDG licence asks an application for a dedicated attribution
@@ -91,45 +113,43 @@
     <div class="about-panel" id="install-panel" role="dialog" aria-modal="true"
          aria-labelledby="install-title" hidden>
       <div class="about-card">
-        <h2 id="install-title">アプリとして入れる</h2>
+        <h2 id="install-title">Install app</h2>
         <p class="about-lead" id="install-lead">
-          ホーム画面から開けるようになります。アイコンがつき、電波がなくても遊べます。
+          Open Lantern Alley from your home screen, with its own icon and offline play.
         </p>
         <!-- Shown only where the browser has actually offered to install. -->
-        <button class="btn btn-primary" id="btn-install" type="button" hidden>今すぐ入れる</button>
+        <button class="btn btn-primary" id="btn-install" type="button" hidden>Install app</button>
         <!-- The one part of removal that is ours to warn about: the save
              lives in this browser, so deleting the app deletes it. -->
         <p class="install-warn" id="install-warn" hidden>
-          消す前に「保存データ」から書き出しておくと、あとで読み込めます。
+          Export your save data before deleting the app. You can import it later.
         </p>
         <ol class="install-steps" id="install-steps"></ol>
-        <button class="btn btn-ghost" id="btn-install-close" type="button">閉じる</button>
+        <button class="btn btn-ghost" id="btn-install-close" type="button">Close</button>
       </div>
     </div>
 
     <div class="about-panel" id="save-panel" role="dialog" aria-modal="true"
          aria-labelledby="save-title" hidden>
       <div class="about-card">
-        <h2 id="save-title">保存データ</h2>
+        <h2 id="save-title">Save data</h2>
         <p class="about-lead">
-          進み具合はこの端末のブラウザだけに入っています。ブラウザのデータを消すと、
-          いっしょに消えます。別の端末に移すときや、消える前に取っておきたいときは、
-          ここから書き出してください。
+          Your progress lives only in this browser on this device. Export it before clearing browser data or moving to another device.
         </p>
         <div class="save-actions">
-          <button class="btn btn-primary" id="btn-save-export" type="button">書き出す</button>
-          <label class="btn btn-ghost" for="save-import-file">読み込む</label>
+          <button class="btn btn-primary" id="btn-save-export" type="button">Export save</button>
+          <label class="btn btn-ghost" for="save-import-file">Import save</label>
           <input type="file" id="save-import-file" accept="application/json,.json" hidden>
         </div>
         <p class="save-status" id="save-status" role="status"></p>
-        <button class="btn btn-ghost" id="btn-save-close" type="button">閉じる</button>
+        <button class="btn btn-ghost" id="btn-save-close" type="button">Close</button>
       </div>
     </div>
 
     <div class="about-panel" id="about-panel" role="dialog" aria-modal="true"
          aria-labelledby="about-title" hidden>
       <div class="about-card">
-        <h2 id="about-title">このゲームについて</h2>
+        <h2 id="about-title">About Lantern Alley</h2>
         <p class="about-lead">言葉の路地 — a Japanese story-walk for JLPT N2.</p>
 
         <h3>言葉のデータ</h3>
@@ -165,18 +185,18 @@
           <button class="btn btn-ghost" id="analytics-toggle" type="button" aria-pressed="false"></button>
         </div>
 
-        <button class="btn btn-primary" id="btn-about-close" type="button">閉じる</button>
+        <button class="btn btn-primary" id="btn-about-close" type="button">Close</button>
       </div>
     </div>
 
     <div class="about-panel" id="reset-confirm" role="dialog" aria-modal="true"
          aria-labelledby="reset-confirm-title" hidden>
       <div class="about-card reset-confirm-card">
-        <h2 id="reset-confirm-title">最初からやり直しますか？</h2>
-        <p class="about-lead">このブラウザにある進み具合と、わが家の持ち物が消えます。</p>
+        <h2 id="reset-confirm-title">Start over?</h2>
+        <p class="about-lead">This erases progress and home items stored in this browser.</p>
         <div class="save-actions reset-confirm-actions">
-          <button class="btn btn-ghost" id="reset-cancel" type="button">キャンセル</button>
-          <button class="btn btn-primary" id="reset-confirm-action" type="button">最初から</button>
+          <button class="btn btn-ghost" id="reset-cancel" type="button">Cancel</button>
+          <button class="btn btn-primary" id="reset-confirm-action" type="button">Start over</button>
         </div>
       </div>
     </div>
@@ -333,39 +353,40 @@
   <footer class="credits">Lantern Alley &middot; a small Japanese story-walk</footer>
 </div>
 
-<script src="curriculum-catalog.js?v=323"></script>
-<script src="learning-content.js?v=323"></script>
-<script src="review-engine.js?v=323"></script>
-<script src="inn-journey.js?v=323"></script>
-<script src="learning-progress.js?v=323"></script>
-<script src="learning-economy.js?v=323"></script>
-    <script src="learning-gloss.js?v=323"></script>
-    <script src="home-room.js?v=323"></script>
-    <script src="home-decor.js?v=323"></script>
-    <script src="home-garden.js?v=323"></script>
-    <script src="home-pet.js?v=323"></script>
-    <script src="daily-practice.js?v=323"></script>
-    <script src="review-mode.js?v=323"></script>
-<script src="question-renderer.js?v=323"></script>
-<script src="catalog-practice.js?v=323"></script>
-<script src="entrance-stage-logic.js?v=323"></script>
-<script src="moonview-inn-interactions.js?v=323"></script>
-<script src="n2-home-inn-stage.js?v=323"></script>
-<script src="n2-inn-episodes.js?v=323"></script>
-    <script src="n2-market-episodes.js?v=323"></script>
-    <script src="n2-teahouse-episodes.js?v=323"></script>
-    <script src="n2-shrine-episodes.js?v=323"></script>
-<script src="audio-index.js?v=323"></script>
-<script src="lantern-map.js?v=323"></script>
+<script src="curriculum-catalog.js?v=326"></script>
+<script src="learning-content.js?v=326"></script>
+<script src="review-engine.js?v=326"></script>
+<script src="inn-journey.js?v=326"></script>
+<script src="learning-progress.js?v=326"></script>
+<script src="learning-economy.js?v=326"></script>
+    <script src="learning-gloss.js?v=326"></script>
+    <script src="home-room.js?v=326"></script>
+    <script src="home-decor.js?v=326"></script>
+    <script src="home-garden.js?v=326"></script>
+    <script src="home-pet.js?v=326"></script>
+    <script src="daily-practice.js?v=326"></script>
+    <script src="review-mode.js?v=326"></script>
+<script src="question-renderer.js?v=326"></script>
+<script src="catalog-practice.js?v=326"></script>
+<script src="entrance-stage-logic.js?v=326"></script>
+<script src="moonview-inn-interactions.js?v=326"></script>
+<script src="n2-home-inn-stage.js?v=326"></script>
+<script src="n2-inn-episodes.js?v=326"></script>
+    <script src="n2-market-episodes.js?v=326"></script>
+    <script src="n2-teahouse-episodes.js?v=326"></script>
+    <script src="n2-shrine-episodes.js?v=326"></script>
+<script src="audio-index.js?v=326"></script>
+<script src="lantern-map.js?v=326"></script>
 <div class="update-bar" id="update-bar" role="status" hidden>
-  <span class="update-bar-text">新しいバージョンがあります。</span>
-  <button class="btn btn-primary" id="btn-update-now" type="button">更新する</button>
-  <button class="update-bar-later" id="btn-update-later" type="button">あとで</button>
+  <span class="update-bar-text">A new version is available.</span>
+  <button class="btn btn-primary" id="btn-update-now" type="button">Update now</button>
+  <button class="update-bar-later" id="btn-update-later" type="button">Later</button>
 </div>
 
-<script src="telemetry-config.js?v=323"></script>
-<script src="telemetry.js?v=323"></script>
-<script src="app.js?v=323"></script>
+<script src="debug-mode.js?v=326"></script>
+<script src="telemetry-config.js?v=326"></script>
+<script src="telemetry.js?v=326"></script>
+<script src="app.js?v=326"></script>
 
 <script>
   // Service workers need http(s); opening this file directly with file://

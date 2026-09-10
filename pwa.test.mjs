@@ -6,6 +6,27 @@ import vm from "node:vm";
 
 const read = (name) => readFileSync(new URL("./" + name, import.meta.url), "utf8");
 
+const pngSize = (name) => {
+  const bytes = readFileSync(new URL("./" + name, import.meta.url));
+  assert.deepEqual([...bytes.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10], `${name} is a PNG`);
+  return { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) };
+};
+
+const jpegSize = (name) => {
+  const bytes = readFileSync(new URL("./" + name, import.meta.url));
+  assert.equal(bytes.readUInt16BE(0), 0xffd8, `${name} is a JPEG`);
+  for(let offset = 2; offset < bytes.length - 9;){
+    if(bytes[offset] !== 0xff){ offset += 1; continue; }
+    const marker = bytes[offset + 1];
+    const length = bytes.readUInt16BE(offset + 2);
+    if(marker >= 0xc0 && marker <= 0xc3){
+      return { width: bytes.readUInt16BE(offset + 7), height: bytes.readUInt16BE(offset + 5) };
+    }
+    offset += 2 + length;
+  }
+  assert.fail(`${name} has no JPEG dimensions`);
+};
+
 // Run audio-index.js the way sw.js does rather than slicing JSON out of it.
 // The file now declares a second object - the per-stage cache groups - and the
 // old "first { to last }" slice swallowed both and failed to parse.
@@ -30,6 +51,36 @@ test("every file the service worker pre-caches actually exists", () => {
       true,
       `sw.js pre-caches "${rel}" but it is missing from disk`,
     );
+  }
+
+  /* On disk is not the test that matters - deployed is.
+   *
+   * A shell entry that exists locally but was never committed passes every
+   * check here and still 404s on the live site, because the site is the
+   * repository. That happened: sw.js listed the two paper-panel mask SVGs
+   * while they sat untracked, so a deployed install would have thrown on the
+   * first of them, cached no shell at all, and - the real damage - never let
+   * the new worker take over, pinning every existing tester to the build they
+   * already had.
+   *
+   * So ask git, not the filesystem. */
+  const tracked = spawnSync("git", ["ls-files", "-z"], {
+    cwd: new URL(".", import.meta.url),
+    encoding: "utf8",
+  });
+  if (tracked.status === 0) {
+    const inRepo = new Set(tracked.stdout.split("\0").filter(Boolean));
+    for (const rel of listed) {
+      // Some entries carry the ?v= cache stamp. git tracks paths, not URLs -
+      // and the existsSync check above only appears to agree because new URL()
+      // quietly drops the query into `search` before it reaches the filesystem.
+      const path = rel.split("?")[0];
+      assert.equal(
+        inRepo.has(path),
+        true,
+        `sw.js pre-caches "${rel}" but git does not track it, so it will 404 once deployed`,
+      );
+    }
   }
 });
 
@@ -77,8 +128,9 @@ test("the manifest is valid and its icons exist", () => {
   assert.equal(manifest.background_color, manifest.theme_color);
 
   for (const icon of manifest.icons) {
+    const filePath = icon.src.split(/[?#]/)[0];
     assert.equal(
-      existsSync(new URL("./" + icon.src, import.meta.url)),
+      existsSync(new URL("./" + filePath, import.meta.url)),
       true,
       `manifest lists ${icon.src} but it is missing`,
     );
@@ -89,6 +141,45 @@ test("the manifest is valid and its icons exist", () => {
     manifest.icons.some((icon) => icon.purpose === "maskable"),
     "at least one maskable icon is required",
   );
+});
+
+test("the PWA and social preview share the finished Lantern Alley identity", () => {
+  const html = read("index.html");
+  const manifest = JSON.parse(read("manifest.webmanifest"));
+  const sw = read("sw.js");
+  const iconBuilder = read("make-icons.py");
+  const iconSource = "assets/branding/lantern-mark-v1.png";
+  const shareImage = "assets/social/lantern-alley-share-v1.jpg";
+  const publicShareImage = "https://chibs-hub.github.io/LantAlley/" + shareImage;
+  const build = /lantern-alley-v(\d+)/.exec(sw)?.[1];
+
+  assert.equal(existsSync(new URL("./" + iconSource, import.meta.url)), true, "the lantern source exists");
+  assert.deepEqual(pngSize(iconSource), { width: 1024, height: 1024 });
+  assert.equal(existsSync(new URL("./" + shareImage, import.meta.url)), true, "the social preview exists");
+  assert.deepEqual(jpegSize(shareImage), { width: 1200, height: 630 });
+
+  assert.match(html, new RegExp('property="og:image" content="' + publicShareImage + '"'));
+  assert.match(html, /property="og:title" content="Lantern Alley"/);
+  assert.match(html, /name="twitter:card" content="summary_large_image"/);
+  assert.match(sw, new RegExp('"\\./' + iconSource + '"'));
+  assert.match(sw, new RegExp('"\\./' + shareImage + '"'));
+
+  assert.ok(build, "the shell exposes its build number");
+  for(const icon of manifest.icons){
+    assert.equal(new URL(icon.src, "https://example.test/").searchParams.get("v"), build,
+      `${icon.src} changes when the installed app icon changes`);
+    assert.ok(sw.includes('"./' + icon.src + '"'), `${icon.src} is available offline`);
+  }
+  assert.match(html, new RegExp('rel="apple-touch-icon" href="icons/apple-touch-icon\\.png\\?v=' + build + '"'));
+  assert.ok(sw.includes('"./icons/apple-touch-icon.png?v=' + build + '"'), "the iOS icon is available offline");
+  assert.match(iconBuilder, /maskable = master\.resize\(\(size, size\), RESAMPLE\)/,
+    "the already-safe master must remain readable instead of being shrunk inside another safe zone");
+  assert.doesNotMatch(iconBuilder, /inner = int\(size \* 0\.6\)/);
+
+  for(const icon of ["icons/icon-192.png", "icons/icon-512.png", "icons/icon-192-maskable.png", "icons/icon-512-maskable.png", "icons/apple-touch-icon.png"]){
+    assert.equal(existsSync(new URL("./" + icon, import.meta.url)), true, `${icon} exists`);
+    assert.notDeepEqual(pngSize(icon), { width: 0, height: 0 }, `${icon} has dimensions`);
+  }
 });
 
 test("the page links the manifest, iOS tags, and registers the worker", () => {

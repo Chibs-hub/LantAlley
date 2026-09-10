@@ -13,7 +13,7 @@ It installs from the browser, and afterwards it opens like any other app: its
 own icon, no address bar, and it works with no signal.
 
 **Android (Chrome)**
-Open the link, then tap **アプリとして入れる** on the title screen. If you do
+Open the link, then tap **Install app** on the title screen when it appears. If you do
 not see it, use the ⋮ menu → *Install app*.
 
 **iPhone (Safari — not Chrome)**
@@ -31,15 +31,37 @@ Your progress is kept **in that browser on that device, and nowhere else**. It
 is not in an account. Clearing your browsing data clears it, and on iPhone the
 system has been known to clear an unused web app's data on its own.
 
-So if you play for more than a few minutes, go to **保存データ** on the title
-screen and press **書き出す**. That gives you a small file. **読み込む** puts it
-back — on the same device or a different one.
+So if you play for more than a few minutes, open **Menu → Save data** on the
+title screen and press **Export save**. That gives you a small file. **Import
+save** puts it back — on the same device or a different one.
 
 Worth doing before you switch phones, clear anything, or leave it a few weeks.
 
 ---
 
 ## What to try
+
+### Debug Mode (local build 326)
+
+On the opening screen choose **Menu > Debug Mode: Off** to turn it on. The page
+reloads at the opening; character selection and the Entrance still play normally.
+The DEBUG MODE banner confirms that the separate test save is active.
+
+All catalog furniture, wallpaper, the cat, and planted and fully grown versions
+of every garden species are in storage. Items without finished art retain their
+existing placeholder drawings. Skip question and Skip stage appear in Inn
+training; episode questions also have Skip question. These are testing shortcuts,
+not evidence of learning. Debug play does not send analytics.
+
+**Exit debug** returns to the normal save. Re-entering Debug Mode resumes its
+own save and placements. **Menu > Start over** while in Debug Mode resets only
+the test save and restocks its inventory. A debug export cannot be imported into
+normal play. For release, set `available = false` in `debug-mode.js`, then bump
+the cache/version stamps; this hides the new mode and ignores `?debug=1`.
+
+The standalone cold-start task has been removed: the first Inn task is now
+Day 1 question 1, with its word card and help. There is no immediate replay
+behind a second introduction screen.
 
 You do not need to know any Japanese to start. The first stage teaches five
 words and tells you which five before it begins.
@@ -56,14 +78,14 @@ be played without it.
 
 ## Updates, and which version you are on
 
-The title screen shows something like **beta 1.0 (build 296)** at the bottom.
-**Please include that when you report anything** — an installed copy runs the
-version already on your phone, so you can be a launch behind whatever was
-fixed most recently.
+Open **Menu** on the title screen to see the build shown in your copy.
+**Please include that exact displayed build when you report anything** — an
+installed copy runs the version already on your phone, so you can be a launch
+behind whatever was fixed most recently.
 
-When a new build is ready you will see **新しいバージョンがあります** with an
-**更新する** button. Pressing it reloads into the new version; **あとで** keeps
-you where you are. Your progress is not affected either way.
+When a new build is ready you will see **A new version is available.** with an
+**Update now** button. Pressing it reloads into the new version; **Later**
+keeps you where you are. Your progress is not affected either way.
 
 Nothing needs reinstalling, ever. Updates arrive on their own.
 

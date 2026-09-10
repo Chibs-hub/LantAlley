@@ -7,7 +7,7 @@
  * Bump CACHE_VERSION whenever any shell file changes, or returning players
  * will keep the old build.
  */
-var CACHE_VERSION = "lantern-alley-v323";
+var CACHE_VERSION = "lantern-alley-v326";
 
 // audio-index.js assigns to `self`, so the worker and the page share one list
 // of clip paths. Importing it here means new lines are cached automatically
@@ -19,6 +19,7 @@ var SHELL = [
   "./index.html",
   "./styles.css",
   "./telemetry-config.js",
+  "./debug-mode.js",
   "./telemetry.js",
   "./app.js",
   "./entrance-stage-logic.js",
@@ -49,6 +50,20 @@ var SHELL = [
   "./assets/home/exterior/open-house-yard-day-v1.webp",
   "./assets/home/exterior/open-house-yard-night-v1.webp",
   "./assets/home/interior/starter-room-v1.webp",
+  /* The two paper-panel masks are NOT listed here on purpose.
+   *
+   * v325 embedded them into styles.css as data URIs, so no request is made
+   * for the files any more - they are kept in assets/ as editable source for
+   * the geometry, not as something the page loads. Listing a file the page
+   * never asks for would be merely pointless if it were harmless, but install
+   * below throws on any non-200 and fails the whole shell. These two were
+   * never committed, so on the deployed site they are 404s: every install
+   * would have failed, no shell would be cached, offline would stop working,
+   * and - worst - the new worker would never take over, leaving every
+   * existing tester pinned to their old build with no way forward.
+   *
+   * If the masks ever go back to being fetched, commit them first, then add
+   * them here. Never the other way round. */
   "./assets/home/interior/starter-room-morning-v1.webp",
   "./assets/home/interior/starter-room-day-v1.webp",
   "./assets/home/interior/starter-room-night-v1.webp",
@@ -101,9 +116,13 @@ var SHELL = [
   "./question-renderer.js",
   "./catalog-practice.js",
   "./manifest.webmanifest",
-  "./icons/icon-192.png",
-  "./icons/icon-512.png",
-  "./icons/apple-touch-icon.png",
+  "./assets/branding/lantern-mark-v1.png",
+  "./assets/social/lantern-alley-share-v1.jpg",
+  "./icons/icon-192.png?v=326",
+  "./icons/icon-512.png?v=326",
+  "./icons/icon-192-maskable.png?v=326",
+  "./icons/icon-512-maskable.png?v=326",
+  "./icons/apple-touch-icon.png?v=326",
   "./assets/kon/kon-idle.webp",
   "./assets/kon/kon-wave-left.webp",
   "./assets/kon/kon-wave-right.webp",

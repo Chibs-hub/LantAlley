@@ -33,10 +33,11 @@ test("opening is a cinematic Japanese entry into the illustrated alley", () => {
   assert.match(html, /\.title-kon::after\{/);
   assert.match(html, /id="progress-note"[^>]*hidden/);
   assert.match(html, /路地へ戻る/);
-  assert.match(html, /id="btn-restart"[^>]*hidden>最初から<\/button>/);
-  /* 最初から asks first. It used to wipe the save on the press itself, which
-     put a one-tap, unrecoverable deletion of every word learned and every
-     home item earned directly beside 路地へ戻る on the title screen. The
+  assert.match(html, /id="btn-title-menu"[^>]*aria-controls="title-menu">Menu<\/button>/);
+  assert.match(html, /class="title-menu" id="title-menu" hidden[\s\S]*?id="btn-restart"[^>]*hidden>Start over<\/button>/);
+  /* Start over lives inside Menu and asks first. It used to wipe the save on
+     the press itself, which put a one-tap, unrecoverable deletion of every
+     word learned and every home item earned beside the entry action. The
      press now opens a confirmation whose safe option takes focus, and only
      the destructive option reaches the reset. Assert the wiring rather than
      the old immediate call - what matters is that restart still works and

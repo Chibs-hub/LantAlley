@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="669" viewBox="0 0 1200 669">
+  <!-- Paper surfaces traced inside the daylight room's sliding-door frames.
+       Openings, shoji, timber, lamps and floor stay transparent.
+       The lower ink landscapes remain visible through the multiply layer. -->
+  <defs>
+    <mask id="paper-handles" maskUnits="userSpaceOnUse" x="0" y="0" width="1200" height="669" style="mask-type:luminance">
+      <rect width="1200" height="669" fill="white"/>
+      <g fill="black">
+        <ellipse cx="99" cy="333" rx="8" ry="14"/>
+        <ellipse cx="325" cy="343" rx="3" ry="8"/>
+        <ellipse cx="458" cy="344" rx="7" ry="8"/>
+        <ellipse cx="741" cy="344" rx="7" ry="8"/>
+        <ellipse cx="912" cy="343" rx="3" ry="10"/>
+        <ellipse cx="1101" cy="335" rx="8" ry="14"/>
+      </g>
+    </mask>
+  </defs>
+  <g fill="white" mask="url(#paper-handles)">
+    <polygon points="0,0 115,65 114,547 0,587"/>
+    <polygon points="281,166 329,190 329,460 281,477"/>
+    <polygon points="351,193 472,193 472,456 351,456"/>
+    <polygon points="727,193 849,193 849,456 727,456"/>
+    <polygon points="872,189 917,166 917,477 872,460"/>
+    <polygon points="1088,65 1200,0 1200,587 1088,547"/>
+  </g>
+</svg>

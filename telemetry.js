@@ -21,7 +21,8 @@
     reward_claimed:{reward_id:1},
     app_error:{message:1, source:1}
   };
-  var enabled = projectKey !== "" && readPreference() !== "off";
+  var debugSession = !!(root.LanternDebug && root.LanternDebug.enabled);
+  var enabled = !debugSession && projectKey !== "" && readPreference() !== "off";
   var contextProvider = function(){ return {}; };
   var provider = null;
   var queued = [];
@@ -140,6 +141,7 @@
   }
 
   function setEnabled(value){
+    if(debugSession) return;
     enabled = !!value && projectKey !== "";
     writePreference(enabled ? "on" : "off");
     if(provider){

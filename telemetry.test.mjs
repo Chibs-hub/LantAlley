@@ -7,11 +7,12 @@ import { FakeStorage } from "./dom-harness.mjs";
 
 const read = (name) => readFileSync(new URL("./" + name, import.meta.url), "utf8");
 
-function loadTelemetry(config) {
+function loadTelemetry(config, debug = false) {
   const sent = [];
   const initialized = [];
   const root = {
     LanternTelemetryConfig: config,
+    LanternDebug: {enabled:debug},
     localStorage: new FakeStorage(),
     posthog: {
       init(key, options) { initialized.push({ key, options }); },
@@ -28,6 +29,15 @@ function loadTelemetry(config) {
   vm.runInContext(read("telemetry.js"), root, { filename: "telemetry.js" });
   return { telemetry: root.LanternTelemetry, sent, initialized };
 }
+
+test("debug sessions never initialize analytics or change the normal analytics preference", () => {
+  const loaded = loadTelemetry({projectKey:"phc_test"}, true);
+  loaded.telemetry.setEnabled(true);
+  loaded.telemetry.track("app_opened", {screen:"title"});
+  assert.equal(loaded.telemetry.isEnabled(), false);
+  assert.deepEqual(loaded.sent, []);
+  assert.deepEqual(loaded.initialized, []);
+});
 
 test("telemetry is a no-op until a public project key is configured", () => {
   const loaded = loadTelemetry({ projectKey: "", apiHost: "https://us.i.posthog.com" });

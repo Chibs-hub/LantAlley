@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="669" viewBox="0 0 1200 669">
+  <!-- Evening/night artwork has lower lintels and handles than daylight. -->
+  <defs>
+    <mask id="paper-handles" maskUnits="userSpaceOnUse" x="0" y="0" width="1200" height="669" style="mask-type:luminance">
+      <rect width="1200" height="669" fill="white"/>
+      <g fill="black">
+        <ellipse cx="99" cy="346" rx="8" ry="14"/>
+        <ellipse cx="325" cy="356" rx="3" ry="8"/>
+        <ellipse cx="458" cy="357" rx="7" ry="8"/>
+        <ellipse cx="741" cy="357" rx="7" ry="8"/>
+        <ellipse cx="912" cy="356" rx="3" ry="10"/>
+        <ellipse cx="1101" cy="348" rx="8" ry="14"/>
+      </g>
+    </mask>
+  </defs>
+  <g fill="white" mask="url(#paper-handles)">
+    <polygon points="0,16 115,79 114,560 0,599"/>
+    <polygon points="281,179 329,203 329,473 281,490"/>
+    <polygon points="351,206 472,206 472,469 351,469"/>
+    <polygon points="727,206 849,206 849,469 727,469"/>
+    <polygon points="872,202 917,179 917,490 872,473"/>
+    <polygon points="1088,79 1200,16 1200,599 1088,560"/>
+  </g>
+</svg>
