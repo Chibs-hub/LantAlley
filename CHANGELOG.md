@@ -5,6 +5,16 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-10 - Eight places on a shelf, reached by pressing the shelf
+
+Two was never a judgement about the furniture. A 違い棚 plainly holds more, and the reason it held two was that each place was its own tap target: eight targets 44px apart need roughly 180x130px, and at the smallest scene the room is drawn at - 533x300 - a shelf is 80x58px with its planks 15px apart. The furniture was the right size; the interaction was the constraint.
+
+So a place is no longer a target. Eight positions on each shelf share a `surface`, and the renderer draws one target over the whole shelf. Pressing it is what a person would say they are doing - putting the thing on the shelf - and the object takes the first free position, filling top-left to bottom-right the way you would set objects down yourself. Taking one off is unchanged: press the object, not the shelf. Sixteen places in the room now, against seven `shelf` pieces in the catalogue, and all seven go on in one press each.
+
+The floating that ran alongside this had a third cause, found only by measuring a third time. Each plank's band in the asset is 28-32px thick, because the board is seen at a slight downward angle and that band is its top surface in perspective. The contact point was the band's first row - the board's far edge - so objects sat at the back of a shelf and hung over the front of it. They rest 45% into the band now, and 15% into the base, which is a thicker plinth.
+
+Everything the bought shelf owns still depends on it: its eight places carry `requires`, so they do not exist until it is standing there, and carrying it out still returns what was on it to storage. The separation test skips pairs that share a surface, with the reason written down - insisting on 44px between two spots on one plank would demand a shelf about twice the width of the wall it stands against - while still checking the two shelves are far apart from each other. Slot ids changed, so old saves settle on read: a placement pointing at a slot the room no longer has returns to storage rather than being stranded. Cache is v335; `node --test` passes (527).
+
 ### 2026-09-10 - The last six decor pieces are photographs, and the shelf sits on the floor
 
 火鉢, 面, 本, 扇, 急須 and 小さな鉢 were the last things in the game still drawn in code. Their photographs arrived and every catalogue item now carries one, so nothing in a learner's room is a line drawing beside a painted object any more. The vectors stay as fallbacks: a picture that fails to load must not make an owned thing vanish from a room somebody paid to decorate.

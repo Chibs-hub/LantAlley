@@ -156,6 +156,59 @@
    * `window-sill` likewise: it sat on a wall panel. It is now on the veranda
    * boards visible through the left opening, which is where a potted plant or
    * a wind chime belongs in this house. */
+  /* Eight places on a shelf, and one target to reach them by.
+   *
+   * A 違い棚 plainly holds more than two things, and two was never a judgement
+   * about the furniture - it was the most tap targets that fit. At the
+   * smallest scene the room is drawn at, 533x300, a shelf is 80x58px and its
+   * planks are 15px apart: eight targets 44px from each other need roughly
+   * 180x130px, so they cannot coexist with the furniture at its real size.
+   *
+   * The way out is to stop making each position a target. `surface` groups
+   * these eight into one, and the renderer draws a single target over the
+   * whole shelf: "put it on the shelf" is the instruction anyway, and the
+   * shelf is a large, easy thing to hit. Which plank it lands on is decided
+   * by filling the first free position, top-left to bottom-right, the way you
+   * would set objects down yourself. Taking one off is unchanged - press the
+   * object, not the shelf.
+   *
+   * The planks are measured, not judged: rows of the asset more than 55%
+   * opaque, giving four bands whose tops are 0.0147, 0.3096, 0.5381 and
+   * 0.7445 of its height. A band is 28-32px thick because the board is seen
+   * at a slight angle and that is its top surface in perspective, so the
+   * contact point is 45% into the band rather than at the top of it - resting
+   * an object on the band's first row put it at the plank's far edge, hanging
+   * over the front of the shelf. The base is a thicker plinth, so it takes
+   * 15%. `xs` are fractions of the shelf's width; the top board is the short
+   * one of a staggered shelf and only spans the left 70%, so its pair sits
+   * inside that. */
+  var SHELF_PLANKS = [
+    {contact:0.0479, xs:[0.22, 0.52]},
+    {contact:0.3406, xs:[0.25, 0.75]},
+    {contact:0.5735, xs:[0.25, 0.75]},
+    {contact:0.7685, xs:[0.25, 0.75]}
+  ];
+
+  function shelfPositions(prefix, centreX, mirrored, requires){
+    var WIDTH = 15, BASE = 73;
+    var HEIGHT = WIDTH * 1.778 / 1.405;      // scene is 16/9; asset is 572x407
+    var top = BASE - HEIGHT, left = centreX - WIDTH / 2;
+    var out = [];
+    SHELF_PLANKS.forEach(function(plank, row){
+      plank.xs.forEach(function(fx, col){
+        var f = mirrored ? 1 - fx : fx;      // the left shelf is drawn mirrored
+        out.push({
+          id: prefix + "-" + (row + 1) + (col ? "b" : "a"),
+          x: +(left + WIDTH * f).toFixed(2),
+          y: +(top + HEIGHT * plank.contact).toFixed(2),
+          scale: 0.52, kind: "shelf", surface: prefix, requires: requires || null,
+          label: (mirrored ? "左棚" : "右棚") + "の" + (row + 1) + "段目"
+        });
+      });
+    });
+    return out;
+  }
+
   var SLOTS = [
     {id:"floor-left",   x:22, y:80, scale:0.89, kind:"floor", label:"床の左"},
     {id:"floor-right",  x:78, y:80, scale:0.89, kind:"floor", label:"床の右"},
@@ -174,30 +227,15 @@
     {id:"post-left",    x:25, y:32, scale:0.88, kind:"post",  label:"柱の左"},
     {id:"post-right",   x:75, y:32, scale:0.88, kind:"post",  label:"柱の右"},
     {id:"eave", x:15, y:30, scale:0.80, kind:"eave", label:"軒下"},
-    {id:"shelf",        x:61, y:54.3, scale:0.52, kind:"shelf", label:"右棚の上段"},
     {id:"window-sill",  x:12, y:78, scale:0.80, kind:"sill",  label:"窓辺"},
-    {id:"tokonoma", x:70, y:68.15, scale:0.52, kind:"shelf", label:"右棚の下段"},
     /* Where the second shelf goes if the learner buys one. `z` sorts it with
        the fixtures rather than by its own foot: whatever stands on its planks
        has a higher y than the shelf's base, so without this the shelf would
        draw in front of the things it is holding. */
     {id:"cabinet-left", x:32.5, y:73, scale:0.74, z:38, kind:"cabinet", label:"左の壁際"},
 
-    /* Its two planks. `requires` is the whole point: these are not places in
-       the room, they are places on a piece of furniture, so they exist only
-       while that furniture does. Nothing offers them as targets, and nothing
-       renders anything left in them, until `cabinet-left` is filled - and
-       emptying it puts whatever was on the planks back in storage rather than
-       leaving a teapot in mid-air.
-
-       The x values are the right shelf's, mirrored inside the shelf's own
-       width, because the left shelf is drawn mirrored - see `flipX` in
-       home-decor.js. Its top plank is therefore the right-hand one. */
-    {id:"shelf-left", x:37, y:54.3, scale:0.52, kind:"shelf",
-     requires:"cabinet-left", label:"左棚の上段"},
-    {id:"tokonoma-left", x:28, y:68.15, scale:0.52, kind:"shelf",
-     requires:"cabinet-left", label:"左棚の下段"}
-  ];
+  ].concat(shelfPositions("shelf-right", 65.5, false, null))
+   .concat(shelfPositions("shelf-left", 32.5, true, "cabinet-left"));
 
   /* Furniture the room owns rather than the player.
    *
@@ -313,6 +351,9 @@
     return source.map(function(slot){
       return {id:slot.id, x:slot.x, y:slot.y, scale:slot.scale || 1,
               skew:slot.skew || 0, kind:slot.kind, label:slot.label,
+              // Which piece of furniture this position is on, so the renderer
+              // can offer one target for the whole shelf instead of eight.
+              surface:slot.surface || null,
               // Same trap as `skew` above: a field left out here is not a
               // missing field at the far end, it is a silently absent one.
               // `z` decides whether a shelf draws behind what stands on it,

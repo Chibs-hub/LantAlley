@@ -2525,6 +2525,15 @@ body:has(.about-panel:not([hidden])) .feedback-open{visibility:hidden;pointer-ev
     background:rgba(255,212,137,.18); border:2px dashed #ffd489;
   }
   .home-target.is-occupied{border-style:solid; background:rgba(255,212,137,.28)}
+  /* A shelf is pressed as a whole rather than at eight points on it, so its
+     target takes the shelf's own shape: a rounded rectangle over the
+     furniture, sized inline from the spread of the positions it stands for.
+     Its own size wins over the 44px circle above, hence the override - and it
+     is never smaller than that circle, because it covers a whole shelf. */
+  .home-target.is-surface{
+    border-radius:10px; min-width:44px; min-height:44px;
+    background:rgba(255,212,137,.13); align-items:flex-end; padding-bottom:2px;
+  }
   @media (prefers-reduced-motion:no-preference){
     .home-target{animation:home-pulse 1.6s ease-in-out infinite}
   }

@@ -4771,6 +4771,28 @@
     return homeDepthZ(slot && slot.z != null ? slot.z : (slot && slot.y));
   }
 
+  /* One pressable shelf, standing for the eight positions on it.
+   *
+   * Centred on the group and given the group's own spread as its size, so the
+   * target covers the furniture rather than a point on it. `id` is the
+   * position the object will actually land in, so the existing placement path
+   * needs no special case: it still receives a slot id. */
+  function surfaceTarget(surface, group, free){
+    var xs = group.map(function(s){ return s.x; });
+    var ys = group.map(function(s){ return s.y; });
+    var left = Math.min.apply(null, xs), right = Math.max.apply(null, xs);
+    var top = Math.min.apply(null, ys), bottom = Math.max.apply(null, ys);
+    return {
+      id: (free || group[0]).id,
+      x: +((left + right) / 2).toFixed(2),
+      y: +((top + bottom) / 2).toFixed(2),
+      kind: group[0].kind,
+      label: surface === "shelf-left" ? "左の棚" : "右の棚",
+      targetWidth: +(right - left + 6).toFixed(2),
+      targetHeight: +(bottom - top + 8).toFixed(2)
+    };
+  }
+
   function homeDepthZ(y){
     return 20 + Math.round(Number(y) || 0);
   }
@@ -4911,9 +4933,15 @@
   }
 
   function targetButton(slot, occupied){
-    return '<button type="button" class="home-target' + (occupied ? " is-occupied" : "") + '"'
-      + ' data-slot="' + slot.id + '" style="left:' + slot.x + '%;top:' + slot.y + '%"'
-      + ' aria-label="' + slot.label + (occupied ? "（入れかえる）" : "に置く") + '">'
+    // A surface target carries its own size, so pressing the shelf means
+    // pressing the shelf rather than a dot floating in the middle of it.
+    var sized = slot.targetWidth
+      ? ';width:' + slot.targetWidth + '%;height:' + slot.targetHeight + '%'
+      : '';
+    return '<button type="button" class="home-target'
+      + (occupied ? " is-occupied" : "") + (slot.targetWidth ? " is-surface" : "") + '"'
+      + ' data-slot="' + slot.id + '" style="left:' + slot.x + '%;top:' + slot.y + '%' + sized + '"'
+      + ' aria-label="' + slot.label + (occupied ? "（いっぱいです）" : "に置く") + '">'
       + '<span aria-hidden="true">' + (occupied ? "↔" : "+") + '</span></button>';
   }
 
@@ -5043,10 +5071,29 @@
             + (slot.skew ? ' skewY(' + slot.skew + 'deg)' : ''));
       });
       if(picked){
+        /* One target per surface, not per position.
+         *
+         * A shelf holds eight things and is 80px wide on the smallest scene,
+         * so eight targets on it could never be 44px apart. Grouping them
+         * means the learner presses the shelf - which is what they would say
+         * they are doing - and the object takes the first free position on
+         * it, filling top-left to bottom-right. Everything else in the room
+         * is still placed exactly where it is pressed. */
+        var offered = {};
         interior.slots.forEach(function(slot){
           if(slot.kind !== picked.kind) return;
           if(!slotAvailable(slot, home.placed)) return;
-          html += targetButton(slot, !!home.placed[slot.id]);
+          if(!slot.surface){
+            html += targetButton(slot, !!home.placed[slot.id]);
+            return;
+          }
+          if(offered[slot.surface]) return;
+          offered[slot.surface] = true;
+          var group = interior.slots.filter(function(s){ return s.surface === slot.surface; });
+          var free = group.filter(function(s){ return !home.placed[s.id]; })[0];
+          // A full shelf still shows, marked taken, so it reads as "no room
+          // left here" rather than vanishing and leaving nowhere to aim.
+          html += targetButton(surfaceTarget(slot.surface, group, free), !free);
         });
       }
     }

@@ -104,6 +104,13 @@ test("same-kind room targets remain separately reachable on a narrow scene", () 
   for(let a = 0; a < slots.length; a += 1){
     for(let b = a + 1; b < slots.length; b += 1){
       if(slots[a].kind !== slots[b].kind) continue;
+      /* Positions on the same piece of furniture are never separate targets.
+         Eight places on a shelf are reached by pressing the shelf once - see
+         `surface` in home-room.js - so the rule that matters is that the
+         SHELVES are far apart, which the pairs below still check, not that
+         two spots on the same plank are. Requiring 44px between them would
+         demand a shelf about twice the size of the wall it stands against. */
+      if(slots[a].surface && slots[a].surface === slots[b].surface) continue;
       const dx = (slots[a].x - slots[b].x) * scene.width / 100;
       const dy = (slots[a].y - slots[b].y) * scene.height / 100;
       assert.ok(Math.abs(dx) >= 44 || Math.abs(dy) >= 44,
@@ -212,10 +219,28 @@ test("every catalogue item is sized from a picture of the object itself", () => 
   }
 });
 
-test("tokonoma shelf rewards meet the back floor instead of floating on the wall", () => {
-  const tokonoma = slots.find(slot => slot.id === "tokonoma");
-  assert.ok(tokonoma.x >= 65, "tokonoma should be in the side alcove");
-  assert.ok(tokonoma.y >= 55, "tokonoma shelf items should meet the floor line");
+test("shelf rewards rest on the shelf's planks rather than on the wall behind it", () => {
+  /* This began life checking that two shelf slots had come down off the wall
+     onto the back floor. They are on a real piece of furniture now, so what
+     is worth holding is that every one of them lands on the shelf: between
+     its top plank and its base, and inside its width. */
+  const shelfSlots = slots.filter(slot => slot.kind === "shelf");
+  assert.equal(shelfSlots.length, 16, "eight places on each of the two shelves");
+
+  for (const [surface, centre] of [["shelf-right", 65.5], ["shelf-left", 32.5]]) {
+    const group = shelfSlots.filter(s => s.surface === surface);
+    assert.equal(group.length, 8, `${surface} holds eight`);
+    for (const slot of group) {
+      // the shelf is 15% wide, standing with its foot at y=73 and 18.98 tall
+      assert.ok(Math.abs(slot.x - centre) <= 7.5, `${slot.id} is within the shelf's width`);
+      assert.ok(slot.y > 73 - 18.98 && slot.y < 73, `${slot.id} is between the top plank and the floor`);
+    }
+  }
+
+  // The bought shelf's places exist only while it is standing there.
+  for (const slot of shelfSlots.filter(s => s.surface === "shelf-left")) {
+    assert.equal(slot.requires, "cabinet-left", `${slot.id} needs the shelf under it`);
+  }
 });
 
 test("window rewards use the visible left opening instead of floating on a wall panel", () => {
@@ -283,14 +308,14 @@ test("placing into an occupied corner swaps, and says what was displaced", () =>
 test("storage is what you own minus what is standing in the room", () => {
   let home = {owned: ["rug-plain", "teapot", "fan"], placed: {}};
   assert.equal(decor.inStorage(home).length, 3);
-  home = decor.place(home, "teapot", "shelf", slots).home;
+  home = decor.place(home, "teapot", "shelf-right-1a", slots).home;
   assert.deepEqual(decor.inStorage(home), ["rug-plain", "fan"]);
 });
 
 test("putting something away returns it to storage", () => {
   let home = {owned: ["teapot"], placed: {}};
-  home = decor.place(home, "teapot", "shelf", slots).home;
-  const gone = decor.remove(home, "shelf");
+  home = decor.place(home, "teapot", "shelf-right-1a", slots).home;
+  const gone = decor.remove(home, "shelf-right-1a");
   assert.equal(gone.removed, "teapot");
   assert.equal(Object.keys(gone.home.placed).length, 0);
   assert.deepEqual(decor.inStorage(gone.home), ["teapot"]);
