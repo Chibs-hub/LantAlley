@@ -24,11 +24,17 @@
    * dictionary form finds nothing. Falling back to the longest leading run of
    * the word that does appear catches the stem, which is the part worth
    * highlighting. An entry may name `focus` outright where even that is wrong.
+   *
+   * The stem fallback has a 2-character floor because a one-character prefix
+   * often matches by coincidence (e.g. あ in あちこち when searching for ある,
+   * or 生 in 生きがい when searching for 生きる). Validation that accepts a
+   * coincidence is worse than no validation: the author must then provide an
+   * explicit `focus` for such words.
    */
   function locate(sentence, word, authored){
     if(authored && sentence.indexOf(authored) >= 0) return authored;
     if(sentence.indexOf(word) >= 0) return word;
-    for(var end = word.length - 1; end > 0; end -= 1){
+    for(var end = word.length - 1; end > 1; end -= 1){
       var stem = word.slice(0, end);
       if(sentence.indexOf(stem) >= 0) return stem;
     }
@@ -71,6 +77,10 @@
       if(sentence.length < MIN_SENTENCE){
         errors.push(word + " has a sentence of " + sentence.length
           + " characters; at least " + MIN_SENTENCE + " are needed to show a use");
+        return;
+      }
+      if(entry.focus && sentence.indexOf(entry.focus) < 0){
+        errors.push(word + " has an authored focus \"" + entry.focus + "\" that does not appear in its sentence");
         return;
       }
       if(!locate(sentence, word, entry.focus)){

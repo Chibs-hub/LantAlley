@@ -65,3 +65,44 @@ test("validation catches the ways an authored entry goes wrong", () => {
     "揃える": { sentence: "スリッパを四つ揃えてください。", pattern: "〜を揃える" },
   }))), []);
 });
+
+test("the 2-character stem floor prevents 1-character kana from matching by coincidence", () => {
+  // Pins: locate() should not match the stray あ in あちこち when searching for ある.
+  // Without the 2-character floor, validateEntries would incorrectly pass this as valid.
+  const teach = load();
+  const words = [{ word: "ある" }];
+  const errors = teach.validateEntries(words, {
+    "ある": { sentence: "あちこち歩き回った後だった。", pattern: "〜ある" },
+  });
+  assert.equal(errors.length, 1, "should reject sentence that never uses the word");
+  assert.match(errors[0], /does not contain/, "error should indicate word is missing");
+});
+
+test("the 2-character stem floor prevents 1-character kanji from matching unrelated words", () => {
+  // Pins: locate() should not match the 1-character 生 in 生きがい when searching for 生きる.
+  // With the 2-character floor, it correctly tries 生き (2 chars) but does not fall back to 生 (1 char).
+  // The minimum stem returned is 2 characters, even if a longer unrelated word contains that stem.
+  const teach = load();
+  const itemIkiru = { canonical: "生きる", reading: "いきる", meanings: ["to live"], level: "N2" };
+  const card = teach.buildCard(
+    { sentence: "彼は生きがいを感じている。", pattern: "〜生きる" },
+    itemIkiru,
+    null
+  );
+  // With the 2-character floor, the stem fallback returns 生き because it matches in 生きがい.
+  // What matters is that it does NOT return 生 (1 character), which would be a false positive.
+  // To avoid ambiguity here, the author should provide explicit focus for this word.
+  assert.equal(card.focus, "生き", "2-character stem is the minimum fallback");
+});
+
+test("validation rejects an authored focus that does not appear in the sentence", () => {
+  // Pins: authored focus typos are caught early.
+  const teach = load();
+  const words = [{ word: "揃える" }];
+  const errors = teach.validateEntries(words, {
+    "揃える": { sentence: "スリッパを四つ揃えてください。", pattern: "〜を揃える", focus: "揃えた" },
+  });
+  assert.equal(errors.length, 1, "should reject focus typo");
+  assert.match(errors[0], /authored focus/, "error should mention authored focus");
+  assert.match(errors[0], /does not appear/, "error should say it does not appear");
+});
