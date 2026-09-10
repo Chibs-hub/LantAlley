@@ -13,10 +13,10 @@ nothing to reason from.
   knowledge of any of its words.
 - **Job:** Understand what a word means and how it is used, before being asked
   to use it for credit.
-- **Current behaviour:** The stage board names five words with a gloss. The
-  cold open then asks a question about a word nobody has been taught. Day 1
-  repeats that question if it was missed, which is the usual case. A margin
-  card repeats word, reading and gloss while the learner is already answering.
+- **Current behaviour:** The stage board names five words with a gloss, then
+  Day 1 begins. A margin card repeats word, reading and gloss while the learner
+  is already being scored. The cold open that used to sit between them was
+  disabled in v326 and its code is still present but unreachable.
 - **Desired outcome:** Between the board and Day 1 sits a teaching step: one
   word at a time, with an authored sentence showing the word at work, and one
   unscored check.
@@ -26,25 +26,39 @@ nothing to reason from.
   200 authored questions. No change to the four SRS interval steps already in
   use, nor to the miss penalty.
 
-## Why the cold open goes
+## The cold open is already gone
 
-It is not a scene. `N2HomeInnStage.coldOpen` is two Kon replies; the question
-is encounter one, played early and unscored. Removing it loses no story beat,
-because the guest it introduces is the guest Day 1 introduces.
+This is the correction that reshapes the work. **The cold open was disabled in
+v326**, commit 9681960, whose message reads "the Inn now opens by teaching
+rather than by an unsupported cold attempt". The entry point changed from
 
-Its own day-goal text is the argument against it:
+    var phase = state.stageProgress.homeInn ? "learn" : "coldopen";
 
-    coldopen: "まだ習っていない言葉ばかりです。できなくて大丈夫、今日から一緒に覚えましょう。"
+to a hardcoded `var phase = "learn";` (app.js:3801). Nothing anywhere assigns
+`stagePhase = "coldopen"`, so the phase is unreachable.
 
-A step that opens by saying it is fine to fail it is carrying no weight. Worse,
-`coldOpenSkipFirst` is set only when the answer was correct, so a miss replays
-that encounter as Day 1's first question. For a word never seen, a four-option
-guess is about 75% likely to miss, which makes the repeat the default path
-rather than the edge case. Six commits have been spent explaining this
-mechanism: 53f5c60, 4c948bb, dc65e16, 32218cf, ed623f4, 59489f7.
+Removing it is therefore **dead-code cleanup with no behavioural change**, not
+a redesign. That drops the risk of this work substantially and is why it can
+land in the same step as the teaching card.
 
-Productive failure needs the learner to hold some resource to reason with. An
-unrecognised word and four options is not that.
+Why it was right to disable, recorded here so it is not reintroduced:
+`coldOpenSkipFirst` was set only on a correct answer, so a miss replayed that
+same encounter as Day 1's first question. For a word never seen, a four-option
+guess misses about 75% of the time, which made the repeat the default path
+rather than the edge case. Six commits went into explaining that mechanism
+rather than removing it: 53f5c60, 4c948bb, dc65e16, 32218cf, ed623f4, 59489f7.
+Productive failure needs the learner to hold some resource to reason with, and
+an unrecognised word with four options is not that.
+
+It was never a scene either. `coldOpen` is two Kon replies over encounter one,
+so nothing narrative is lost - the guest it introduced is the guest Day 1
+introduces.
+
+What v326 left behind is the gap this design fills. "Opens by teaching" in
+practice means it goes straight to the Day 1 board and then to graded
+questions, with word, reading and gloss repeated in a margin card while the
+learner is already being scored. The words are named; they are still not
+taught.
 
 ## Where it fits
 
@@ -163,24 +177,45 @@ check taken seconds after study would contradict the engine's own reasoning.
 Never repeating the missed word is the specific failure of the cold open, and
 is not reintroduced here.
 
-## Removing the cold open
+## Clearing out the cold open
 
+All of this is unreachable today, so none of it changes what a learner sees.
 Delete, across 21 references in app.js:
 
 - `coldOpen` from `N2HomeInnStage`, and `coldopen` from `DAY_GOALS`,
   `DAY_KINDS`, `getDayMeta` and `getDayAnnouncement`
 - `state.coldOpenSkipFirst`, `state.coldOpenRetryPending`, `resolveColdOpen`
 - every `stagePhase === "coldopen"` branch
+- the `var opening = phase === "coldopen"` variant inside `stageJobBoard`
+  (app.js:3613) and the four ternaries it feeds. This is the "この宿でおぼえる
+  言葉 / 五つの言葉 / はじめての場所" board, which has been unreachable since
+  v326 for the same reason.
 
-Saves paused mid-cold-open already resume as `learn` (app.js:4007), so no new
-migration is required.
+The resume guard at app.js:4007 that maps a saved `coldopen` phase to `learn`
+**stays**. Saves written before v326 can still carry it, and it costs one
+ternary to keep them opening correctly.
 
-Three test files carry cold-open assertions that are **deleted rather than
-repaired**, because the behaviour they protect is being removed on purpose:
+### Two audio clips stop shipping
+
+`coldOpen.wrongReply` and `correctReply` have pre-rendered clips
+(`0ea2000aa3bb.mp3`, 35KB and `5fb0b5ca1a6c.mp3`, 39KB) which sit in
+`LanternAlleyAudioGroups.shell`, the group fetched on first run. The test that
+put them there reasons they are "reachable on a first run" - true when it was
+written, false since v326. Removing the cold open takes 74KB out of the
+first-run download, which matters on an artifact already near its 15MB ceiling.
+
+The clip files themselves are left on disk. They cost nothing once
+unreferenced, and deleting generated audio is easy to regret.
+
+### Tests that get deleted rather than repaired
+
+They protect dead data, so there is nothing to repair:
 
 - `n2-home-inn-stage.test.mjs:1247` and `:1274` - two whole tests
-- `pwa.test.mjs:970` - asserts cold-open clips install with the shell
-- `walkthrough.test.mjs:253` - a save fixture pinned to `phase: "coldopen"`
+- `pwa.test.mjs:970` - asserts the cold-open clips install with the audio shell
+- `walkthrough.test.mjs:253` - a save fixture pinned to `phase: "coldopen"`.
+  Keep one fixture like it, retargeted at the resume guard above, so the
+  pre-v326 save path stays covered.
 
 ## Spacing schedule change
 
@@ -229,10 +264,10 @@ fails a test rather than being found by playing:
 
 **Flow:**
 
-- no `coldopen` phase is reachable from any entry point
 - the teaching step appears between the board and the first graded question
 - it teaches only the words the board marks new
-- a save written mid-cold-open resumes into the teaching step
+- a pre-v326 save carrying `phase: "coldopen"` still resumes into `learn`
+- no reference to `coldopen` survives outside that one resume guard
 
 **No-stakes guarantee:** answering the check, right or wrong, leaves
 `reviewProgress`, `money` and `masteredByStage` untouched.
