@@ -2134,6 +2134,40 @@ body:has(.about-panel:not([hidden])) .feedback-open{visibility:hidden;pointer-ev
   .home-card.is-picked{border-color:#ffd489; box-shadow:0 0 0 2px rgba(255,212,137,.45)}
   .home-card.is-locked{opacity:.45}
   .home-card.is-owned{opacity:.55; cursor:default}
+
+  /* On a phone the storage shelf is a tray, not a grid.
+   *
+   * As a grid it was 340px tall for nine things and grew a row for every few
+   * more, while the room above it is 453 and the controls between them 139:
+   * 1270px of page inside an 851px screen. So picking something meant
+   * scrolling down past the room, and placing it meant scrolling back up -
+   * once per object, and worse the more you owned, which is exactly backwards
+   * for the part of the game that rewards owning more.
+   *
+   * One row that scrolls sideways instead. Its height no longer depends on
+   * how much you have, and sticking it to the bottom of the screen keeps the
+   * room and the things you are putting in it visible together, so a whole
+   * decorating session needs no vertical scrolling at all. */
+  @media(max-width:760px){
+    .home-stage .home-shelf{
+      position:sticky; bottom:0; z-index:60;
+      display:flex; grid-template-columns:none; max-width:none;
+      gap:8px; padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px));
+      overflow-x:auto; overflow-y:hidden;
+      scroll-snap-type:x proximity; overscroll-behavior-x:contain;
+      background:linear-gradient(180deg,rgba(24,14,8,.88),rgba(24,14,8,.98));
+      border-top:1px solid rgba(224,164,79,.28);
+      scrollbar-width:none;
+    }
+    .home-stage .home-shelf::-webkit-scrollbar{display:none}
+    .home-stage .home-shelf .home-card{
+      flex:0 0 auto; width:84px; scroll-snap-align:start;
+      padding:6px 4px 5px;
+    }
+    .home-stage .home-shelf .home-card-art{height:40px}
+    .home-stage .home-shelf .home-card-name{font-size:.76rem; white-space:nowrap}
+    .home-stage .home-shelf .home-card-sub{font-size:.66rem}
+  }
   /* Explicit, not inherited: the panel's ink is dark and this sits on the dark
      stage, so inheriting made it invisible the moment the home went dark. */
   .home-empty{grid-column:1/-1; text-align:center; font-size:.85rem; color:#cbb894}

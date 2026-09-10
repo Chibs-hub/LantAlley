@@ -5,6 +5,16 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-10 - The storage shelf is a tray, so decorating needs no scrolling
+
+Reported as having to scroll down to pick something up and back to put it down, every time - and, more usefully, that it would only get worse with more things to choose from. That second half is what made the first fix wrong: scrolling the room into view after a pick helps one direction and leaves the return trip, and both get longer the more you own, which is backwards for the part of the game that rewards owning more.
+
+The shape of the tray was the cause. Measured on a 393x851 phone: the room 453px, the controls between them 139, and the storage grid 340px for nine objects - 1270px of page inside an 851px screen, gaining a row every few purchases.
+
+It is one row that scrolls sideways now, stuck to the bottom of the screen on phone widths. Its height stops depending on how much you own: 340px down to 107, and 107 whether you hold nine things or ninety. The room and the tray share the screen, so a whole session of decorating scrolls vertically not at all - verified by picking from the tray, finding all five targets already on screen, placing, and seeing the scroll position unchanged. Desktop keeps its centred grid, where there was never a shortage of room.
+
+`showPlacementTargets` from the earlier attempt stays. It is a no-op whenever the room is already visible, which it now always is on a phone, and it still earns its place on a short or landscape screen. Being straight about it: it never fired in testing and the reason was not found - the tray is what fixed this, not that hook. Cache is v337; `node --test` passes (528).
+
 ### 2026-09-10 - Shelf objects rest on the staggered boards (v336)
 
 The eight-slot layout treated both middle boards as full-width. Two positions
