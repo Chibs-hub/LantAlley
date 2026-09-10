@@ -5,6 +5,16 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-10 - The shelf stands on the floor now, not above it
+
+Reported as "position is off", and it was: the shelf's foot sat at image y=461 while the tatami it is supposed to rest on starts at y=487. Twenty-six pixels of daylight under a piece of furniture, which is exactly the kind of thing that reads as wrong before anyone can say why.
+
+The numbers came off the painting this time rather than out of an estimate. Blown up 3x with a ruler drawn over it, the right fusuma runs x=715 to x=855 of the 1200-wide source and its bottom rail meets the floor at y=487. The scene is `cover` on a 533x300 box, so the source scales by 0.4484 with 2.55px cropped from each side: image x maps to (x*0.4484-2.55)/533, image y maps to y/669. That puts the panel at 59.7%-71.5% and the floor line at 72.8%, hence x:65.5 and y:73. Measured back after the change, the foot renders at y=488 against a floor line of 487.
+
+The width went to 15% for a reason worth keeping. 11% is what fits inside the fusuma leaf, but the asset is 1.36 times wider than tall, so 11% draws a 90x66cm sideboard rather than a chigaidana. 15% is about 124x87cm, the real proportion, and it overlaps the panel frame by roughly a hand's width each side the way a real piece standing against fusuma does. It also leaves the two slots 9% apart - 48px on the smallest scene - where fitting inside the leaf would have put them 37px apart and failed the reachability rule.
+
+One imperfection is left and is not worth an image: the asset is drawn in a slight three-quarter view showing its right end, while a shelf sitting right of centre should show its left end to a viewer standing left of it. It does not read as wrong at this size. A straight-on elevation of the same shelf would remove the argument entirely, if it is ever wanted. Cache is v329; `node --test` passes (525).
+
 ### 2026-09-10 - The room owns a shelf, so the small things have somewhere to be
 
 `shelf` and `tokonoma` named furniture the painting does not contain. They hung on flat wall first, then retreated to the tatami by the back wall, which left a kyusu and a daruma sitting in the middle of an empty floor with nothing under them.

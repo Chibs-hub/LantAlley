@@ -155,9 +155,9 @@
     {id:"post-left",    x:25, y:32, scale:0.88, kind:"post",  label:"柱の左"},
     {id:"post-right",   x:75, y:32, scale:0.88, kind:"post",  label:"柱の右"},
     {id:"eave", x:15, y:30, scale:0.80, kind:"eave", label:"軒下"},
-    {id:"shelf",        x:61, y:53, scale:0.52, kind:"shelf", label:"棚の上"},
+    {id:"shelf",        x:61, y:55, scale:0.52, kind:"shelf", label:"棚の上"},
     {id:"window-sill",  x:12, y:78, scale:0.80, kind:"sill",  label:"窓辺"},
-    {id:"tokonoma", x:71, y:64, scale:0.52, kind:"shelf", label:"棚の下"}
+    {id:"tokonoma", x:70, y:68, scale:0.52, kind:"shelf", label:"棚の下"}
   ];
 
   /* Furniture the room owns rather than the player.
@@ -171,10 +171,32 @@
    * sorts it by. That is deliberately shallower than the slots standing on
    * it: the objects on a shelf are in front of its frame, so they must sort
    * above it, and depth here is measured from the object's base, which for
-   * the shelf is lower down the picture than the surfaces it holds. */
+   * the shelf is lower down the picture than the surfaces it holds.
+   *
+   * The three numbers are read off the painting, not chosen by eye. Blown up
+   * 3x, the right fusuma runs x=715 to x=855 of the 1200-wide source and its
+   * bottom rail meets the tatami at y=487. The scene is `cover` on a 533x300
+   * box, which scales the source by 0.4484 and crops 2.55px from each side,
+   * so image x maps to (x*0.4484-2.55)/533 and image y maps to y/669:
+   *
+   *   fusuma      x 715..855 -> 59.7%..71.5%, centre 65.6
+   *   floor line  y 487      -> 72.8%
+   *
+   * Hence x:65.5 and y:73. The first attempt used y:69, which is image y=461
+   * - twenty-five pixels up the wall, with the shelf hanging in the air above
+   * its own floor.
+   *
+   * The width is 15 rather than the 11 that would fit inside the fusuma leaf,
+   * because 11 is 90cm and the asset is 1.36 times wider than tall, which
+   * would make it 66cm high - a sideboard, not a chigaidana. 15 is about
+   * 124cm by 87cm, which is the real proportion, and it overlaps the panel
+   * frame by a hand's width each side the way a real piece of furniture
+   * standing against fusuma does. It also leaves the two slots 9% apart,
+   * which is 48px on the smallest scene; at 11 they were 37px and would have
+   * failed the reachability rule. */
   var INTERIOR_FIXTURES = [
     {id:"display-shelf", image:"assets/home/decor/display-shelf-staggered-v1.webp",
-     x:66, y:69, width:14, z:38, label:"違い棚"}
+     x:65.5, y:73, width:15, z:38, label:"違い棚"}
   ];
 
   /* The eight beds, measured off the painting rather than estimated from it.
