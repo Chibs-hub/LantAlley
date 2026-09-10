@@ -40,7 +40,12 @@
      image:"assets/home/decor/rug-plain-v1.webp",
      svg:'<ellipse cx="0" cy="0" rx="62" ry="22" fill="#8a4b3c" stroke="#5d2f24" stroke-width="3"/>'
        + '<ellipse cx="0" cy="0" rx="44" ry="13" fill="none" stroke="#d8a97a" stroke-width="2"/>'},
-    {id:"plant-small", name:"鉢植え", kind:"floor", price:80, category:"床",
+    /* A bonsai is a thing you display, not a thing you leave on the floor.
+       Catalogued as `floor`, its only homes were the five tatami positions,
+       so a 60cm potted pine ended up standing in the middle of an empty room
+       like a houseplant in a corridor. It is a `shelf` piece now, which is
+       where a bonsai actually goes - on a stand, at eye level, looked at. */
+    {id:"plant-small", name:"鉢植え", kind:"shelf", price:80, category:"棚",
      image:"assets/home/decor/bonsai-green-v1.webp",
      svg:'<rect x="-14" y="-4" width="28" height="24" rx="4" fill="#9c6b4a" stroke="#6b4530" stroke-width="3"/>'
        + '<path d="M0 -4 C -18 -20 -12 -40 0 -34 C 12 -40 18 -20 0 -4 Z" fill="#4f7d4a"/>'
@@ -222,9 +227,11 @@
   var PRESENTATION = {
     "floor-cushion-navy": {width:14, anchorY:82},
     "rug-plain":          {width:20, anchorY:55, scaleY:0.58},
-    "plant-small":        {width:10, anchorY:100},
+    // 10 was a 60cm pot on the floor. On a shelf at 0.52 that came to 44cm,
+    // most of the shelf's own height; 7 is about 31cm, a bonsai you display.
+    "plant-small":        {width:7, anchorY:100},
     "low-table":          {width:23, anchorY:100},
-    brazier:               {width:14, anchorY:100},
+    brazier:               {width:14, anchorY:69.2},
     kotatsu:               {width:29, anchorY:100},
     "folding-screen":     {width:43, anchorY:100},
     "floor-lantern":      {width:8, anchorY:100},
@@ -233,16 +240,32 @@
     "wall-lamp":          {width:5.5, anchorY:50},
     fan:                   {width:9, anchorY:50},
     mask:                  {width:9, anchorY:50},
-    /* These two are boxes, not objects, and the difference bites.
-       `width` is the slot the art is drawn into; the vector fallbacks only
-       fill part of it - the teapot 47%, the books 38% - so 8 here has never
-       been 8 of visible teapot. Measuring the rendered element and dividing
-       by the tatami scale measures the transparent padding too, and reads
-       about twice the object. The visible-fill test below is the one that
-       knows the difference; trust it over a ruler held up to the box.
-       At the shelf's 0.52 these land near 16cm and 15cm. */
-    teapot:                {width:8, anchorY:100},
-    books:                 {width:9, anchorY:100},
+    /* anchorY on a drawn object is where its ART ends, not where its box does.
+     *
+     * The six pieces with no photograph fall back to an inline SVG in a fixed
+     * `-60 -52 120 104` viewBox, and none of them fill it. Their drawings stop
+     * around y=14 to y=20 of a box that ends at y=52, so anchoring at 100 sat
+     * the empty bottom of the box on the plank and left the object hovering
+     * above it - about a tenth of the room's height on a shelf, which is what
+     * "not placed right" looked like. The photographs are cut tight, so 100 is
+     * correct for those and they were never wrong.
+     *
+     * Measured, not estimated: each fallback was rendered and asked for its
+     * getBBox(), and the anchor is (artBottom + 52) / 104. Redraw one of these
+     * paths and the number moves with it.
+     *
+     * Wall art keeps 50. `fan` and `mask` hang from their middles rather than
+     * standing on anything, and centring them is deliberate.
+     *
+     * `width` is the same kind of trap in the other axis: it is the box the
+     * art is drawn into, and these fallbacks fill only part of it across as
+     * well - the teapot 47%, the books 38% - so 8 has never been 8 of visible
+     * teapot. Measuring the rendered element and dividing by the tatami scale
+     * measures the transparent padding too and reads about twice the object.
+     * The visible-fill test knows the difference; trust it over a ruler held
+     * against the box. At the shelf's 0.52 these land near 16cm and 15cm. */
+    teapot:                {width:8, anchorY:63.5},
+    books:                 {width:9, anchorY:63.5},
     "cat-figure":         {width:5, anchorY:100},
     daruma:                {width:4, anchorY:100},
     "sakura-bonsai":      {width:7.5, anchorY:100},
@@ -260,7 +283,7 @@
        match - a mirrored staggered shelf has its high plank on the other
        side. */
     "display-shelf":      {width:20.3, anchorY:100, flipX:true},
-    "sill-plant":         {width:14, anchorY:100},
+    "sill-plant":         {width:14, anchorY:65.4},
     "wind-chime":         {width:4, anchorY:0, offsetY:0}
   };
 

@@ -5,6 +5,16 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-10 - Drawn objects rest on their artwork, and a bonsai goes on a shelf
+
+Reported as objects not sitting right on the shelves, and the cause was one line each. `anchorY` says where an object's contact point is, and the six pieces with no photograph fall back to an inline SVG in a fixed `-60 -52 120 104` viewBox that none of them fill: their drawings stop around y=14 to y=20 where the box ends at 52. Anchored at 100, the empty bottom of the box sat on the plank and the object hovered above it - the teapot by about 15px in a 554px scene. The photographs are cut tight, which is why the maneki-neko always sat correctly and only the drawn pieces looked wrong.
+
+The four that stand on something are now anchored to their art, measured rather than estimated: each fallback was rendered and asked for its `getBBox()`, and the anchor is (artBottom + 52) / 104. `brazier` 69.2, `teapot` and `books` 63.5, `sill-plant` 65.4. Wall art keeps 50 - `fan` and `mask` hang from their middles and centring them is deliberate.
+
+`plant-small` (鉢植え) moved from `floor` to `shelf`. Catalogued as floor furniture its only homes were the five tatami positions, so a 60cm potted pine stood in the middle of an empty room like a houseplant in a corridor. A bonsai is grown to be displayed on a stand. Its width came down from 10 to 7 to suit a shelf, about 31cm.
+
+That change would have stranded every existing save, which was already holding one on the floor with no way to notice, so `homeState` now settles placements on read: anything whose slot no longer matches its kind, or whose supporting furniture is gone, or whose slot the room no longer has, returns to storage. Nothing is destroyed - the item stays owned, and storage is where an object with nowhere valid to stand belongs. Cache is v332; `node --test` passes (527).
+
 ### 2026-09-10 - A second shelf to buy, mirrored so it faces the right way
 
 Two things, both reported. The room could display two of the catalogue's six `shelf` pieces, so four had nowhere to go; and a floor object placed at the back-right landed inside the shelf's footprint, because `floor-back-right` sits at the foot of the back wall and so, now, does a piece of furniture. Both back-floor slots moved five percent nearer the viewer, which puts a plant in front of the shelf where one actually stands. The x did not change - the depth was what was wrong.

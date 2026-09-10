@@ -144,12 +144,17 @@ test("placed decor carries physical size and contact-point calibration", () => {
     "low-table": {width:23, anchorY:100, scaleY:1, offsetY:0},
     "folding-screen": {width:43, anchorY:100, scaleY:1, offsetY:0},
     "scroll": {width:7, anchorY:50, scaleY:1, offsetY:0},
-    "brazier": {width:14, anchorY:100, scaleY:1, offsetY:0},
+    /* The four vector fallbacks that stand on something anchor to the bottom
+       of their ART, not of their box - measured with getBBox() in a browser,
+       (artBottom + 52) / 104 of the -60 -52 120 104 viewBox. At 100 the empty
+       bottom of the box sat on the surface and the object hovered above it. */
+    "brazier": {width:14, anchorY:69.2, scaleY:1, offsetY:0},
+    "teapot": {width:8, anchorY:63.5, scaleY:1, offsetY:0},
+    "books": {width:9, anchorY:63.5, scaleY:1, offsetY:0},
+    "sill-plant": {width:14, anchorY:65.4, scaleY:1, offsetY:0},
+    // Wall art is the exception and keeps its centre: it hangs, not stands.
     "fan": {width:9, anchorY:50, scaleY:1, offsetY:0},
     "mask": {width:9, anchorY:50, scaleY:1, offsetY:0},
-    "teapot": {width:8, anchorY:100, scaleY:1, offsetY:0},
-    "books": {width:9, anchorY:100, scaleY:1, offsetY:0},
-    "sill-plant": {width:14, anchorY:100, scaleY:1, offsetY:0},
     // A wind chime hangs from its hook, so its anchor is the top of the picture
     // and there is nothing to offset it from. The -40 was lifting it off a
     // windowsill it should never have been standing on.
@@ -302,16 +307,18 @@ test("buy and place never mutate the home they were handed", () => {
 test("every object declares the surface it actually belongs on", () => {
   const belongs = {
     // rests on the tatami
-    "floor-cushion-navy": "floor", "rug-plain": "floor", "plant-small": "floor",
+    "floor-cushion-navy": "floor", "rug-plain": "floor",
     "low-table": "floor", "brazier": "floor", "kotatsu": "floor",
     "folding-screen": "floor", "floor-lantern": "floor", "chrysanthemum-pot": "floor",
     // hangs flat against a wall
     "scroll": "wall", "fan": "wall", "mask": "wall",
     // hangs on a structural post rather than on flat plaster
     "wall-lamp": "post",
-    // rests on a raised surface rather than the floor
+    // rests on a raised surface rather than the floor. A bonsai belongs here
+    // and not on the tatami: it is grown to be displayed on a stand.
     "teapot": "shelf", "books": "shelf", "cat-figure": "shelf",
     "daruma": "shelf", "sakura-bonsai": "shelf", "pine-bonsai": "shelf",
+    "plant-small": "shelf",
     // stands against a wall and is itself a surface: the only piece whose
     // presence creates places for other pieces, which is why it has a kind
     // of its own rather than being one more thing on the floor
@@ -379,4 +386,41 @@ test("taking away a shelf brings down what was standing on it", () => {
   plain = decor.place(plain, "floor-cushion-navy", "floor-left", roomSlots).home;
   const one = decor.remove(plain, "floor-left", roomSlots);
   assert.deepEqual([...one.evicted], [], "nothing stands on a cushion");
+});
+
+/* A drawn object stands on the bottom of its drawing, not of its box.
+ *
+ * The six pieces with no photograph fall back to an inline SVG in a fixed
+ * -60 -52 120 104 viewBox, and none of them fill it: the art stops around
+ * y=14..20 where the box ends at y=52. Anchoring those at 100 puts the empty
+ * bottom of the box on the surface and leaves the object hovering above it -
+ * which is exactly what a teapot floating over a shelf plank looked like.
+ *
+ * The numbers come from getBBox() in a browser, so this guards the rule
+ * rather than recomputing it: anything standing on something must anchor
+ * well above its box bottom, and anything with a photograph - cut tight -
+ * must anchor at its base. Redraw a fallback path and this will not catch
+ * the new value, but it will catch a reset to 100.
+ */
+test("drawn objects rest on their artwork, not on the bottom of the viewBox", () => {
+  const drawn = ["brazier", "teapot", "books", "sill-plant"];
+  for (const id of drawn) {
+    const item = decor.getItem(id);
+    assert.equal(item.image, undefined, `${id} is expected to be a vector fallback`);
+    const anchor = decor.presentationFor(id).anchorY;
+    assert.ok(anchor > 55 && anchor < 90,
+      `${id} anchors at ${anchor}: a fallback that stands on a surface sits on its art, near 63-70, not on its box at 100`);
+  }
+
+  // Wall art is the deliberate exception: it hangs from its middle.
+  for (const id of ["fan", "mask"]) {
+    assert.equal(decor.presentationFor(id).anchorY, 50, `${id} hangs from its centre`);
+  }
+
+  // A tight-cropped photograph really does end at its base.
+  for (const id of ["cat-figure", "daruma", "pine-bonsai", "plant-small"]) {
+    assert.ok(decor.getItem(id).image, `${id} should have a photograph`);
+    assert.equal(decor.presentationFor(id).anchorY, 100,
+      `${id} is cut tight, so its base is the bottom of the picture`);
+  }
 });

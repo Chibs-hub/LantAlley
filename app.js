@@ -4612,7 +4612,34 @@
     if(!state.home) state.home = {owned:[], placed:{}};
     if(!state.home.owned) state.home.owned = [];
     if(!state.home.placed) state.home.placed = {};
+    settleHomePlacements(state.home);
     return state.home;
+  }
+
+  /* A save can outlive the rules it was written under.
+   *
+   * `place` refuses to put a thing where its kind does not belong, but a save
+   * made before a kind changed is already holding one - the bonsai was floor
+   * furniture until it became a shelf piece, so every existing room still had
+   * one standing on the tatami with no way to notice. The same goes for a
+   * plank whose shelf is gone, and for a slot the room no longer has at all.
+   *
+   * Nothing is destroyed: the item stays owned and returns to storage, which
+   * is where an object with nowhere valid to stand belongs. Silent, because
+   * this runs on every read and a message on each one would be noise. */
+  function settleHomePlacements(home){
+    var scenes = homeScenes();
+    var decor = (typeof LanternHomeDecor !== "undefined") ? LanternHomeDecor : null;
+    if(!scenes || !decor || !home || !home.placed) return;
+    var byId = {};
+    scenes.interior.slots.forEach(function(slot){ byId[slot.id] = slot; });
+    Object.keys(home.placed).forEach(function(slotId){
+      var slot = byId[slotId];
+      var item = decor.getItem(home.placed[slotId]);
+      var homeless = !slot || !item || slot.kind !== item.kind
+        || (slot.requires && !home.placed[slot.requires]);
+      if(homeless) delete home.placed[slotId];
+    });
   }
 
   function gardenState(){
