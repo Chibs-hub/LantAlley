@@ -5,6 +5,20 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-10 - The room owns a shelf, so the small things have somewhere to be
+
+`shelf` and `tokonoma` named furniture the painting does not contain. They hung on flat wall first, then retreated to the tatami by the back wall, which left a kyusu and a daruma sitting in the middle of an empty floor with nothing under them.
+
+The room now owns a 違い棚. `display-shelf-staggered-v1` was already in the repo, transparent and unused; it stands against the right fusuma as a **fixture** - scenery rather than stock, so it needs no purchase, cannot be picked up, and is there on a first visit - and the two slots sit on two of its real planks. It is also the horizontal line above floor level the room never had.
+
+Two calibration mistakes were made and corrected on the way, both worth recording because both are easy to repeat.
+
+The shelf was first sized with the front-row scale, about a quarter of a percent of the scene per centimetre, which is where the tatami seams were measured. It stands at the back wall, where the room spans roughly 350px to 850px of the painting's 1200 for about 3.5m - 0.12% per centimetre, half as much. It came out over two metres wide and ran off the fusuma into the corner post.
+
+Then the teapot looked twice life size, so its width came down - which was wrong twice over. `width` is the box the art is drawn into, and the vector teapot fills 47% of it, so 8 was never 8 of visible teapot; measuring the rendered element and dividing by the tatami scale measures the transparent padding too. The real fix was the slot's own scale, 0.78 on the floor to 0.52 on the shelf, which lands the visible kyusu at 16cm with the width untouched. The `vector fallback rewards compensate for unused view-box space` test is what caught it, and it should be trusted over a ruler held against the box.
+
+The separation test caught a third: two shelf slots 8% apart measure 43px on the smallest scene, one short of 44, so they are 10% apart now. That test's own scene constant was stale in the other direction - 320x180 predates the pannable camera, and the room's floor is `clamp(300px,50dvh,480px)` at 16/9, so even a 320x568 phone renders it 533x300 and pans. Verified by loading one. Cache is v328; `node --test` passes (525).
+
 ### 2026-09-10 - Three shell files that would have 404'd on the live site
 
 `sw.js` pre-cached `debug-mode.js`, `assets/branding/lantern-mark-v1.png` and `assets/social/lantern-alley-share-v1.jpg`, none of which had been committed. Every check passed, because every check asked the filesystem and the files were sitting right there. The deployed site is the repository, though, so all three would have 404'd - and install throws on any non-200 on purpose, to avoid a half-cached shell. The install would therefore have failed on every load: no offline, and worse, the new worker would never have taken over, pinning every existing tester to the build already on their phone with no route forward. That is the update-delivery failure of v313-v317 again, in a form that does not resolve itself.

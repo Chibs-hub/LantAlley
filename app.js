@@ -4675,6 +4675,23 @@
     return '<img class="home-scene-bg" src="' + background + '" alt="' + label + '">';
   }
 
+  /* Furniture the room came with. See INTERIOR_FIXTURES in home-room.js.
+   *
+   * Drawn after the wallpaper, so it stands in front of the wall rather than
+   * under the pattern, and before the placed objects, which sort above it by
+   * depth and so sit on its shelves instead of behind them. It is decoration
+   * in the strict sense - aria-hidden and pointer-events off - because there
+   * is nothing here to press: the things a learner can act on are the objects
+   * they own and the slots those go into. */
+  function fixtureLayer(fixtures){
+    if(!fixtures || !fixtures.length) return "";
+    return fixtures.map(function(fixture){
+      return '<img class="home-fixture" src="' + fixture.image + '" alt="" aria-hidden="true"'
+        + ' style="left:' + fixture.x + '%;top:' + fixture.y + '%;width:' + fixture.width + '%;'
+        + 'z-index:' + homeDepthZ(fixture.z == null ? fixture.y : fixture.z) + '">';
+    }).join("");
+  }
+
   function positioned(className, slot, inner, attrs, extraStyle){
     return '<div class="' + className + '" style="left:' + slot.x + '%;top:' + slot.y + '%;'
       + (extraStyle || "") + '"'
@@ -4944,7 +4961,7 @@
     var background = LanternHomeRoom.backgroundFor("interior", lighting);
     var html = '<div class="home-scene home-interior-scene light-' + lighting + '">'
       + sceneLayer(background, "わが家の部屋")
-      + wallpaperLayer() + homePetMarkup("interior");
+      + wallpaperLayer() + fixtureLayer(interior.fixtures) + homePetMarkup("interior");
 
     // The open veranda already reads as the way out; a labeled hotspot over
     // it matches the yard's own house hotspot rather than leaving only the

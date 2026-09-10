@@ -2258,6 +2258,15 @@ body:has(.about-panel:not([hidden])) .feedback-open{visibility:hidden;pointer-ev
      everything from the house, so anything standing in it needs to sit in that
      light rather than float above it. */
   .home-plant, .home-item{position:absolute; width:20%; cursor:pointer; line-height:0}
+  /* Room furniture, not stock. Anchored at its foot like a floor object, so
+     the percentage in home-room.js means the same thing for both, and graded
+     with the room the way the owned items are - an ungraded cut-out standing
+     against a painted wall is the thing that reads as pasted on. */
+  .home-fixture{
+    position:absolute; height:auto; transform:translate(-50%,-100%);
+    pointer-events:none; user-select:none;
+    filter:drop-shadow(0 3px 5px rgba(25,13,6,.5)) saturate(.86) sepia(.10) brightness(.94) contrast(.97);
+  }
   /* Width is set inline from the cat's own depth, so the flat 13% here is only
      the fallback for a render before the pet module has spoken. It used to be
      the actual size everywhere, which made the cat a giant against the back

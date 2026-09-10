@@ -88,7 +88,19 @@ test("every catalogue item can actually go somewhere in the room", () => {
 });
 
 test("same-kind room targets remain separately reachable on a narrow scene", () => {
-  const scene = {width:320, height:180};
+  /* The narrowest scene the room is ever drawn at, which is not the narrowest
+     phone. 320x180 here was the viewport itself, from before the camera could
+     pan: the scene now sizes from `clamp(300px,50dvh,480px)` of height at
+     16/9 and scrolls sideways inside whatever viewport it is given, so its
+     floor is 533x300 and a 320px phone gets that too. Verified by loading one
+     - a 320x568 viewport reported the interior scene 533x300.
+
+     The distinction matters in the strict direction. Against the old numbers
+     a pair 10% apart measures 32px and looks like a failure; against the real
+     ones it is 53px and passes honestly. Keeping the smaller figure would not
+     have been "safely conservative" - it would have forced slots further
+     apart than the furniture they sit on is wide. */
+  const scene = {width:533, height:300};
   for(let a = 0; a < slots.length; a += 1){
     for(let b = a + 1; b < slots.length; b += 1){
       if(slots[a].kind !== slots[b].kind) continue;

@@ -221,6 +221,14 @@
     "wall-lamp":          {width:5.5, anchorY:50},
     fan:                   {width:9, anchorY:50},
     mask:                  {width:9, anchorY:50},
+    /* These two are boxes, not objects, and the difference bites.
+       `width` is the slot the art is drawn into; the vector fallbacks only
+       fill part of it - the teapot 47%, the books 38% - so 8 here has never
+       been 8 of visible teapot. Measuring the rendered element and dividing
+       by the tatami scale measures the transparent padding too, and reads
+       about twice the object. The visible-fill test below is the one that
+       knows the difference; trust it over a ruler held up to the box.
+       At the shelf's 0.52 these land near 16cm and 15cm. */
     teapot:                {width:8, anchorY:100},
     books:                 {width:9, anchorY:100},
     "cat-figure":         {width:5, anchorY:100},

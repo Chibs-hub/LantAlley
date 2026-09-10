@@ -7,7 +7,7 @@
  * Bump CACHE_VERSION whenever any shell file changes, or returning players
  * will keep the old build.
  */
-var CACHE_VERSION = "lantern-alley-v326";
+var CACHE_VERSION = "lantern-alley-v328";
 
 // audio-index.js assigns to `self`, so the worker and the page share one list
 // of clip paths. Importing it here means new lines are cached automatically
@@ -83,6 +83,10 @@ var SHELL = [
   "./assets/home/decor/sakura-bonsai-v1.webp",
   "./assets/home/decor/pine-bonsai-v1.webp",
   "./assets/home/decor/wallpaper-asanoha-blue-v1.webp",
+  // The room's own shelf. Not stock like the rest of this list - it is a
+  // fixture drawn in every interior, so a learner offline without it sees
+  // their teapot and daruma floating where its planks should be.
+  "./assets/home/decor/display-shelf-staggered-v1.webp",
   "./assets/home/garden/camellia-planted-gravel-v2.webp",
   "./assets/home/garden/camellia-sprout-gravel-v2.webp",
   "./assets/home/garden/camellia-growing-gravel-v2.webp",
@@ -118,11 +122,11 @@ var SHELL = [
   "./manifest.webmanifest",
   "./assets/branding/lantern-mark-v1.png",
   "./assets/social/lantern-alley-share-v1.jpg",
-  "./icons/icon-192.png?v=326",
-  "./icons/icon-512.png?v=326",
-  "./icons/icon-192-maskable.png?v=326",
-  "./icons/icon-512-maskable.png?v=326",
-  "./icons/apple-touch-icon.png?v=326",
+  "./icons/icon-192.png?v=328",
+  "./icons/icon-512.png?v=328",
+  "./icons/icon-192-maskable.png?v=328",
+  "./icons/icon-512-maskable.png?v=328",
+  "./icons/apple-touch-icon.png?v=328",
   "./assets/kon/kon-idle.webp",
   "./assets/kon/kon-wave-left.webp",
   "./assets/kon/kon-wave-right.webp",

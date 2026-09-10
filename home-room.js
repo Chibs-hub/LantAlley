@@ -102,13 +102,44 @@
    * horizontal instead: fourteen percent of the width is 44.8px, and no two
    * floor positions are closer than that.
    *
-   * `shelf` and `tokonoma` are a different problem, half-solved. This room has
-   * no shelf and no alcove - the names describe furniture the painting does
-   * not contain - so they were hanging on a flat wall. Small objects now rest
-   * on the tatami near the back wall instead, which is somewhere a teapot or a
-   * bonsai could actually sit. They keep their `shelf` kind so the same items
-   * still go to them. A room painted with a real tokonoma would want them
-   * moved back up.
+   * `shelf` and `tokonoma` were the half-solved case, and this is the other
+   * half. The painting has no shelf and no alcove, so the two slots first hung
+   * on flat wall, then retreated to the tatami by the back wall - somewhere a
+   * teapot *can* sit, but it left a kyusu and a daruma marooned in the middle
+   * of an empty floor with nothing under them, and the room reading as bare
+   * boards.
+   *
+   * So the room owns a piece of furniture now. `display-shelf-staggered-v1`
+   * was already in the repo, transparent and unused; it stands against the
+   * right fusuma as a FIXTURE - scenery, not stock, so it needs no purchase,
+   * cannot be picked up, and every room has one from the first visit. These
+   * two slots sit on two of its real surfaces. It is also the horizontal line
+   * above floor level that the room never had.
+   *
+   * The pair is split across the shelf - top plank left, bottom plank right -
+   * rather than stacked on adjacent surfaces, and 10% apart rather than the
+   * 14% the floor slots keep between them.
+   *
+   * 14% belongs to a 320px-wide scene, which no longer exists: the camera is
+   * pannable and its own floor is `clamp(300px,50dvh,480px)` of height at
+   * 16/9, so even a 320x568 phone renders the room 533x300 and pans it. That
+   * is measured, not derived - a 320px viewport was loaded and the scene came
+   * back 533 wide. At that floor 10% is 53px, clear of the 44px target, while
+   * the 8% first tried here was 43px: one pixel short, and the separation
+   * test was right to refuse it.
+   *
+   * Both carry the same scale, because they are the same distance from the
+   * camera. A shelf's height off the floor is not depth.
+   *
+   * That scale is 0.52 rather than the 0.74 these had on the floor, and the
+   * shelf itself is 14% wide rather than the 24% first tried, because the
+   * back wall is not the front row. The PRESENTATION widths in home-decor.js
+   * are calibrated where the tatami seams were measured - the front of the
+   * room, about a quarter of a percent of the scene per centimetre - but the
+   * back wall spans roughly 350px to 850px of the painting's 1200 for a room
+   * about 3.5m across, which is 0.12% per centimetre, half as much. Sized on
+   * the front-row figure the shelf came out over two metres wide and ran off
+   * the fusuma into the corner post.
    *
    * `window-sill` likewise: it sat on a wall panel. It is now on the veranda
    * boards visible through the left opening, which is where a potted plant or
@@ -124,9 +155,26 @@
     {id:"post-left",    x:25, y:32, scale:0.88, kind:"post",  label:"柱の左"},
     {id:"post-right",   x:75, y:32, scale:0.88, kind:"post",  label:"柱の右"},
     {id:"eave", x:15, y:30, scale:0.80, kind:"eave", label:"軒下"},
-    {id:"shelf",        x:50, y:72, scale:0.78, kind:"shelf", label:"奥の段"},
+    {id:"shelf",        x:61, y:53, scale:0.52, kind:"shelf", label:"棚の上"},
     {id:"window-sill",  x:12, y:78, scale:0.80, kind:"sill",  label:"窓辺"},
-    {id:"tokonoma", x:70, y:74, scale:0.85, kind:"shelf", label:"床の間"}
+    {id:"tokonoma", x:71, y:64, scale:0.52, kind:"shelf", label:"棚の下"}
+  ];
+
+  /* Furniture the room owns rather than the player.
+   *
+   * A fixture is drawn from the same art as the catalogue but is not stock:
+   * it cannot be bought, placed or put away, and it is there on a first
+   * visit. The shelf exists so the `shelf` slots above have something real
+   * under them - see the note on those two.
+   *
+   * `y` is the foot, like a floor slot, and `z` is the depth the renderer
+   * sorts it by. That is deliberately shallower than the slots standing on
+   * it: the objects on a shelf are in front of its frame, so they must sort
+   * above it, and depth here is measured from the object's base, which for
+   * the shelf is lower down the picture than the surfaces it holds. */
+  var INTERIOR_FIXTURES = [
+    {id:"display-shelf", image:"assets/home/decor/display-shelf-staggered-v1.webp",
+     x:66, y:69, width:14, z:38, label:"違い棚"}
   ];
 
   /* The eight beds, measured off the painting rather than estimated from it.
@@ -245,6 +293,9 @@
       interior: {
         background: backgroundFor("interior", "evening"),
         slots: cloneSlots(SLOTS),
+        fixtures: INTERIOR_FIXTURES.map(function(f){
+          return {id:f.id, image:f.image, x:f.x, y:f.y, width:f.width, z:f.z, label:f.label};
+        }),
         /* The open veranda on the left is the one place the painting actually
          * shows the outside - sliding door drawn open, garden visible through
          * it - so it is the room's own equivalent of the yard's door: the
