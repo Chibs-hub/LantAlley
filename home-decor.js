@@ -56,6 +56,7 @@
        + '<rect x="-38" y="-4" width="8" height="22" fill="#573719"/>'
        + '<rect x="30" y="-4" width="8" height="22" fill="#573719"/>'},
     {id:"brazier", name:"火鉢", kind:"floor", price:400, category:"床",
+     image:"assets/home/decor/brazier-v1.webp",
      svg:'<ellipse cx="0" cy="10" rx="30" ry="10" fill="#4a3524"/>'
        + '<path d="M-30 10 L-24 -14 L24 -14 L30 10 Z" fill="#6b5340" stroke="#3f3021" stroke-width="3"/>'
        + '<ellipse cx="0" cy="-14" rx="24" ry="8" fill="#2b1c11"/>'
@@ -95,20 +96,30 @@
        + '<line x1="-18" y1="-6" x2="18" y2="-6" stroke="#9c6b2f" stroke-width="2"/>'
        + '<line x1="-18" y1="8" x2="18" y2="8" stroke="#9c6b2f" stroke-width="2"/>'},
     {id:"fan", name:"扇", kind:"wall", price:90, category:"壁",
+     image:"assets/home/decor/fan-v1.webp",
      svg:'<path d="M0 26 L-40 -18 A54 54 0 0 1 40 -18 Z" fill="#e8dabd" stroke="#a98f68" stroke-width="3"/>'
        + '<path d="M0 26 L0 -30 M0 26 L-22 -14 M0 26 L22 -14" stroke="#a98f68" stroke-width="2"/>'
        + '<circle cx="0" cy="26" r="4" fill="#6b4530"/>'},
-    {id:"mask", name:"面", kind:"wall", price:400, category:"壁",
+    /* A `post` rather than a `wall`, which is both where a mask actually
+       hangs in a room like this and the only spare hanging place the room
+       had. There are two pillar slots and only the 掛け行灯 wanted one, while
+       three things competed for two stretches of flat wall - so 面 moved to
+       the pillar it would be hung on anyway, and now every hanging piece in
+       the catalogue has somewhere to go. */
+    {id:"mask", name:"面", kind:"post", price:400, category:"壁",
+     image:"assets/home/decor/mask-v1.webp",
      svg:'<ellipse cx="0" cy="0" rx="26" ry="34" fill="#f0e4cd" stroke="#8a6a45" stroke-width="3"/>'
        + '<path d="M-12 -8 q6 -6 12 0 M0 -8 q6 -6 12 0" stroke="#7a2a24" stroke-width="3" fill="none"/>'
        + '<path d="M-10 14 q10 8 20 0" stroke="#7a2a24" stroke-width="3" fill="none"/>'},
 
     // --- shelf -----------------------------------------------------------
     {id:"teapot", name:"急須", kind:"shelf", price:70, category:"棚",
+     image:"assets/home/decor/teapot-v1.webp",
      svg:'<path d="M-16 6 q0 -16 16 -16 q16 0 16 16 q0 8 -16 8 q-16 0 -16 -8 Z" fill="#6b7d6a" stroke="#3f4d3e" stroke-width="3"/>'
        + '<path d="M16 -4 q12 -2 10 8" stroke="#3f4d3e" stroke-width="3" fill="none"/>'
        + '<path d="M-16 -2 q-10 0 -12 6" stroke="#3f4d3e" stroke-width="3" fill="none"/>'},
     {id:"books", name:"本", kind:"shelf", price:110, category:"棚",
+     image:"assets/home/decor/books-v1.webp",
      svg:'<rect x="-24" y="-20" width="10" height="34" fill="#8a4b3c" stroke="#5d2f24" stroke-width="2"/>'
        + '<rect x="-12" y="-24" width="10" height="38" fill="#4f6d7d" stroke="#2f4552" stroke-width="2"/>'
        + '<rect x="0" y="-18" width="10" height="32" fill="#7d6a3f" stroke="#4f4225" stroke-width="2"/>'
@@ -143,6 +154,7 @@
 
     // --- window sill -----------------------------------------------------
     {id:"sill-plant", name:"小さな鉢", kind:"sill", price:60, category:"窓辺",
+     image:"assets/home/decor/sill-plant-v1.webp",
      svg:'<rect x="-10" y="0" width="20" height="16" rx="3" fill="#9c6b4a" stroke="#6b4530" stroke-width="2"/>'
        + '<path d="M0 0 q-12 -12 -6 -20 q8 4 6 20 M0 0 q12 -12 6 -20 q-8 4 -6 20" fill="#4f7d4a"/>'},
     {id:"wind-chime", name:"風鈴", kind:"eave", price:150, category:"窓辺",
@@ -231,15 +243,15 @@
     // most of the shelf's own height; 7 is about 31cm, a bonsai you display.
     "plant-small":        {width:7, anchorY:100},
     "low-table":          {width:23, anchorY:100},
-    brazier:               {width:14, anchorY:69.2},
+    brazier:               {width:11.5, anchorY:100},
     kotatsu:               {width:29, anchorY:100},
     "folding-screen":     {width:43, anchorY:100},
     "floor-lantern":      {width:8, anchorY:100},
     "chrysanthemum-pot":   {width:9.5, anchorY:100},
     scroll:                {width:7, anchorY:50},
     "wall-lamp":          {width:5.5, anchorY:50},
-    fan:                   {width:9, anchorY:50},
-    mask:                  {width:9, anchorY:50},
+    fan:                   {width:11.5, anchorY:50},
+    mask:                  {width:3.8, anchorY:50},
     /* anchorY on a drawn object is where its ART ends, not where its box does.
      *
      * The six pieces with no photograph fall back to an inline SVG in a fixed
@@ -264,8 +276,8 @@
      * measures the transparent padding too and reads about twice the object.
      * The visible-fill test knows the difference; trust it over a ruler held
      * against the box. At the shelf's 0.52 these land near 16cm and 15cm. */
-    teapot:                {width:8, anchorY:63.5},
-    books:                 {width:9, anchorY:63.5},
+    teapot:                {width:4.6, anchorY:100},
+    books:                 {width:5.6, anchorY:100},
     "cat-figure":         {width:5, anchorY:100},
     daruma:                {width:4, anchorY:100},
     "sakura-bonsai":      {width:7.5, anchorY:100},
@@ -283,7 +295,7 @@
        match - a mirrored staggered shelf has its high plank on the other
        side. */
     "display-shelf":      {width:20.3, anchorY:100, flipX:true},
-    "sill-plant":         {width:14, anchorY:65.4},
+    "sill-plant":         {width:7.6, anchorY:100},
     "wind-chime":         {width:4, anchorY:0, offsetY:0}
   };
 

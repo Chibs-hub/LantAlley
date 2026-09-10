@@ -131,6 +131,18 @@
    * Both carry the same scale, because they are the same distance from the
    * camera. A shelf's height off the floor is not depth.
    *
+   * The y values are the planks themselves, read off the asset rather than
+   * judged: each row of the picture was scanned for how much of it is opaque,
+   * a run above 55% is a plank, and the top of that run is its surface. On the
+   * cropped 572x407 art those come out at 0.0147, 0.3096, 0.5381 and 0.7445 of
+   * the height, and at a 15%-wide shelf standing at y=73 that puts the top
+   * plank at 54.30 and the bottom one at 68.15. Re-measure if the art changes:
+   *
+   *   the shelf's own picture had 4.8% of transparent height beneath it, so it
+   *   stood that far off the floor and carried everything on it up with it.
+   *   Cropping the file changed its aspect from 1.385 to 1.405 and moved every
+   *   plank, which is why these are not round numbers.
+   *
    * That scale is 0.52 rather than the 0.74 these had on the floor, and the
    * shelf itself is 14% wide rather than the 24% first tried, because the
    * back wall is not the front row. The PRESENTATION widths in home-decor.js
@@ -162,9 +174,9 @@
     {id:"post-left",    x:25, y:32, scale:0.88, kind:"post",  label:"柱の左"},
     {id:"post-right",   x:75, y:32, scale:0.88, kind:"post",  label:"柱の右"},
     {id:"eave", x:15, y:30, scale:0.80, kind:"eave", label:"軒下"},
-    {id:"shelf",        x:61, y:55, scale:0.52, kind:"shelf", label:"右棚の上段"},
+    {id:"shelf",        x:61, y:54.3, scale:0.52, kind:"shelf", label:"右棚の上段"},
     {id:"window-sill",  x:12, y:78, scale:0.80, kind:"sill",  label:"窓辺"},
-    {id:"tokonoma", x:70, y:68, scale:0.52, kind:"shelf", label:"右棚の下段"},
+    {id:"tokonoma", x:70, y:68.15, scale:0.52, kind:"shelf", label:"右棚の下段"},
     /* Where the second shelf goes if the learner buys one. `z` sorts it with
        the fixtures rather than by its own foot: whatever stands on its planks
        has a higher y than the shelf's base, so without this the shelf would
@@ -181,9 +193,9 @@
        The x values are the right shelf's, mirrored inside the shelf's own
        width, because the left shelf is drawn mirrored - see `flipX` in
        home-decor.js. Its top plank is therefore the right-hand one. */
-    {id:"shelf-left", x:37, y:55, scale:0.52, kind:"shelf",
+    {id:"shelf-left", x:37, y:54.3, scale:0.52, kind:"shelf",
      requires:"cabinet-left", label:"左棚の上段"},
-    {id:"tokonoma-left", x:28, y:68, scale:0.52, kind:"shelf",
+    {id:"tokonoma-left", x:28, y:68.15, scale:0.52, kind:"shelf",
      requires:"cabinet-left", label:"左棚の下段"}
   ];
 

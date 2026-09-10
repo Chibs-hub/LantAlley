@@ -1490,8 +1490,14 @@ test("the unlock hands over every painted item, and leaves all of it unplaced", 
   const paintedPaper = decor.wallpapers()
     .filter((w) => w.id !== "wallpaper-plain" && decor.getWallpaper(w.id).image);
   assert.equal(report.furniture, paintedDecor.length, "every painted item is owned");
-  assert.ok(paintedDecor.length < decor.catalogue().length,
-    "some items are still unpainted, so this test is actually excluding something");
+  /* Decor is fully painted now - the last six arrived together - so the
+     furniture filter excludes nothing and asserting that it does would be
+     asserting the game is unfinished. The exclusion this test exists to check
+     is still real, and still checked, on the wallpaper and the plants below:
+     one paper and four species are drawings yet. Restore a furniture-specific
+     version of this line only if unpainted furniture ever reappears. */
+  assert.equal(paintedDecor.length, decor.catalogue().length,
+    "every catalogue item is painted, so the furniture filter has nothing left to exclude");
   assert.equal(report.wallpapers, paintedPaper.length,
     "only wallpaper with a picture is owned");
   assert.equal(report.plants % 2, 0, "each granted species arrives twice");

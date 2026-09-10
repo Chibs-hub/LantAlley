@@ -127,7 +127,15 @@ test("available reward artwork is connected to matching shop items", () => {
     "floor-lantern":"floor-lantern-v1.webp",
     "chrysanthemum-pot":"chrysanthemum-pot-v1.webp",
     "sakura-bonsai":"sakura-bonsai-v1.webp",
-    "pine-bonsai":"pine-bonsai-v1.webp"
+    "pine-bonsai":"pine-bonsai-v1.webp",
+    // The last six to arrive; before these, every one was a drawing.
+    "brazier":"brazier-v1.webp",
+    "fan":"fan-v1.webp",
+    "mask":"mask-v1.webp",
+    "teapot":"teapot-v1.webp",
+    "books":"books-v1.webp",
+    "sill-plant":"sill-plant-v1.webp",
+    "display-shelf":"display-shelf-staggered-v1.webp"
   };
   for(const [id, filename] of Object.entries(expected)){
     assert.equal(decor.getItem(id)?.image, `assets/home/decor/${filename}`, `${id} image mapping`);
@@ -144,17 +152,19 @@ test("placed decor carries physical size and contact-point calibration", () => {
     "low-table": {width:23, anchorY:100, scaleY:1, offsetY:0},
     "folding-screen": {width:43, anchorY:100, scaleY:1, offsetY:0},
     "scroll": {width:7, anchorY:50, scaleY:1, offsetY:0},
-    /* The four vector fallbacks that stand on something anchor to the bottom
-       of their ART, not of their box - measured with getBBox() in a browser,
-       (artBottom + 52) / 104 of the -60 -52 120 104 viewBox. At 100 the empty
-       bottom of the box sat on the surface and the object hovered above it. */
-    "brazier": {width:14, anchorY:69.2, scaleY:1, offsetY:0},
-    "teapot": {width:8, anchorY:63.5, scaleY:1, offsetY:0},
-    "books": {width:9, anchorY:63.5, scaleY:1, offsetY:0},
-    "sill-plant": {width:14, anchorY:65.4, scaleY:1, offsetY:0},
+    /* These six briefly carried vector-fallback anchors - 63.5, 69.2, 65.4 -
+       which described where a drawing stopped inside a box it did not fill.
+       Their photographs are cropped tight, so the bottom of the picture is
+       the bottom of the object again and they anchor at 100 like every other
+       photograph. The widths came down at the same time and for the same
+       reason: the old ones measured the padded box rather than the thing. */
+    "brazier": {width:11.5, anchorY:100, scaleY:1, offsetY:0},
+    "teapot": {width:4.6, anchorY:100, scaleY:1, offsetY:0},
+    "books": {width:5.6, anchorY:100, scaleY:1, offsetY:0},
+    "sill-plant": {width:7.6, anchorY:100, scaleY:1, offsetY:0},
     // Wall art is the exception and keeps its centre: it hangs, not stands.
-    "fan": {width:9, anchorY:50, scaleY:1, offsetY:0},
-    "mask": {width:9, anchorY:50, scaleY:1, offsetY:0},
+    "fan": {width:11.5, anchorY:50, scaleY:1, offsetY:0},
+    "mask": {width:3.8, anchorY:50, scaleY:1, offsetY:0},
     // A wind chime hangs from its hook, so its anchor is the top of the picture
     // and there is nothing to offset it from. The -40 was lifting it off a
     // windowsill it should never have been standing on.
@@ -177,12 +187,28 @@ test("placed decor carries physical size and contact-point calibration", () => {
   }
 });
 
-test("vector fallback rewards compensate for unused view-box space", () => {
-  const visibleFill = {brazier:0.50, fan:0.67, mask:0.43, teapot:0.47, books:0.38, "sill-plant":0.20};
-  const minimumVisibleWidth = {brazier:7, fan:6, mask:3.8, teapot:3.7, books:3.4, "sill-plant":2.8};
-  for(const [id, fill] of Object.entries(visibleFill)){
-    const visibleWidth = decor.presentationFor(id).width * fill;
-    assert.ok(visibleWidth >= minimumVisibleWidth[id], `${id} remains visibly undersized`);
+/* Every catalogue item now carries a photograph, so nothing is sized through
+ * a partly-filled viewBox any more and the compensation this test used to
+ * check no longer exists to be checked.
+ *
+ * What replaces it is the rule that made that compensation necessary: `width`
+ * must describe the object, not the box it is drawn in. A tight-cropped
+ * photograph makes those the same thing, and this fails if a drawing-only
+ * item ever comes back without someone re-deriving its width.
+ */
+test("every catalogue item is sized from a picture of the object itself", () => {
+  for(const item of decor.catalogue()){
+    const full = decor.getItem(item.id);
+    assert.ok(full.image,
+      `${item.id} has no photograph: its width would describe a viewBox rather than the object, and its anchor would have to be re-measured from the artwork`);
+    assert.ok(fs.existsSync(new URL("./" + full.image, import.meta.url)),
+      `${item.id} points at ${full.image}, which is not on disk`);
+  }
+
+  // The vectors stay as fallbacks - a picture that fails to load must not
+  // make an owned object vanish from a room someone paid to decorate.
+  for(const item of decor.catalogue()){
+    assert.ok(decor.svgFor(item.id).length > 40, `${item.id} lost its fallback drawing`);
   }
 });
 
@@ -311,9 +337,12 @@ test("every object declares the surface it actually belongs on", () => {
     "low-table": "floor", "brazier": "floor", "kotatsu": "floor",
     "folding-screen": "floor", "floor-lantern": "floor", "chrysanthemum-pot": "floor",
     // hangs flat against a wall
-    "scroll": "wall", "fan": "wall", "mask": "wall",
-    // hangs on a structural post rather than on flat plaster
-    "wall-lamp": "post",
+    "scroll": "wall", "fan": "wall",
+    /* hangs on a structural post rather than on flat plaster. 面 joined the
+       lantern here: a mask is hung on a pillar in a room like this, and it
+       was also the only way to stop three hanging pieces competing for two
+       stretches of wall while a pillar stood empty. */
+    "wall-lamp": "post", "mask": "post",
     // rests on a raised surface rather than the floor. A bonsai belongs here
     // and not on the tatami: it is grown to be displayed on a stand.
     "teapot": "shelf", "books": "shelf", "cat-figure": "shelf",
@@ -402,14 +431,20 @@ test("taking away a shelf brings down what was standing on it", () => {
  * must anchor at its base. Redraw a fallback path and this will not catch
  * the new value, but it will catch a reset to 100.
  */
-test("drawn objects rest on their artwork, not on the bottom of the viewBox", () => {
-  const drawn = ["brazier", "teapot", "books", "sill-plant"];
-  for (const id of drawn) {
+test("objects rest on their artwork, not on the bottom of a padded box", () => {
+  /* This began as a guard on the four vector fallbacks, which anchored at
+     63.5-69.2 because their drawings stopped well short of the viewBox they
+     sat in. Their photographs arrived cropped tight, so the rule is simpler
+     now and stricter: a picture that stands on something ends at its base,
+     and anchors at 100. The failure it guards against is a padded export -
+     transparent pixels under the object put it back in mid-air, which is
+     exactly how the teapot floated above its plank. */
+  const standing = ["brazier", "teapot", "books", "sill-plant"];
+  for (const id of standing) {
     const item = decor.getItem(id);
-    assert.equal(item.image, undefined, `${id} is expected to be a vector fallback`);
-    const anchor = decor.presentationFor(id).anchorY;
-    assert.ok(anchor > 55 && anchor < 90,
-      `${id} anchors at ${anchor}: a fallback that stands on a surface sits on its art, near 63-70, not on its box at 100`);
+    assert.ok(item.image, `${id} should have a photograph`);
+    assert.equal(decor.presentationFor(id).anchorY, 100,
+      `${id} stands on a surface, so its picture must be cropped to its base and anchor at 100`);
   }
 
   // Wall art is the deliberate exception: it hangs from its middle.
