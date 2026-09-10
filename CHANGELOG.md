@@ -5,6 +5,22 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-10 - The tray's first object is reachable again, sakura included (v338)
+
+Reported as the leftmost object being cut off while decorating on a phone. It was, and it was not reachable by scrolling either - the tray sat at its resting position with its first card already sliced down the middle.
+
+The tray inherited `justify-content:center` from the grid it replaced. That cost nothing for as long as it was a grid: capped at 520px and wrapping, it never overflowed, so there was nothing to push past an edge. A sideways-scrolling row overflows by design, and centring an overflowing row splits the overflow across *both* ends. A scroll container has no room before its start edge - `scrollLeft` stops at 0 - so the left half is not merely off screen, it is unreachable. Worse the more you own, which is the same backwards direction the tray itself was built to fix: at five objects on a 393px phone the first card loses about 40 of its 84 pixels, and at nine it loses the first two cards entirely.
+
+Fixed where it started, in the media query that turns the grid into a row, by unsetting the centring it had no business keeping. Declared twice: `flex-start` first, then `safe center`, which centres a row short enough to fit and falls back to the start once it overflows. An engine that does not know the `safe` keyword drops that second line and keeps `flex-start`, which is never wrong - it only forgoes centring a short row.
+
+The base rule's own comment already recorded this same failure once, at 320px, when eight of fourteen cards sat off the side with no way to reach them. Same shape of bug, new trigger, so the test names the behaviour rather than the property.
+
+**The missing sakura was this same bug.** Reported separately, as the cherry tree being absent from the inventory in Debug Mode. It was never absent, and nothing was wrong with the garden: Debug Mode seeds one planted and one mature of every species in catalogue order, `cherry-tree` is first in that order, so its two cards were the first two in the row - precisely the cards centring parked where no scroll could reach. Sixteen cards make a 1464px row in a 373px tray; centred, the leading 546px, very nearly six cards, was unreachable, taking the maple and the hydrangea with it. Worth writing down because the two reports looked like a rendering bug and an inventory bug and were one line of CSS. Ruled out along the way, each verified rather than assumed: the sakura art is present, tracked and in the service worker shell; the slot ids match; a planted mature cherry renders correctly with its painted art; `settleHomePlacements` touches only interior decor; plants sit at z-index 78-114, above the tray's 60; and `--plant-lift-max` does cap the cherry's brightness lift at 1.07, so it is not blown out to white either.
+
+A second fix, found while reading the first: the tray now keeps its scroll position across a re-render. `renderHome` writes the whole stage with `innerHTML`, so every render handed back a new element at `scrollLeft` 0 - the scene viewport has carried a remember and a restore for this since it started panning, and the tray was added later with neither. It cost a scroll per tap, since picking re-renders before the object is even placed. Kept per tab, because the tabs hold different rows and an offset measured in one means nothing in another.
+
+Cache is v338; `node --test` passes (531).
+
 ### 2026-09-10 - The storage shelf is a tray, so decorating needs no scrolling
 
 Reported as having to scroll down to pick something up and back to put it down, every time - and, more usefully, that it would only get worse with more things to choose from. That second half is what made the first fix wrong: scrolling the room into view after a pick helps one direction and leaves the return trip, and both get longer the more you own, which is backwards for the part of the game that rewards owning more.

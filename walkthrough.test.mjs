@@ -1207,6 +1207,107 @@ test("decorate mode reveals owned items and placement interaction", () => {
     "owned decor is available to place");
 });
 
+/* Centring cost nothing while the shelf was a grid: it was capped at 520px and
+ * wrapped, so it never overflowed and there was nothing to push off the edge.
+ * The tray overflows on purpose. Centring an overflowing row splits that
+ * overflow across both ends, and a scroll container has no room before its
+ * start edge - so the left of the row is not merely off screen, it is
+ * unreachable. At rest, with the tray already at scrollLeft 0, the first card
+ * is cut in half, and it loses more of itself with every object bought.
+ *
+ * The base rule's own comment records this same failure once before, at 320px,
+ * when eight of fourteen cards sat off the side with no way to reach them. */
+test("the sideways tray starts at its first card instead of centring it out of reach", () => {
+  const css = read("styles.css");
+  const tray = css.slice(css.indexOf("On a phone the storage shelf is a tray"));
+  const start = tray.indexOf(".home-stage .home-shelf{");
+  const rule = tray.slice(start, tray.indexOf("}", start));
+  assert.match(rule, /overflow-x:auto/, "this is the rule that makes the tray scroll");
+  /* Declared twice on purpose, in this order. An engine that does not know the
+     `safe` keyword drops that line as invalid and keeps flex-start, which is
+     never wrong - it only forgoes centring a row short enough to fit. */
+  assert.match(rule, /justify-content:flex-start/,
+    "the grid's centre must be overridden with a value every engine understands");
+  assert.match(rule, /justify-content:safe center/,
+    "engines that can, centre a short row and fall back to the start once it overflows");
+});
+
+/* Reported as the sakura being absent from the inventory in Debug Mode. It was
+ * never absent. Debug Mode seeds one planted and one mature of every species
+ * in catalogue order, and `cherry-tree` is first in that order, so its two
+ * cards are the first two in the tray - the exact cards the centring bug above
+ * parked on the unreachable side of the scroll. Sixteen cards make a 1464px
+ * row in a 373px tray; centred, the first 546px, very nearly six cards, could
+ * not be scrolled to. The maple and the hydrangea were stranded with it.
+ *
+ * So this asserts the half the CSS cannot: that the row really does carry a
+ * card for a stored tree, and that it is the first one. If it ever stops being
+ * first, the report "the sakura is missing" would mean something new. */
+test("the garden tray lists a stored cherry tree, first in the row", () => {
+  const game = boot(plantedCamelliaSave({
+    garden: {
+      plants: [
+        { id: "p1", typeId: "cherry-tree", slotId: null,
+          growthPoints: 12, stage: "mature", pendingAnimation: false },
+        { id: "p2", typeId: "japanese-maple", slotId: null,
+          growthPoints: 10, stage: "mature", pendingAnimation: false },
+        { id: "p3", typeId: "camellia", slotId: "garden-left-2",
+          growthPoints: 4, stage: "mature", pendingAnimation: false },
+      ],
+      usedCreditIds: [], starterClaimed: true, nextInstanceId: 4,
+    },
+  }));
+  enterHome(game);
+  game.doc.querySelectorAll("[data-home-decorate]")[0].click();
+
+  const cards = game.doc.querySelectorAll("[data-pick-plant]");
+  const picked = cards.map((c) => c.getAttribute("data-pick-plant"));
+  assert.ok(picked.includes("p1"), "the stored cherry tree has a card to pick");
+  assert.equal(picked[0], "p1", "and it is the first card, where the clipping bit hardest");
+  const art = cards[0].querySelectorAll("img")[0];
+  assert.ok(art && /sakura-mature/.test(art.getAttribute("src")),
+    "the card shows the painted sakura, not a drawn stand-in");
+});
+
+/* The room already had this problem and already solved it: renderHome writes
+ * the whole stage with innerHTML, so every re-render hands back a brand new
+ * element with scrollLeft 0, and the scene viewport carries a remember and a
+ * restore to survive that. The tray was added later and got neither.
+ *
+ * It costs a scroll per tap. Picking re-renders, so the row jumps home before
+ * the object is even placed; placing re-renders again. Reaching the tenth
+ * thing you own means scrolling to it, watching it snap back, and scrolling
+ * to it a second time - and the further along the row you shop, the longer
+ * both trips are. Per tab, because the tabs hold different rows and a
+ * position measured in one means nothing in another. */
+test("the tray stays where it was scrolled to when picking re-renders the stage", () => {
+  const game = boot(plantedCamelliaSave({
+    home: { owned: ["floor-cushion-navy", "low-table", "teapot", "books",
+                    "daruma", "cat-figure", "floor-lantern"], placed: {} },
+  }));
+  enterHome(game);
+  game.doc.querySelectorAll("[data-enter-house]")[0].click();
+  game.doc.querySelectorAll("[data-home-decorate]")[0].click();
+
+  const tray = game.doc.getElementById("home-shelf");
+  tray.scrollWidth = 700;
+  tray.clientWidth = 373;
+  tray.scrollLeft = 240;
+  tray.dispatchEvent(new FakeEvent("scroll", { bubbles: false }));
+
+  const cards = game.doc.querySelectorAll("[data-pick]");
+  assert.ok(cards.length >= 5, "the tray needs enough objects to be worth scrolling");
+  cards[cards.length - 1].click();
+
+  const trayAgain = game.doc.getElementById("home-shelf");
+  assert.notEqual(trayAgain, tray, "picking rebuilds the stage, so this is a new element");
+  trayAgain.scrollWidth = 700;
+  trayAgain.clientWidth = 373;
+  game.clock.advance(20);
+  assert.equal(trayAgain.scrollLeft, 240,
+    "the tray returns to the object the learner was looking at");
+});
+
 /* The yard already had one picture-shaped way in - the house hotspot - and
  * only a text link, top-left, as its way out. A learner who read that link
  * as a title rather than navigation had no symmetric way out painted onto
@@ -2765,3 +2866,4 @@ test("feedback only claims it was sent when it could be sent", () => {
   assert.match(on.$("feedback-status").textContent, /was sent/,
     "a configured build still confirms the send");
 });
+

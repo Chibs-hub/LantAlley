@@ -2147,11 +2147,23 @@ body:has(.about-panel:not([hidden])) .feedback-open{visibility:hidden;pointer-ev
    * One row that scrolls sideways instead. Its height no longer depends on
    * how much you have, and sticking it to the bottom of the screen keeps the
    * room and the things you are putting in it visible together, so a whole
-   * decorating session needs no vertical scrolling at all. */
+   * decorating session needs no vertical scrolling at all.
+   *
+   * justify-content has to be unset here, not merely left alone. The grid
+   * above centres itself, which cost nothing while it was capped at 520px and
+   * wrapped - it never overflowed, so there was nothing to push off the edge.
+   * This row overflows by design, and centring an overflowing row splits that
+   * overflow across both ends. A scroll container has no room before its start
+   * edge, so the left half is not off screen, it is unreachable: the tray sits
+   * at scrollLeft 0 with its first card already cut down the middle, and cut
+   * deeper with every object bought. Twice on purpose - an engine that does
+   * not know `safe` drops that line and keeps flex-start, which is never
+   * wrong, it only forgoes centring a row short enough to fit. */
   @media(max-width:760px){
     .home-stage .home-shelf{
       position:sticky; bottom:0; z-index:60;
       display:flex; grid-template-columns:none; max-width:none;
+      justify-content:flex-start; justify-content:safe center;
       gap:8px; padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px));
       overflow-x:auto; overflow-y:hidden;
       scroll-snap-type:x proximity; overscroll-behavior-x:contain;

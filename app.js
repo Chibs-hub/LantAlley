@@ -4322,6 +4322,42 @@
     homeSceneScroll[area] = viewport.scrollLeft;
   }
 
+  /* The tray scrolls sideways on a phone, and renderHome writes the whole
+   * stage with innerHTML, so every re-render hands back a new element sitting
+   * at scrollLeft 0. The scene viewport above has carried a remember and a
+   * restore for exactly this since it started panning; the tray was added
+   * later and got neither, so it cost a scroll per tap: picking re-renders,
+   * placing re-renders again, and reaching the tenth thing you own meant
+   * scrolling to it, watching it snap home, and scrolling to it again.
+   *
+   * Kept per tab. The tabs hold different rows - furniture, wallpaper, the
+   * plants waiting to go in - so an offset measured in one means nothing in
+   * another, and restoring it across a tab change would land somewhere
+   * arbitrary. */
+  var homeTrayScroll = {};
+
+  function restoreHomeTray(){
+    // By class, not by id: the shop's grid reuses the id and is not a tray.
+    var tray = $("scene").querySelector(".home-shelf");
+    if(!tray) return;
+    var tab = homeTab;
+    tray.addEventListener("scroll", function(){
+      // Same trap as the camera: a browser may deliver one last scroll event
+      // from the element the next render already detached, and letting that
+      // through would overwrite the position with the dead node's zero.
+      if($("scene").querySelector(".home-shelf") !== tray) return;
+      homeTrayScroll[tab] = tray.scrollLeft;
+    });
+    requestAnimationFrame(function(){
+      var remembered = homeTrayScroll[tab];
+      if(!remembered) return;
+      // Placing empties a card out of the row, so the row it returns to can be
+      // shorter than the one it left.
+      var maxScroll = Math.max(0, (tray.scrollWidth || 0) - (tray.clientWidth || 0));
+      tray.scrollLeft = Math.min(maxScroll, remembered);
+    });
+  }
+
   /* Which species have painted art, and where each stage lives.
    *
    * Spelled out rather than built from the id and the stage, because a path
@@ -5714,6 +5750,7 @@
       + tutorialPanel();
     homeNotice = "";
     restoreHomeSceneCamera();
+    restoreHomeTray();
     startHomePetMotion();
     renderHud();
     settleGrowth();
