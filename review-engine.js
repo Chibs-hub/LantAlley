@@ -14,7 +14,20 @@
   "use strict";
 
   var DAY = 86400000;
-  var INTERVALS = [1, 3, 7, 14];
+  /* Rungs past a fortnight exist because nothing retires.
+   *
+   * An item that returns every N days occupies 1/N of a session slot for ever,
+   * so the words a daily learner can hold is bounded by session size times the
+   * longest interval. At [1,3,7,14] with a 20-card session that is 280, against
+   * a catalogue of 3,579 - and reviews fill the session about a month in, after
+   * which no new word is ever introduced. Adding 30 and 90 raises the same
+   * arithmetic to 1,800.
+   *
+   * Not retirement: a mastered word still comes back, just rarely. Mastery here
+   * is two delayed successes over seven days, which is not the same as knowing
+   * something for ever, and a schedule that never asks again cannot notice
+   * decay. */
+  var INTERVALS = [1, 3, 7, 14, 30, 90];
   var MASTERY_DELAYED_SUCCESSES = 2;
   var MASTERY_MIN_DAYS = 7;
 

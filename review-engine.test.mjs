@@ -130,3 +130,35 @@ test("a card answered right first time is never held back", () => {
   assert.equal(result.queue.join(","), "b");
   assert.equal(result.exhausted, false);
 });
+
+/* The ceiling is session size times the longest interval, because an item that
+ * comes back every N days occupies 1/N of a session slot for ever and nothing
+ * retires. At [1,3,7,14] that is 20 x 14 = 280 words, against a catalogue of
+ * 3,579 - so a learner stops meeting new words about a month in. This test
+ * pins the ceiling so a change to INTERVALS or SESSION_SIZE cannot quietly
+ * lower it again. */
+function reachableWords(review, size, days, poolSize) {
+  let progress = {};
+  let now = T0;
+  let introduced = 0;
+  for (let d = 0; d < days; d++) {
+    const due = review.getDueItems(progress, now).slice(0, size);
+    const session = [...due];
+    while (session.length < size && introduced < poolSize) {
+      session.push("item-" + introduced++);
+    }
+    for (const id of session) {
+      progress = review.recordOutcome(progress, { id, correct: true, now });
+    }
+    now += DAY;
+  }
+  return Object.keys(progress).length;
+}
+
+test("the schedule lets a daily learner reach far more than one session's worth of words", () => {
+  const review = load();
+  assert.deepEqual([...review.INTERVALS], [1, 3, 7, 14, 30, 90],
+    "the ladder needs rungs past a fortnight or reviews eat the whole session");
+  assert.ok(reachableWords(review, 20, 365, 3579) > 900,
+    "a year of perfect daily practice should reach past 900 words, not stall near 280");
+});
