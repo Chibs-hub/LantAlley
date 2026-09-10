@@ -5,6 +5,25 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-10 - Shelf objects rest on the staggered boards (v336)
+
+The eight-slot layout treated both middle boards as full-width. Two positions
+were above transparent pixels, explaining the floating books and ornaments.
+Board-specific horizontal positions and a corrected sloping-base contact now
+support every slot. Slot IDs stay stable so saved rooms need no reset.
+
+Each slot carries width and height limits. Rendering fits the seven shelf
+assets proportionally within the real board clearance, preventing neighboring
+objects or the board above from intersecting them. The slot-copy boundary
+preserves these limits. Built-in and owned shelves now share time-of-day
+grading and opacity; shelf props and cabinets gain contact shadows.
+
+The regression failed on the original unsupported position before the fix.
+Both shelf orientations and every pair of shelf objects are covered. Edge
+desktop and phone-width renders were visually inspected, mobile panning and
+book relocation were exercised, and all four lighting filters were compared.
+See the focused v336 handoff for verification and deployment status.
+
 ### 2026-09-10 - Eight places on a shelf, reached by pressing the shelf
 
 Two was never a judgement about the furniture. A 違い棚 plainly holds more, and the reason it held two was that each place was its own tap target: eight targets 44px apart need roughly 180x130px, and at the smallest scene the room is drawn at - 533x300 - a shelf is 80x58px with its planks 15px apart. The furniture was the right size; the interaction was the constraint.

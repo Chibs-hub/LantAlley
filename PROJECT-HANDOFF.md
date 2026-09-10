@@ -20,6 +20,14 @@ Sections 1, 3, 4, 5, 6, 8, 13, 14 and 15 are reference: what the game is, how it
 
 ## 0. Current status
 
+**Current home repair: v336, local and not pushed.** See the
+[shelf support handoff](docs/handoffs/2026-09-10-v336-shelf-support.md).
+Staggered-board placement, object clearance, contact shadows, and matching
+furniture lighting are repaired. Desktop and phone-width browser renders
+were inspected. The final full suite passed 528/528; independent review found
+no blockers. Preserve concurrent placement-scroll work.
+The v326/v325/v324 notes below are historical, not the current asset inventory.
+
 **Resume here:** [v326 focused handoff](docs/handoffs/2026-09-10-v326-debug-home.md)
 lists completed work, verification limits, and the still-open wallpaper and
 shelf/room-layout requests.

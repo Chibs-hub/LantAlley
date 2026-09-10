@@ -178,15 +178,15 @@
    * at a slight angle and that is its top surface in perspective, so the
    * contact point is 45% into the band rather than at the top of it - resting
    * an object on the band's first row put it at the plank's far edge, hanging
-   * over the front of the shelf. The base is a thicker plinth, so it takes
-   * 15%. `xs` are fractions of the shelf's width; the top board is the short
-   * one of a staggered shelf and only spans the left 70%, so its pair sits
-   * inside that. */
+   * over the front of the shelf. The base contact sits below its sloping
+   * right edge. `xs` are fractions of the shelf's width. The second board ends
+   * at x=0.65 and the third starts at x=0.36; the outer frame is not a
+   * usable surface. Clearance leaves room for the board above the item. */
   var SHELF_PLANKS = [
-    {contact:0.0479, xs:[0.22, 0.52]},
-    {contact:0.3406, xs:[0.25, 0.75]},
-    {contact:0.5735, xs:[0.25, 0.75]},
-    {contact:0.7685, xs:[0.25, 0.75]}
+    {contact:0.0479, xs:[0.25, 0.75], maxWidth:5.4, maxHeight:9},
+    {contact:0.3406, xs:[0.20, 0.50], maxWidth:3.3, maxHeight:4.5},
+    {contact:0.5735, xs:[0.51, 0.81], maxWidth:3.3, maxHeight:3.4},
+    {contact:0.786, xs:[0.25, 0.75], maxWidth:5.4, maxHeight:2.6}
   ];
 
   function shelfPositions(prefix, centreX, mirrored, requires){
@@ -202,6 +202,7 @@
           x: +(left + WIDTH * f).toFixed(2),
           y: +(top + HEIGHT * plank.contact).toFixed(2),
           scale: 0.52, kind: "shelf", surface: prefix, requires: requires || null,
+          maxWidth: plank.maxWidth, maxHeight: plank.maxHeight,
           label: (mirrored ? "左棚" : "右棚") + "の" + (row + 1) + "段目"
         });
       });
@@ -354,6 +355,7 @@
               // Which piece of furniture this position is on, so the renderer
               // can offer one target for the whole shelf instead of eight.
               surface:slot.surface || null,
+              maxWidth:slot.maxWidth || null, maxHeight:slot.maxHeight || null,
               // Same trap as `skew` above: a field left out here is not a
               // missing field at the far end, it is a silently absent one.
               // `z` decides whether a shelf draws behind what stands on it,

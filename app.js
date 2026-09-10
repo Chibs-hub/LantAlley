@@ -4733,9 +4733,7 @@
    * supplies the depth; the table below stays what it always was, the object's
    * own size. */
   function decorSceneWidth(item, slot){
-    var presentation = LanternHomeDecor.presentationFor(item && item.id);
-    var base = presentation.width;
-    return +(base * ((slot && slot.scale) || 1)).toFixed(2);
+    return LanternHomeDecor.widthForSlot(item && item.id, slot);
   }
 
   function decorSceneAnchor(item){
@@ -5871,6 +5869,7 @@
       homeSelected = (homeSelected && homeSelected.kind === "decor" && homeSelected.id === id)
         ? null : {kind:"decor", id:id};
       paintHome();
+      showPlacementTargets();
       return;
     }
 
@@ -5880,6 +5879,7 @@
       homeSelected = (homeSelected && homeSelected.kind === "plant" && homeSelected.id === instanceId)
         ? null : {kind:"plant", id:instanceId};
       paintHome();
+      showPlacementTargets();
       return;
     }
 
@@ -7443,6 +7443,22 @@
    * Only when it is actually out of view, so the wide layout, where it is
    * already on screen beside the room, does not jump.
    */
+  /* Picking something up should show you where it can go.
+   *
+   * The storage shelf sits under the room, so choosing an object meant
+   * scrolling down to it and then back up to find the glowing places - once
+   * per object, on every phone. The room comes to the learner instead.
+   *
+   * Only when something is actually held: pressing a selected object again
+   * puts it down, and scrolling the room into view on the way to nowhere
+   * would be worse than not scrolling at all. `bringIntoView` is already a
+   * no-op when the target is fully visible, so a desktop that shows both at
+   * once never moves. */
+  function showPlacementTargets(){
+    if(!homeSelected) return;
+    bringIntoView(document.querySelector(".home-scene-camera"));
+  }
+
   function bringIntoView(node){
     if(!node || !node.scrollIntoView) return;
     var run = function(){

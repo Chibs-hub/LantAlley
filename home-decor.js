@@ -311,6 +311,22 @@
             flipX:!!row.flipX};
   }
 
+  // Intrinsic raster ratios: fit height too, so tall ornaments cannot pass
+  // through a plank above them. The scene has a 16:9 aspect ratio.
+  var SHELF_ART_RATIOS = {
+    "plant-small":587/639, teapot:224/143, books:224/200,
+    "cat-figure":389/401, daruma:542/626,
+    "sakura-bonsai":640/540, "pine-bonsai":640/566
+  };
+  function widthForSlot(id, slot){
+    var width = presentationFor(id).width * ((slot && slot.scale) || 1);
+    if(slot && slot.maxWidth) width = Math.min(width, slot.maxWidth);
+    if(slot && slot.maxHeight && SHELF_ART_RATIOS[id]){
+      width = Math.min(width, slot.maxHeight * SHELF_ART_RATIOS[id] / 1.778);
+    }
+    return slot && slot.kind === "shelf" ? Math.floor(width * 100) / 100 : +width.toFixed(2);
+  }
+
   /* Five petals around a centre. Written once rather than five times per
    * blossom, because the pattern needs several and they must match. */
   function blossom(cx, cy, r){
@@ -528,6 +544,7 @@
     isWallpaper: isWallpaper,
     categories: categories,
     presentationFor: presentationFor,
+    widthForSlot: widthForSlot,
     getItem: getItem,
     svgFor: svgFor,
     owns: owns,

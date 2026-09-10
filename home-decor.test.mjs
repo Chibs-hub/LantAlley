@@ -17,6 +17,52 @@ const decor = context.LanternHomeDecor;
 const room = context.LanternHomeRoom;
 const slots = room.slots();
 
+test("shelf objects have real plank support and clearance, including the mirrored shelf", () => {
+  // Measured from the 572x407 artwork, not the slot generator. The middle
+  // boards alternate sides. Empty air inside the outer frame is not support.
+  const boards = [[0.06, 0.94], [0.08, 0.65], [0.36, 0.95], [0.07, 0.94]];
+  const clearance = [9, 4.6, 3.5, 2.7];
+  const ratios = {"plant-small":587/639, teapot:224/143, books:224/200,
+    "cat-figure":389/401, daruma:542/626, "sakura-bonsai":640/540, "pine-bonsai":640/566};
+  for(const slot of slots.filter(s => s.kind === "shelf")){
+    const row = Number(slot.id.match(/-(\d)[ab]$/)[1]) - 1;
+    const mirrored = slot.surface === "shelf-left";
+    let x = (slot.x - (mirrored ? 32.5 : 65.5) + 7.5) / 15;
+    if(mirrored) x = 1 - x;
+    assert.ok(x > boards[row][0] && x < boards[row][1], `${slot.id} is over empty air`);
+    if(row === 3 && x > 0.65){
+      // The perspective plinth begins at y=314 on its right half.
+      const imageY = (slot.y - (73 - 15 * 1.778 / 1.405)) / (15 * 1.778 / 1.405) * 407;
+      assert.ok(imageY >= 315 && imageY <= 335, `${slot.id} floats above the sloping plinth`);
+    }
+  }
+  for(const slot of slots.filter(s => s.kind === "shelf")){
+    const row = Number(slot.id.match(/-(\d)[ab]$/)[1]) - 1;
+    const mirrored = slot.surface === "shelf-left";
+    const centre = mirrored ? 32.5 : 65.5;
+    let x = (slot.x - centre + 7.5) / 15;
+    if(mirrored) x = 1 - x;
+    const [left, right] = boards[row];
+    assert.ok(x > left && x < right, `${slot.id} is over empty air`);
+    for(const [id, ratio] of Object.entries(ratios)){
+      const width = decor.widthForSlot(id, slot);
+      assert.ok(x - width / 30 >= left && x + width / 30 <= right,
+        `${id} extends beyond ${slot.id}'s plank`);
+      assert.ok(width * 1.778 / ratio <= clearance[row], `${id} intersects the board above ${slot.id}`);
+    }
+  }
+  for(const surface of ["shelf-left", "shelf-right"]){
+    for(let row = 1; row <= 4; row++){
+      const a = slots.find(s => s.id === `${surface}-${row}a`);
+      const b = slots.find(s => s.id === `${surface}-${row}b`);
+      for(const first of Object.keys(ratios)) for(const second of Object.keys(ratios)){
+        assert.ok((decor.widthForSlot(first, a) + decor.widthForSlot(second, b)) / 2 < Math.abs(a.x-b.x),
+          `${first} and ${second} overlap on ${surface} row ${row}`);
+      }
+    }
+  }
+});
+
 test("home scenes use the production raster asset paths", () => {
   const scenes = room.scenes();
   assert.equal(scenes.yard.background, "assets/home/exterior/open-house-yard-v1.webp");
