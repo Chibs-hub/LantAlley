@@ -97,22 +97,27 @@
      * use, run from the word board before the clock starts.
      */
     "案内": {
+      target:"w-annai",
       sentence:"お客様を二階のお部屋までご案内してください。",
       pattern:"〜を〜へ案内する"
     },
     "注文": {
+      target:"w-chuumon",
       sentence:"お客様の夕食のご注文をうかがってください。",
       pattern:"ご注文をうかがう"
     },
     "掃除": {
+      target:"w-souji",
       sentence:"お客様が出られたあと、お部屋を掃除してください。",
       pattern:"〜を掃除する"
     },
     "確認": {
+      target:"w-kakunin",
       sentence:"ご予約のお名前と人数をもう一度確認してください。",
       pattern:"〜を確認する"
     },
     "断る": {
+      target:"v-kotowaru",
       sentence:"今夜は満室ですので、新しいご予約はお断りします。",
       // The sentence carries お断り, and locate() cannot reach it: its stem
       // search stops above two characters, and 断る leaves only 断. Authored
@@ -120,6 +125,167 @@
       // innkeeper would say to a guest.
       focus:"お断り",
       pattern:"〜を断る"
+    },
+
+    /* Episode 2, the ledger: the desk, the paperwork, the day's record. */
+    "書類": {
+      target:"w-shorui",
+      sentence:"帳場の机にたまった書類を片づけてください。",
+      pattern:"書類を出す"
+    },
+    "報告": {
+      target:"w-houkoku",
+      sentence:"ゆうべの部屋の样子を女将さんに報告してください。",
+      pattern:"〜に〜を報告する"
+    },
+    "通知": {
+      target:"w-tsuuchi",
+      sentence:"朝食の時間が変わったことをお客様に通知します。",
+      pattern:"〜に〜を通知する"
+    },
+    "判子": {
+      target:"w-hanko",
+      sentence:"帳場の引き出しから宿の判子を出してください。",
+      pattern:"判子を押す"
+    },
+    "郵送": {
+      target:"w-yuusou",
+      sentence:"忘れ物は明日お客様のご自宅へ郵送します。",
+      pattern:"〜を〜に郵送する"
+    },
+    "削除": {
+      target:"w-sakujo",
+      sentence:"取り消しのあったご予約は帳面から削除してください。",
+      pattern:"〜を削除する"
+    },
+    "延期": {
+      target:"w-enki",
+      sentence:"雨のため、明日の傅しは来週に延期します。",
+      pattern:"〜を〜に延期する"
+    },
+    "指定": {
+      target:"w-shitei",
+      sentence:"お着きの時間を指定されたお客様が三組いらっしゃいます。",
+      pattern:"〜を指定する"
+    },
+    "満員": {
+      target:"w-manin",
+      sentence:"今夜は満員ですので、これ以上はお泊めできません。",
+      pattern:"〜は満員だ"
+    },
+    "清書": {
+      target:"w-seisho",
+      sentence:"下書きができたら、もう一度きれいに清書してください。",
+      pattern:"〜を清書する"
+    },
+
+    /* Episode 3, the guests coming back in: rooms, belongings, tempers. */
+    "床": {
+      target:"w-yuka",
+      sentence:"現関の床が濡れていますので、拭いておいてください。",
+      pattern:"床を拭く"
+    },
+    "敷く": {
+      target:"v-shiku",
+      sentence:"お布団を敷くのは、夕食が済んでからです。",
+      pattern:"〜を敷く"
+    },
+    "機嫌": {
+      target:"w-kigen-2",
+      sentence:"長くお待たせしたお客様の機嫌がよくありません。",
+      pattern:"機嫌がいい・悪い"
+    },
+    "重なる": {
+      target:"v-kasanaru",
+      sentence:"三組のお客様のお戻りが同じ時刻に重なりました。",
+      focus:"重なり",
+      pattern:"〜が重なる"
+    },
+    "扱う": {
+      target:"v-atsukau",
+      sentence:"割れやすいお預かり品は、丁寧に扱ってください。",
+      focus:"扱って",
+      pattern:"〜を扱う"
+    },
+    "傷": {
+      target:"w-kizu",
+      sentence:"お預かりした箱のふたに大きな傷がありました。",
+      pattern:"傷がつく"
+    },
+    "滞在": {
+      target:"w-taizai",
+      sentence:"二番のお客様は明日までご滞在の予定です。",
+      pattern:"〜に滞在する"
+    },
+    "事情": {
+      target:"w-jijou",
+      sentence:"急なご事情で、朝早くお発ちになるお客様がいます。",
+      pattern:"事情がある"
+    },
+    "世話": {
+      target:"w-sewa",
+      sentence:"小さなお子様のお世話をお願いできますか。",
+      pattern:"〜の世話をする"
+    },
+    "預かる": {
+      target:"v-azukaru",
+      sentence:"お忘れの財布は、帳場で預かることにします。",
+      pattern:"〜を預かる"
+    },
+
+    /* Episode 4, closing the inn: the last rounds, the keys, the winter. */
+    "見送る": {
+      target:"w-miokuru",
+      sentence:"現関までお客様を見送るのが最後の仕事です。",
+      pattern:"〜を見送る"
+    },
+    "鍵": {
+      target:"w-kagi",
+      sentence:"裏の戸の鍵を掛けてから、帳場へ戻ってください。",
+      pattern:"鍵を掛ける"
+    },
+    "残り": {
+      target:"w-nokori",
+      sentence:"六部屋のうち四部屋が済み、残りは二部屋です。",
+      pattern:"残りは〜だ"
+    },
+    "納める": {
+      target:"v-osameru-2",
+      sentence:"お布団はたたんで押し入れに納めてください。",
+      pattern:"〜を〜に納める"
+    },
+    "戻す": {
+      target:"v-modosu",
+      sentence:"机と座布団を最初にあった場所へ戻してください。",
+      focus:"戻して",
+      pattern:"〜を〜に戻す"
+    },
+    "客間": {
+      target:"w-kyakuma",
+      sentence:"お客様がお使いになった客間を一部屋ずつ見ます。",
+      pattern:"客間を見て回る"
+    },
+    "完了": {
+      target:"w-kanryou",
+      sentence:"すべての見回りが完了してから鍵をお返しします。",
+      pattern:"〜が完了する"
+    },
+    "泊める": {
+      target:"v-tomeru",
+      sentence:"冬の間は、どなたもお泊めできません。",
+      focus:"お泊め",
+      pattern:"〜を泊める"
+    },
+    "浴衣": {
+      target:"w-yukata",
+      sentence:"三番のお客様から浴衣二枚のお返しがありません。",
+      pattern:"浴衣を貸す"
+    },
+    "務める": {
+      target:"w-tsutomeru-2",
+      sentence:"三日間の練習と三つの夜、受付を務めました。",
+      focus:"務め",
+      pattern:"〜を務める"
     }
   };
 
@@ -960,8 +1126,21 @@
     "引き受ける":"v-hikiukeru"
   };
 
+  /* The catalogue id for a word, from either map.
+   *
+   * TARGET_IDS covers the five the three days teach and is what the days
+   * themselves ask. Every other word the place teaches carries its own id on
+   * its teaching entry, which is the only place that word appears at all.
+   *
+   * Without the second half of this, the check that follows each card could
+   * not resolve a gloss for an episode word, so its wrong answers silently
+   * collapsed to the five Day 1 words no matter which of the forty was being
+   * taught - a pool of five dressed as a pool of forty.
+   */
   function getTargetId(focusWord){
-    return TARGET_IDS[focusWord] || null;
+    if(TARGET_IDS[focusWord]) return TARGET_IDS[focusWord];
+    var entry = TEACHING[focusWord];
+    return (entry && entry.target) || null;
   }
 
   /* The catalog's first sense is not always the Inn's sense.

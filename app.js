@@ -2932,35 +2932,10 @@
       + '</div></div>';
     $("btn-words-begin").addEventListener("click", function(event){
       event.stopImmediatePropagation();
-      /* The words the board just marked はじめて are taught here, on the
-       * same cards the three days use, before the clock starts. Naming a word
-       * as new and then asking about it under a five-second timer was the
-       * gap this closes - reported from play, and admitted in this
-       * function's own comment before that.
-       *
-       * Only the ones with an authored sentence. A place whose episode words
-       * are not written yet keeps the board it had rather than showing a
-       * blank card. */
-      var loc = getLocation(state.currentKey);
-      var untaught = loc && loc.getTeaching ? rows.filter(function(row){
-        return !row.known && !!loc.getTeaching(row.word);
-      }).map(function(row){ return {word:row.word, target:row.id}; }) : [];
-      /* Not the order the hour asks in, for the same reason the three days
-       * teach in their own order: the board lists the words in the sequence
-       * the questions come, so teaching straight down that list makes the
-       * first guest a recital of the last card. Rotated rather than
-       * reversed, so the word taught first is neither the first nor the last
-       * to be asked. */
-      if(untaught.length > 2){
-        var at = untaught.length > 4 ? 2 : 1;
-        untaught = untaught.slice(at).concat(untaught.slice(0, at));
-      }
-      if(untaught.length && startTeaching(loc, untaught, {
-        badge:"今夜の言葉",
-        note:"ここからは本番です。時間内に答えてください。",
-        button:"受付を始めます",
-        then:function(){ renderPreviewQuestion(); }
-      })) return;
+      /* The words the board marked はじめて are taught inside the hour, one
+       * block at a time - see teachBlockIfNeeded, which the first question
+       * runs through. Teaching all of them here put twenty screens in front
+       * of a ten-question shift. */
       renderPreviewQuestion();
     });
   }
@@ -3072,7 +3047,62 @@
     });
   }
 
+  /* Each block of the hour teaches its own new words, just before they are
+   * needed.
+   *
+   * Taught all at once from the word board, a shift meant twenty screens -
+   * ten cards and ten checks - in front of a ten-question hour. The hour is
+   * already three blocks (宵の口, 食事どき, 仕上げ) and the new words fall
+   * three, three, four across them, exactly matching the questions, so each
+   * block teaches its own and is used immediately. One mark per block, set
+   * before teaching starts so the handover's return does not re-teach it.
+   */
+  function teachBlockIfNeeded(){
+    if(!previewState) return false;
+    /* The shift only. The finishing round reuses this renderer, and it exists
+     * to prove words the learner has already met - teaching them there would
+     * put cards in front of the one part of the place whose whole job is to
+     * ask, and its list has no blocks to teach by. */
+    if(previewState.masteryRound) return false;
+    var entry = previewState.list[previewState.index];
+    if(!entry) return false;
+    var loc = getLocation(state.currentKey);
+    if(!loc || !loc.getTeaching) return false;
+    var label = entry.label || "";
+    if(!previewState.taughtBlocks) previewState.taughtBlocks = {};
+    if(previewState.taughtBlocks[label]) return false;
+    previewState.taughtBlocks[label] = true;
+
+    var known = (state.masteredByStage || {})[state.currentKey] || [];
+    var seen = {};
+    var queue = [];
+    previewState.list.forEach(function(row){
+      if((row.label || "") !== label) return;
+      var id = row.question && row.question.target;
+      if(!id || seen[id] || known.indexOf(id) >= 0) return;
+      seen[id] = true;
+      var item = typeof LanternCurriculumCatalog !== "undefined"
+        ? LanternCurriculumCatalog.getItem(id) : null;
+      if(!item || !loc.getTeaching(item.canonical)) return;
+      queue.push({word:item.canonical, target:id});
+    });
+    if(!queue.length) return false;
+    // Not in the order the block asks, for the same reason the days teach in
+    // their own order: straight down the list makes the first guest a recital.
+    if(queue.length > 1) queue = queue.slice(1).concat(queue.slice(0, 1));
+
+    var first = previewState.index === 0;
+    return startTeaching(loc, queue, {
+      badge:"今夜の言葉",
+      note:first ? "ここからは本番です。時間内に答えてください。"
+        : "この言葉を使って、仕事の続きをしましょう。",
+      button:first ? "受付を始めます" : "仕事に戻ります",
+      then:function(){ renderPreviewQuestion(); }
+    });
+  }
+
   function renderPreviewQuestion(){
+    if(teachBlockIfNeeded()) return;
     var entry = previewState.list[previewState.index];
     var question = entry.question;
     // The episode reuses the Challenge dialogue DOM. Reset its controls for

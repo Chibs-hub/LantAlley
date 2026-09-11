@@ -5,6 +5,24 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-10 - The Inn teaches all forty of its words, a block at a time (v347)
+
+The Inn is finished. Thirty more sentences and patterns, so every word all four shifts ask about is taught before it is asked - 案内 through 務める, set in the scene each word's own question happens in: the 判子 sentence is about the drawer at the front desk, because that is where its question is.
+
+**Taught a block at a time, inside the hour.** Teaching a shift's ten words from the word board put twenty screens - ten cards and ten checks - in front of a ten-question hour. The hour was already three blocks (宵の口, 食事どき, 仕上げ) and the new words fall three, three, four across them, exactly matching the questions, so each block now teaches its own just before they are used: three cards, three guests, three cards, three guests. Verified by playing it - three questions of 宵の口, then 掃除 taught as 食事どき begins.
+
+**A bug in the v344 claim, found while doing this.** The check's wrong answers are other words' glosses, read through `getTargetId`, and that map only ever held the five words the three days teach. So every card in the place drew its three distractors from those same five however many words it taught - a pool of five dressed as a pool of forty. The catalogue id lives on the teaching entry now, and a test asserts all forty resolve a gloss and that no two share one, since two words with the same gloss offer the same answer twice with one of them marked wrong.
+
+**Not the finishing round.** It reuses the same renderer, and it exists to prove words the learner has already met - cards there would put teaching in front of the one part of the place whose whole job is to ask, and its list has no blocks to teach by.
+
+Eight of the forty needed an authored `focus`: `locate()` stops its stem search above two characters, so a two-character dictionary form has none - 戻す leaves only 戻 - and the natural sentence conjugates. Naming the form that appears beats bending the sentence into something no innkeeper would say.
+
+**The four places after the Inn still teach nothing**, which is 160 words. `docs/handoffs/2026-09-10-teaching-sentences.md` is that list, and the engine needs nothing per place: a `TEACHING` map and a `getTeaching` is the whole of it.
+
+**Still drafts awaiting native review:** all forty Inn sentences, and Day 3's five narrations from v345.
+
+Cache is v347; `node --test` passes (546).
+
 ### 2026-09-10 - Studying stops being a recital, and the card gets the screen (v346)
 
 Three reports from play, all about the teaching step.

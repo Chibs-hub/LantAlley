@@ -1492,31 +1492,49 @@ test("a word board never promises teaching the place cannot give", () => {
   }
   const stage = context.N2HomeInnStage;
   const catalog = context.LanternCurriculumCatalog;
-  const episode = context.LanternEpisodeStages["home-inn"].episodes[0];
+  const episodes = context.LanternEpisodeStages["home-inn"].episodes;
 
-  /* Every word Episode 1 asks about has a card. The board marks the ones the
-   * three days did not cover as はじめて and the hour then scores them, so
-   * "new" has to mean "about to be taught", not "about to be guessed".
+  /* Every word the Inn asks about, across all four shifts, has a card.
    *
-   * Episodes 2 to 4 and the other four places are not here on purpose: 190
-   * words still have no sentence, and docs/handoffs/2026-09-10-teaching-
-   * sentences.md is the list. This test is what makes finishing one episode
-   * visible - add a place's entries and extend it to that place.
+   * Each shift opens on a board that marks the words the learner has not met
+   * as はじめて and then scores them, so "new" has to mean "about to be
+   * taught", not "about to be guessed".
+   *
+   * The other four places are not here yet: 160 words still have no
+   * sentence, and docs/handoffs/2026-09-10-teaching-sentences.md is the list.
+   * Extending this test to a place is what marks that place done.
    */
   const words = [];
   const seen = new Set();
-  for (const day of episode.days) {
-    for (const question of day.questions) {
-      if (!question.target || seen.has(question.target)) continue;
-      seen.add(question.target);
-      const item = catalog.getItem(question.target);
-      if (item) words.push({ word: item.canonical, item });
+  for (const episode of episodes) {
+    for (const day of episode.days) {
+      for (const question of day.questions) {
+        if (!question.target || seen.has(question.target)) continue;
+        seen.add(question.target);
+        const item = catalog.getItem(question.target);
+        if (item) words.push({ word: item.canonical, item });
+      }
     }
   }
-  assert.equal(words.length, 10, "the hour asks about ten words");
+  assert.equal(words.length, 40, "the four shifts ask about forty words");
 
   const entries = {};
   words.forEach((row) => { entries[row.word] = stage.getTeaching(row.word); });
   assert.deepEqual([...context.LanternWordTeaching.validateEntries(words, entries)], [],
-    "every word the first shift asks about is taught before it is asked");
+    "every word the Inn asks about is taught before it is asked");
+
+  /* And every one resolves a gloss, because the wrong answers on each card
+   * are other words' glosses. Before the entries carried their own catalogue
+   * id, only the five Day 1 words resolved, so a card's distractors came
+   * from a pool of five however many words the place taught. */
+  const glosses = new Set();
+  for (const { word } of words) {
+    const item = catalog.getItem(stage.getTargetId(word));
+    assert.ok(item, `${word} has no catalogue id to read a gloss from`);
+    const gloss = stage.getCardSense(word) || (item.meanings && item.meanings[0]);
+    assert.ok(gloss, `${word} has no gloss for a card or a distractor`);
+    glosses.add(gloss);
+  }
+  assert.equal(glosses.size, words.length,
+    "two words sharing a gloss would offer the same answer twice, one marked wrong");
 });

@@ -3146,6 +3146,17 @@ test("the episode teaches the words its board calls new, before the clock", asyn
    * about first: the board lists them in question order, so teaching
    * straight down that list would recite the opening guest. */
   const innStage = game.context.N2HomeInnStage;
+  const firstShift = game.context.LanternEpisodeStages["home-inn"].episodes[0];
+  const threeDays = new Set(innStage.encounters.map((item) => item.focusWord));
+  const newWordsOnBoard = [];
+  for (const day of firstShift.days) {
+    for (const question of day.questions) {
+      const item = game.context.LanternCurriculumCatalog.getItem(question.target);
+      if (item && !threeDays.has(item.canonical) && !newWordsOnBoard.includes(item.canonical)) {
+        newWordsOnBoard.push(item.canonical);
+      }
+    }
+  }
   const shown = innStage.getTeachingWords().filter((word) => card.textContent.includes(word));
   assert.equal(shown.length, 1, "exactly one word is on the card, saw " + shown.join(" / "));
   const firstAsked = game.context.LanternCurriculumCatalog
@@ -3153,13 +3164,25 @@ test("the episode teaches the words its board calls new, before the clock", asyn
   assert.notEqual(shown[0], firstAsked, "and not the word the first guest asks about");
   assert.ok(card.querySelector(".teach-focus"), "with the sentence it lives in");
 
-  // And the wrong answers are not only the other new words, which would make
-  // the last card answerable by elimination.
+  /* And the wrong answers are not only the other words in this run. Drawn
+   * from the queue alone, five cards offered five glosses and the last was
+   * answerable by elimination; drawn from every word the Inn teaches, they
+   * are not. */
   game.$("btn-teach-next").click();
   game.clock.advance(300);
   const glosses = game.doc.querySelectorAll(".teach-option").map((b) => b.textContent);
   assert.equal(glosses.length, 4);
-  assert.ok(glosses.some((g) => ["to put things in order", "to replace", "to warm (food or drink)",
-    "adjustment, coordination", "to undertake"].includes(g)),
-    "distractors come from every word the place teaches, saw " + glosses.join(" / "));
+  assert.equal(new Set(glosses).size, 4, "no option is offered twice");
+
+  const glossOf = (word) => {
+    const item = game.context.LanternCurriculumCatalog.getItem(innStage.getTargetId(word));
+    return innStage.getCardSense(word) || (item && item.meanings && item.meanings[0]);
+  };
+  const everyGloss = new Set(innStage.getTeachingWords().map(glossOf));
+  assert.ok(glosses.every((g) => everyGloss.has(g)),
+    "every option is a real gloss from this place, saw " + glosses.join(" / "));
+
+  const boardGlosses = new Set(newWordsOnBoard.map(glossOf));
+  assert.ok(glosses.some((g) => !boardGlosses.has(g)),
+    "at least one wrong answer comes from outside the words being taught, saw " + glosses.join(" / "));
 });
