@@ -5,6 +5,25 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-10 - The update notice is a dialog, and two bugs that were hiding it (v341)
+
+Reported as the update being hard to notice. It was, and worse than it looked - the presentation was the smaller half of the problem.
+
+**It is a dialog now.** It was a thin bar across the foot of the page, on a phone, on a screen that scrolls, sharing that corner with the feedback button and the decor tray. It reuses `.about-panel` and `.about-card`, so it is the same shape as About and Save data rather than a third thing to learn, with a gold edge because unlike those it was not opened on purpose and has to earn a glance. Update now is full width and first; Later is quieter and underneath. The copy says progress is not affected, because the question a tester actually has before reloading is whether they lose their garden.
+
+**And there is a way to ask.** Menu now has Check for updates, which reports what it found - a build downloading, or that you are on the newest one. A button that reports nothing reads as a button that did nothing.
+
+Two bugs found while verifying this, both of which hid the notice outright and neither of which a test could have caught:
+
+- **The listeners were attached to a registration that did not exist yet.** `index.html` registers the worker on window load and `app.js` runs before that, so `getRegistration()` resolved with nothing and the `updatefound` listener, the visibility re-check and the new menu button were all silently skipped on a first visit. It waits on `navigator.serviceWorker.ready` instead, which is the moment those are worth attaching.
+- **`hadController` was a boolean captured at boot.** On the first load after an install the page is not controlled yet - the new worker claims it a moment later - so the flag was captured `false`, and the guard that exists to stay quiet on a first install then suppressed *every* later version for as long as that tab stayed open. It holds the worker the page started under instead: the first claim sets the baseline and the next change is a real one.
+
+And one of my own, from the same session: the dialog waits for a moment when no question is half-answered, because a modal over a half-finished answer loses the attempt behind it. The check was `screenGame.style.display === "none"`, but the stylesheet hides that screen and the game reveals it by writing an inline display - so before the first stage it reads `""`, which the check counted as showing. The dialog held for a question that was not there, on the title screen, forever.
+
+Verified end to end in the browser rather than reasoned about: a page loaded under one worker, a new `CACHE_VERSION` shipped underneath it, and the dialog appeared on the swap; Update now reloaded onto the new build.
+
+Cache is v341; `node --test` passes (541).
+
 ### 2026-09-10 - The teaching check asks for the meaning, and a right answer moves on by itself (v340)
 
 Two changes to the check v339 added, both from play.

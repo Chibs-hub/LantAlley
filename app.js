@@ -1026,13 +1026,15 @@
       label.textContent = APP_RELEASE + (build ? " (build " + build + ")" : "");
     }
 
-    var bar = $("update-bar");
+    var panel = $("update-panel");
     var now = $("btn-update-now");
     var later = $("btn-update-later");
+    var check = $("btn-check-update");
+    var note = $("update-note");
     // Checked for a value, not for the key: file:// has no worker at all, and
     // the test harness defines the property as undefined - "in" is true for
     // both, and reading .controller off it throws before the game can boot.
-    if(!bar || !now || !later || !navigator.serviceWorker) return;
+    if(!panel || !now || !later || !navigator.serviceWorker) return;
 
     /* An installed player runs the version already on the phone, and the new
      * one downloads behind them - so they are one launch behind. Measured on
@@ -1045,28 +1047,85 @@
      * the reload. Offer rather than perform: reloading someone in the middle
      * of a question is its own bug.
      */
-    var hadController = !!navigator.serviceWorker.controller;
+    /* The worker this page started under, not a boolean taken at boot.
+     *
+     * It was a boolean, and it was wrong in a way that hid the notice for a
+     * whole session: on the first load after an install there is no
+     * controller yet - the new worker claims the page a moment later - so the
+     * flag was captured false and every later version, for as long as that
+     * tab stayed open, was suppressed by it. Holding the worker itself means
+     * the first claim sets the baseline and the next one is a real change.
+     */
+    var bootController = navigator.serviceWorker.controller || null;
     var dismissed = false;
+    var retry = null;
+
+    /* Anywhere but a question still waiting for an answer.
+     *
+     * The notice used to be a bar at the foot of the page, which could appear
+     * over a question without taking anything over. A dialog cannot: put one
+     * in front of a half-finished answer and the attempt is lost behind it.
+     * So a notice that arrives mid-question waits, and the wait is a poll
+     * rather than a hook because every screen in the game would need the hook.
+     */
+    function safeMoment(){
+      /* Not `=== "none"`. The stylesheet hides this screen and the game
+       * reveals it by writing an inline display, so before the first stage it
+       * reads "" - which is hidden, and which the earlier check counted as
+       * showing. The dialog then held for a question that was not there, on
+       * the title screen, forever. */
+      var asking = screenGame && screenGame.style.display
+        && screenGame.style.display !== "none";
+      if(!asking) return true;
+      return !!state.answered;
+    }
 
     function offer(){
-      if(dismissed || !bar.hidden) return;
-      bar.hidden = false;
+      if(dismissed || !panel.hidden) return;
+      if(!safeMoment()){
+        if(!retry) retry = setInterval(offer, 4000);
+        return;
+      }
+      if(retry){ clearInterval(retry); retry = null; }
+      panel.hidden = false;
     }
 
     navigator.serviceWorker.addEventListener("controllerchange", function(){
-      // Not on the very first install, where there was no previous version to
-      // have been running.
-      if(!hadController) return;
+      // The first install claims a page that was running no worker at all.
+      // Nothing the learner was using has been replaced, so there is nothing
+      // to offer - but this is the version to compare the next one against.
+      if(!bootController){
+        bootController = navigator.serviceWorker.controller || null;
+        return;
+      }
       offer();
     });
 
-    navigator.serviceWorker.getRegistration && navigator.serviceWorker.getRegistration().then(function(reg){
+    /* navigator.serviceWorker.ready, not getRegistration().
+     *
+     * index.html registers the worker on window load, and this file runs
+     * before that - so on a first visit getRegistration() resolved with
+     * nothing and every listener below was skipped, silently. ready waits for
+     * a registration with an active worker, which is exactly the moment these
+     * are worth attaching. It never resolves where there is no worker at all
+     * (file://), which is why the button's handler is attached outside it.
+     */
+    var readyFor = navigator.serviceWorker.ready
+      ? navigator.serviceWorker.ready
+      : Promise.reject();
+
+    readyFor.then(function(reg){
       if(!reg) return;
+      /* A build that finished installing while the app was closed fires
+       * nothing when it reopens - the events below have already happened. The
+       * worker is sitting there either waiting or already in charge, so ask
+       * once on boot rather than relying on an event that is in the past. */
+      if(bootController && reg.waiting) offer();
       reg.addEventListener("updatefound", function(){
         var incoming = reg.installing;
         if(!incoming) return;
         incoming.addEventListener("statechange", function(){
-          if(incoming.state === "installed" && hadController) offer();
+          if(incoming.state === "installed" && bootController) offer();
         });
       });
       // A phone left on the title screen for an hour should still notice.
@@ -1075,10 +1134,41 @@
       });
     }).catch(function(){});
 
+    /* Asking, rather than only being told.
+     *
+     * update() resolves whether or not there was anything new, so the answer
+     * is read off the registration afterwards: a worker installing or waiting
+     * means a new build arrived, and the dialog above says so. With nothing
+     * new the note says that plainly - a button that reports nothing reads as
+     * a button that did nothing.
+     */
+    if(check){
+      check.addEventListener("click", function(){
+        if(note){
+          note.hidden = false;
+          note.textContent = "Checking...";
+        }
+        readyFor.then(function(reg){
+          if(!reg || !reg.update) throw new Error("no worker");
+          return reg.update().then(function(){
+            if(reg.installing || reg.waiting){
+              dismissed = false;
+              if(note) note.textContent = "A new version is downloading.";
+              return;
+            }
+            if(note) note.textContent = "You are on the newest build.";
+          });
+        }).catch(function(){
+          if(note) note.textContent = "Could not check right now.";
+        });
+      });
+    }
+
     now.addEventListener("click", function(){ window.location.reload(); });
     later.addEventListener("click", function(){
       dismissed = true;
-      bar.hidden = true;
+      if(retry){ clearInterval(retry); retry = null; }
+      panel.hidden = true;
     });
   })();
 

@@ -1719,34 +1719,29 @@
 
 /* Offered, not forced: a reload in the middle of a question is its own bug.
    Fixed to the bottom because an update can land on any screen. */
-.update-bar{
-  position:fixed; left:0; right:0; bottom:0; z-index:60;
-  display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:10px;
-  padding:12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
-  background:#2b1c11; border-top:2px solid var(--wood-edge);
-  box-shadow:0 -8px 22px rgba(0,0,0,.42);
-  color:#f3e6d4; font-size:.82rem;
+/* The update notice. It reuses .about-panel and .about-card, so it is the
+   same dialog as About and Save data - one shape for "the game is asking you
+   something", rather than a third thing to learn. What is added here is
+   emphasis: this one has a gold edge, because unlike the others it was not
+   opened on purpose and has to earn a glance. */
+.update-card{
+  max-width:400px; text-align:center;
+  border:2px solid var(--lantern-bright);
+  box-shadow:0 18px 48px rgba(10,5,2,.6), 0 0 0 1px rgba(255,212,137,.18);
 }
-.update-bar .btn{padding:9px 18px; font-size:.82rem;}
-.update-bar-later{
-  border:0; background:none; color:#c9b193;
-  font:inherit; font-size:.76rem; text-decoration:underline; cursor:pointer;
+.update-kicker{
+  margin:0 0 4px; color:var(--lantern-bright);
+  font-size:.68rem; font-weight:900; letter-spacing:.18em; text-transform:uppercase;
 }
-.update-bar-later:hover{color:#f3e6d4;}
-@media(max-width:420px){
-  .update-bar-text{flex:1 1 100%; text-align:center;}
-}
-/* The bar is fixed, so it sits on top of whatever is at the foot of the page -
-   here the version line and the about link, both of which a tester reporting a
-   problem is being asked to read. Give the page room for it. */
-body:has(#update-bar:not([hidden])){padding-bottom:96px;}
-@media(max-width:420px){
-body:has(#update-bar:not([hidden])){padding-bottom:132px;}
-}
+.update-card h2{color:#ffe4a0;}
+/* Update first, and at a size a thumb finds without aiming. Later is a way
+   out, not an equal choice, so it is quieter and underneath. */
+.update-card .btn{display:block; width:100%; margin:14px auto 0; min-height:46px;}
+.update-card .btn-ghost{margin-top:8px; min-height:40px; font-size:.8rem; opacity:.8;}
 
 /* Tester safety controls are fixed because a save failure can happen on any
-   screen. They sit above the update bar, and the feedback button moves up
-   while that bar is visible so neither action hides the other. */
+   screen. The update notice no longer needs room made for it here - it is a
+   dialog, and the rule below hides this button while any dialog is open. */
 .storage-warning{
   position:fixed; top:max(10px,env(safe-area-inset-top,0px)); left:50%; z-index:120;
   width:min(560px,calc(100% - 28px)); margin:0; padding:10px 14px;
@@ -1761,15 +1756,11 @@ body:has(#update-bar:not([hidden])){padding-bottom:132px;}
   color:#fff0cf; font:800 .8rem 'Zen Maru Gothic',sans-serif; cursor:pointer;
 }
 .feedback-open:hover,.feedback-open:focus-visible{background:#4a2d19;outline:3px solid var(--lantern-bright);outline-offset:2px}
-body:has(#update-bar:not([hidden])) .feedback-open{bottom:calc(104px + env(safe-area-inset-bottom,0px));}
-@media(max-width:420px){body:has(#update-bar:not([hidden])) .feedback-open{bottom:calc(138px + env(safe-area-inset-bottom,0px));}}
 /* Feedback is a utility, not the current task. On a phone it yields to the
    sticky correction and Continue docks rather than covering either one. */
 @media(max-width:760px){
   body:has(#screen-game[style*="display: block"] #next-row[style*="display: block"]) .feedback-open{bottom:calc(76px + env(safe-area-inset-bottom,0px));}
   body:has(#screen-game[style*="display: block"] #feedback-row.show) .feedback-open{bottom:calc(152px + env(safe-area-inset-bottom,0px));}
-  body:has(#update-bar:not([hidden])):has(#screen-game[style*="display: block"] #next-row[style*="display: block"]) .feedback-open{bottom:calc(214px + env(safe-area-inset-bottom,0px));}
-  body:has(#update-bar:not([hidden])):has(#screen-game[style*="display: block"] #feedback-row.show) .feedback-open{bottom:calc(290px + env(safe-area-inset-bottom,0px));}
 }
 /* A modal owns the screen and already offers a close or response action. */
 body:has(.about-panel:not([hidden])) .feedback-open{visibility:hidden;pointer-events:none}

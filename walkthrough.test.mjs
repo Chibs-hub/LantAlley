@@ -528,9 +528,10 @@ test("title utility chrome uses English while the alley entry remains Japanese",
     "a returning player keeps the Japanese alley destination wording");
   assert.equal(game.$("btn-title-menu").textContent, "Menu");
   assert.equal(game.$("btn-install-open").textContent, "Install app");
-  assert.equal(game.$("update-bar").querySelectorAll("span")[0].textContent, "A new version is available.");
+  assert.equal(game.$("update-title").textContent, "A new version is available.");
   assert.equal(game.$("btn-update-now").textContent, "Update now");
   assert.equal(game.$("btn-update-later").textContent, "Later");
+  assert.equal(game.$("btn-check-update").textContent, "Check for updates");
 
   game.$("btn-title-menu").click();
   assert.equal(game.$("btn-save-data").textContent, "Save data");
@@ -2731,16 +2732,32 @@ test("an update is offered rather than forced", () => {
   const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
   const html = readFileSync(new URL("./index.html", import.meta.url), "utf8");
 
-  assert.match(html, /id="update-bar"/);
+  /* A dialog, not a bar at the foot of a scrolling page - reported as easy to
+   * miss, which it was. It reuses .about-panel so it sits in front of
+   * everything and so the game has one shape for asking a question. */
+  assert.match(html, /id="update-panel"[\s\S]*?class="about-card update-card"/);
+  assert.match(html, /id="update-panel"[^>]*role="dialog"/);
   assert.match(html, /id="btn-update-now"/);
   assert.match(html, /id="btn-update-later"/);
+  // And a way to ask for an update rather than only being told about one.
+  assert.match(html, /id="btn-check-update"/);
+  assert.match(app, /reg\.update\(\)\.then/);
+
+  /* A dialog over a half-finished answer loses the attempt behind it, so one
+   * that arrives mid-question waits for a moment when nothing is pending. */
+  assert.match(app, /function safeMoment\(\)/);
+  assert.match(app, /if\(!safeMoment\(\)\)/);
 
   // Reloading someone mid-question is its own bug, so the reload happens on a
   // press and never on its own.
   assert.match(app, /now\.addEventListener\("click", function\(\)\{ window\.location\.reload\(\); \}\);/);
   assert.match(app, /controllerchange/);
-  // Not on a first install, where there was no previous version running.
-  assert.match(app, /if\(!hadController\) return;/);
+  /* Not on a first install, where there was no previous version running.
+   * Held as the worker the page started under rather than a boolean: on that
+   * first load there is no controller yet, so a boolean captured at boot was
+   * false and suppressed every later version for the life of the tab. */
+  assert.match(app, /var bootController = navigator\.serviceWorker\.controller \|\| null;/);
+  assert.match(app, /if\(!bootController\)\{/);
 });
 
 test("every scene change says what kind of part it is", () => {
