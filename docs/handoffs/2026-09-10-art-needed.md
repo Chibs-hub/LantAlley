@@ -17,7 +17,48 @@
 desktop as `img/lantern.png`). Nothing in the game has a slot that size yet.
 It is not a gap - it is a spare, recorded here so nobody commissions another.
 
-Still outstanding: the 16 garden images below.
+Still outstanding: the 16 garden images below, and one title-screen background
+specified next.
+
+## Title-screen background, without the baked-in title
+
+**Asked for 2026-09-11.** The owner's wide village banner is in the repository
+as the share preview (`assets/social/lantern-alley-share-v2.jpg`) and is a much
+better title screen than the top-down map painting the title currently uses -
+but it cannot be used there as it stands, because "Lantern Alley" and the
+tagline are painted into the image, and the title screen already draws both as
+real text. Used as-is the title reads twice and the Japanese title 言葉の路地
+competes with English pixels.
+
+What to export: the same night village scene, **no text of any kind**.
+
+| | |
+| --- | --- |
+| File | `assets/title/lantern-alley-title-v1.jpg` (or .webp) |
+| Size | 1600x1067 or larger, 3:2 - the current background is 1200x800 |
+| Drawn as | `center/cover` across the whole title panel, so it is cropped at the edges, not letterboxed |
+
+Where the screen puts things on top of it, so the composition can allow for
+them. Percentages are of the panel, and the panel is the full width of the
+frame:
+
+- **Left 42% is heavily darkened** and the darkening fades out by 78%:
+  `linear-gradient(90deg, rgba(6,13,28,.92) 0%, rgba(6,13,28,.7) 42%, rgba(6,13,28,.14) 78%)`.
+  The Japanese title, the English title, the kicker and the entry button all sit
+  in that band. Anything painted there will be nearly invisible, so keep the
+  detail that matters right of centre.
+- **The bottom 45% is darkened** as well: `linear-gradient(0deg, rgba(6,13,28,.72), transparent 55%)`.
+- **Kon stands at the lower right**, `right:5% bottom:4%`, between 190 and 320px
+  wide. On a phone she moves to `right:6% top:27%` at up to 40vw. Avoid putting
+  a focal point exactly there.
+- **On a phone the background shifts to `background-position: 54% center`**, so
+  the right-hand third is what a phone actually shows. That is the part worth
+  composing for.
+
+The lantern, the tea-house sign and the bridge in the existing banner all sit in
+the right two thirds already, so a text-free export of the same scene needs no
+recomposition - only the words removed.
+
 
 # Art still needed - v332
 
