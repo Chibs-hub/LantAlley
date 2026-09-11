@@ -21,6 +21,29 @@ const read = (name) => readFileSync(new URL("./" + name, import.meta.url), "utf8
 /* `seed` is written before the app initialises, because it reads storage once
  * on DOMContentLoaded and then owns it. Setting it afterwards seeds nothing:
  * the first save overwrites it. */
+/* Past the word board and through the cards it now leads to.
+ *
+ * The board marks five of the episode's ten words as new, and until now the
+ * next screen was a timed question about one of them. They are taught first,
+ * on the same cards the three days use, so every driver that used to click
+ * straight from the board into question one walks them the way a learner
+ * does.
+ */
+function passWordBoard(game, settle) {
+  game.$("btn-words-begin").click();
+  game.clock.advance(settle || 300);
+  for (let guard = 0; guard < 24; guard += 1) {
+    const done = game.$("btn-teach-done");
+    if (done) { done.click(); game.clock.advance(600); break; }
+    const next = game.$("btn-teach-next");
+    if (next) { next.click(); game.clock.advance(600); continue; }
+    const option = game.doc.querySelectorAll(".teach-option")[0];
+    if (!option) break;
+    option.click();
+    game.clock.advance(1200);
+  }
+}
+
 function boot(seed, search, options) {
   const html = read("index.html");
   const body = html.slice(html.indexOf("<body"), html.lastIndexOf("</body>"));
@@ -970,6 +993,23 @@ async function drive(game, steps, onQuestion) {
     if (playRoom(game, task)) { stalled = 0; continue; }
     if (playSchedule(game, task)) { stalled = 0; continue; }
 
+    /* The teaching cards, before the generic scene-button fallback below.
+     *
+     * That fallback takes the first button in the scene, which on a check is
+     * the first option - and once the check is answered that button is spent,
+     * so the driver clicked it again every step and never reached the
+     * episode. The cards have an order: hand over, then advance, then answer.
+     */
+    const teachDone = game.$("btn-teach-done");
+    const teachNext = game.$("btn-teach-next");
+    const teachOption = game.doc.querySelectorAll(".teach-option").filter(game.visible)[0];
+    if (teachDone || teachNext || teachOption) {
+      (teachDone || teachNext || teachOption).click();
+      game.clock.advance(1500);
+      stalled = 0;
+      continue;
+    }
+
     // A scene that offers its own button - the helper's yes, the episode's
     // "let us begin" - is the way forward, and tapping the backdrop is not.
     const sceneAction = game.$("scene").querySelectorAll("button").filter(game.visible)
@@ -1882,8 +1922,7 @@ test("?skip=1's skip-question control also works inside Episode 1", async () => 
   game.clock.advance(500);
   game.$("btn-brief-begin").click();
   game.clock.advance(500);
-  game.$("btn-words-begin").click();
-  game.clock.advance(500);
+  passWordBoard(game, 500);
 
   assert.equal(game.$("btn-skip-question").hidden, false,
     "the skip-question control shows once a real episode question is on screen");
@@ -2151,8 +2190,7 @@ test("an episode names its story, not its internal skill taxonomy", async () => 
   game.clock.advance(300);
   // The hour names its ten words before the clock starts - five practised in
   // the three days, five it is about to introduce.
-  game.$("btn-words-begin").click();
-  game.clock.advance(300);
+  passWordBoard(game, 300);
 
   const label = game.$("scene-label").textContent;
   assert.doesNotMatch(label, /preview/i, "players should not be told they are in a preview");
@@ -2175,8 +2213,7 @@ test("an episode question does not print its citation as Kon's speech", async ()
   game.clock.advance(300);
   // The hour names its ten words before the clock starts - five practised in
   // the three days, five it is about to introduce.
-  game.$("btn-words-begin").click();
-  game.clock.advance(300);
+  passWordBoard(game, 300);
 
   assert.doesNotMatch(game.$("narration").textContent, /第一話/,
     "the citation belongs on the opening card, not in the character's speech slot");
@@ -2230,8 +2267,7 @@ async function openFirstEpisodeQuestion(game) {
   game.clock.advance(300);
   game.$("btn-brief-begin").click();
   game.clock.advance(300);
-  game.$("btn-words-begin").click();
-  game.clock.advance(300);
+  passWordBoard(game, 300);
 }
 
 test("every episode answer names the exact learning word after the attempt", async () => {
@@ -2293,8 +2329,7 @@ test("finishing a stage starts its episode once, not twice", async () => {
   game.clock.advance(300);
   // The hour names its ten words before the clock starts - five practised in
   // the three days, five it is about to introduce.
-  game.$("btn-words-begin").click();
-  game.clock.advance(300);
+  passWordBoard(game, 300);
   assert.equal(game.doc.querySelectorAll(".episode-open").length, 0, "a question is on screen");
 
   // Let every deferred advance the stage armed run out.
@@ -3076,4 +3111,35 @@ test("the studying ends on a screen that says the day is starting", async () => 
   assert.equal(game.doc.querySelector(".teach-card"), null, "and then the day starts");
   assert.equal(game.$("encounter-progress").textContent, "1");
   assert.ok(game.doc.querySelectorAll(".inn-new-word").length);
+});
+
+test("the episode teaches the words its board calls new, before the clock", async () => {
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game);
+  startEpisodeAfterTraining(game);
+  game.$("btn-episode-begin").click();
+  game.clock.advance(500);
+  game.$("btn-brief-begin").click();
+  game.clock.advance(500);
+  assert.ok(game.$("btn-words-begin"), "the shift opens on its word board");
+
+  /* The board marks five of the ten new and used to hand straight to a timed
+   * question about one of them - reported from play, and admitted in the
+   * board's own comment before that. */
+  game.$("btn-words-begin").click();
+  game.clock.advance(400);
+  const card = game.doc.querySelector(".teach-card");
+  assert.ok(card, "a word the board called new is taught first");
+  assert.ok(card.textContent.includes("案内"));
+  assert.ok(card.textContent.includes("ご案内"), "with the sentence it lives in");
+
+  // And the wrong answers are not only the other new words, which would make
+  // the last card answerable by elimination.
+  game.$("btn-teach-next").click();
+  game.clock.advance(300);
+  const glosses = game.doc.querySelectorAll(".teach-option").map((b) => b.textContent);
+  assert.equal(glosses.length, 4);
+  assert.ok(glosses.some((g) => ["to put things in order", "to replace", "to warm (food or drink)",
+    "adjustment, coordination", "to undertake"].includes(g)),
+    "distractors come from every word the place teaches, saw " + glosses.join(" / "));
 });

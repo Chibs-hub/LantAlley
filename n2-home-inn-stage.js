@@ -86,11 +86,52 @@
     "引き受ける": {
       sentence:"今夜の夕食の配膳を引き受けていただけませんか。",
       pattern:"〜を引き受ける"
+    },
+
+    /* The five the episode asks about that the three days never teach.
+     *
+     * Reported from play: the board names them as はじめて and the next
+     * screen is a timed question. The board's own code said as much - naming
+     * them was most of the value and teaching them was content work - and
+     * this is that content. They are taught by the same cards the three days
+     * use, run from the word board before the clock starts.
+     */
+    "案内": {
+      sentence:"お客様を二階のお部屋までご案内してください。",
+      pattern:"〜を〜へ案内する"
+    },
+    "注文": {
+      sentence:"お客様の夕食のご注文をうかがってください。",
+      pattern:"ご注文をうかがう"
+    },
+    "掃除": {
+      sentence:"お客様が出られたあと、お部屋を掃除してください。",
+      pattern:"〜を掃除する"
+    },
+    "確認": {
+      sentence:"ご予約のお名前と人数をもう一度確認してください。",
+      pattern:"〜を確認する"
+    },
+    "断る": {
+      sentence:"今夜は満室ですので、新しいご予約はお断りします。",
+      // The sentence carries お断り, and locate() cannot reach it: its stem
+      // search stops above two characters, and 断る leaves only 断. Authored
+      // here rather than bending the sentence into a dictionary form no
+      // innkeeper would say to a guest.
+      focus:"お断り",
+      pattern:"〜を断る"
     }
   };
 
   function getTeaching(focusWord){
     return TEACHING[focusWord] || null;
+  }
+
+  // Every word this place can teach, three days and episode alike. The check
+  // that follows each card draws its wrong answers from here, so they are not
+  // always the other four words of the same handful.
+  function getTeachingWords(){
+    return Object.keys(TEACHING);
   }
 
   var DAY_ANNOUNCEMENTS = {
@@ -931,6 +972,7 @@
     getTargetId:getTargetId,
     getCardSense:getCardSense,
     getTeaching:getTeaching,
+    getTeachingWords:getTeachingWords,
     balanceOptions:balanceOptions
   };
 })(typeof window !== "undefined" ? window : globalThis);

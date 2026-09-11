@@ -5,6 +5,20 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-10 - The episode teaches its five new words before the clock starts (v344)
+
+Reported from play, and the code already knew: the word board named 案内, 注文, 掃除, 確認 and 断る as はじめて and the next screen was a timed question about one of them. The board's own comment said as much - naming them was most of the value, teaching them was content work. This is that content.
+
+**Five more authored sentences and patterns**, in the same `TEACHING` map the three days use, so `getTeaching` serves both. They are taught on the same cards, with the same unscored check, run from the word board before the clock starts and handing over to 受付を始めます rather than 一日目をはじめる. **Drafts by a non-native writer, awaiting review** like the first five. One of them needed the `focus` field: 断る is two characters, `locate()` stops its stem search above two, so 「お断りします」 is unreachable by search and is named outright rather than bending the sentence into a dictionary form no innkeeper would say to a guest.
+
+**The teaching flow now takes a queue and a handover** instead of assuming five encounters and Day 1. The queue carries an optional catalogue id, because the episode knows its words by id where the days look them up.
+
+**Wrong answers now come from every word the place teaches**, not just the handful in the current queue. Drawn from the queue alone, five cards offered five glosses and the last one was answerable by elimination. The pool is rotated by the word being asked, so the choices are stable per card but different between cards.
+
+**Not done: the day order.** Day 1 and Day 3 ask the five words in the same sequence, which is worth fixing and cannot be fixed here. Each Day 3 scene is timestamped - 次の朝です, 廊下が暗く, 日暮れ後, 夕食の時間, 最後のお客様も部屋に入りました - and `n2-home-inn-stage.test.mjs` pins that chronology, its comment recording a previous order of 2, 0, 4, 1, 3 that made the day jump from after dark to the next morning. Reordering Day 3 means rewriting its five narrations, which is authoring, not a code change. Day 2 was already reshaped for exactly this reason and its comment says so.
+
+Cache is v344; `node --test` passes (545).
+
 ### 2026-09-10 - The studying hands over to the day, and Kon stops wearing the placeholder's disc (v343)
 
 **Nothing marked the end of the teaching.** The fifth check gave way to a scored question with no seam at all - reported as there being no transition between learning the five words and the first day. Studying and being marked are different things and the learner has to know which one they are in, which is the same reason every day announces itself. There is one screen between them now: the five words listed once more, one sentence saying that from here it counts, and a button that starts Day 1. Kon says the same thing in her own bubble.

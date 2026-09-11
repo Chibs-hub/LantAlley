@@ -2932,6 +2932,25 @@
       + '</div></div>';
     $("btn-words-begin").addEventListener("click", function(event){
       event.stopImmediatePropagation();
+      /* The words the board just marked はじめて are taught here, on the
+       * same cards the three days use, before the clock starts. Naming a word
+       * as new and then asking about it under a five-second timer was the
+       * gap this closes - reported from play, and admitted in this
+       * function's own comment before that.
+       *
+       * Only the ones with an authored sentence. A place whose episode words
+       * are not written yet keeps the board it had rather than showing a
+       * blank card. */
+      var loc = getLocation(state.currentKey);
+      var untaught = loc && loc.getTeaching ? rows.filter(function(row){
+        return !row.known && !!loc.getTeaching(row.word);
+      }).map(function(row){ return {word:row.word, target:row.id}; }) : [];
+      if(untaught.length && startTeaching(loc, untaught, {
+        badge:"今夜の言葉",
+        note:"ここからは本番です。時間内に答えてください。",
+        button:"受付を始めます",
+        then:function(){ renderPreviewQuestion(); }
+      })) return;
       renderPreviewQuestion();
     });
   }
@@ -3804,11 +3823,13 @@
        * a learner resuming Day 1 is not taught what they have shown they
        * know. */
       if(phase === "learn" && loc.getTeaching){
-        state.teachQueue = loc.encounters.filter(function(item){
+        var untaught = loc.encounters.filter(function(item){
           return !state.trainingCorrectWords[item.focusWord];
-        }).map(function(item){ return item.focusWord; });
-        state.teachIndex = 0;
-        if(state.teachQueue.length){ renderTeachingCard(loc); return; }
+        }).map(function(item){ return {word:item.focusWord}; });
+        if(untaught.length){
+          startTeaching(loc, untaught, {then:function(){ startStagePhase(loc, "learn"); }});
+          return;
+        }
       }
       startStagePhase(loc, phase, null, startIndex || 0);
     });
@@ -3818,6 +3839,24 @@
   // is not reading anything on this screen - they have already answered it.
   var TEACH_ADVANCE_MS = 700;
 
+  // Where the current run of teaching cards hands over, and the wording of
+  // the screen that hands over. Null whenever no teaching is running.
+  var teachHandover = null;
+
+  /* A stable order for one word's wrong answers.
+   *
+   * Stable so the same card offers the same four choices however many times
+   * it is seen, and ordered off the word itself so different words do not
+   * all draw the same three distractors from the front of the pool.
+   */
+  function shuffleTeachPool(pool, word){
+    var seed = 0;
+    for(var i = 0; i < word.length; i++) seed += word.charCodeAt(i);
+    var rotated = pool.slice();
+    var at = pool.length ? seed % pool.length : 0;
+    return rotated.slice(at).concat(rotated.slice(0, at));
+  }
+
   /* One word, taught, before anything scores it.
    *
    * The boards name the five words and the margin card in Day 1 repeats word,
@@ -3826,16 +3865,46 @@
    * sentence with the word highlighted where it stands, and the pattern it
    * lives in - which is the part of an N2 word that makes it usable.
    */
+  /* Run the teaching cards over a list of words, then hand over.
+   *
+   * Two callers now. The three days teach the five they are about to score;
+   * the episode teaches the words its board marks はじめて, which nothing
+   * taught before - the board named them and the next screen was a timed
+   * question. Same cards, same check, different place to hand over to, so
+   * the handover is passed in rather than assumed to be Day 1.
+   */
+  function startTeaching(loc, entries, handover){
+    state.teachQueue = entries || [];
+    state.teachIndex = 0;
+    teachHandover = handover || null;
+    if(!state.teachQueue.length){
+      finishTeaching();
+      return false;
+    }
+    renderTeachingCard(loc);
+    return true;
+  }
+
+  function finishTeaching(){
+    var done = teachHandover;
+    teachHandover = null;
+    state.teachQueue = [];
+    state.teachIndex = 0;
+    if(done && done.then) done.then();
+  }
+
   function renderTeachingCard(loc){
-    var word = state.teachQueue[state.teachIndex];
+    var queued = state.teachQueue[state.teachIndex];
     // Taught nothing - every word already credited - so there is nothing to
-    // hand over from and the day starts directly.
-    if(!word){
+    // hand over from and the caller's own next screen comes straight up.
+    if(!queued){
       if(state.teachIndex > 0){ renderTeachingHandover(loc); return; }
-      startStagePhase(loc, "learn");
+      finishTeaching();
       return;
     }
-    var targetId = loc.getTargetId ? loc.getTargetId(word) : null;
+    var word = queued.word;
+    // The episode knows its words by catalogue id; the days look them up.
+    var targetId = queued.target || (loc.getTargetId ? loc.getTargetId(word) : null);
     var item = targetId && typeof LanternCurriculumCatalog !== "undefined"
       ? LanternCurriculumCatalog.getItem(targetId) : null;
     var entry = loc.getTeaching ? loc.getTeaching(word) : null;
@@ -3892,9 +3961,11 @@
    * announces itself. This is the one screen that says the studying is over.
    */
   function renderTeachingHandover(loc){
+    var copy = teachHandover || {};
     var meta = loc.getDayMeta ? loc.getDayMeta("learn") : null;
-    var taught = state.teachQueue.slice();
-    $("stage-phase-badge").textContent = meta ? meta.label + "・" + meta.mode + " " + meta.stars : "一日目";
+    var taught = state.teachQueue.map(function(row){ return row.word; });
+    $("stage-phase-badge").textContent = copy.badge
+      || (meta ? meta.label + "・" + meta.mode + " " + meta.stars : "一日目");
     $("jp-line").textContent = "コン：「五つとも見ましたね。では、仕事をはじめましょう。」";
     $("romaji-line").textContent = "";
     $("romaji-line").style.display = "none";
@@ -3912,15 +3983,15 @@
           return '<li class="teach-recap-word">' + item + '</li>';
         }).join("") + '</ul>'
       // What changes, in the one sentence that matters: from here it counts.
-      + '<p class="episode-open-note">ここからは仕事です。覚えた言葉を使って、実際にやってみましょう。</p>'
-      + '<button class="btn btn-primary" id="btn-teach-done">一日目をはじめる</button>'
+      + '<p class="episode-open-note">' + (copy.note
+        || "ここからは仕事です。覚えた言葉を使って、実際にやってみましょう。") + '</p>'
+      + '<button class="btn btn-primary" id="btn-teach-done">'
+      + (copy.button || "一日目をはじめる") + '</button>'
       + '</div></div>';
 
     $("btn-teach-done").addEventListener("click", function(event){
       event.stopImmediatePropagation();
-      state.teachQueue = [];
-      state.teachIndex = 0;
-      startStagePhase(loc, "learn");
+      finishTeaching();
     });
   }
 
@@ -3936,9 +4007,14 @@
     var senses = [];
     var seen = {};
     seen[card.sense] = true;
-    loc.encounters.forEach(function(item){
-      if(item.focusWord === card.word) return;
-      var sense = wordSense(loc, item.focusWord);
+    /* Wrong answers from every word the place teaches, not just the ones in
+     * this queue. Drawn from the queue alone, the last card of five offered
+     * the four glosses already used and was answerable by elimination. */
+    var pool = loc.getTeachingWords ? loc.getTeachingWords()
+      : loc.encounters.map(function(item){ return item.focusWord; });
+    shuffleTeachPool(pool, card.word).forEach(function(focusWord){
+      if(focusWord === card.word) return;
+      var sense = wordSense(loc, focusWord);
       // A stage whose words share a gloss would otherwise offer the same
       // answer twice, with one of them marked wrong.
       if(!sense || seen[sense]) return;
