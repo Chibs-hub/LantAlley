@@ -1959,14 +1959,14 @@
       // question of a day over and over against a board nobody pressed.
       var begin = $("btn-jobs-begin");
       if(begin) begin.click();
-      // Day 1 now teaches its five words before asking about any of them,
-      // and each card leads to one unscored check that has to be answered.
-      for(var taught = 0; taught < 20; taught++){
-        var next = $("btn-teach-next");
-        if(next){ next.click(); continue; }
-        var option = $("scene").querySelector(".teach-option");
-        if(!option) break;
-        option.click();
+      /* Day 1 now teaches its five words before asking about any of them.
+       * Stepped through directly rather than by clicking: a correct check
+       * advances on a timer, and this loop is synchronous, so clicking would
+       * leave the teaching half done under a question it had already
+       * answered. */
+      if($("scene").querySelector(".teach-card") && state.teachQueue){
+        state.teachIndex = state.teachQueue.length;
+        renderTeachingCard(loc);
       }
     }
   }
@@ -3672,6 +3672,10 @@
     });
   }
 
+  // Long enough to see the mark, short enough not to be a wait. The learner
+  // is not reading anything on this screen - they have already answered it.
+  var TEACH_ADVANCE_MS = 700;
+
   /* One word, taught, before anything scores it.
    *
    * The boards name the five words and the margin card in Day 1 repeats word,
@@ -3732,21 +3736,38 @@
    * cold open did, and what made the opening feel stuck.
    */
   function renderTeachingCheck(loc, card){
-    var others = loc.encounters
-      .filter(function(item){ return item.focusWord !== card.word; })
-      .map(function(item){ return item.focusWord; });
-    var options = [card.word].concat(others.slice(0, 2));
+    /* The word is given and the meaning is chosen, not the other way round.
+     *
+     * Asking for the word from an English gloss made the three options three
+     * N2 words to read, which is three more reading tasks in a step that is
+     * supposed to check one. The word the learner just studied sits on top
+     * where they can see it, and the choice is in a language they already
+     * have, so what is being checked is whether the meaning stuck.
+     */
+    var senses = [];
+    var seen = {};
+    seen[card.sense] = true;
+    loc.encounters.forEach(function(item){
+      if(item.focusWord === card.word) return;
+      var sense = wordSense(loc, item.focusWord);
+      // A stage whose words share a gloss would otherwise offer the same
+      // answer twice, with one of them marked wrong.
+      if(!sense || seen[sense]) return;
+      seen[sense] = true;
+      senses.push(sense);
+    });
+    var options = [card.sense].concat(senses.slice(0, 3));
     // Deterministic placement from the word itself, so the answer is not
     // always first and the same word always sits in the same place.
     var at = card.word.length % options.length;
     options.splice(at, 0, options.splice(0, 1)[0]);
 
     $("scene").innerHTML = '<div class="episode-open"><div class="episode-open-card teach-card">'
-      + '<p class="teach-sense" lang="en">' + card.sense + '</p>'
-      + '<p class="teach-question">どの言葉ですか。</p>'
-      + '<div class="teach-check">' + options.map(function(word){
-          return '<button type="button" class="btn teach-option" data-correct="'
-            + (word === card.word ? "1" : "0") + '">' + word + '</button>';
+      + '<p class="teach-word teach-word-asked"><ruby>' + card.word + '<rt>' + card.reading + '</rt></ruby></p>'
+      + '<p class="teach-question">どの意味ですか。</p>'
+      + '<div class="teach-check">' + options.map(function(sense){
+          return '<button type="button" lang="en" class="btn teach-option" data-correct="'
+            + (sense === card.sense ? "1" : "0") + '">' + sense + '</button>';
         }).join("") + '</div>'
       + '<div class="teach-answer-slot"></div>'
       + '</div></div>';
@@ -3758,14 +3779,37 @@
     $("scene").querySelectorAll(".teach-option").forEach(function(button){
       button.addEventListener("click", function(event){
         event.stopImmediatePropagation();
-        if($("scene").querySelector(".teach-answer")) return;
+        /* Answered once. The flag lives on the group rather than on the
+         * presence of an answer line, because a correct answer no longer
+         * writes one - it shows a mark and moves on, and a second tap during
+         * that pause would otherwise queue a second advance and skip a word. */
+        var check = $("scene").querySelector(".teach-check");
+        if(!check || check.className.indexOf("is-answered") >= 0) return;
+        check.className += " is-answered";
         var right = button.getAttribute("data-correct") === "1";
         // Which one they chose, left on screen. Without this the answer line
         // says what was right with nothing showing what was picked, so a
         // learner who mis-tapped cannot tell that is what happened.
         button.className += right ? " is-picked is-right" : " is-picked is-wrong";
+        if(right){
+          /* A mark and on to the next word. Getting it right is the expected
+           * case, and making the learner confirm it with a second tap is a
+           * tap per word to say nothing. A wrong answer keeps its button,
+           * because that screen has something to read. */
+          /* The mark goes in the button they just tapped, not in the slot
+           * below the options. Four options push that slot past the bottom of
+           * a phone screen, so the one piece of feedback before the card
+           * advances by itself was off screen. */
+          button.innerHTML = button.innerHTML
+            + '<span class="teach-mark" role="status" aria-label="正解">✓</span>';
+          setTimeout(function(){
+            state.teachIndex += 1;
+            renderTeachingCard(loc);
+          }, TEACH_ADVANCE_MS);
+          return;
+        }
         $("scene").querySelector(".teach-answer-slot").innerHTML =
-          '<p class="teach-answer">' + (right ? "そうです。" : "正しい答えは「" + card.word + "」です。")
+          '<p class="teach-answer">正しい意味は「' + card.sense + '」です。'
           + '</p><button class="btn btn-primary" id="btn-teach-next">つぎへ</button>';
         $("btn-teach-next").addEventListener("click", function(next){
           next.stopImmediatePropagation();

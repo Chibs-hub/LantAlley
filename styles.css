@@ -1657,8 +1657,18 @@
    each and stop reading as three separate choices. */
 .teach-question{margin:0 0 14px; font-size:1rem; color:#3f3125;}
 .teach-check{display:flex; flex-direction:column; gap:8px; align-items:stretch;}
-.teach-option{font-family:'Shippori Mincho',serif; font-size:1.15rem; padding:12px;}
+/* The word being asked about, smaller than on the teaching card: there it is
+   the subject, here it is the question. */
+.teach-word-asked{margin:0 0 10px; font-size:1.7rem;}
+/* English options, so the body font rather than the Japanese serif, and left
+   aligned - a gloss like "adjustment, coordination" is a phrase to read, and
+   centred phrases of different lengths have no common edge to scan down. */
+.teach-card .teach-option{display:block; width:100%; margin:0; font-size:.95rem; line-height:1.4; padding:11px 16px; text-align:left;}
+.teach-check.is-answered .teach-option{pointer-events:none;}
 .teach-answer{margin:16px 0 12px; font-size:1rem; color:#8a5a2b;}
+/* A right answer is marked and moves on, so the mark is the whole reply. It
+   rides in the chosen button, at the end of the line the learner just read. */
+.teach-mark{float:right; margin-left:10px; font-size:1.1rem; font-weight:900; color:var(--moss);}
 /* The chosen option stays marked. Colour is not the only signal: the answer
    line beneath says in words which word was right. */
 .teach-option.is-picked{box-shadow:none; transform:translateY(2px);}

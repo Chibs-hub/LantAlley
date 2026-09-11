@@ -755,7 +755,8 @@ async function enterTheInn(game, opts) {
       const option = game.doc.querySelectorAll(".teach-option")[0];
       if (!option) break;
       option.click();
-      game.clock.advance(200);
+      // A correct pick advances on a timer rather than on a second tap.
+      game.clock.advance(1200);
     }
   }
   await tick();
@@ -2921,4 +2922,46 @@ test("the teaching check costs nothing, however it is answered", async () => {
     "and it does not count toward the mastery gate");
   assert.ok(game.doc.querySelector(".teach-answer"),
     "a miss is answered rather than repeated");
+});
+
+test("a right answer is marked and moves on by itself", async () => {
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game, {stopAtTeaching:true});
+  const first = game.doc.querySelector(".teach-card").textContent;
+  game.$("btn-teach-next").click();
+  game.clock.advance(200);
+
+  // The word is given and the meaning is chosen, so the options are English
+  // and there are four of them - three more N2 words to read is three more
+  // reading tasks in a step meant to check one.
+  const options = game.doc.querySelectorAll(".teach-option");
+  assert.equal(options.length, 4);
+  assert.ok(options.every((b) => b.getAttribute("lang") === "en"),
+    "the choice is in a language the learner already has");
+  assert.equal(options.filter((b) => b.getAttribute("data-correct") === "1").length, 1);
+
+  const right = options.find((b) => b.getAttribute("data-correct") === "1");
+  right.click();
+  game.clock.advance(50);
+  assert.ok(game.doc.querySelector(".teach-mark"), "a right answer is marked");
+  assert.equal(game.$("btn-teach-next"), null, "and asks for no second tap");
+
+  game.clock.advance(1200);
+  const card = game.doc.querySelector(".teach-card");
+  assert.ok(card, "the next word arrives on its own");
+  assert.notEqual(card.textContent, first, "and it is the next word, not the same one");
+});
+
+test("a second tap during the pause after a right answer does not skip a word", async () => {
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game, {stopAtTeaching:true});
+  game.$("btn-teach-next").click();
+  game.clock.advance(200);
+  const options = game.doc.querySelectorAll(".teach-option");
+  options.find((b) => b.getAttribute("data-correct") === "1").click();
+  // Impatient, or a double tap on a phone.
+  options.find((b) => b.getAttribute("data-correct") !== "1").click();
+  game.clock.advance(1500);
+  assert.ok(game.doc.querySelector(".teach-card").textContent.includes("2 / 5"),
+    "one answer advances one word");
 });

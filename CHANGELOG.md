@@ -5,6 +5,20 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-10 - The teaching check asks for the meaning, and a right answer moves on by itself (v340)
+
+Two changes to the check v339 added, both from play.
+
+**The question was the wrong way round.** It gave an English gloss and offered three N2 words to choose between - three more words to read, in a step whose whole job is to check whether one word stuck. The word the learner just studied now sits on top, with its reading, and the four options are English. Four, not three, because the stage has five words and the other four supply the distractors; they are de-duplicated by gloss, so a stage whose words share a meaning cannot offer the same answer twice with one of them marked wrong.
+
+**A right answer no longer asks for a second tap.** It marks the chosen option and the next word arrives 700ms later. Confirming a correct answer was a tap per word to say nothing. A wrong answer keeps its button, because that screen has something to read.
+
+The mark rides inside the button that was tapped rather than in the slot beneath the options - with four options that slot sits past the bottom of a phone screen, so the one piece of feedback before the card advanced by itself was off screen. Caught in the browser; a test could not have seen it.
+
+Two things the pause made newly possible, both closed. A second tap during it used to queue a second advance and skip a word; the group carries an `is-answered` flag now, checked before anything else, and `pointer-events` are off for good measure. And the debug Skip-stage driver used to click its way through the teaching, which no longer works when an advance is on a timer and that loop is synchronous - it would have left the teaching half done underneath a question it had already answered. It steps the queue directly instead.
+
+Cache is v340; `node --test` passes (541).
+
 ### 2026-09-10 - The Inn teaches a word before it scores it, and the review ladder goes past a fortnight (v339)
 
 Five things, one change of shape: the stage taught nothing before it started marking, and the schedule had nowhere to put a word that was already known.
