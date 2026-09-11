@@ -40,15 +40,19 @@ branch, so a shell file that is not committed is a 404 that kills the service
 worker install for every tester. `pwa.test.mjs` asks `git ls-files` rather than
 the disk for exactly that reason.
 
-`node --test` passes 562. Every version from v339 to v350 was verified in a
-browser as well as by the suite; the changelog entry for each one says what was
-checked and what was not.
+`node --test` runs 563: 558 pass and 5 fail. The five are the standalone
+artifact checks in `pwa.test.mjs`, which read a built
+`lantern-alley-artifact.html` that is not in the tree; they fail identically on
+an untouched checkout, so they are the build's absence, not a regression. Every
+version from v339 to v350 was verified in a browser as well as by the suite;
+the changelog entry for each one says what was checked and what was not.
 
 **What changed across v339-v350**, newest first. Full reasons in
 [CHANGELOG.md](CHANGELOG.md).
 
 | Version | What it did |
 | --- | --- |
+| v354 | The title screen answers a tap before the web fonts arrive - the font stylesheet no longer blocks the scripts behind it. Kon back on the path instead of hovering mid-air on a phone, the credit line no longer cut in half, and Debug Mode off the learner's menu. |
 | v350 | Teaching and review reliability audit: focus, feedback visibility, 48px touch targets, accurate recap counts, episode teaching resume. A correct answer advances the ladder only when the word was due and a day has passed; answering early no longer pushes the next review out. |
 | v348 | 直す言葉: one list of the words still owed, from every place. Answer one right and it leaves the list; the schedule still brings it back. Six options, not four. Count on the map plus one line a day, not a dialog at launch. |
 | v347 | The Inn teaches all forty of its words, a block of the shift at a time (three cards, three guests) rather than twenty screens up front. |
