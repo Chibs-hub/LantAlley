@@ -1,16 +1,25 @@
-# The 195 sentences still to write
+# The 190 sentences still to write
 
-Written 2026-09-10, alongside v339.
+Rewritten 2026-09-10, alongside v346. Supersedes the 195-word list written for v339.
 
-v339 gave the Moonview Inn stage a teaching step: before the first question that
-scores a word, the learner sees that word once at a size worth reading, in a
-sentence with the word highlighted where it stands, above the pattern it lives
-in. Five words have that. The other 195 - every word the five places teach
-through their episodes - do not, and the episode path still goes straight from
-a board to a scored question.
+Every episode in the game opens on a word board that names the hour's ten
+words and marks the ones the learner has never met as はじめて. Ten of those
+words are taught before the questions start; **190 are not**, and for those the
+board still names a word as new and then asks about it under a timer.
 
-This is the list, with each word's current catalogue example beside it, so the
-writing is a replacement rather than a blank page.
+| Place | Words with a teaching card | Still to write |
+|---|---|---|
+| Moonview Inn | 10 (the three days' five, plus Episode 1's five new) | 30 |
+| Market | 0 | 40 |
+| Tea house | 0 | 40 |
+| Station | 0 | 40 |
+| Shrine | 0 | 40 |
+
+The engine is done and generic: `startTeaching(loc, entries, handover)` runs the
+cards over any list of words, and the episode word board already calls it for
+whichever of its words have an entry. A place gets its teaching step by
+gaining a `TEACHING` map and a `getTeaching`, nothing more. So this file is the
+only thing between the other four places and the same step the Inn has.
 
 ## What a sentence has to do
 
@@ -22,50 +31,40 @@ Two of these are load-bearing rather than preferences. A test enforces both.
   not the target.
 - **The sentence must contain the word.** `locate()` matches the authored form
   or a stem of at least two characters, so a conjugated 揃えて matches 揃える.
-  A sentence that teaches the word without using it fails validation.
+  **A two-character dictionary form has no usable stem** - 断る leaves only 断 -
+  so if the natural sentence conjugates it, set `focus` to the form that
+  actually appears (`focus:"お断り"`) and the card highlights that instead.
 
 And one that is not enforceable but is the reason the step exists:
 
 - **A `pattern` is required.** 〜を揃える, 〜を〜に取り替える. It is the part of
   an N2 word that makes it usable and the part no picture and no gloss can
-  carry. A word with a sentence and no pattern fails validation too.
+  carry.
 
-Two cautions from writing the first five. The catalogue's example is sometimes
+Three cautions from writing the first ten. The catalogue's example is sometimes
 not about the word at all - it taught 揃える through an idiom meaning to speak
-in unison, and 調整 by tuning a clarinet - so read it before reusing it. And
-the sentence should sit in the place that teaches it: an inn word in an inn,
-a station word on a platform. The five that exist are drafts by a non-native
-writer and are awaiting the same review as these.
+in unison, and 調整 by tuning a clarinet - so read it before reusing it. The
+sentence should sit in the place that teaches it: an inn word in an inn, a
+station word on a platform. And the wrong answers on each card are drawn from
+every word the place teaches, so a place with only three entries offers thin
+distractors; a full set of ten per episode is what makes the check work.
 
 ## Where they go
 
-Authored per stage, in a `TEACHING` map beside the stage's own data, reached by
-`getTeaching(focusWord)` - see `n2-home-inn-stage.js`. The episode path has no
-teaching step wired yet; that is a separate piece of work, and authoring can
-start before it exists.
+Beside the stage's own data, in a `TEACHING` map keyed by the catalogue's
+canonical form, reached by `getTeaching(focusWord)` - see
+`n2-home-inn-stage.js`. A stage that also wants its cards taught in a
+different order from its questions exports `getTeachingOrder()`; without one
+the episode board rotates the list so the first word taught is not the first
+asked.
 
-## Moonview Inn - 35 words
+**Every sentence in the game so far is a draft by a non-native writer.** The
+repository owner is a native speaker and reviews the Japanese directly.
 
-- **案内** (あんない) - information
-  - catalogue: ご案内します。  [7 chars]
-  - sentence:
-  - pattern:
-- **注文** (ちゅうもん) - order
-  - catalogue: 本、注文した？  [7 chars]
-  - sentence:
-  - pattern:
-- **掃除** (そうじ) - cleaning
-  - catalogue: 大掃除の時間よ。  [8 chars]
-  - sentence:
-  - pattern:
-- **確認** (かくにん) - affirmation
-  - catalogue: ご確認ください。  [8 chars]
-  - sentence:
-  - pattern:
-- **断る** (ことわる) - to refuse
-  - catalogue: 僕だったら、断るな。  [10 chars]
-  - sentence:
-  - pattern:
+## Moonview Inn - 30 words still to write
+
+### Episode 2 - 予約帳 (10 words)
+
 - **書類** (しょるい) - documents
   - catalogue: 私は書類に署名した。  [10 chars]
   - sentence:
@@ -106,6 +105,9 @@ start before it exists.
   - catalogue: マユコは原稿の清書をした。  [13 chars]
   - sentence:
   - pattern:
+
+### Episode 3 - 戻り客 (10 words)
+
 - **床** (ゆか) - floor
   - catalogue: 床に伏せろ！  [6 chars]
   - sentence:
@@ -146,6 +148,9 @@ start before it exists.
   - catalogue: 銀行は人の金を預かる。  [11 chars]
   - sentence:
   - pattern:
+
+### Episode 4 - 宿を閉じる (10 words)
+
 - **見送る** (みおくる) - (1) to see off
   - catalogue: 彼らを見送る必要は無い。  [12 chars]
   - sentence:
@@ -187,7 +192,9 @@ start before it exists.
   - sentence:
   - pattern:
 
-## Market - 40 words
+## Market - 40 words still to write
+
+### Episode 1 - 宵の値段 (10 words)
 
 - **値段** (ねだん) - price
   - catalogue: 値段聞いた？  [6 chars]
@@ -229,6 +236,9 @@ start before it exists.
   - catalogue: 現金な人ね。  [6 chars]
   - sentence:
   - pattern:
+
+### Episode 2 - 品書き (10 words)
+
 - **商品** (しょうひん) - commodity
   - catalogue: 商品に触れるな。  [8 chars]
   - sentence:
@@ -269,6 +279,9 @@ start before it exists.
   - catalogue: これは珍しい種類の魚です。  [13 chars]
   - sentence:
   - pattern:
+
+### Episode 3 - 人の波 (10 words)
+
 - **混雑** (こんざつ) - confusion
   - catalogue: 食堂は混雑していた。  [10 chars]
   - sentence:
@@ -309,6 +322,9 @@ start before it exists.
   - catalogue: このテーブルは重たい。  [11 chars]
   - sentence:
   - pattern:
+
+### Episode 4 - 店じまい (10 words)
+
 - **余る** (あまる) - to remain
   - catalogue: 身に余る栄光。  [7 chars]
   - sentence:
@@ -350,7 +366,9 @@ start before it exists.
   - sentence:
   - pattern:
 
-## Tea house - 40 words
+## Tea house - 40 words still to write
+
+### Episode 1 - お運び (10 words)
 
 - **伺う** (うかがう) - (hon) to visit
   - catalogue: あすスミスさんのお宅に伺うことになっている。  [22 chars]
@@ -392,6 +410,9 @@ start before it exists.
   - catalogue: ご親切に恐縮しております。  [13 chars]
   - sentence:
   - pattern:
+
+### Episode 2 - 品書きを直す (10 words)
+
 - **茶碗** (ちゃわん) - rice bowl
   - catalogue: その茶碗にはひびがある。  [12 chars]
   - sentence:
@@ -432,6 +453,9 @@ start before it exists.
   - catalogue: (none)  [6 chars]
   - sentence:
   - pattern:
+
+### Episode 3 - 混み合う夕 (10 words)
+
 - **様子** (ようす) - aspect
   - catalogue: 様子を見て来て。  [8 chars]
   - sentence:
@@ -472,6 +496,9 @@ start before it exists.
   - catalogue: それで満足？  [6 chars]
   - sentence:
   - pattern:
+
+### Episode 4 - 店を閉める (10 words)
+
 - **汚す** (よごす) - (1) to disgrace
   - catalogue: いくつかの工場は環境を汚す。  [14 chars]
   - sentence:
@@ -513,7 +540,9 @@ start before it exists.
   - sentence:
   - pattern:
 
-## Station - 40 words
+## Station - 40 words still to write
+
+### Episode 1 - 終電まで (10 words)
 
 - **乗客** (じょうきゃく) - passenger
   - catalogue: 乗客は何人ですか。  [9 chars]
@@ -555,6 +584,9 @@ start before it exists.
   - catalogue: 次の駅で下車します。  [10 chars]
   - sentence:
   - pattern:
+
+### Episode 2 - 窓口の書き付け (10 words)
+
 - **線路** (せんろ) - line
   - catalogue: 毎朝線路を横切る。  [9 chars]
   - sentence:
@@ -595,6 +627,9 @@ start before it exists.
   - catalogue: 私は姉に相談した。  [9 chars]
   - sentence:
   - pattern:
+
+### Episode 3 - 放送が鳴る (10 words)
+
 - **放送** (ほうそう) - broadcast
   - catalogue: 絶賛放送中！  [6 chars]
   - sentence:
@@ -635,6 +670,9 @@ start before it exists.
   - catalogue: 案外、この本は読みやすいね。  [14 chars]
   - sentence:
   - pattern:
+
+### Episode 4 - 忘れ物 (10 words)
+
 - **預ける** (あずける) - to give into custody
   - catalogue: フロントに預けるといいよ。  [13 chars]
   - sentence:
@@ -676,7 +714,9 @@ start before it exists.
   - sentence:
   - pattern:
 
-## Shrine - 40 words
+## Shrine - 40 words still to write
+
+### Episode 1 - 宵宮 (10 words)
 
 - **祭** (まつり) - festival
   - catalogue: 祭が終わった。  [7 chars]
@@ -718,6 +758,9 @@ start before it exists.
   - catalogue: 俺に感謝しろよ。  [8 chars]
   - sentence:
   - pattern:
+
+### Episode 2 - 立て札 (10 words)
+
 - **区域** (くいき) - limits
   - catalogue: ここは立入禁止区域です。  [12 chars]
   - sentence:
@@ -758,6 +801,9 @@ start before it exists.
   - catalogue: (none)  [6 chars]
   - sentence:
   - pattern:
+
+### Episode 3 - 太鼓が鳴る (10 words)
+
 - **太鼓** (たいこ) - drum
   - catalogue: 太鼓の音が聞こえる。  [10 chars]
   - sentence:
@@ -798,6 +844,9 @@ start before it exists.
   - catalogue: 私の責任です。  [7 chars]
   - sentence:
   - pattern:
+
+### Episode 4 - 後始末 (10 words)
+
 - **燃やす** (もやす) - to burn
   - catalogue: 石炭や石油やガスを燃やすと、様々なガスが発生する。  [25 chars]
   - sentence:

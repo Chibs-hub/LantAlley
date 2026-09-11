@@ -2961,8 +2961,18 @@ test("the Inn teaches each word before the first question that scores it", async
 
   const card = game.doc.querySelector(".teach-card");
   assert.ok(card, "a word is taught before it is asked about");
-  assert.ok(card.textContent.includes("\u63c3\u3048\u308b"), "the first word is the first encounter's word");
-  assert.ok(card.textContent.includes("\u301c\u3092\u63c3\u3048\u308b"), "the pattern is shown, not just the gloss");
+  /* Not the word the day asks first. Studying the five in the order Day 1
+   * then asks about them makes the day a recital - reported from play. The
+   * cards carry no scene and no time of day, so unlike the days themselves
+   * this order is free to differ, and it is where the pattern gets broken. */
+  const stage = game.context.N2HomeInnStage;
+  const asked = stage.getPhaseItems("learn").map((item) => item.focusWord);
+  const taught = stage.getTeachingOrder();
+  assert.notDeepEqual(taught, asked, "the teaching order is not the asking order");
+  assert.deepEqual([...taught].sort(), [...asked].sort(), "and it is the same five words");
+  assert.ok(card.textContent.includes(taught[0]), "the first card is the first word taught");
+  assert.ok(card.textContent.includes(stage.getTeaching(taught[0]).pattern),
+    "the pattern is shown, not just the gloss");
   assert.ok(game.doc.querySelector(".teach-focus"),
     "the word is highlighted inside its sentence, not only glossed beside it");
   assert.equal(game.doc.querySelectorAll(".teach-card img").length, 0,
@@ -3132,8 +3142,16 @@ test("the episode teaches the words its board calls new, before the clock", asyn
   game.clock.advance(400);
   const card = game.doc.querySelector(".teach-card");
   assert.ok(card, "a word the board called new is taught first");
-  assert.ok(card.textContent.includes("案内"));
-  assert.ok(card.textContent.includes("ご案内"), "with the sentence it lives in");
+  /* One of the words the board marked new, and not the one the hour asks
+   * about first: the board lists them in question order, so teaching
+   * straight down that list would recite the opening guest. */
+  const innStage = game.context.N2HomeInnStage;
+  const shown = innStage.getTeachingWords().filter((word) => card.textContent.includes(word));
+  assert.equal(shown.length, 1, "exactly one word is on the card, saw " + shown.join(" / "));
+  const firstAsked = game.context.LanternCurriculumCatalog
+    .getItem(game.context.LanternEpisodeStages["home-inn"].episodes[0].days[0].questions[0].target).canonical;
+  assert.notEqual(shown[0], firstAsked, "and not the word the first guest asks about");
+  assert.ok(card.querySelector(".teach-focus"), "with the sentence it lives in");
 
   // And the wrong answers are not only the other new words, which would make
   // the last card answerable by elimination.

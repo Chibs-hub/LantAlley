@@ -127,6 +127,22 @@
     return TEACHING[focusWord] || null;
   }
 
+  /* The order the five are taught in, which is not the order they are asked
+   * in.
+   *
+   * Reported from play: studying them in the order Day 1 then asks about them
+   * makes the first day a recital. The cards are standalone - no scene, no
+   * time of day - so unlike the days themselves this order is free to differ,
+   * and it is the cheapest place in the stage to break the pattern. Indexed
+   * by encounter: 2, 0, 4, 1, 3 teaches the tea first and the desk last,
+   * while Day 1 still opens on the cushions.
+   */
+  var TEACH_ORDER = [2, 0, 4, 1, 3];
+
+  function getTeachingOrder(){
+    return TEACH_ORDER.map(function(index){ return encounters[index].focusWord; });
+  }
+
   // Every word this place can teach, three days and episode alike. The check
   // that follows each card draws its wrong answers from here, so they are not
   // always the other four words of the same handful.
@@ -998,6 +1014,7 @@
     getTargetId:getTargetId,
     getCardSense:getCardSense,
     getTeaching:getTeaching,
+    getTeachingOrder:getTeachingOrder,
     getTeachingWords:getTeachingWords,
     balanceOptions:balanceOptions
   };

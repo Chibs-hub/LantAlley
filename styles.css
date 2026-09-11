@@ -1097,12 +1097,35 @@
     border:2px solid rgba(184,119,63,.82);border-radius:10px;
     background:rgba(249,238,211,.94);box-shadow:0 4px 0 rgba(35,20,13,.72)
   }
+  /* A word being taught gets the whole width.
+     Reported from play: Kon's panel took seven of the twelve columns while
+     the card being studied had five, and her line there is one generic
+     sentence - "let us learn this word" - repeated on every card. It is the
+     one screen in the stage with nothing to read on the left, so the left is
+     gone and the card is the screen. The badge still says あたらしい言葉, and
+     the first card carries the instruction itself. */
+  .inn-stage .game-layout:has(.teach-card){grid-template-columns:1fr}
+  .inn-stage .game-layout:has(.teach-card) .learning-context{display:none}
+  .inn-stage .answer-workspace:has(.teach-card){grid-column:1/-1}
+  /* Capped and centred: full width on a phone, but a sentence set across a
+     desktop monitor is a worse line to read, not a better one. */
+  .inn-stage .episode-open-card.teach-card{max-width:640px;margin-inline:auto;padding:26px 28px}
+  .inn-stage .teach-word{font-size:2.6rem}
+  .inn-stage .teach-sentence{font-size:1.25rem}
   .inn-stage .episode-open-title{font-size:1.2rem}
   .inn-stage .episode-open-card .btn{min-width:168px;margin-inline:auto}
 
   @media(max-width:760px){
     .inn-stage .game-layout:has(.episode-open){grid-template-columns:1fr;grid-template-rows:auto auto auto;align-items:stretch}
     .inn-stage .game-layout:has(.episode-open) .learning-context{grid-column:1;grid-row:2;min-height:0;padding:28px 7px 7px}
+    /* Same on a phone, where the panel is a screen of its own to scroll past
+       before reaching the word. */
+    .inn-stage .game-layout:has(.teach-card){grid-template-rows:auto auto}
+    .inn-stage .game-layout:has(.teach-card) .learning-context{display:none}
+    .inn-stage .answer-workspace:has(.teach-card){grid-row:2}
+    .inn-stage .episode-open-card.teach-card{padding:18px 16px}
+    .inn-stage .teach-word{font-size:2.1rem}
+    .inn-stage .teach-sentence{font-size:1.12rem}
     .inn-stage .answer-workspace:has(.episode-open){grid-column:1;grid-row:3;min-height:0;padding:7px}
     .inn-stage .episode-open,.inn-stage .episode-open-card{min-height:150px}
     .inn-stage .episode-open-card{padding:12px 14px}
@@ -1636,6 +1659,7 @@
    part of the game rather than the next beat of the same one. */
 .teach-card{text-align:center;}
 .teach-count{margin:0 0 10px; color:#9a8b74; font-size:.7rem; font-weight:900; letter-spacing:.14em;}
+.teach-lead{margin:0 0 14px; color:#6b5844; font-size:.9rem; line-height:1.5;}
 .teach-word{margin:0 0 6px; font-family:'Shippori Mincho',serif; font-size:2.2rem; line-height:1.4; color:#2d2926;}
 .teach-word rt{font-size:.32em; color:#7a6752;}
 .teach-sense{margin:0 0 14px; color:#6b5844; font-size:.86rem; line-height:1.4;}

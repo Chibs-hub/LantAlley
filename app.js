@@ -2945,6 +2945,16 @@
       var untaught = loc && loc.getTeaching ? rows.filter(function(row){
         return !row.known && !!loc.getTeaching(row.word);
       }).map(function(row){ return {word:row.word, target:row.id}; }) : [];
+      /* Not the order the hour asks in, for the same reason the three days
+       * teach in their own order: the board lists the words in the sequence
+       * the questions come, so teaching straight down that list makes the
+       * first guest a recital of the last card. Rotated rather than
+       * reversed, so the word taught first is neither the first nor the last
+       * to be asked. */
+      if(untaught.length > 2){
+        var at = untaught.length > 4 ? 2 : 1;
+        untaught = untaught.slice(at).concat(untaught.slice(0, at));
+      }
       if(untaught.length && startTeaching(loc, untaught, {
         badge:"今夜の言葉",
         note:"ここからは本番です。時間内に答えてください。",
@@ -3823,9 +3833,14 @@
        * a learner resuming Day 1 is not taught what they have shown they
        * know. */
       if(phase === "learn" && loc.getTeaching){
-        var untaught = loc.encounters.filter(function(item){
-          return !state.trainingCorrectWords[item.focusWord];
-        }).map(function(item){ return {word:item.focusWord}; });
+        /* Taught in the stage's own teaching order, not the order the day
+         * asks in - studying five words and then being asked about them in
+         * the same sequence makes the day a recital. */
+        var order = loc.getTeachingOrder ? loc.getTeachingOrder()
+          : loc.encounters.map(function(item){ return item.focusWord; });
+        var untaught = order.filter(function(word){
+          return !state.trainingCorrectWords[word];
+        }).map(function(word){ return {word:word}; });
         if(untaught.length){
           startTeaching(loc, untaught, {then:function(){ startStagePhase(loc, "learn"); }});
           return;
@@ -3927,6 +3942,9 @@
      * was simply unreadable - verified in the browser, not assumed. */
     $("scene").innerHTML = '<div class="episode-open"><div class="episode-open-card teach-card">'
       + '<p class="teach-count">' + (state.teachIndex + 1) + ' / ' + state.teachQueue.length + '</p>'
+      // Kon's panel is hidden on this screen, so her one instruction comes
+      // with the first card rather than being lost with it.
+      + (state.teachIndex === 0 ? '<p class="teach-lead">まず、この言葉を覚えましょう。</p>' : '')
       + '<p class="teach-word"><ruby>' + card.word + '<rt>' + card.reading + '</rt></ruby></p>'
       + '<p class="teach-sense" lang="en">' + card.sense + '</p>'
       + '<p class="teach-pattern">' + card.pattern + '</p>'

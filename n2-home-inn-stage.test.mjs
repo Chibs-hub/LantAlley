@@ -1481,3 +1481,42 @@ test("every word the Inn teaches carries an authored sentence and pattern", () =
   assert.deepEqual([...context.LanternWordTeaching.validateEntries(words, entries)], [],
     "a stage may not teach a word it has written no sentence for");
 });
+
+test("a word board never promises teaching the place cannot give", () => {
+  const context = {};
+  context.self = context;
+  vm.createContext(context);
+  for (const file of ["curriculum-catalog.js", "word-teaching.js", "moonview-inn-interactions.js",
+    "n2-home-inn-stage.js", "n2-inn-episodes.js"]) {
+    vm.runInContext(readFileSync(new URL("./" + file, import.meta.url), "utf8"), context);
+  }
+  const stage = context.N2HomeInnStage;
+  const catalog = context.LanternCurriculumCatalog;
+  const episode = context.LanternEpisodeStages["home-inn"].episodes[0];
+
+  /* Every word Episode 1 asks about has a card. The board marks the ones the
+   * three days did not cover as はじめて and the hour then scores them, so
+   * "new" has to mean "about to be taught", not "about to be guessed".
+   *
+   * Episodes 2 to 4 and the other four places are not here on purpose: 190
+   * words still have no sentence, and docs/handoffs/2026-09-10-teaching-
+   * sentences.md is the list. This test is what makes finishing one episode
+   * visible - add a place's entries and extend it to that place.
+   */
+  const words = [];
+  const seen = new Set();
+  for (const day of episode.days) {
+    for (const question of day.questions) {
+      if (!question.target || seen.has(question.target)) continue;
+      seen.add(question.target);
+      const item = catalog.getItem(question.target);
+      if (item) words.push({ word: item.canonical, item });
+    }
+  }
+  assert.equal(words.length, 10, "the hour asks about ten words");
+
+  const entries = {};
+  words.forEach((row) => { entries[row.word] = stage.getTeaching(row.word); });
+  assert.deepEqual([...context.LanternWordTeaching.validateEntries(words, entries)], [],
+    "every word the first shift asks about is taught before it is asked");
+});

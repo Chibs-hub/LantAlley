@@ -5,6 +5,20 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-10 - Studying stops being a recital, and the card gets the screen (v346)
+
+Three reports from play, all about the teaching step.
+
+**The five were taught in the order Day 1 then asked about them.** Verified: `encounters` and `getPhaseItems("learn")` are the same list, and the teach queue was built straight off it, so the first day was a recital of the cards just read. The cards carry no scene and no time of day - unlike the days themselves, which is why Day 3 had to be rewritten rather than reordered - so this order is free to differ. `TEACH_ORDER = [2, 0, 4, 1, 3]` teaches the tea first and the desk last while Day 1 still opens on the cushions. The episode's list gets the same treatment by rotation: its board lists the words in question order, so teaching down that list would have recited the opening guest.
+
+**The card gets the whole width.** Kon's panel held seven of the twelve columns while the word being studied had five, and her line there is one generic sentence repeated on every card. It is the one screen in the stage with nothing to read on the left, so the left is gone: the card is capped at 640px and centred, the word is 2.6rem, and the instruction rides on the first card instead of in a column of its own. Same on a phone, where that panel was a screen to scroll past before reaching the word.
+
+**And the honest answer to "is there teaching every time a new word list appears": no, not yet.** Every episode in the game opens on a word board that marks unmet words as はじめて - five places, four episodes each, 200 words. Ten have cards. **190 do not**, and for those the board still names a word as new and then asks about it under a timer. The engine is generic and done; what is missing is 190 sentences and patterns. `docs/handoffs/2026-09-10-teaching-sentences.md` is rewritten as that list, grouped by place and episode, each word beside its catalogue example, with the per-place count in a table at the top.
+
+A new test pins the part that is finished - every word the Inn's first shift asks about has a card - and says in its comment that extending it to a place is what marks that place done.
+
+Cache is v346; `node --test` passes (546).
+
 ### 2026-09-10 - Day 3 gets its own hour of the day (v345)
 
 Day 1 and Day 3 walked the same five situations in the same sequence - open on the cushions, end on tomorrow's favour - so the day that tests what was learned played as the first day again. Day 2 was reshaped for exactly this reason and its comment says so; this is the same fix arriving late for the third day.
