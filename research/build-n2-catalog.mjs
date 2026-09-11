@@ -140,7 +140,11 @@ for (const file of ["research/openjlpt/n2.json", "research/openjlpt/n3.json"]) {
      * learners: the practice layer asked what 賛成 is read as and marked
      * さんせい wrong, because the answer it held was "Uӣ[い".
      */
-    if (reading && !KANA_ONLY.test(reading)) reading = READING_CORRECTIONS.get(canonical) || "";
+    let readingRepaired = false;
+    if (reading && !KANA_ONLY.test(reading)) {
+      reading = READING_CORRECTIONS.get(canonical) || "";
+      readingRepaired = true;
+    }
 
     if (!reading && KANA_ONLY.test(canonical)) { reading = canonical; derivedReading = true; }
     if (!reading) {
@@ -155,7 +159,7 @@ for (const file of ["research/openjlpt/n2.json", "research/openjlpt/n3.json"]) {
     byWord.set(canonical, {
       canonical, reading, aliases, meanings,
       examples: parseList(record.examples).filter((e) => e && e.ja).slice(0, 1),
-      level, source: "openjlpt", reviewed: false, derivedReading,
+      level, source: "openjlpt", reviewed: false, derivedReading, readingRepaired,
       hasKanji: KANJI.test(canonical),
       type: inferType(meanings),
     });
@@ -174,20 +178,45 @@ for (const item of read("research/n2-supplement.json").items) {
 // Stable ids. Sorting first keeps ids identical between runs.
 const items = [...byWord.values()].sort((a, b) => a.canonical.localeCompare(b.canonical, "ja"));
 const used = new Set();
-items.forEach((item, index) => {
-  if (!item.id) {
-    const prefix = item.type === "verb" ? "v" : "w";
-    let id = `${prefix}-${romaji(item.reading)}`;
-    let n = 2;
-    while (used.has(id)) id = `${prefix}-${romaji(item.reading)}-${n++}`;
-    item.id = id;
-  }
+
+/* An id derived from a reading can be claimed by two words, and the loser
+ * takes a "-2" suffix. Which one loses is decided by the order they are named
+ * in, and an id is not cosmetic: authored questions name their target by id,
+ * and so does every learner's saved progress.
+ *
+ * 灰 and はい are both read はい. はい carried a broken reading until this
+ * build repaired it, so it never competed, and 灰 - the word a shrine question
+ * teaches - has always held `w-hai`. Naming the repaired row in sorted order
+ * would hand it `w-hai` and quietly turn that question into one about "yes".
+ *
+ * So a row whose reading this build had to repair is named last. It cannot
+ * take an id another word already answers to, and every id that existed
+ * before the repair is still the same id afterwards. The repaired rows are
+ * the only ones that gain a name they did not have.
+ */
+const nameFirst = items.filter((item) => !item.readingRepaired);
+const nameAfter = items.filter((item) => item.readingRepaired);
+for (const item of items) if (item.id) used.add(item.id);
+for (const item of [...nameFirst, ...nameAfter]) {
+  if (item.id) continue;
+  const prefix = item.type === "verb" ? "v" : "w";
+  let id = `${prefix}-${romaji(item.reading)}`;
+  let n = 2;
+  while (used.has(id)) id = `${prefix}-${romaji(item.reading)}-${n++}`;
+  item.id = id;
   used.add(item.id);
+}
+
+items.forEach((item, index) => {
   // Round-robin so every location gets a comparable mix rather than one
   // location absorbing every word starting with the same kana - except for
   // the words a story episode actually teaches, which belong to their place.
   item.partition = PINNED.get(item.canonical) || PARTITIONS[index % PARTITIONS.length];
 });
+
+// `readingRepaired` decides naming order and says nothing about the word, so
+// it does not travel into the shipped catalogue.
+for (const item of items) delete item.readingRepaired;
 
 const payload = { items, excluded };
 writeFileSync(
