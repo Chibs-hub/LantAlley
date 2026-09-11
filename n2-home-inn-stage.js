@@ -12,21 +12,7 @@
     learn:{day:1,label:"一日目",mode:"基礎",difficulty:"やさしい",stars:"★☆☆"},
     practice:{day:2,label:"二日目",mode:"実践",difficulty:"ふつう",stars:"★★☆"},
     challenge:{day:3,label:"三日目",mode:"挑戦",difficulty:"むずかしい",stars:"★★★"},
-    review:{day:3,label:"三日目",mode:"復習",difficulty:"もう一度",stars:"★★★"},
-    // Day 0, and deliberately starless: the cold open is not scored, so a
-    // star rating on it would promise a judgement that never comes.
-    coldopen:{day:0,label:"はじめの仕事",mode:"ためし",difficulty:"",stars:""}
-  };
-
-  /* The first guest arrives before any teaching, and the learner almost
-   * certainly cannot help her yet. That is the point: the three days become an
-   * answer to a problem they have just felt rather than homework set in
-   * advance. Kon absorbs the outcome - nothing here is scored, paid or
-   * recorded - and the correct branch exists so a learner who already knows
-   * 揃える is not sent away to practise it. */
-  var coldOpen = {
-    wrongReply:"コン：「間違いです。でもこれから一緒に覚えていきましょう。」",
-    correctReply:"コン：「よくご存じですね。では、残りの言葉も見ていきましょう。」"
+    review:{day:3,label:"三日目",mode:"復習",difficulty:"もう一度",stars:"★★★"}
   };
 
   /* What each part of the stage is for, said before it starts.
@@ -37,7 +23,6 @@
    * difficulty rising on purpose.
    */
   var DAY_GOALS = {
-    coldopen:"まだ習っていない言葉ばかりです。できなくて大丈夫、今日から一緒に覚えましょう。",
     learn:"五つの言葉を、意味とローマ字を見ながら覚えます。困ったらヒントを見てください。",
     practice:"同じ五つを、別の場面で使います。今日はローマ字がありません。文を読んで、正しい形を選びます。",
     challenge:"同じ五つを、音声だけで聞き取ります。文は画面に出ません。もう一度聞きたいときはスピーカーを押してください。",
@@ -58,7 +43,6 @@
    * vocabulary everywhere so the three read as a set.
    */
   var DAY_KINDS = {
-    coldopen:"ためし",
     learn:"新しい言葉を覚える",
     practice:"覚えた言葉を練習する",
     challenge:"覚えた言葉をテストする",
@@ -113,10 +97,7 @@
     learn:"コン：「一日目です。今日は基礎から始めましょう。」",
     practice:"コン：「二日目です。今日は実際の仕事の中で練習しましょう。」",
     challenge:"コン：「三日目です。今日は音声を聞いて仕事に挑戦しましょう。」",
-    review:"コン：「三日目の最後に、間違えた仕事だけもう一度確認しましょう。」",
-    // Without its own line the cold open announced 「一日目です」, which is the
-    // one thing it is not: the three days start after it, because of it.
-    coldopen:"コン：「あっ、もうお客様がいらっしゃいました。さっそくですが、お願いします。」"
+    review:"コン：「三日目の最後に、間違えた仕事だけもう一度確認しましょう。」"
   };
 
   var encounters = [
@@ -928,7 +909,6 @@
     pos:{x:64, y:74},
     label:"月見宿・N2",
     intro:intro,
-    coldOpen:coldOpen,
     encounters:encounters,
     practice:practice,
     challenge:challenge,

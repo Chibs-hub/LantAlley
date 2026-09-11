@@ -140,13 +140,6 @@
     challengeScore:0,
     challengeCorrectWords:{},
     trainingCorrectWords:{},
-    // Set by a correct cold-open answer, consumed by the btn-next handler
-    // that starts Day 1: it tells "learn" to begin one encounter in, so the
-    // task the learner just solved is not asked again immediately after.
-    coldOpenSkipFirst:false,
-    // Day 1 reopens on the task a failed cold open just lost. Set there,
-    // spent on the first Day 1 render, where it raises the もう一度 banner.
-    coldOpenRetryPending:false,
     challengeMisses:[],
     // word -> which rung of the review ladder it is on. A word missed again in
     // review climbs a rung rather than being asked the same way twice.
@@ -1621,27 +1614,6 @@
     if(practiceState){ advancePractice(); return; }
     if(previewState){ advanceEpisodePreview(); return; }
     var loc = getLocation(state.currentKey);
-    // The cold open is one task outside the day model, so it advances into
-    // Day 1 rather than to a next encounter it does not have. A correct
-    // cold-open guess also skips replaying that same encounter as Day 1's
-    // first question - see resolveColdOpen.
-    if(state.stagePhase === "coldopen" && loc && loc.encounters){
-      var skipFirst = state.coldOpenSkipFirst;
-      state.coldOpenSkipFirst = false;
-      /* Day 1 opens on its own board, even though the stage already opened
-       * on one. They are not the same screen: the first introduces the place
-       * and its five words, and this one names the day and says what the day
-       * is for - 新しい言葉を覚える. Skipping it left Day 1 as the only part
-       * of the stage that never announced itself, which is exactly the
-       * confusion this label exists to remove. The cold open sits between
-       * them, so they are not shown back to back.
-       *
-       * startIndex still carries the skip: a correctly guessed cold-open task
-       * is not replayed as Day 1's first question. See resolveColdOpen.
-       */
-      stageJobBoard(loc, "learn", skipFirst ? 1 : 0);
-      return;
-    }
     if(loc && loc.encounters){
       continueStageEncounter(loc);
     }else{
@@ -1961,12 +1933,6 @@
     }
     var loc = getLocation(state.currentKey);
     if(!loc || !loc.encounters) return;
-    // The cold open is a scene rather than a question - there is nothing to
-    // answer correctly - so skipping it means stepping into Day 1.
-    if(state.stagePhase === "coldopen"){
-      startStagePhase(loc, "learn");
-      return;
-    }
     var prompt = getActivePrompt(loc);
     answerStage(true, prompt, prompt.correct);
   }
@@ -1979,9 +1945,6 @@
   function skipWholeStage(){
     var loc = getLocation(state.currentKey);
     if(!loc || !loc.encounters) return;
-    // Step out of the cold open first: it answers to nothing and would
-    // otherwise be walked five times by the loop below.
-    if(state.stagePhase === "coldopen") startStagePhase(loc, "learn");
     for(var guard = 0; guard < 40 && state.currentKey === loc.key; guard++){
       var prompt = getActivePrompt(loc);
       answerStage(true, prompt, prompt.correct);
@@ -3608,9 +3571,6 @@
     // the speech slot with the request again. Both land after this render and
     // put the finished day's words back on top of the new day's board.
     if(konResponseTimer){ clearTimeout(konResponseTimer); konResponseTimer = null; }
-    // The opening board introduces the stage rather than a day: it is now the
-    // first thing shown, before the cold open, so it has no day to name yet.
-    var opening = phase === "coldopen";
     var first = !Object.keys(state.trainingCorrectWords).length;
     var rows = loc.encounters.map(function(item){
       var done = !!state.trainingCorrectWords[item.focusWord];
@@ -3635,11 +3595,11 @@
     }).length;
 
     $("scene").innerHTML = '<div class="episode-open"><div class="episode-open-card job-board">'
-      + '<p class="episode-open-kicker">' + (opening ? "この宿でおぼえる言葉" : "今日の仕事") + '</p>'
-      + '<h2 class="episode-open-title">' + (opening ? "五つの言葉" : (meta ? meta.label + " " + meta.mode : "")) + '</h2>'
-      + (loc.getDayKind ? '<p class="day-kind">' + (opening ? "はじめての場所" : loc.getDayKind(phase)) + '</p>' : '')
+      + '<p class="episode-open-kicker">' + "今日の仕事" + '</p>'
+      + '<h2 class="episode-open-title">' + (meta ? meta.label + " " + meta.mode : "") + '</h2>'
+      + (loc.getDayKind ? '<p class="day-kind">' + loc.getDayKind(phase) + '</p>' : '')
       + '<p class="episode-open-note">'
-      + (opening ? "三日かけて、この五つを覚えます。" : "言葉は五つです。" + doneCount + " / " + loc.encounters.length)
+      + "言葉は五つです。" + doneCount + " / " + loc.encounters.length
       + '</p>'
       // What this part of the stage is actually for. The days differ in how
       // much help is on screen and nothing said so, so Day 3 arrived with no
@@ -3648,7 +3608,7 @@
       + (loc.getDayGoal ? '<p class="job-goal">' + loc.getDayGoal(phase) + '</p>' : '')
       + '<ul class="job-board-list">' + rows + '</ul>'
       + '<button class="btn btn-primary" id="btn-jobs-begin">'
-      + (opening ? "仕事をはじめる" : (meta ? meta.label : "") + "をはじめる") + '</button>'
+      + (meta ? meta.label : "") + "をはじめる" + '</button>'
       + '</div></div>';
 
     /* Kon introduces the day rather than leaving the previous question's
@@ -3834,7 +3794,7 @@
     $("scene-label").textContent = prompt.stageLabel + " - " + prompt.label;
     $("stage-phase-row").style.display = "flex";
     $("stage-phase-badge").textContent = dayMeta ? dayMeta.label + "・" + dayMeta.mode + " " + dayMeta.stars : (phaseLabels[state.stagePhase] || phaseName);
-    $("encounter-status").style.display = state.stagePhase === "coldopen" ? "none" : "block";
+    $("encounter-status").style.display = "block";
     $("encounter-progress").textContent = String(state.encounterIndex + 1);
     $("encounter-total").textContent = String((state.phaseItems || loc.getPhaseItems(state.stagePhase)).length);
     // Resolve the greeting once. Calling stageNarrationFor twice consumed the
@@ -3864,21 +3824,6 @@
       // line on top of it made three Kon greetings before the situation.
       // Prefer the day announcement and drop the resume greeting.
       storyNarration = joinKonLines(loc.getDayAnnouncement(state.stagePhase), prompt.narration);
-      /* And when Day 1 is reopening on the very task the cold open just lost,
-       * say so. Otherwise the first two things a new player is asked are
-       * word-for-word identical, with a board between them, and it reads as
-       * the game repeating itself rather than as the teaching arriving.
-       * Spent here so it is said once, on that one screen.
-       */
-      if(state.coldOpenRetryPending && state.stagePhase === "learn"){
-        state.coldOpenRetryPending = false;
-        /* The banner above the bubble says this, so Kon does not say it too.
-         * She had an acknowledgement here first; with the banner as well it
-         * was the same point twice and pushed her line to four sentences
-         * before the request even arrived.
-         */
-        retryReason = "さっきできなかった仕事です。今度は言葉の意味とヒントが出ます。";
-      }
     }
     $("narration").textContent = storyNarration;
     var retryFlag = $("retry-flag");
@@ -4096,7 +4041,7 @@
     // the sentence directly, so arriving at Challenge revealed the request.
     var resumedPrompt = writeStagePrompt(loc, prompt);
     $("romaji-line").textContent = prompt.romaji;
-    $("romaji-line").style.display = state.romajiOn && state.stagePhase !== "challenge" && state.stagePhase !== "coldopen" ? "block" : "none";
+    $("romaji-line").style.display = state.romajiOn && state.stagePhase !== "challenge" ? "block" : "none";
     $("meaning-line").textContent = "";
     $("meaning-line").classList.remove("show");
     $("hint-box").textContent = prompt.hint;
@@ -7189,12 +7134,6 @@
   function answerStage(isCorrect, prompt, selectedKey){
     showPracticeTranslation(false);
     var stage = getLocation(prompt.stageKey);
-    // Before Kon's usual reply and before anything is credited: the cold open
-    // has its own reply and credits nothing at all.
-    if(state.stagePhase === "coldopen"){
-      resolveColdOpen(isCorrect, stage, prompt);
-      return;
-    }
     var items = state.phaseItems || stage.getPhaseItems(state.stagePhase);
     showKonStageResponse(stage, prompt, isCorrect, selectedKey);
     // Outside the isCorrect branch: a missed word has to enter the schedule
@@ -7325,81 +7264,12 @@
   // question answerable. Only Challenge is scored on one attempt. Without this
   // the scene kept whatever state the failed attempt left behind and there was
   // no way to try again.
-  // Challenge is scored on one attempt, and so is the cold open - for the
-  // opposite reason. Challenge withholds a retry because the shift is timed;
-  // the cold open withholds one because failing is what it is for.
   function isSingleAttemptPhase(){
     // Review is single-attempt too, but for a third reason again: a miss there
     // is not the end of the question, it is the next rung. Handing the same
     // form straight back would keep the learner on the rung that just failed,
     // which is the behaviour the ladder exists to replace.
-    return state.stagePhase === "challenge" || state.stagePhase === "coldopen"
-      || state.stagePhase === "review";
-  }
-
-  /* The cold open borrows Day 1's first encounter and throws the result away.
-   * Nothing is paid, scheduled, mastered or starred: the learner has not been
-   * taught the word yet, so an answer here is evidence of nothing. Kon
-   * absorbs it, and the three days begin as the answer to it.
-   *
-   * A correct guess is the one exception, and only for what Day 1 opens
-   * with: playing this live, solving the cushion task cold and then being
-   * asked the identical task again as "Day 1, question 1" reads as a
-   * mistake, not a lesson - Kon's own correctReply already says "let's look
-   * at the rest" rather than "let's do that again". coldOpenSkipFirst tells
-   * the next startStagePhase("learn") to begin one encounter in instead of
-   * replaying it, and trainingCorrectWords is credited to match, so the
-   * later full-coverage check still passes without that encounter ever
-   * running through the real, scored answer path. Nothing else this
-   * function's opening comment protects - money, stars, reviewProgress,
-   * masteredByStage - is touched. A wrong guess skips nothing: that word
-   * genuinely has not been taught yet. */
-  function resolveColdOpen(isCorrect, stage, prompt){
-    state.answered = true;
-    state.coldOpenSkipFirst = false;
-    // A correct answer skips the replay; a wrong one gets it again, taught -
-    // and Kon has to say that, or the same request twice reads as a fault.
-    state.coldOpenRetryPending = !isCorrect;
-    if(isCorrect && prompt && prompt.focusWord){
-      state.trainingCorrectWords[prompt.focusWord] = true;
-      state.coldOpenSkipFirst = true;
-    }
-    var reply = stage && stage.coldOpen
-      ? (isCorrect ? stage.coldOpen.correctReply : stage.coldOpen.wrongReply)
-      : "";
-    /* Kon answers in her speech bubble, where she answers everything else.
-     *
-     * This went into the narration line instead - the small grey strip above
-     * the bubble - while the bubble itself kept showing the request. So a
-     * learner who put the wrong thing down saw no reaction at all, just a
-     * button appearing: reported as nothing happening. The one moment in the
-     * stage that exists to be failed was the one moment that said nothing
-     * about it.
-     */
-    if(reply){
-      // Through speak(), which types it out and plays the clip together - the
-      // same path every other line of hers takes. Started silent, which made
-      // these the only two things she says without a voice.
-      $("romaji-line").textContent = "";
-      $("romaji-line").style.display = "none";
-      speak(reply, isCorrect ? "correct" : "wrong");
-    }
-    // Listening, not celebrating and not correcting. The scene is not scored,
-    // so the fox does not react as though it were.
-    setEntranceFoxPose(isCorrect ? "celebrate" : "listen");
-    showFeedback(true, isCorrect ? "けっこうです。" : "ここからが練習です。");
-    /* No stamp either way. 「もう一度」 would punish the stumble this scene
-     * exists to produce, and 「正解」 on a wrong answer is simply false - the
-     * first version of this stamped 正解 on a miss. The scene is not marked,
-     * so it shows no mark. */
-    // Hidden, not merely emptied: the stamp carries a border and a rounded
-    // outline, so an empty one draws a blank oval beside the text that reads
-    // as a picture that failed to load.
-    $("stamp").textContent = "";
-    $("stamp").className = "stamp";
-    $("stamp").hidden = true;
-    $("btn-next").textContent = "一日目をはじめる →";
-    $("next-row").style.display = "block";
+    return state.stagePhase === "challenge" || state.stagePhase === "review";
   }
 
   function offerRetry(prompt){

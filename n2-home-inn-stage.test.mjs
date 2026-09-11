@@ -1244,43 +1244,6 @@ test("wrong-answer feedback never hands over the target word", () => {
   }
 });
 
-test("the cold open has its own replies and its own day badge", () => {
-  const context = {};
-  vm.createContext(context);
-  vm.runInContext(readFileSync(stageUrl, "utf8"), context);
-  const stage = context.N2HomeInnStage;
-
-  assert.ok(stage.coldOpen, "the stage has no cold-open content");
-  /* Kon used to avoid the word 間違い here, on the reasoning that naming a
-   * miss would punish the stumble this scene exists to produce. Changed on
-   * the author's instruction: a learner who put the wrong thing down and was
-   * told only 「大丈夫ですよ」 could reasonably think they had got it right.
-   * She says plainly that it was wrong, and immediately what happens next.
-   *
-   * The scene is still unscored - no stamp, no money, nothing recorded. It is
-   * unmarked, not unspoken.
-   */
-  assert.match(stage.coldOpen.wrongReply, /間違い/, "the miss is named");
-  assert.match(stage.coldOpen.wrongReply, /一緒に覚えて/, "and so is the way out of it");
-  // A learner who already knows the word is not sent to remedial practice.
-  assert.match(stage.coldOpen.correctReply, /ご存じ/);
-
-  // The badge must not claim this is Day 1 - Day 1 comes after it.
-  const meta = stage.getDayMeta("coldopen");
-  assert.notEqual(meta.label, "一日目");
-  assert.equal(meta.stars, "");
-});
-
-test("the cold open announces a guest, not Day 1", () => {
-  const context = {};
-  vm.createContext(context);
-  vm.runInContext(readFileSync(stageUrl, "utf8"), context);
-  const stage = context.N2HomeInnStage;
-  const line = stage.getDayAnnouncement("coldopen");
-  assert.match(line, /お客様/);
-  assert.doesNotMatch(line, /一日目/, "the three days start after the cold open, because of it");
-});
-
 test("the day announcement and the situation are spoken as one Kon line", () => {
   const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
   // Both strings are authored as Kon speaking, each with its own

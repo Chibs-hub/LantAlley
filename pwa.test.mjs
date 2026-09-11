@@ -966,29 +966,3 @@ test("camellia and sunflower ship all four painted stages, wired end to end", ()
   assert.equal(styles.includes(".home-plant::after"), false,
     "gravel-integrated plant art should not be covered by the old soil-disc haze");
 });
-
-test("Kon's answers to the cold open are spoken like the rest of her lines", () => {
-  // These were written to the narration strip and never spoken, so nothing
-  // ever collected them for a clip. Once she started saying them in her own
-  // bubble they became the only two lines of hers with no voice.
-  const index = audioIndex();
-  const context = {};
-  context.self = context;
-  vm.createContext(context);
-  vm.runInContext(read("moonview-inn-interactions.js"), context);
-  vm.runInContext(read("n2-home-inn-stage.js"), context);
-  const coldOpen = context.N2HomeInnStage.coldOpen;
-
-  for (const key of ["wrongReply", "correctReply"]) {
-    assert.ok(index.LanternAlleyAudio[coldOpen[key]],
-      `no clip for coldOpen.${key}: ${coldOpen[key]}`);
-  }
-
-  // Reachable on a first run, so they belong in the installed shell rather
-  // than in a group fetched when some later stage unlocks.
-  const shell = new Set(index.LanternAlleyAudioGroups.shell);
-  for (const key of ["wrongReply", "correctReply"]) {
-    assert.equal(shell.has(index.LanternAlleyAudio[coldOpen[key]]), true,
-      `coldOpen.${key} must install with the shell`);
-  }
-});
