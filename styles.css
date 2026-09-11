@@ -272,6 +272,10 @@
      to them in English. This is the support put back on the right side of
      that line: quiet, secondary, and never on the content itself. */
   .screen-gloss{margin:6px 0 0;color:rgba(255,240,214,.66);font-size:.74rem;font-weight:500;line-height:1.45}
+  /* On the map this line is the instruction rather than a gloss on one, since
+     the Japanese sentence above it was removed as a duplicate. It carries the
+     contrast that job needs. */
+  .map-heading .screen-gloss{color:rgba(255,240,214,.84)}
   .metric-gloss{display:block;margin-top:1px;color:rgba(255,240,214,.55);font-size:.58rem;font-weight:600;letter-spacing:.04em;text-transform:none}
   .map-detail .metric-gloss,.map-detail-progress-label .metric-gloss{color:rgba(74,52,35,.62)}
   .character-guide .title-kicker{margin:0;color:#f1bd70}

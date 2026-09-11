@@ -5,6 +5,14 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-11 - One instruction on the map, not two (v360)
+
+The map heading had grown to four stacked lines: the name, a Japanese sentence telling the learner to pick a place, the English line added in v359 telling them the same thing, and the goal note about the lanterns. The Japanese sentence and the English one were the same instruction twice, so the Japanese one is gone and the English one carries the job, with the contrast that job needs rather than the quieter weight of a gloss.
+
+The map region keeps its Japanese `aria-label`, so a screen reader still announces 行き先を選んでください. The goal note stays: it explains what the 灯り counter means, which nothing else says.
+
+Cache is v360.
+
 ### 2026-09-11 - Six places the screen did not say what it meant (v359)
 
 Walked as a new learner on a phone: title, character, entrance, map, Inn, teaching card, first question. The teaching card is the clearest screen in the game. What surrounds it was not.
