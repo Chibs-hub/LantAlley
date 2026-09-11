@@ -86,6 +86,28 @@ const PINNED = new Map();
   }
 }
 
+/* The two rows the rule above cannot rescue, corrected by hand.
+ *
+ * Both are kanji headwords, so there is nothing to derive a reading from, and
+ * dropping them would take two ordinary N3 words out of the catalogue. The
+ * correction is the reading only - the meanings and the examples are the
+ * source's own and stay attributed to it.
+ *
+ *   暖かい  the source gives "あたたか(い)": the reading is right and the
+ *           okurigana is in brackets, which no other row does.
+ *   賛成    the source gives "Uӣ[い", which is mojibake. さんせい is the
+ *           reading, and n3.json's own example 「大賛成です。」 is read
+ *           だいさんせい.
+ *
+ * Anything added here is a claim about the language, so each line carries the
+ * evidence for it. A row that cannot be evidenced belongs in the exclusion
+ * list instead, where it is visible.
+ */
+const READING_CORRECTIONS = new Map([
+  ["暖かい", "あたたかい"],
+  ["賛成", "さんせい"],
+]);
+
 const excluded = [];
 const byWord = new Map();
 
@@ -104,6 +126,22 @@ for (const file of ["research/openjlpt/n2.json", "research/openjlpt/n3.json"]) {
 
     let reading = String(record.reading || "").trim();
     let derivedReading = false;
+
+    /* A reading that is not kana is not a reading.
+     *
+     * Nineteen source rows carry something else in that column. Most are a
+     * part-of-speech marker that leaked out of a neighbouring field - 「うん」
+     * is recorded as "（感）", 「だいいち」 as "（副）" - and a few are a gloss
+     * rather than a reading: 「じゅうたん」 is given as "（カーペット）".
+     * Seventeen of the nineteen are kana headwords, so they fall through to
+     * the derivation below and end up reading as themselves, which is right.
+     *
+     * Taking the column at its word instead put those strings in front of
+     * learners: the practice layer asked what 賛成 is read as and marked
+     * さんせい wrong, because the answer it held was "Uӣ[い".
+     */
+    if (reading && !KANA_ONLY.test(reading)) reading = READING_CORRECTIONS.get(canonical) || "";
+
     if (!reading && KANA_ONLY.test(canonical)) { reading = canonical; derivedReading = true; }
     if (!reading) {
       const reason = KANJI.test(canonical)

@@ -5,6 +5,22 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-11 - The station gets its episodes back, and four other things stop being wrong (v358)
+
+**路地駅 has had no episodes since 2026-09-07.** A commit about Inn audio dropped `<script src="n2-station-episodes.js">` from index.html, and nothing anywhere said so. Every other part of the system went on believing in it: the module still registered itself into `LanternEpisodeStages` when loaded, the service worker still pre-cached the file, the artifact builder still required it, and the map still offered 路地駅 as a destination. Only the page had stopped loading it, so `LanternEpisodeStages` held four places instead of five and a learner who walked to the station arrived at a place with nothing in it. Eleven versions, ten of them verified in a browser, and none of that verification ever opened the station.
+
+The test that would have caught it is the mirror of one that already existed. `pwa.test.mjs` checks that every script the page loads is in the worker's shell list; nothing checked the other direction, which is the one that broke - a module that exists, builds, and is never loaded. Now every `n2-*-episodes.js` in the repository has to have a script tag.
+
+**Nineteen readings were not readings.** The source's reading column leaks other fields: 「うん」 is recorded as "（感）", 「だいいち」 as "（副）", 「じゅうたん」 as "（カーペット）" - a gloss, not a reading - and 賛成 as "Uӣ[い", which is mojibake. The builder took the column at its word. Seventeen of the nineteen are kana headwords, so refusing a non-kana reading lets them fall through to the derivation that was already there and they read as themselves. The remaining two are kanji words and are corrected by hand in the builder, with the evidence for each written beside it; their meanings and examples stay the source's own and stay attributed to it.
+
+This was not cosmetic, and v357 is what exposed it: the practice layer asks what a word is read as and grades against this field, so 賛成 was a question whose correct answer was mojibake and さんせい was marked a miss. A test now holds every reading in the catalogue to kana.
+
+**Five tests failed on every fresh clone.** They read `lantern-alley-artifact.html`, which the builder writes and `.gitignore` deliberately excludes - "rebuild it, never edit it". On a clean checkout the file is not there, so five tests failed on a repository with nothing wrong with it, and a suite that is permanently five red is a suite nobody reads. They now skip when the artifact is absent and run when it is present, and the skip names the command that builds it.
+
+**The credit line ran under the feedback pill.** The pill is fixed to the bottom right corner and the footer is centred across the full width, so on a phone the last words sat behind it. The footer now keeps a gutter the width of the pill.
+
+Cache is v358.
+
 ### 2026-09-11 - The reading is typed, not picked (v357)
 
 Everything the daily practice asked was four options and a tap, and so are 190 of the 200 authored questions. That is recognition: you can pick 「あたためる」 out of a line-up long after you have lost the ability to say it. The multiple-choice reading question is now a box the learner writes the reading into, which is the only card in the game that asks them to produce Japanese rather than notice it.

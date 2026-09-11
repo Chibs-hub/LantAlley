@@ -87,3 +87,27 @@ test("every item belongs to exactly one location partition", () => {
   assert.equal(Object.keys(counts).length, 5);
   for (const key of Object.keys(counts)) assert.ok(counts[key] > 300, `${key} only has ${counts[key]}`);
 });
+
+test("every reading is kana, because every reading is asked as a question", () => {
+  const catalog = loadCatalog();
+  /* Nineteen rows used to carry something else in the reading field, taken
+   * from the source as-is: part-of-speech markers that had leaked out of a
+   * neighbouring column (「うん」 = "（感）", 「だいいち」 = "（副）"), a gloss
+   * where a reading belonged (「じゅうたん」 = "（カーペット）"), okurigana in
+   * brackets, and one row that was mojibake outright (賛成 = "Uӣ[い").
+   *
+   * They were not cosmetic. The practice layer asks what a word is read as
+   * and grades the answer against this field, so 賛成 was a question whose
+   * correct answer was wrong and さんせい was marked a miss. The builder now
+   * refuses a non-kana reading, and this is the check that it stays refused.
+   */
+  const kana = /^[ぁ-ゖァ-ヺー]+$/;
+  // Listed rather than counted: a failure here should name the rows.
+  // (Compared by length, because the catalogue is loaded in its own vm realm
+  // and a strict deep-equal against a literal [] fails on the prototype.)
+  const broken = catalog.items
+    .filter((item) => !item.reading || !kana.test(item.reading))
+    .map((item) => `${item.canonical}=${item.reading}`);
+  assert.equal(broken.length, 0,
+    "a reading that is not kana cannot be asked for or answered: " + broken.join(", "));
+});

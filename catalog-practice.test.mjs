@@ -83,20 +83,30 @@ test("the reading is typed rather than chosen, in kana or in romaji", () => {
 
 test("a reading that is not kana never becomes a question", () => {
   const { LanternCurriculumCatalog: catalog, LanternCatalogPractice: practice } = load();
-  /* Nineteen catalogue rows carry something other than a reading in the
-   * reading field, inherited from the source: part-of-speech markers that
-   * leaked out of the column, a gloss, bracketed okurigana, and one row that
-   * is mojibake. Two of them have kanji, so before this guard they were built
-   * into a reading question whose correct answer was wrong. */
-  const broken = catalog.items.filter(
-    (item) => item.hasKanji && item.reading && !practice.KANA_READING.test(item.reading));
-  assert.ok(broken.length > 0, "the fixture for this test has gone: no broken readings left");
-  for (const item of broken) {
-    const kinds = practice.buildPracticeCards(item, catalog).map((card) => card.kind);
-    assert.ok(!kinds.includes("reading-input"), `${item.canonical} asks for a reading it does not have`);
+  /* Nineteen catalogue rows used to carry something other than a reading in
+   * the reading field - part-of-speech markers that had leaked out of the
+   * source's neighbouring column ("（感）", "（副）"), a gloss, bracketed
+   * okurigana, and one row that was mojibake (賛成 = "Uӣ[い"). Two had kanji,
+   * so they were built into a reading question whose correct answer was
+   * wrong, and a learner who knew さんせい was marked wrong for it.
+   *
+   * The builder refuses those readings now, so the catalogue no longer holds
+   * an example to point at and this asks the guard directly. Both halves are
+   * worth keeping: curriculum-catalog.test.mjs holds the data to kana, and
+   * this holds the card layer to it even if a bad row ever gets through.
+   */
+  const real = catalog.items.find((item) => item.hasKanji && item.reading);
+  for (const junk of ["（感）", "あたたか(い)", "Uӣ[い", "（カーペット）", ""]) {
+    const broken = Object.assign({}, real, {reading: junk});
+    const kinds = practice.buildPracticeCards(broken, catalog).map((card) => card.kind);
+    assert.ok(!kinds.includes("reading-input"),
+      JSON.stringify(junk) + " is not a reading and must not be asked for");
   }
-});
 
+  // The same word with its real reading still asks for it.
+  const kinds = practice.buildPracticeCards(real, catalog).map((card) => card.kind);
+  assert.ok(kinds.includes("reading-input"), "a real reading is still asked for");
+});
 test("a card is never generated from data the item lacks", () => {
   const { LanternCurriculumCatalog: catalog, LanternCatalogPractice: practice } = load();
 

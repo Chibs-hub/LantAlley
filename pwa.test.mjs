@@ -1,10 +1,29 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
 
 const read = (name) => readFileSync(new URL("./" + name, import.meta.url), "utf8");
+
+/* The standalone artifact is a build product, and a gitignored one.
+ *
+ * The five tests below read `lantern-alley-artifact.html`, which
+ * `build-artifact.mjs` writes and `.gitignore` deliberately keeps out of the
+ * repository - "rebuild it, never edit it". On any fresh clone it does not
+ * exist, so those five failed on a checkout that had nothing wrong with it,
+ * and a suite that is always five red is a suite nobody reads.
+ *
+ * They are skipped when the file is absent and run when it is there, so the
+ * builder is still checked by whoever has just run it. The skip names the
+ * command, because a skipped test that does not say how to un-skip itself is
+ * the same silence in a quieter voice.
+ */
+const ARTIFACT = "lantern-alley-artifact.html";
+const artifactBuilt = existsSync(new URL("./" + ARTIFACT, import.meta.url));
+const needsArtifact = artifactBuilt
+  ? {}
+  : { skip: ARTIFACT + " is not built - run `node build-artifact.mjs` to check it" };
 
 const pngSize = (name) => {
   const bytes = readFileSync(new URL("./" + name, import.meta.url));
@@ -458,7 +477,34 @@ test("the offline build owns both player choices and the Inn scene set", () => {
   assert.equal(app.includes("player-actions-woman-v1.webp"), false, "the old woman sheet is still active");
 });
 
-test("the self-contained artifact embeds the selectable alley map", () => {
+test("every episode module in the repository is loaded by the page", () => {
+  /* The station's four episodes were absent from the game for eleven
+   * versions and nothing failed.
+   *
+   * On 2026-09-07 a commit about Inn audio dropped
+   * `<script src="n2-station-episodes.js">` from index.html. Every other
+   * part of the system still believed in it: the module registered itself
+   * into LanternEpisodeStages when loaded, the service worker went on
+   * pre-caching it, the artifact builder went on requiring it, and the map
+   * went on offering 路地駅 as a destination. Only the page had stopped
+   * loading it, so a learner walking to the station arrived at a place with
+   * no episodes in it.
+   *
+   * The shell test next door checks that every script the page loads is in
+   * the worker's list. This is the other direction, which is the one that
+   * was missing: a module that exists and is never loaded.
+   */
+  const html = read("index.html");
+  const modules = readdirSync(new URL("./", import.meta.url))
+    .filter((name) => /^n2-.*-episodes\.js$/.test(name));
+  assert.ok(modules.length >= 5, "the episode modules have been renamed - this test is looking for the wrong files");
+  for (const name of modules) {
+    assert.ok(html.includes('src="' + name + '?v='),
+      name + " is in the repository but no script tag loads it");
+  }
+});
+
+test("the self-contained artifact embeds the selectable alley map", needsArtifact, () => {
   const artifact = read("lantern-alley-artifact.html");
   const mapAsset = "assets/map/lantern-alley-map-v1.jpg";
   const encoded = readFileSync(new URL("./" + mapAsset, import.meta.url)).toString("base64");
@@ -472,7 +518,7 @@ test("the self-contained artifact embeds the selectable alley map", () => {
   assert.doesNotMatch(artifact, /assets\/map\/lantern-alley-map-v1\.jpg/);
 });
 
-test("the offline delivery contains the cinematic opening, Entrance, and room lighting", () => {
+test("the offline delivery contains the cinematic opening, Entrance, and room lighting", needsArtifact, () => {
   const sw = read("sw.js");
   const artifact = read("lantern-alley-artifact.html");
 
@@ -503,7 +549,7 @@ test("the offline delivery contains the cinematic opening, Entrance, and room li
   assert.match(artifact, /room-light-bright/);
 });
 
-test("the standalone artifact keeps the completed Entrance controls visible on a phone", () => {
+test("the standalone artifact keeps the completed Entrance controls visible on a phone", needsArtifact, () => {
   const artifact = read("lantern-alley-artifact.html");
 
   assert.match(
@@ -518,7 +564,7 @@ test("the standalone artifact keeps the completed Entrance controls visible on a
   );
 });
 
-test("the self-contained artifact includes the illustrated room", () => {
+test("the self-contained artifact includes the illustrated room", needsArtifact, () => {
   const artifact = read("lantern-alley-artifact.html");
   const context = {};
   vm.createContext(context);
@@ -536,7 +582,7 @@ test("the self-contained artifact includes the illustrated room", () => {
   assert.ok(statSync(new URL("./lantern-alley-artifact.html", import.meta.url)).size < 16 * 1024 * 1024);
 });
 
-test("the self-contained artifact includes click-to-finish dialogue", () => {
+test("the self-contained artifact includes click-to-finish dialogue", needsArtifact, () => {
   const artifact = read("lantern-alley-artifact.html");
   assert.match(artifact, /id="dialogue-panel"/);
   assert.match(artifact, /id="dialogue-continue"/);

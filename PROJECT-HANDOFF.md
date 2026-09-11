@@ -52,6 +52,7 @@ the changelog entry for each one says what was checked and what was not.
 
 | Version | What it did |
 | --- | --- |
+| v358 | 路地駅 gets its episodes back - its script tag was dropped on 2026-09-07 and the place had been empty since. Nineteen corrupted readings fixed at the builder. The five artifact tests skip on a clone that has not built one. |
 | v357 | The daily practice's reading question is typed rather than picked, in kana or romaji - the one card that asks the learner to produce Japanese. Readings that are not kana (19 rows the source corrupted) no longer become questions. |
 | v356 | Debug Mode is back on the title menu for the beta. `available` in `debug-mode.js` remains the switch that removes it for release. |
 | v355 | The opening screen is one lit scene rather than art with UI on top: the slab over the left of the painting is gone, the colours are sampled from the artwork, the entry button is a lit paper lantern, and Kon stands on the stones inviting the learner in instead of sitting cut-out above them. |

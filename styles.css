@@ -929,8 +929,16 @@
     .answer-workspace:has(#feedback-row.show) .next-row{margin-top:0}
   }
 
+  /* The feedback pill is fixed to the bottom right corner, and on a phone the
+     credit line runs straight underneath it: the last words were behind the
+     pill at every width narrow enough for the line to reach that far. The
+     padding is the pill's own width plus its inset, applied on the right only,
+     so the text centres in what is left rather than under the button. */
   footer.credits{
     text-align:center; color:rgba(242,235,221,0.35); font-size:0.72rem; margin-top:18px;
+  }
+  @media(max-width:620px){
+    footer.credits{padding-right:clamp(112px,32vw,132px); text-align:right}
   }
   .stage:has(#screen-game:not(.hidden)) footer.credits{margin-top:8px}
 
