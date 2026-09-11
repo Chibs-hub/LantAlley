@@ -5,6 +5,20 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-10 - Kon wears her portrait everywhere, and debug can start a place over (v342)
+
+**The fox emoji was still showing.** Reported from an episode entered in debug mode, and it was not a stale asset: `index.html` ships the dialogue shell's avatar slot holding a gold circle with a fox emoji in it, a placeholder from before there was any art. `enterLocation` was the only thing that ever replaced it, so every way into a scene that skips `enterLocation` - resuming straight into an episode, a debug jump - showed the placeholder rather than her. The installer is its own function now and runs at boot as well, so there is no moment for the emoji to appear in. The old `assets/kon/kon-*.webp` files are still in the service worker shell and referenced by nothing; left alone here rather than mixed into this change.
+
+**Restart stage**, in the debug banner. It goes the other way from Skip stage beside it, and further back than the existing 学ぶからやり直す, which restarts Day 1 but leaves the place started, its episodes finished and its words mastered - so the intro, the boards and the teaching step were never seen again. This clears every record that routes `enterLocation` past the beginning, then enters the place normally: whatever a first visit does, this does. It asks first, because on a real save it throws away a place's progress.
+
+In the banner rather than beside the other two testing controls, which live in the stage row - a row the intro, the job board and the teaching card all hide, which is most of what there is to test. The banner is on every screen for as long as debug mode is.
+
+One bug found while verifying it, and it is worth knowing about generally: `saveProgress()` rebuilds the inn's resume record from live state whenever `currentKey` is the inn. Clearing the record and then saving wrote it straight back, and the restart landed on Day 1 question 1 with the intro, the board and the teaching step all skipped. It saves as being nowhere, and `enterLocation` sets the key again on the way in.
+
+Also guarded: the confirm and the alert are called through `window.confirm &&` / `window.alert &&`. Every browser has them; the test harness's window is a plain object, where an unguarded call throws.
+
+Cache is v342; `node --test` passes (543).
+
 ### 2026-09-10 - The update notice is a dialog, and two bugs that were hiding it (v341)
 
 Reported as the update being hard to notice. It was, and worse than it looked - the presentation was the smaller half of the problem.

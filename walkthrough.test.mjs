@@ -2982,3 +2982,43 @@ test("a second tap during the pause after a right answer does not skip a word", 
   assert.ok(game.doc.querySelector(".teach-card").textContent.includes("2 / 5"),
     "one answer advances one word");
 });
+
+test("Kon wears her portrait from the moment the app boots", () => {
+  const game = boot(null, "?skip=1");
+  const slot = game.$("avatar-slot");
+
+  /* The slot ships holding a gold circle with a fox emoji - a placeholder
+   * from before there was any art. enterLocation was the only thing that
+   * replaced it, so every way into a scene that skips enterLocation showed
+   * the emoji: reported from an episode entered in debug mode. */
+  assert.ok(slot.innerHTML.includes("kon-photo-img"), "the portrait is installed, not the placeholder");
+  assert.equal(slot.innerHTML.includes("\u{1F98A}"), false, "and the emoji is gone before any screen can show it");
+  assert.ok(slot.className.includes("avatar-animated"));
+});
+
+test("debug mode offers a way back to the start of a place", async () => {
+  const game = boot(null, "?debug=1");
+  assert.equal(game.$("debug-banner").hidden, false);
+  const restart = game.$("btn-restart-stage");
+  assert.ok(restart, "the control is in the banner, which is on every screen");
+  assert.equal(restart.textContent, "Restart stage");
+
+  await enterTheInn(game);
+  assert.equal(game.$("encounter-progress").textContent, "1");
+  assert.ok(playRoom(game, game.$("jp-line").textContent));
+  game.clock.advance(7000);
+  game.$("btn-next").click();
+  game.clock.advance(500);
+  assert.equal(game.$("encounter-progress").textContent, "2", "some progress to throw away");
+
+  restart.click();
+  game.clock.advance(2000);
+
+  /* The intro again, not Day 1 question 1: saveProgress rebuilds the inn's
+   * resume record from live state, so clearing it and then saving wrote it
+   * straight back and the restart skipped the intro, the board and the
+   * teaching step - most of what there is to test. */
+  const saved = JSON.parse(game.storage.getItem("lanternAlley.debug.v3"));
+  assert.deepEqual(saved.stages || {}, {}, "the resume record is gone, not rewritten");
+  assert.ok(game.doc.querySelector("#btn-accept-helper"), "the place opens on its own introduction");
+});

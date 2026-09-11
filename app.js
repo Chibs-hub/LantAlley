@@ -1019,6 +1019,10 @@
   paintAnalyticsToggle();
   trackTelemetry("app_opened");
 
+  // Before any screen can show her. See installFoxAvatar: the slot ships with
+  // a placeholder emoji, and the paths that skipped enterLocation showed it.
+  installFoxAvatar(false);
+
   (function(){
     var label = $("app-version");
     if(label){
@@ -1704,6 +1708,7 @@
   $("btn-restart-learn").addEventListener("click", restartStageLearning);
   $("btn-skip-question").addEventListener("click", skipCurrentQuestion);
   $("btn-skip-stage").addEventListener("click", skipWholeStage);
+  $("btn-restart-stage").addEventListener("click", restartWholeStage);
   $("btn-next").addEventListener("click", function(){
     if(practiceState){ advancePractice(); return; }
     if(previewState){ advanceEpisodePreview(); return; }
@@ -3958,6 +3963,72 @@
     }
   }
 
+  /* Testing only: put a place back to the state a learner meets it in.
+   *
+   * Distinct from the button beside it. "Skip stage" jumps forward to the
+   * unlock; this goes the other way, and further back than the existing
+   * 学ぶからやり直す, which restarts Day 1 but leaves the stage started, its
+   * episodes finished and its words mastered - so the intro, the boards and
+   * now the teaching step were never seen again. Every record that routes
+   * enterLocation past the beginning is cleared here, then the place is
+   * entered normally: whatever a first visit does, this does.
+   *
+   * Debug-only, and it says so before it acts, because on a real save this
+   * throws away a place's progress and there is no undo.
+   */
+  function restartWholeStage(){
+    var key = state.currentKey;
+    var loc = getLocation(key);
+    // The banner is on screen everywhere, the title and the map included, so
+    // say which place has no beginning to go back to rather than doing
+    // nothing and looking broken.
+    if(!loc){
+      // Guarded: these exist in every browser but not in the test harness,
+      // whose window is a plain object - an unguarded call throws there.
+      if(window.alert) window.alert("No place to restart - open one first.");
+      return;
+    }
+    if(window.confirm && !window.confirm("Restart " + (loc.label || loc.name || key)
+      + " from the beginning? This clears its progress on this save.")) return;
+
+    previewState = null;
+    practiceState = null;
+    savedEpisode = null;
+    clearRepairTimer();
+
+    if(loc.encounters) state.stageProgress.homeInn = null;
+    if(state.stageStarted) delete state.stageStarted[key];
+    if(state.masteredByStage) delete state.masteredByStage[key];
+    var stage = stageFor(key);
+    if(stage && state.episodesDone){
+      stage.episodes.forEach(function(episode){ delete state.episodesDone[episode.id]; });
+    }
+
+    state.challengeScore = 0;
+    state.challengeCorrectWords = {};
+    state.trainingCorrectWords = {};
+    state.challengeMisses = [];
+    state.reviewPasses = {};
+    state.dayMisses = {};
+    state.teachQueue = [];
+    state.teachIndex = 0;
+    state.encounterIndex = 0;
+    state.encounterMissed = false;
+    state.stageMastered = false;
+    state.resumedStageEntry = false;
+    state.resumedAfterDecline = false;
+    state.stageDeclined = false;
+    /* saveProgress() rebuilds the inn's resume record from live state
+     * whenever currentKey is the inn, so saving from here wrote straight back
+     * the record just cleared - the restart landed on Day 1 question 1 with
+     * the intro, the board and the teaching step all skipped, which is most
+     * of what there is to test. Saved as being nowhere; enterLocation sets
+     * the key again on the way in. */
+    state.currentKey = null;
+    saveProgress();
+    enterLocation(key);
+  }
+
   function restartStageLearning(){
     var loc = getLocation(state.currentKey);
     if(!loc || !loc.encounters) return;
@@ -4112,6 +4183,38 @@
     speak(prompt.jp, undefined, false, writtenPrompt);
   }
 
+  /* Kon's portrait, put into the slot the dialogue shell reserves for her.
+   *
+   * index.html ships that slot holding a gold circle with a fox emoji in it -
+   * a placeholder from before there was any art, and one that was never meant
+   * to be seen. It was: enterLocation was the only thing that replaced it, so
+   * every way into a scene that skips enterLocation - resuming straight into
+   * an episode, or a debug jump - showed the emoji instead of her. Installed
+   * at boot as well now, so the placeholder has no moment to appear in.
+   */
+  function installFoxAvatar(transparentFox){
+    var avatarSlot = $("avatar-slot");
+    var dialogueShell = $("dialogue-shell");
+    if(!avatarSlot) return;
+    if(dialogueShell) dialogueShell.classList.toggle("entrance-dialogue", !!transparentFox);
+    avatarSlot.classList.add("avatar-animated");
+    avatarSlot.classList.toggle("entrance-fox", !!transparentFox);
+    avatarSlot.innerHTML = '<div class="kon-photo-wrap"><img class="kon-photo" id="kon-photo-img" src="'
+      + ENTRANCE_FOX_POSES.idle + '" alt="Kon the fox spirit"><div class="live-mouth" aria-hidden="true"></div></div>';
+    activeFoxEl = avatarSlot;
+    activeFoxImgEl = $("kon-photo-img");
+    if(!transparentFox) return;
+    var transparentFoxStyle = LanternAlleyLogic.getTransparentFoxStyle();
+    activeFoxImgEl.style.boxShadow = transparentFoxStyle.boxShadow;
+    activeFoxImgEl.style.filter = transparentFoxStyle.filter;
+    var happyMouthStyle = LanternAlleyLogic.getHappyMouthStyle();
+    var liveMouthEl = avatarSlot.querySelector(".live-mouth");
+    liveMouthEl.style.left = happyMouthStyle.left;
+    liveMouthEl.style.top = happyMouthStyle.top;
+    liveMouthEl.style.borderRadius = happyMouthStyle.borderRadius;
+    liveMouthEl.style.background = happyMouthStyle.background;
+  }
+
   function enterLocation(key){
     var loc = getLocation(key);
     if(!loc) return;
@@ -4253,24 +4356,7 @@
     // avatarSlot/dialogueShell were already restored to #dialogue-shell at
     // the top of this function, before the home branch could displace them.
     var transparentFox = LanternAlleyLogic.shouldUseTransparentFox(loc.key, !!loc.encounters);
-    dialogueShell.classList.toggle("entrance-dialogue", transparentFox);
-    avatarSlot.classList.add("avatar-animated");
-    avatarSlot.classList.toggle("entrance-fox", transparentFox);
-    var initialFoxSrc = ENTRANCE_FOX_POSES.idle;
-    avatarSlot.innerHTML = '<div class="kon-photo-wrap"><img class="kon-photo" id="kon-photo-img" src="' + initialFoxSrc + '" alt="Kon the fox spirit"><div class="live-mouth" aria-hidden="true"></div></div>';
-    activeFoxEl = avatarSlot;
-    activeFoxImgEl = $("kon-photo-img");
-    if(transparentFox){
-      var transparentFoxStyle = LanternAlleyLogic.getTransparentFoxStyle();
-      activeFoxImgEl.style.boxShadow = transparentFoxStyle.boxShadow;
-      activeFoxImgEl.style.filter = transparentFoxStyle.filter;
-      var happyMouthStyle = LanternAlleyLogic.getHappyMouthStyle();
-      var liveMouthEl = avatarSlot.querySelector(".live-mouth");
-      liveMouthEl.style.left = happyMouthStyle.left;
-      liveMouthEl.style.top = happyMouthStyle.top;
-      liveMouthEl.style.borderRadius = happyMouthStyle.borderRadius;
-      liveMouthEl.style.background = happyMouthStyle.background;
-    }
+    installFoxAvatar(transparentFox);
 
     var prompt = getActivePrompt(loc);
     setAudioReplayControl(loc.encounters && state.stagePhase === "challenge");
