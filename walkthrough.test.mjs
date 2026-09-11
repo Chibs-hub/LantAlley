@@ -3334,3 +3334,34 @@ test("the list is mentioned once a day, not at every launch", () => {
   assert.equal(later.$("map-fix-nudge").hidden, true, "and it does not say it again today");
   assert.equal(later.$("map-detail-fix").hidden, false, "the count is still there");
 });
+
+
+test("the due count rides on the button that acts on it", () => {
+  /* It was a line of text reading 今日の復習 N 問, sitting between two real
+   * buttons - so it read as an entry point and was not one. Asked outright how
+   * to open it, which is the question a label that looks pressable and is not
+   * will always produce. The daily session already starts with the due words,
+   * so the count and the button were one feature described twice.
+   */
+  const game = boot(savedMissSeed(), "?skip=1");
+  game.$("btn-start").click();
+  game.clock.advance(900);
+
+  const practice = game.$("map-detail-practice");
+  assert.equal(practice.hidden, false);
+  assert.match(practice.textContent, /Daily practice - 2 due/,
+    "the button says how much is owed, saw " + practice.textContent);
+
+  // And the status line keeps the streak, which is the part a learner cannot
+  // act on and which is not describing a control.
+  assert.equal(game.$("map-day-status").textContent.includes("復習"), false,
+    "the count is not also a line of its own");
+
+  /* With nothing due it names the session length instead. A button reading
+   * "0 due" is a button asking to be pressed for nothing. */
+  const clear = boot(Object.assign(savedMissSeed(), {reviewProgress: {}}), "?skip=1");
+  clear.$("btn-start").click();
+  clear.clock.advance(900);
+  assert.match(clear.$("map-detail-practice").textContent, /Daily practice - 20 questions/);
+  assert.equal(clear.$("map-detail-fix").hidden, true, "and nothing is owed on the list either");
+});

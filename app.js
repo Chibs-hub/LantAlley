@@ -1856,7 +1856,19 @@
     if(canPractise){
       var sessionSize = typeof LanternDailyPractice !== "undefined"
         ? LanternDailyPractice.SESSION_SIZE : 20;
-      practiceBtn.textContent = "Daily practice - " + sessionSize + " questions";
+      /* The due count rides on the button that acts on it.
+       *
+       * It used to be a separate line of text reading 今日の復習 N 問, sitting
+       * between two real buttons - so it read as an entry point and was not
+       * one. Asked outright how to open it, which is the question a label
+       * that looks pressable and is not will always produce. The session
+       * already starts with the due words, oldest first, so the count and
+       * this button were one feature described twice.
+       */
+      var due = dueTodayCount();
+      practiceBtn.textContent = due > 0
+        ? "Daily practice - " + due + " due"
+        : "Daily practice - " + sessionSize + " questions";
     }
 
     /* The words still owed, counted on the button. A label alone would say
@@ -2006,8 +2018,9 @@
       bits.push("連続 " + state.streak + " 日目");
       if(state.freezes > 0) bits.push("お休みの札 " + state.freezes);
     }
-    var due = dueTodayCount();
-    if(due > 0) bits.push("今日の復習 " + due + " 問");
+    // The due count is on the Daily practice button now - see renderMap. A
+    // number a learner cannot act on belongs beside the action, not in a
+    // status line of its own.
     status.hidden = bits.length === 0;
     status.textContent = bits.join("　・　");
   }

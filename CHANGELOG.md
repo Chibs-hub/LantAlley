@@ -5,6 +5,16 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-10 - The due count moves onto the button that acts on it (v349)
+
+Asked outright how to open 今日の復習, which is the question a label that looks pressable and is not will always produce. It was a line of plain text in `#map-day-status`, sitting between two real buttons, reporting how many words the schedule wanted back today and offering no way to answer them.
+
+There was no missing screen. The daily session has always started with the due words, oldest due first, so the count and the Daily practice button were one feature described twice - and only one half of it could be pressed. The button reads **Daily practice - N due** when something is owed and **Daily practice - 20 questions** when nothing is, because a button reading "0 due" asks to be pressed for nothing. The status line keeps the streak, which is the part a learner cannot act on and which is not describing a control.
+
+Offered as one of two fixes; the other was a second button running only the due words. The owner picked this one, and it is the right half: every missed word is also a due word, so that button would have overlapped 直す言葉 on most days for a row that already holds two buttons and a nudge.
+
+Cache is v349; `node --test` passes (552).
+
 ### 2026-09-10 - 直す言葉: one list of the words still owed, from every place (v348)
 
 Requested: a simple spot outside the stages for the words that went wrong, gathered from every stage, workable until empty, with a way to strike one off by hand.
