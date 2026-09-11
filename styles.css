@@ -1595,7 +1595,9 @@
    an inline display on that button, and !important is what reliably beats it
    regardless of which write happens to land last. */
 .answer-workspace:has(.job-board) #hint-btn,
-.answer-workspace:has(.job-board) #hint-box{display:none!important;}
+.answer-workspace:has(.job-board) #hint-box,
+.answer-workspace:has(.teach-card) #hint-btn,
+.answer-workspace:has(.teach-card) #hint-box{display:none!important;}
 .job-board .episode-open-kicker,
 .job-board .episode-open-title,
 .job-board .episode-open-note{text-align:center;}
@@ -1626,6 +1628,30 @@
 .job-row.done .job-mark,
 .job-row.done .job-state{color:var(--moss);}
 .job-row.done .job-word{color:#3f5a34;}
+
+/* A word being taught is read, not scanned, so it is set at a size that
+   rewards looking at it - the boards already do the list-row version.
+   Cream like the board it follows, not one of the dark cards: the two are
+   consecutive screens and a palette flip between them reads as a different
+   part of the game rather than the next beat of the same one. */
+.teach-card{text-align:center;}
+.teach-count{margin:0 0 10px; color:#9a8b74; font-size:.7rem; font-weight:900; letter-spacing:.14em;}
+.teach-word{margin:0 0 6px; font-family:'Shippori Mincho',serif; font-size:2.2rem; line-height:1.4; color:#2d2926;}
+.teach-word rt{font-size:.32em; color:#7a6752;}
+.teach-sense{margin:0 0 14px; color:#6b5844; font-size:.86rem; line-height:1.4;}
+/* The pattern is the part that makes an N2 word usable, so it gets the chip
+   rather than a line of body text that the eye slides past. */
+.teach-pattern{
+  display:inline-block; margin:0 0 16px; padding:5px 14px;
+  border:1px solid rgba(154,95,48,.4); border-radius:999px;
+  background:rgba(154,95,48,.12);
+  color:#8a5a2b; font-size:.92rem; font-weight:800;
+}
+.teach-sentence{margin:0 0 18px; font-size:1.1rem; line-height:1.95; color:#3f3125;}
+/* The word is highlighted where it stands rather than repeated underneath,
+   so what is learned is the word doing its job in a sentence. */
+.teach-focus{color:#9a5f30; font-weight:700; border-bottom:2px solid rgba(154,95,48,.45);}
+.teach-card .btn{display:block; margin:0 auto;}
 
 /* A question being asked again because it was missed says so, plainly and
    before the request. The same task twice with nothing marking it is the

@@ -711,7 +711,10 @@ function beginDay(game) {
  * that the second episode is actually reachable by playing. Neither solves
  * anything cleverly - wrong answers are fine.
  */
-async function enterTheInn(game) {
+// Lands on the Inn's first scored task. Day 1 now teaches its five words
+// first, so the helper walks those cards; a test about the teaching itself
+// passes {stopAtTeaching:true} and is handed the first card instead.
+async function enterTheInn(game, opts) {
   game.$("btn-start").click();
   game.clock.advance(500);
 
@@ -743,6 +746,14 @@ async function enterTheInn(game) {
   // The five words are named as the stage opens, before anything is played.
   const openingBoard = game.$("btn-jobs-begin");
   if (openingBoard) { openingBoard.click(); game.clock.advance(900); }
+  if (!(opts && opts.stopAtTeaching)) {
+    for (let taught = 0; taught < 10; taught += 1) {
+      const next = game.$("btn-teach-next");
+      if (!next) break;
+      next.click();
+      game.clock.advance(900);
+    }
+  }
   await tick();
 }
 
@@ -2867,3 +2878,17 @@ test("feedback only claims it was sent when it could be sent", () => {
     "a configured build still confirms the send");
 });
 
+
+test("the Inn teaches each word before the first question that scores it", async () => {
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game, {stopAtTeaching:true});
+
+  const card = game.doc.querySelector(".teach-card");
+  assert.ok(card, "a word is taught before it is asked about");
+  assert.ok(card.textContent.includes("\u63c3\u3048\u308b"), "the first word is the first encounter's word");
+  assert.ok(card.textContent.includes("\u301c\u3092\u63c3\u3048\u308b"), "the pattern is shown, not just the gloss");
+  assert.ok(game.doc.querySelector(".teach-focus"),
+    "the word is highlighted inside its sentence, not only glossed beside it");
+  assert.equal(game.doc.querySelectorAll(".teach-card img").length, 0,
+    "no artwork exists yet and the card must not leave a broken slot");
+});

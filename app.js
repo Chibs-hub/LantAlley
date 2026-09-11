@@ -130,6 +130,10 @@
     answered:false,
     acting:false,
     encounterIndex:0,
+    // The words still to be taught before Day 1 starts scoring them, and how
+    // far through that queue the learner is. Empty outside the teaching step.
+    teachQueue:[],
+    teachIndex:0,
     // Whether the current encounter has already been answered wrongly. Learn
     // and Practice retry without limit, so without this a learner who taps
     // every option in turn ends up credited exactly like one who knew the
@@ -1955,6 +1959,12 @@
       // question of a day over and over against a board nobody pressed.
       var begin = $("btn-jobs-begin");
       if(begin) begin.click();
+      // Day 1 now teaches its five words before asking about any of them.
+      for(var taught = 0; taught < 10; taught++){
+        var next = $("btn-teach-next");
+        if(!next) break;
+        next.click();
+      }
     }
   }
 
@@ -3643,7 +3653,68 @@
     $("next-row").style.display = "none";
     $("btn-jobs-begin").addEventListener("click", function(event){
       event.stopImmediatePropagation();
+      /* Day 1 teaches before it asks. The board names the five words; it does
+       * not teach any of them, and the next thing after it used to be a
+       * scored question about the first. A word already credited is skipped:
+       * a learner resuming Day 1 is not taught what they have shown they
+       * know. */
+      if(phase === "learn" && loc.getTeaching){
+        state.teachQueue = loc.encounters.filter(function(item){
+          return !state.trainingCorrectWords[item.focusWord];
+        }).map(function(item){ return item.focusWord; });
+        state.teachIndex = 0;
+        if(state.teachQueue.length){ renderTeachingCard(loc); return; }
+      }
       startStagePhase(loc, phase, null, startIndex || 0);
+    });
+  }
+
+  /* One word, taught, before anything scores it.
+   *
+   * The boards name the five words and the margin card in Day 1 repeats word,
+   * reading and gloss while the learner is already being scored. Neither
+   * teaches. This does: the word at a size worth reading, the authored
+   * sentence with the word highlighted where it stands, and the pattern it
+   * lives in - which is the part of an N2 word that makes it usable.
+   */
+  function renderTeachingCard(loc){
+    var word = state.teachQueue[state.teachIndex];
+    if(!word){ startStagePhase(loc, "learn"); return; }
+    var targetId = loc.getTargetId ? loc.getTargetId(word) : null;
+    var item = targetId && typeof LanternCurriculumCatalog !== "undefined"
+      ? LanternCurriculumCatalog.getItem(targetId) : null;
+    var entry = loc.getTeaching ? loc.getTeaching(word) : null;
+    var sense = loc.getCardSense ? loc.getCardSense(word) : null;
+    var card = (typeof LanternWordTeaching !== "undefined")
+      ? LanternWordTeaching.buildCard(entry, item, sense) : null;
+    // A word with no authored sentence is a content bug caught by a test, but
+    // a learner mid-stage should still move rather than meet a blank screen.
+    if(!card){ state.teachIndex += 1; renderTeachingCard(loc); return; }
+
+    $("stage-phase-badge").textContent = "あたらしい言葉";
+    $("jp-line").textContent = "コン：「まず、この言葉を覚えましょう。」";
+    $("romaji-line").textContent = "";
+    $("meaning-line").classList.remove("show");
+    $("feedback-row").classList.remove("show");
+    $("next-row").style.display = "none";
+
+    /* The same cream panel the job board sits on. Without the wrapper the
+     * card was transparent text over the tatami photograph, which on a phone
+     * was simply unreadable - verified in the browser, not assumed. */
+    $("scene").innerHTML = '<div class="episode-open"><div class="episode-open-card teach-card">'
+      + '<p class="teach-count">' + (state.teachIndex + 1) + ' / ' + state.teachQueue.length + '</p>'
+      + '<p class="teach-word"><ruby>' + card.word + '<rt>' + card.reading + '</rt></ruby></p>'
+      + '<p class="teach-sense" lang="en">' + card.sense + '</p>'
+      + '<p class="teach-pattern">' + card.pattern + '</p>'
+      + '<p class="teach-sentence">' + card.before
+      + '<span class="teach-focus">' + card.focus + '</span>' + card.after + '</p>'
+      + '<button class="btn btn-primary" id="btn-teach-next">つぎへ</button>'
+      + '</div></div>';
+
+    $("btn-teach-next").addEventListener("click", function(event){
+      event.stopImmediatePropagation();
+      state.teachIndex += 1;
+      renderTeachingCard(loc);
     });
   }
 
