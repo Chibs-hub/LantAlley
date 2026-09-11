@@ -5,6 +5,14 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-11 - Debug Mode goes back on the menu (v356)
+
+v354 hid the Debug Mode entry until `?debug=1` was already in the URL, so that a learner opening the menu was not offered a developer toggle. The owner uses it, and while this is a beta the people opening that menu are the people testing the game: making them edit a URL to reach the switch costs more than the switch costs anyone else. It is visible again whenever the build ships with debug compiled in.
+
+`available` in `debug-mode.js` is still the release switch, and setting it to false still removes the entry, the banner and the `?debug=1` URLs together. That is the line to flip on the day this stops being a beta.
+
+Cache is v356.
+
 ### 2026-09-11 - The alley is lit; the interface is what the light touches (v355)
 
 The opening screen was three visual languages at once: a painted night village, a front-lit plush fox cut out on top of it, and a glossy orange pill button that could have come from any app. This is one scene instead.

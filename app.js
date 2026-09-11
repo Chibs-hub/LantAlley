@@ -926,14 +926,14 @@
     url.hash = "";
     window.location.href = url.href;
   }
-  /* Debug Mode is a tester's switch, and the menu is a learner's menu. The
-   * button used to appear for everyone the build shipped with debug compiled
-   * in, which is every build - so a learner opening About was offered a
-   * developer toggle. It now shows only once debug is actually on, which is
-   * reached the way a tester reaches it anyway, with ?debug=1, and the button
-   * is what turns it back off. Setting `available` to false in debug-mode.js
-   * still removes it from the build entirely. */
-  $("btn-debug-mode").hidden = !(window.LanternDebug && window.LanternDebug.available && debugEnabled);
+  /* Debug Mode stays on the menu while this is a beta the owner is testing.
+   * v355 hid it until ?debug=1 was already in the URL, on the grounds that a
+   * learner should not be offered a developer toggle - true at release, and
+   * the wrong trade now: the people opening this menu are testing the game,
+   * and making them edit the URL to reach the switch costs them more than the
+   * switch costs a learner. `available` in debug-mode.js is the release
+   * switch, and setting it to false still removes this entirely. */
+  $("btn-debug-mode").hidden = !(window.LanternDebug && window.LanternDebug.available);
   $("btn-debug-mode").textContent = "Debug Mode: " + (debugEnabled ? "On" : "Off");
   $("btn-debug-mode").setAttribute("aria-pressed", String(debugEnabled));
   $("btn-debug-mode").addEventListener("click", function(){ switchDebugMode(!debugEnabled); });
