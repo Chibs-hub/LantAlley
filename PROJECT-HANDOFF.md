@@ -1,6 +1,6 @@
 # Lantern Alley Project Handoff
 
-Last updated: 2026-09-10
+Last updated: 2026-09-10 (v348)
 
 A browser game that teaches JLPT N2 Japanese. Vanilla JS, CSS and HTML, no build step, no framework, offline-capable.
 
@@ -20,42 +20,59 @@ Sections 1, 3, 4, 5, 6, 8, 13, 14 and 15 are reference: what the game is, how it
 
 ## 0. Current status
 
-**Current home repair: v336, local and not pushed.** See the
-[shelf support handoff](docs/handoffs/2026-09-10-v336-shelf-support.md).
-Staggered-board placement, object clearance, contact shadows, and matching
-furniture lighting are repaired. Desktop and phone-width browser renders
-were inspected. The final full suite passed 528/528; independent review found
-no blockers. Preserve concurrent placement-scroll work.
-The v326/v325/v324 notes below are historical, not the current asset inventory.
+**Live at v348, pushed.** `codex/inn-learning-redesign` is the working branch;
+master is frozen. The deployed site is the repository - GitHub Pages serves the
+branch, so a shell file that is not committed is a 404 that kills the service
+worker install for every tester. `pwa.test.mjs` asks `git ls-files` rather than
+the disk for exactly that reason.
 
-**Resume here:** [v326 focused handoff](docs/handoffs/2026-09-10-v326-debug-home.md)
-lists completed work, verification limits, and the still-open wallpaper and
-shelf/room-layout requests.
+`node --test` passes 551. Every version from v339 to v348 was verified in a
+browser as well as by the suite; the changelog entry for each one says what was
+checked and what was not.
 
-**Latest local candidate: v326 (supersedes the v325/v324 notes below).** Debug
-Mode is available from the opening Menu, with separate save keys, full test
-inventory, mature plants, cat, skip controls and an Exit debug banner. Normal
-progress and analytics are isolated. The Inn starts directly with guided Day 1;
-old cold-start saves resume there. Wallpaper masks are now embedded in CSS.
-The final full suite passes 525/525, including debug import/restock coverage;
-syntax and diff checks pass. No commit or push. These are automated checks,
-not live browser or mobile verification.
+**What changed across v339-v348**, newest first. Full reasons in
+[CHANGELOG.md](CHANGELOG.md).
 
-**Open user follow-ups:** all wallpaper designs reportedly fail to show in the
-user's browser. Local selection/save tests pass, but the exact testing URL/build
-has not been supplied (the user confirmed it affects all designs). Live rendering
-must still be checked. The room's shelf slots have no physical shelf, and some
-placeholder objects use inflated sizes. Existing shelf/cabinet images have been
-inspected; propose real shelf-top placements and scale corrections before building
-that layout. No new shelf art is necessary for the proposed approach.
+| Version | What it did |
+| --- | --- |
+| v348 | 直す言葉: one list of the words still owed, from every place. Answer one right and it leaves the list; the schedule still brings it back. Six options, not four. Count on the map plus one line a day, not a dialog at launch. |
+| v347 | The Inn teaches all forty of its words, a block of the shift at a time (three cards, three guests) rather than twenty screens up front. |
+| v346 | Teaching runs in its own order, not the order the day asks in. The card gets the whole width; Kon's panel is hidden on it. |
+| v345 | Day 3 has its own hour of the day instead of replaying Day 1's. Five narrations rewritten, audio regenerated. |
+| v344 | The episode teaches the five words its board calls new, before its clock starts. |
+| v343 | A handover screen between the teaching and Day 1. Kon stopped wearing the pre-art placeholder's gold disc. |
+| v342 | Kon's portrait installed at boot, so no path shows the fox emoji. Debug banner gained **Restart stage**. |
+| v341 | The update notice is a dialog, and two bugs that were hiding it are fixed. |
+| v340 | The teaching check asks for the meaning, and a right answer is marked and moves on. |
+| v339 | The review ladder gained 30- and 90-day rungs. The Inn teaches a word before it scores it. The cold open, unreachable since v326, is gone. |
 
-**Latest local candidate: v325.** Home wallpaper now uses paper-panel masks, not an upper-room rectangle. The six solid sliding-door panels can change; timber, shoji, open doorways and floor cannot. Daylight and evening/night use separate masks to match their artwork. All 73 targeted home-decor, wallpaper-boundary and PWA tests pass, and offline composited previews were visually checked. Live browser/mobile verification remains open because the local server is unavailable. Uncommitted and not pushed. The v324 work and its earlier full-suite evidence below are preserved as background; current cache and URL stamps are v325.
+**The teaching step, since it is the newest system.** A word is taught on a card
+- word, reading, gloss, the pattern it lives in, and an authored sentence with
+the word highlighted where it stands - then checked once, unscored. A stage
+gains the step by exporting `TEACHING` and `getTeaching`; `startTeaching` and
+`teachBlockIfNeeded` in app.js need nothing per place. The Inn has all forty of
+its words. **The other four places have none of theirs: 160 words**, listed in
+[the teaching-sentences handoff](docs/handoffs/2026-09-10-teaching-sentences.md).
 
-**Current candidate: v324 on `codex/inn-learning-redesign`; do not merge or push it to `master` until the owner has confirmed the new journey is better.** The v324 pre-beta polish is local and uncommitted. It gives the tester build a project-native PWA identity: the icon family and social preview are composed from `assets/map/lantern-alley-map-HQ.png` and `assets/home/decor/floor-lantern-v1.webp`, not an unrelated generated illustration. The title screen has one primary alley-entry action, a compact keyboard-accessible Menu for Save data, About, and Start over, and an install action only when installation is actually available. Tester-facing utility chrome uses English while Japanese world names and lesson material remain untouched. Review corrections keep the lantern readable in maskable icons, version the manifest icon URLs so installed Chromium apps detect the replacement, and return keyboard focus from every title dialog to the visible Menu trigger. Phone feedback rules are present for active feedback, Continue, and update docks, but remain inside the served-browser gate below.
+**Awaiting native review** (the owner reviews Japanese after authoring, not
+during): the Inn's forty teaching sentences and patterns, Day 3's five
+rewritten narrations, and the correction list's chrome. The older backlog in
+section 11-A still stands.
 
-**Evidence at this point:** `node --test` passes 523/523; `node --check app.js`, the PWA identity and metadata tests, and `git diff --check` pass; and a read-only temporary-copy balance run verified all 200 authored questions at 25% / 25% / 25% / 25% answer positions and 50% / 50% repair positions. The normal, maskable, Apple touch, and social images were visually inspected at their native dimensions. Full self-hosting of the current Japanese font set was evaluated and deferred: the six required official OFL font files total 36.3 MB before a bespoke subset build, which is too large for the offline shell. The cache is `lantern-alley-v324` and all local asset stamps agree.
+**Open user follow-up:** all wallpaper designs were reported as failing to show
+in the owner's browser. Local selection and save tests pass and the exact build
+under test was never pinned down, so live rendering is still unconfirmed. The
+shelf half of this note is done - v336 through v338 built the 違い棚, its eight
+staggered slots and the object clearance, and the six placeholder objects were
+replaced with photographs.
 
-**Still required before calling v324 visually verified:** serve this exact working tree and inspect the title Menu, feedback coexistence, share metadata, and Inn target labels at desktop, 320x568, 375x667, and 390x844; then check console and failed network requests. The local test server was unavailable during this pass, so these browser checks remain open rather than being described as done. Preserve `.codex-remote-attachments/` as user-owned files and do not stage it.
+Superseded candidate notes for v324 and v325 were removed on 2026-09-10: they
+claimed work was uncommitted and unpushed that has since shipped. The history is
+in [CHANGELOG.md](CHANGELOG.md), which is where section 12 says it belongs.
+
+
+
+
 
 **Current Inn journey:** Moonview Inn has a finite five-stop journey: its three-day training, then Episodes 1 through 4. The strip makes the current stop, completed work and next locked reward visible without showing an overwhelming course total. Training earns a floor cushion and +25 yen; the first three episodes earn a camellia seed, hanging scroll and floor lantern; Episode 4 alone unlocks the cat. Fresh homes are empty, show only the next useful reward action, and never give those items or the cat for free. Legacy saves keep a cat already owned before this system was introduced. The reward screen pauses deferred advancement until the learner chooses to continue or visit home. It was checked in the live Inn at desktop and narrow layouts.
 
@@ -431,17 +448,16 @@ Grouped by **who can actually do it**, because most of what is left is not code 
 
    | Line | Where |
    | --- | --- |
-   | コン：「あっ、もうお客様がいらっしゃいました。さっそくですが、お願いします。」 | `n2-home-inn-stage.js`, `DAY_ANNOUNCEMENTS.coldopen` |
-   | コン：「大丈夫ですよ。お客様は私が。三日ありますから、一緒に覚えていきましょう。」 | `n2-home-inn-stage.js`, `coldOpen.wrongReply` |
-   | コン：「よくご存じですね。では、残りの言葉も見ていきましょう。」 | `n2-home-inn-stage.js`, `coldOpen.correctReply` |
-   | はじめの仕事 / ためし | `n2-home-inn-stage.js`, `DAY_META.coldopen` |
-   | けっこうです。 / ここからが練習です。 | `app.js`, `resolveColdOpen` |
-   | 一日目をはじめる → | `app.js`, `resolveColdOpen` |
    | 不正解 | `app.js`, retryable Inn miss feedback |
    | 明日、この五つの言葉をもう一度たしかめましょう。 | `app.js`, the stage's mastery message |
    | この路地の灯りは消えています。場所の言葉をすべて覚えると、灯りがひとつ戻ります。 | `app.js`, `renderMap`, `#map-goal-note` |
    | 学ぶからやり直す / 問題 N / M / ヒントを見る / あたらしい言葉 / あなた / 男性 / 女性 / 使う姿をえらぶ | `index.html` and `app.js` chrome |
    | お客様が来る前に / 洗面所で / お茶が冷めてしまった / 明日の予定を立てる / 夕食の配膳 / 月見宿・N2 | `n2-home-inn-stage.js`, encounter and stage labels |
+   | The forty teaching sentences and patterns, 揃える through 務める | `n2-home-inn-stage.js`, `TEACHING` (v339, v344, v347) |
+   | Day 3's five narrations: 三日目の朝 / 午前のうちに / 昼過ぎ / 夕方の支度 / 夜も遅く | `n2-home-inn-stage.js`, `evidenceNarrationsB` (v345, audio regenerated) |
+   | コン：「五つとも見ましたね。では、仕事をはじめましょう。」 / 覚えた言葉 / 五つの言葉 / ここからは仕事です。… | `app.js`, `renderTeachingHandover` (v343) |
+   | まず、この言葉を覚えましょう。 / どの意味ですか。 / そうです。 / 正しい意味は「…」です。 | `app.js`, the teaching card and its check (v339-v346) |
+   | 直す言葉 / 今は空です / もう大丈夫 / 一回正しく答えられたら、このリストから消します。 / コン：「直す言葉が N 語あります。…」 | `app.js`, the correction list and its nudge (v348) |
    | コン：「お客様が部屋で休んでいる間に、明日の予定を決めておきましょう。お客様のチェックアウト時刻と、次のお客様の到着時刻を確認して、掃除を始める時間を調整してください。」 | `n2-home-inn-stage.js`, the 調整 encounter's `narration` (rewritten 2026-09-04, see below) |
    | お客様は12時にチェックアウトするそうです。チェックアウトの1時間後から掃除ができます。掃除には2時間必要です。次のお客様は15時に到着します。掃除を始める時間を調整してください。 | `n2-home-inn-stage.js`, the 調整 encounter's `jp` (rewritten 2026-09-04) |
    | ありがとうございます。掃除を13時に始めるよう調整できました。これで次のお客様の到着にも間に合います。 | `n2-home-inn-stage.js`, the 調整 encounter's `successReply` (rewritten 2026-09-04) |
