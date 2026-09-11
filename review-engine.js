@@ -75,10 +75,6 @@
     };
   }
 
-  function sameDay(a, b){
-    return Math.floor(a / DAY) === Math.floor(b / DAY);
-  }
-
   function recordOutcome(progress, outcome){
     var next = {};
     Object.keys(progress || {}).forEach(function(key){ next[key] = progress[key]; });
@@ -105,7 +101,8 @@
 
     // Repeating an item minutes after getting it right is recognition, not
     // retrieval, so it neither advances the schedule nor counts toward mastery.
-    var isDelayed = !!previous && !sameDay(previous.lastAnswered, now);
+    var isDelayed = !!previous && now >= previous.due
+      && now - previous.lastAnswered >= DAY && !outcome.immediate;
     var step = previous ? previous.step : 0;
     if(isDelayed){
       delayed += 1;
@@ -119,7 +116,8 @@
       lastAnswered: now,
       delayedSuccesses: delayed,
       lastDelayedSuccess: lastDelayed,
-      due: now + INTERVALS[step] * DAY,
+      due: previous && !previous.errorTag && now < previous.due
+        ? previous.due : now + INTERVALS[step] * DAY,
       errorTag: null
     };
     return next;

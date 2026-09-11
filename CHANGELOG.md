@@ -5,6 +5,28 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-11 - Teaching and review reliability audit (v350)
+
+Teaching cards now receive focus, settled answers are disabled but readable,
+and wrong-answer feedback scrolls with its Continue button. Phone answer
+targets are at least 48px. Study screens no longer say "Answer here"; recaps
+count the actual words. Leaving a check cancels its stale visual advance.
+Episode teaching saves its card and completed blocks without granting mastery.
+
+Practice saves every answer even after the daily coin cap. Scheduled words
+stay out of filler. Early correct repetition preserves a future due date and
+does not earn delayed credit; a due answer reschedules even if too recent to
+advance. Repairs clear the saved miss without delayed credit, and reloading
+an empty repair queue returns to completion instead of replaying a question.
+
+Browser checks: 320px and 390px teaching; 320px garden tray, Sakura placement,
+and wallpaper painting. Feedback yields to mobile teaching and decorating.
+Regression tests were added for each reproduced state defect. Held local
+pending permission, then reviewed and released: 562 tests pass, all four
+changed scripts parse, the service-worker shell test confirms nothing in the
+shell is untracked, and the v349 work underneath is intact rather than
+reverted.
+
 ### 2026-09-10 - The due count moves onto the button that acts on it (v349)
 
 Asked outright how to open 今日の復習, which is the question a label that looks pressable and is not will always produce. It was a line of plain text in `#map-day-status`, sitting between two real buttons, reporting how many words the schedule wanted back today and offering no way to answer them.

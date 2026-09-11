@@ -2600,8 +2600,11 @@
     }
 
     if(cards.length < size){
+      var fillerProgress = practiceProgress();
+      fillerProgress.excluded = Object.keys(state.reviewProgress || {});
+      // Scheduled words belong to the due pass above, not the filler pass.
       var filler = LanternCatalogPractice.getPracticeSession(
-        keys, practiceProgress(), LanternCurriculumCatalog, size - cards.length);
+        keys, fillerProgress, LanternCurriculumCatalog, size - cards.length);
       filler.forEach(function(card){ if(!used[card.target]) cards.push(card); });
     }
     return cards;
@@ -2860,6 +2863,8 @@
           id: card.target, correct: right, now: Date.now()
         });
         if(right) earnPracticeCoins(1);
+        // Saving learning progress must not depend on a coin payout.
+        saveProgress();
         $("jp-line").textContent = "「" + item.canonical + "」（" + item.reading + "）" + (item.meanings[0] || "");
         showFeedback(right, right ? "正解です。"
           : "正しい答えは「" + card.options[card.correctIndex] + "」です。");
@@ -2987,6 +2992,8 @@
       // Saved beside the question ids because the correction round empties
       // those, and the hour still has to be able to name what went wrong.
       missedTargets: (previewState.missedTargets || []).slice(),
+      taughtBlocks: Object.assign({}, previewState.taughtBlocks || {}),
+      teaching: previewState.teaching || null,
       inRepair: !!previewState.repair,
       repairQueue: previewState.repair ? previewState.repair.queue.slice() : []
     };
@@ -3016,16 +3023,18 @@
       answered: false,
       missed: (savedEpisode.missed || []).slice(),
       missedTargets: (savedEpisode.missedTargets || []).slice(),
+      taughtBlocks: Object.assign({}, savedEpisode.taughtBlocks || {}),
+      teaching: savedEpisode.teaching || null,
       repair: null
     };
     screenTitle.style.display = "none";
     screenMap.style.display = "none";
     screenGame.style.display = "block";
     screenGame.classList.remove("entrance-stage");
-    if(savedEpisode.inRepair && (savedEpisode.repairQueue || []).length){
+    if(savedEpisode.inRepair){
       var byId = {};
       list.forEach(function(entry){ byId[entry.question.id] = entry.question; });
-      previewState.repair = {queue: savedEpisode.repairQueue.slice(), byId: byId, timer:null, tick:null};
+      previewState.repair = {queue: (savedEpisode.repairQueue || []).slice(), byId: byId, timer:null, tick:null};
       renderRepairCard();
       return true;
     }
@@ -3325,7 +3334,6 @@
     var label = entry.label || "";
     if(!previewState.taughtBlocks) previewState.taughtBlocks = {};
     if(previewState.taughtBlocks[label]) return false;
-    previewState.taughtBlocks[label] = true;
 
     var known = (state.masteredByStage || {})[state.currentKey] || [];
     var seen = {};
@@ -3340,18 +3348,26 @@
       if(!item || !loc.getTeaching(item.canonical)) return;
       queue.push({word:item.canonical, target:id});
     });
-    if(!queue.length) return false;
+    if(!queue.length){ previewState.taughtBlocks[label] = true; return false; }
     // Not in the order the block asks, for the same reason the days teach in
     // their own order: straight down the list makes the first guest a recital.
     if(queue.length > 1) queue = queue.slice(1).concat(queue.slice(0, 1));
 
     var first = previewState.index === 0;
     return startTeaching(loc, queue, {
+      block: label,
+      startIndex: previewState.teaching && previewState.teaching.label === label
+        ? previewState.teaching.index : 0,
       badge:"今夜の言葉",
       note:first ? "ここからは本番です。時間内に答えてください。"
         : "この言葉を使って、仕事の続きをしましょう。",
       button:first ? "受付を始めます" : "仕事に戻ります",
-      then:function(){ renderPreviewQuestion(); }
+      then:function(){
+        previewState.taughtBlocks[label] = true;
+        previewState.teaching = null;
+        rememberEpisode();
+        renderPreviewQuestion();
+      }
     });
   }
 
@@ -3789,6 +3805,12 @@
     rememberEpisode();
 
     if(outcome === "correct"){
+      if(repairedQuestion){
+        state.reviewProgress = LanternReviewEngine.recordOutcome(state.reviewProgress || {}, {
+          id: repairedQuestion.target, correct: true, now: Date.now(), immediate: true
+        });
+        saveProgress();
+      }
       if(repairedQuestion) markMastered(state.currentKey, repairedQuestion.target);
       var repairPay = rewardCorrect(cardId, "review");
       showFeedback(true, "正解です。" + (repairPay ? " +¥" + repairPay : ""));
@@ -4142,6 +4164,16 @@
   // the screen that hands over. Null whenever no teaching is running.
   var teachHandover = null;
 
+  function focusTeaching(selector){
+    var target = $("scene").querySelector(selector);
+    if(!target) return;
+    target.setAttribute("tabindex", "-1");
+    target.focus({ preventScroll: true });
+    var region = selector === ".teach-answer"
+      ? $("scene").querySelector(".teach-answer-slot") : target;
+    region.scrollIntoView({ block: "nearest" });
+  }
+
   /* A stable order for one word's wrong answers.
    *
    * Stable so the same card offers the same four choices however many times
@@ -4176,6 +4208,9 @@
     state.teachQueue = entries || [];
     state.teachIndex = 0;
     teachHandover = handover || null;
+    if(handover && Number.isInteger(handover.startIndex)){
+      state.teachIndex = Math.max(0, Math.min(handover.startIndex, state.teachQueue.length));
+    }
     if(!state.teachQueue.length){
       finishTeaching();
       return false;
@@ -4193,6 +4228,10 @@
   }
 
   function renderTeachingCard(loc){
+    if(previewState && teachHandover && teachHandover.block !== undefined){
+      previewState.teaching = {label: teachHandover.block, index: state.teachIndex};
+      rememberEpisode();
+    }
     var queued = state.teachQueue[state.teachIndex];
     // Taught nothing - every word already credited - so there is nothing to
     // hand over from and the caller's own next screen comes straight up.
@@ -4241,6 +4280,7 @@
       event.stopImmediatePropagation();
       renderTeachingCheck(loc, card);
     });
+    focusTeaching(".teach-word");
   }
 
   /* One retrieval attempt, immediately, worth nothing.
@@ -4268,7 +4308,7 @@
     var taught = state.teachQueue.map(function(row){ return row.word; });
     $("stage-phase-badge").textContent = copy.badge
       || (meta ? meta.label + "・" + meta.mode + " " + meta.stars : "一日目");
-    $("jp-line").textContent = "コン：「五つとも見ましたね。では、仕事をはじめましょう。」";
+    $("jp-line").textContent = "Study complete. Now use these words.";
     $("romaji-line").textContent = "";
     $("romaji-line").style.display = "none";
     $("meaning-line").classList.remove("show");
@@ -4277,7 +4317,7 @@
 
     $("scene").innerHTML = '<div class="episode-open"><div class="episode-open-card teach-card">'
       + '<p class="episode-open-kicker">覚えた言葉</p>'
-      + '<h2 class="episode-open-title">五つの言葉</h2>'
+      + '<h2 class="episode-open-title" lang="en">' + taught.length + ' words studied</h2>'
       + '<ul class="teach-recap">' + taught.map(function(item){
           // Its own class rather than a ".teach-recap li" selector: the test
           // harness has no descendant combinator, so a two-part selector
@@ -4295,6 +4335,7 @@
       event.stopImmediatePropagation();
       finishTeaching();
     });
+    focusTeaching(".episode-open-title");
   }
 
   function renderTeachingCheck(loc, card){
@@ -4353,6 +4394,9 @@
         var check = $("scene").querySelector(".teach-check");
         if(!check || check.className.indexOf("is-answered") >= 0) return;
         check.className += " is-answered";
+        $("scene").querySelectorAll(".teach-option").forEach(function(option){
+          option.disabled = true;
+        });
         var right = button.getAttribute("data-correct") === "1";
         // Which one they chose, left on screen. Without this the answer line
         // says what was right with nothing showing what was picked, so a
@@ -4370,6 +4414,8 @@
           button.innerHTML = button.innerHTML
             + '<span class="teach-mark" role="status" aria-label="正解">✓</span>';
           setTimeout(function(){
+            if($("screen-game").style.display === "none"
+              || $("scene").querySelector(".teach-check") !== check) return;
             state.teachIndex += 1;
             renderTeachingCard(loc);
           }, TEACH_ADVANCE_MS);
@@ -4383,8 +4429,10 @@
           state.teachIndex += 1;
           renderTeachingCard(loc);
         });
+        focusTeaching(".teach-answer");
       });
     });
+    focusTeaching(".teach-word");
   }
 
   function startStagePhase(loc, phase, items, startIndex){

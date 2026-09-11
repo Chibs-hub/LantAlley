@@ -1717,6 +1717,11 @@
    consecutive screens and a palette flip between them reads as a different
    part of the game rather than the next beat of the same one. */
 .teach-card{text-align:center;}
+.answer-workspace:has(.teach-card) .inn-focus-cue{display:none!important;}
+@media(max-width:760px){
+  body:has(#screen-game[style*="display: block"] .teach-card) .feedback-open{visibility:hidden;pointer-events:none;}
+  body:has(#home-shelf button) .feedback-open{visibility:hidden;pointer-events:none;}
+}
 .teach-count{margin:0 0 10px; color:#9a8b74; font-size:.7rem; font-weight:900; letter-spacing:.14em;}
 .teach-lead{margin:0 0 14px; color:#6b5844; font-size:.9rem; line-height:1.5;}
 .teach-word{margin:0 0 6px; font-family:'Shippori Mincho',serif; font-size:2.2rem; line-height:1.4; color:#2d2926;}
@@ -1746,8 +1751,11 @@
 /* English options, so the body font rather than the Japanese serif, and left
    aligned - a gloss like "adjustment, coordination" is a phrase to read, and
    centred phrases of different lengths have no common edge to scan down. */
-.teach-card .teach-option{display:block; width:100%; margin:0; font-size:.95rem; line-height:1.4; padding:11px 16px; text-align:left;}
+.teach-card .teach-option{display:block; width:100%; min-height:48px; margin:0; font-size:.95rem; line-height:1.4; padding:11px 16px; text-align:left;}
 .teach-check.is-answered .teach-option{pointer-events:none;}
+.teach-check.is-answered .teach-option:disabled{opacity:1;}
+.teach-check.is-answered .teach-option:disabled:not(.is-picked){color:#3e3428;}
+.teach-answer-slot{scroll-margin-bottom:16px;}
 .teach-answer{margin:16px 0 12px; font-size:1rem; color:#8a5a2b;}
 /* The five words, listed once more as the studying ends. Rows rather than a
    sentence: it is a list being checked off, not prose. */

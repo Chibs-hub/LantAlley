@@ -14,6 +14,35 @@ function load() {
 const DAY = 86400000;
 const T0 = Date.UTC(2026, 7, 25, 9, 0, 0);
 
+test("early practice neither advances nor postpones a scheduled review", () => {
+  const review = load();
+  let progress = review.recordOutcome({}, {id: "v-x", correct: true, now: T0});
+  progress = review.recordOutcome(progress, {id: "v-x", correct: true, now: T0 + DAY});
+  const due = progress["v-x"].due;
+  progress = review.recordOutcome(progress, {id: "v-x", correct: true, now: T0 + 2 * DAY});
+  assert.equal(progress["v-x"].step, 1);
+  assert.equal(progress["v-x"].delayedSuccesses, 1);
+  assert.equal(progress["v-x"].due, due);
+});
+
+test("crossing midnight alone is not delayed retrieval", () => {
+  const review = load();
+  const late = Date.UTC(2026, 7, 25, 23, 59);
+  let progress = review.recordOutcome({}, {id: "v-x", correct: true, now: late});
+  progress = review.recordOutcome(progress, {id: "v-x", correct: true, now: late + 120000});
+  assert.equal(progress["v-x"].delayedSuccesses, 0);
+});
+
+test("a due success after recent practice schedules another review without advancing", () => {
+  const review = load();
+  let progress = review.recordOutcome({}, {id: "v-x", correct: true, now: T0});
+  for(const day of [1, 3.75, 4]){
+    progress = review.recordOutcome(progress, {id: "v-x", correct: true, now: T0 + day * DAY});
+  }
+  assert.equal(progress["v-x"].step, 1);
+  assert.ok(progress["v-x"].due > T0 + 4 * DAY);
+});
+
 test("correct repair leaves the queue while wrong moves to the end", () => {
   const review = load();
   let queue = review.createRepairQueue(["q1", "q2", "q3"]);

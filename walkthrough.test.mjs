@@ -2252,6 +2252,15 @@ test("a written Episode document does not inherit the audio replay control", asy
     game.$("btn-skip-question").click();
     game.$("btn-next").click();
     game.clock.advance(100);
+    // A new work block teaches its words before the next scored question.
+    for(let guard = 0; guard < 24 && game.doc.querySelector(".teach-card"); guard++){
+      const done = game.$("btn-teach-done");
+      const next = game.$("btn-teach-next");
+      if(done) done.click();
+      else if(next) next.click();
+      else game.doc.querySelectorAll(".teach-option")[0].click();
+      game.clock.advance(900);
+    }
   }
 
   assert.ok(game.doc.querySelectorAll(".reading-document").length,
@@ -3047,6 +3056,69 @@ test("a second tap during the pause after a right answer does not skip a word", 
     "one answer advances one word");
 });
 
+test("teaching moves focus to the word and then to wrong-answer feedback", async () => {
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game, {stopAtTeaching:true});
+  assert.equal(game.doc.querySelector(".teach-word").focused, true);
+  game.$("btn-teach-next").click();
+  assert.equal(game.doc.querySelector(".teach-word").focused, true);
+  game.doc.querySelectorAll(".teach-option")
+    .find((b) => b.getAttribute("data-correct") === "0").click();
+  assert.equal(game.doc.querySelector(".teach-answer").focused, true,
+    "feedback must be reached without tabbing back through settled answers");
+  assert.ok(game.doc.querySelectorAll(".teach-option").every((b) => b.disabled));
+});
+
+test("leaving during teaching feedback cancels its pending advance", async () => {
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game, {stopAtTeaching:true});
+  game.$("btn-teach-next").click();
+  game.doc.querySelectorAll(".teach-option")
+    .find((b) => b.getAttribute("data-correct") === "1").click();
+  game.$("btn-back-map").click();
+  const leftBehind = game.$("scene").innerHTML;
+  game.clock.advance(1200);
+  assert.equal(game.$("scene").innerHTML, leftBehind,
+    "an old check must not render a new card after the learner leaves");
+});
+
+test("episode teaching resumes at the last studied card after reload", async () => {
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game);
+  startEpisodeAfterTraining(game);
+  game.$("btn-episode-begin").click();
+  game.$("btn-brief-begin").click();
+  game.$("btn-words-begin").click();
+  game.$("btn-teach-next").click();
+  game.doc.querySelectorAll(".teach-option")
+    .find((b) => b.getAttribute("data-correct") === "1").click();
+  game.clock.advance(900);
+  const word = game.doc.querySelector(".teach-word").textContent;
+  const reloaded = boot(JSON.parse(game.storage.getItem("lanternAlley.v3")), "?skip=1");
+  await openResumedInnScheduleChallenge(reloaded);
+  assert.equal(reloaded.doc.querySelector(".teach-count").textContent, "2 / 2");
+  assert.equal(reloaded.doc.querySelector(".teach-word").textContent, word);
+});
+
+test("an episode recap counts only the words in its teaching block", async () => {
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game);
+  startEpisodeAfterTraining(game);
+  game.$("btn-episode-begin").click(); game.clock.advance(500);
+  game.$("btn-brief-begin").click(); game.clock.advance(500);
+  game.$("btn-words-begin").click(); game.clock.advance(400);
+  for (let i = 0; i < 20 && !game.$("btn-teach-done"); i++) {
+    const next = game.$("btn-teach-next");
+    if (next) next.click();
+    else game.doc.querySelectorAll(".teach-option")
+      .find((b) => b.getAttribute("data-correct") === "1").click();
+    game.clock.advance(900);
+  }
+  assert.equal(game.doc.querySelectorAll(".teach-recap-word").length, 2);
+  assert.match(game.doc.querySelector(".episode-open-title").textContent, /2/,
+    "a two-word block must not claim five words were studied");
+});
+
 test("Kon wears her portrait from the moment the app boots", () => {
   const game = boot(null, "?skip=1");
   const slot = game.$("avatar-slot");
@@ -3229,6 +3301,41 @@ function openCorrectionList(game) {
   fix.click();
   game.clock.advance(600);
 }
+
+test("correction answers save immediately even at the daily coin cap", () => {
+  const probe = boot(savedMissSeed(), "?skip=1");
+  const date = probe.context.LanternDailyPractice.dayKey(Date.now());
+  const game = boot(savedMissSeed({dailyPractice: {date, coins: 40}}), "?skip=1");
+  openCorrectionList(game);
+  game.$("btn-fix-start").click();
+  game.clock.advance(900);
+  game.doc.querySelectorAll(".question-control")
+    .find((b) => b.textContent === "to put things in order").click();
+  const saved = JSON.parse(game.storage.getItem("lanternAlley.v3"));
+  assert.equal(saved.reviewProgress["v-soroeru"].errorTag, null);
+});
+
+test("a successful episode repair clears corrections without delayed credit", async () => {
+  const seed = savedMissSeed();
+  const probe = boot(seed, "?skip=1");
+  const episode = probe.context.LanternEpisodeStages["home-inn"].episodes[0];
+  const question = episode.days[0].questions[0];
+  seed.episode = {locationKey: "home-inn", episodeId: episode.id, index: 9,
+    missed: [question.id], missedTargets: [question.target], inRepair: true,
+    repairQueue: [question.id]};
+  seed.reviewProgress[question.target] = {...seed.reviewProgress["v-soroeru"]};
+  const game = boot(seed, "?skip=1");
+  await openResumedInnScheduleChallenge(game);
+  const card = game.context.LanternLearningContent.makeRepairQuestion(question);
+  game.$("repair-controls").querySelectorAll("button")[card.correctIndex].click();
+  const saved = JSON.parse(game.storage.getItem("lanternAlley.v3"));
+  assert.equal(saved.reviewProgress[question.target].errorTag, null);
+  assert.equal(saved.reviewProgress[question.target].delayedSuccesses, 0);
+  const reloaded = boot(saved, "?skip=1");
+  await openResumedInnScheduleChallenge(reloaded);
+  assert.ok(reloaded.$("feedback-text").textContent.includes("All corrections cleared"),
+    "an empty saved repair queue resumes its completion, not the last question");
+});
 
 test("the correction list gathers the words that went wrong, and says where from", () => {
   const game = boot(savedMissSeed(), "?skip=1");

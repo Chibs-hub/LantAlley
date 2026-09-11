@@ -140,6 +140,8 @@
       catalog.getPartition(key).forEach(function(item){ items.push(item); });
     });
     var states = (progress && progress.items) || {};
+    var excluded = new Set((progress && progress.excluded) || []);
+    items = items.filter(function(item){ return !excluded.has(item.id); });
 
     var unseen = items.filter(function(item){ return !states[item.id]; });
     var rest = items.filter(function(item){ return !!states[item.id]; });

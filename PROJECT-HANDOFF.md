@@ -1,6 +1,6 @@
 # Lantern Alley Project Handoff
 
-Last updated: 2026-09-10 (v348)
+Last updated: 2026-09-11 (v350)
 
 A browser game that teaches JLPT N2 Japanese. Vanilla JS, CSS and HTML, no build step, no framework, offline-capable.
 
@@ -20,21 +20,36 @@ Sections 1, 3, 4, 5, 6, 8, 13, 14 and 15 are reference: what the game is, how it
 
 ## 0. Current status
 
-**Live at v348, pushed.** `codex/inn-learning-redesign` is the working branch;
+**Latest audit (v350, committed and pushed 2026-09-11):** the changes below
+were reviewed and released with the owner's approval; the lines that asked for
+that approval have been removed rather than left standing. The changes improve
+teaching focus, feedback visibility, touch targets, accurate recap counts and episode
+teaching resume. Practice outcomes save independently of payouts; early
+practice cannot inflate spaced recall; successful repairs clear corrections
+and empty repair queues resume at completion. Daily filler excludes scheduled
+words. The mobile Feedback utility yields while studying or decorating.
+
+Browser checks confirmed Sakura placement, first-tray-item visibility, and
+wallpaper rendering at 320px. Teaching was checked at 320px and 390px.
+The remaining 160 non-Inn teaching entries still need authored content and
+native-language review. No new artwork or broad visual redesign was attempted.
+
+**Live at v350, pushed.** `codex/inn-learning-redesign` is the working branch;
 master is frozen. The deployed site is the repository - GitHub Pages serves the
 branch, so a shell file that is not committed is a 404 that kills the service
 worker install for every tester. `pwa.test.mjs` asks `git ls-files` rather than
 the disk for exactly that reason.
 
-`node --test` passes 551. Every version from v339 to v348 was verified in a
+`node --test` passes 562. Every version from v339 to v350 was verified in a
 browser as well as by the suite; the changelog entry for each one says what was
 checked and what was not.
 
-**What changed across v339-v348**, newest first. Full reasons in
+**What changed across v339-v350**, newest first. Full reasons in
 [CHANGELOG.md](CHANGELOG.md).
 
 | Version | What it did |
 | --- | --- |
+| v350 | Teaching and review reliability audit: focus, feedback visibility, 48px touch targets, accurate recap counts, episode teaching resume. A correct answer advances the ladder only when the word was due and a day has passed; answering early no longer pushes the next review out. |
 | v348 | 直す言葉: one list of the words still owed, from every place. Answer one right and it leaves the list; the schedule still brings it back. Six options, not four. Count on the map plus one line a day, not a dialog at launch. |
 | v347 | The Inn teaches all forty of its words, a block of the shift at a time (three cards, three guests) rather than twenty screens up front. |
 | v346 | Teaching runs in its own order, not the order the day asks in. The card gets the whole width; Kon's panel is hidden on it. |

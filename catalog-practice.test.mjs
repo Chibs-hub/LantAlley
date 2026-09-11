@@ -13,6 +13,17 @@ function load() {
   return context;
 }
 
+test("excluded practice targets do not consume session slots", () => {
+  const { LanternCurriculumCatalog: catalog, LanternCatalogPractice: practice } = load();
+  const key = catalog.items[0].partition;
+  const keys = key || "home-inn";
+  const first = practice.getPracticeSession(keys, {}, catalog, 3, () => 0);
+  assert.equal(first.length, 3);
+  const next = practice.getPracticeSession(keys, {excluded: [first[0].target]}, catalog, 3, () => 0);
+  assert.equal(next.length, 3);
+  assert.ok(next.every((card) => card.target !== first[0].target));
+});
+
 test("three card types are generated from data the catalog already has", () => {
   const { LanternCurriculumCatalog: catalog, LanternCatalogPractice: practice } = load();
   const item = catalog.items.find((i) => i.hasKanji && i.examples.length);
