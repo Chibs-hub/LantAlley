@@ -5,6 +5,24 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-10 - The Inn teaches a word before it scores it, and the review ladder goes past a fortnight (v339)
+
+Five things, one change of shape: the stage taught nothing before it started marking, and the schedule had nowhere to put a word that was already known.
+
+**The ladder gained two rungs.** `INTERVALS` was `[1, 3, 7, 14]`, so a word answered right four times was asked again a fortnight later, forever. It is `[1, 3, 7, 14, 30, 90]` now. The arithmetic that matters is the ceiling: a session's longest interval times its size is how far ahead the schedule can reach, so a five-word session went from 70 days of horizon to 450. Nothing else in the engine changed - the rule that repetition inside one session is recognition rather than retrieval is what the rest of this entry keeps deferring to.
+
+**A word is now taught before the first question that scores it.** Day 1 opened on a board naming the five words and went straight to a marked question about the first of them. The board is a list; the margin card during Day 1 repeats word, reading and gloss while the learner is already being marked. Neither teaches. The new card shows one word at a size worth reading, an authored sentence with the word highlighted where it stands, and the pattern it lives in - which is the part of an N2 word that makes it usable and the part no picture can carry. Words already credited are skipped, so resuming Day 1 does not re-teach what you have shown you know.
+
+**The sentences are authored, not borrowed.** The catalogue's examples for these five run to a median of nine characters, too short to show the grammar N2 tests, and two were actively wrong here: it taught the 揃える entry through an idiom meaning to speak in unison, and 調整 by tuning a clarinet. Five sentences and five patterns are written in the stage file, with a validation test that refuses a stage teaching a word it has no sentence for. **They are drafts by a non-native writer and need native review** - flagged rather than treated as final.
+
+**The check that follows each card is worth nothing, on purpose.** One question, three options, answered once. Nothing is paid, scheduled, mastered or saved, and a miss is answered and left rather than sent round again - the engine's own rule says a repetition seconds after study is recognition, so recording it would inflate the schedule with successes that prove nothing. The test asserts the save is byte-identical across a deliberately wrong answer.
+
+**The cold open is gone.** It had been unreachable since v326, which hardcoded the entry phase to `learn`; nothing had assigned `coldopen` since. Removed: the stage content, twenty-one references in `app.js`, three tests that protected dead data, and 74KB of first-run audio for two lines nobody could hear. The `.mp3` files stay on disk - once unreferenced they cost nothing, and deleting generated audio is easy to regret. **The one thing kept is the resume guard** that maps a pre-v326 save's `coldopen` to `learn`, with a test naming why: such a save is still on disk somewhere and that guard is the only reason it is not stuck.
+
+Two notes for whoever reads the code. The card sits on the same cream panel as the job board rather than a dark card of its own, because the two are consecutive screens and a palette flip between them reads as a different part of the game - caught in the browser, where the first version was transparent text over the tatami photograph. And the check's options carry their own class instead of being selected as `.teach-check button`: the test harness's selector engine has no descendant combinator, so the two-part selector bound no handler under test while working perfectly in the browser.
+
+Cache is v339; `node --test` passes (539).
+
 ### 2026-09-10 - The tray's first object is reachable again, sakura included (v338)
 
 Reported as the leftmost object being cut off while decorating on a phone. It was, and it was not reachable by scrolling either - the tray sat at its resting position with its first card already sliced down the middle.

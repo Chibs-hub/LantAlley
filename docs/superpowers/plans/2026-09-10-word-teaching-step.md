@@ -38,7 +38,7 @@ The schedule never graduates past 14 days, so reviews accumulate until they fill
 - Consumes: nothing
 - Produces: `LanternReviewEngine.INTERVALS` becomes `[1, 3, 7, 14, 30, 90]`. No signature changes; `recordOutcome`, `getDueItems`, `isMastered` keep their shapes.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Add to the end of `review-engine.test.mjs`. This simulates the real session loop from `dailySessionCards` (app.js:2412-2429): due items first, oldest first, then unseen filler.
 
@@ -76,7 +76,7 @@ test("the schedule lets a daily learner reach far more than one session's worth 
 });
 ```
 
-- [ ] **Step 2: Run it and watch it fail**
+- [x] **Step 2: Run it and watch it fail**
 
 ```bash
 node --test --test-name-pattern "far more than one session" review-engine.test.mjs
@@ -84,7 +84,7 @@ node --test --test-name-pattern "far more than one session" review-engine.test.m
 
 Expected: FAIL on the `deepEqual`, actual `[1, 3, 7, 14]`.
 
-- [ ] **Step 3: Extend the intervals**
+- [x] **Step 3: Extend the intervals**
 
 In `review-engine.js`, replace line 17 and add the reasoning above it:
 
@@ -105,7 +105,7 @@ In `review-engine.js`, replace line 17 and add the reasoning above it:
   var INTERVALS = [1, 3, 7, 14, 30, 90];
 ```
 
-- [ ] **Step 4: Run the review-engine tests**
+- [x] **Step 4: Run the review-engine tests**
 
 ```bash
 node --test review-engine.test.mjs
@@ -113,7 +113,7 @@ node --test review-engine.test.mjs
 
 Expected: PASS, 12 tests. The existing schedule tests exercise only indices 0 and 1, so appending cannot disturb them.
 
-- [ ] **Step 5: Run the full suite**
+- [x] **Step 5: Run the full suite**
 
 ```bash
 node --test
@@ -121,7 +121,7 @@ node --test
 
 Expected: PASS. Confirm `fail 0` before continuing.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add review-engine.js review-engine.test.mjs
@@ -145,7 +145,7 @@ git commit -m "Give the review ladder two rungs past a fortnight"
   - `entry` shape authored by stages: `{sentence, pattern, focus}` where `focus` is optional.
   - `before`/`focus`/`after` split `sentence` so a renderer can highlight the target in place without doing string work itself.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `word-teaching.test.mjs`:
 
@@ -219,7 +219,7 @@ test("validation catches the ways an authored entry goes wrong", () => {
 });
 ```
 
-- [ ] **Step 2: Run it and watch it fail**
+- [x] **Step 2: Run it and watch it fail**
 
 ```bash
 node --test word-teaching.test.mjs
@@ -227,7 +227,7 @@ node --test word-teaching.test.mjs
 
 Expected: FAIL, cannot read `word-teaching.js` (ENOENT).
 
-- [ ] **Step 3: Write the module**
+- [x] **Step 3: Write the module**
 
 Create `word-teaching.js`:
 
@@ -326,7 +326,7 @@ Create `word-teaching.js`:
 })(typeof self !== "undefined" ? self : this);
 ```
 
-- [ ] **Step 4: Run the tests**
+- [x] **Step 4: Run the tests**
 
 ```bash
 node --test word-teaching.test.mjs
@@ -334,7 +334,7 @@ node --test word-teaching.test.mjs
 
 Expected: PASS, 4 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add word-teaching.js word-teaching.test.mjs
@@ -352,7 +352,7 @@ A new `.js` file that is not in all three places 404s on the deployed site, and 
 - Modify: `sw.js:10` (`CACHE_VERSION`), `sw.js:37` (SHELL, after `review-engine.js`), every `?v=338` stamp
 - Modify: `manifest.webmanifest`, every `?v=338` stamp
 
-- [ ] **Step 1: Add the script tag**
+- [x] **Step 1: Add the script tag**
 
 In `index.html`, directly after the `review-engine.js` line:
 
@@ -360,7 +360,7 @@ In `index.html`, directly after the `review-engine.js` line:
 <script src="word-teaching.js?v=338"></script>
 ```
 
-- [ ] **Step 2: Add it to the service worker shell**
+- [x] **Step 2: Add it to the service worker shell**
 
 In `sw.js`, in the `SHELL` array directly after `"./review-engine.js",`:
 
@@ -368,7 +368,7 @@ In `sw.js`, in the `SHELL` array directly after `"./review-engine.js",`:
   "./word-teaching.js",
 ```
 
-- [ ] **Step 3: Bump the cache version everywhere**
+- [x] **Step 3: Bump the cache version everywhere**
 
 Every `337`-to-`338` style stamp moves to `339`. Verify first that every occurrence is a version stamp and not data:
 
@@ -386,7 +386,7 @@ sed -i 's/?v=338/?v=339/g; s/lantern-alley-v338/lantern-alley-v339/g' index.html
 
 Use `sed`, not PowerShell: `Set-Content -Encoding utf8` on Windows PowerShell 5.1 writes a BOM, which these files must not have.
 
-- [ ] **Step 4: Verify the registration**
+- [x] **Step 4: Verify the registration**
 
 ```bash
 node --test pwa.test.mjs
@@ -394,14 +394,14 @@ node --test pwa.test.mjs
 
 Expected: PASS. This is the test that checks every shell entry is tracked by `git ls-files` and that every local asset carries the current stamp. It will fail until the next step commits the new file.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add index.html sw.js manifest.webmanifest word-teaching.js
 git commit -m "Ship word-teaching.js in the shell as v339"
 ```
 
-- [ ] **Step 6: Re-run the shell test now the file is tracked**
+- [x] **Step 6: Re-run the shell test now the file is tracked**
 
 ```bash
 node --test pwa.test.mjs
@@ -423,7 +423,7 @@ Three of the five already have project-quality sentences in the catalogue and ar
 - Consumes: `LanternWordTeaching.validateEntries`
 - Produces: `N2HomeInnStage.getTeaching(focusWord)` returns the authored `{sentence, pattern}` entry or `null`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Add to `n2-home-inn-stage.test.mjs`:
 
@@ -451,7 +451,7 @@ test("every word the Inn teaches carries an authored sentence and pattern", () =
 });
 ```
 
-- [ ] **Step 2: Run it and watch it fail**
+- [x] **Step 2: Run it and watch it fail**
 
 ```bash
 node --test --test-name-pattern "authored sentence and pattern" n2-home-inn-stage.test.mjs
@@ -459,7 +459,7 @@ node --test --test-name-pattern "authored sentence and pattern" n2-home-inn-stag
 
 Expected: FAIL - `stage.getTeaching is not a function`.
 
-- [ ] **Step 3: Add the teaching entries**
+- [x] **Step 3: Add the teaching entries**
 
 In `n2-home-inn-stage.js`, after the `DAY_KINDS` block:
 
@@ -511,7 +511,7 @@ Add to the export object alongside `getCardSense`:
     getTeaching:getTeaching,
 ```
 
-- [ ] **Step 4: Run the test**
+- [x] **Step 4: Run the test**
 
 ```bash
 node --test --test-name-pattern "authored sentence and pattern" n2-home-inn-stage.test.mjs
@@ -519,7 +519,7 @@ node --test --test-name-pattern "authored sentence and pattern" n2-home-inn-stag
 
 Expected: PASS.
 
-- [ ] **Step 5: Run the full suite**
+- [x] **Step 5: Run the full suite**
 
 ```bash
 node --test
@@ -527,7 +527,7 @@ node --test
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add n2-home-inn-stage.js n2-home-inn-stage.test.mjs
@@ -549,7 +549,7 @@ All of this has been unreachable since v326 (commit 9681960 hardcoded `var phase
 - Modify: `pwa.test.mjs:970` - delete the test
 - Modify: `walkthrough.test.mjs:253` - retarget the fixture
 
-- [ ] **Step 1: Write the test that pins what must survive**
+- [x] **Step 1: Write the test that pins what must survive**
 
 A pre-v326 save can still carry `phase: "coldopen"`, and the guard that maps it to `learn` must stay. Replace the fixture at `walkthrough.test.mjs:253` with a named test:
 
@@ -570,7 +570,7 @@ test("a save written before v326 still opens, though the cold open is gone", () 
 });
 ```
 
-- [ ] **Step 2: Run it and confirm it passes before the removal**
+- [x] **Step 2: Run it and confirm it passes before the removal**
 
 ```bash
 node --test --test-name-pattern "written before v326" walkthrough.test.mjs
@@ -578,11 +578,11 @@ node --test --test-name-pattern "written before v326" walkthrough.test.mjs
 
 Expected: PASS. It is a characterisation test - it must pass both before and after, which is what makes it useful.
 
-- [ ] **Step 3: Delete the cold open from the stage data**
+- [x] **Step 3: Delete the cold open from the stage data**
 
 In `n2-home-inn-stage.js`: delete the `coldOpen` object and its comment; delete the `coldopen:` key from `DAY_GOALS` and `DAY_KINDS`; delete `coldOpen:coldOpen,` from the exports; delete any `coldopen` branch in `getDayMeta` and `getDayAnnouncement`.
 
-- [ ] **Step 4: Delete the cold open from app.js**
+- [x] **Step 4: Delete the cold open from app.js**
 
 Find every reference and remove it:
 
@@ -598,13 +598,13 @@ Remove: `state.coldOpenSkipFirst` and `state.coldOpenRetryPending` (declarations
       state.stagePhase = resumed.phase === "coldopen" ? "learn" : (resumed.phase || "learn");
 ```
 
-- [ ] **Step 5: Delete the tests that protect dead data**
+- [x] **Step 5: Delete the tests that protect dead data**
 
 Delete `n2-home-inn-stage.test.mjs:1247` ("the cold open has its own replies and its own day badge") and `:1274` ("the cold open announces a guest, not Day 1") in full. Delete `pwa.test.mjs:970` ("Kon's answers to the cold open are spoken like the rest of her lines") in full - it asserts that two clips totalling 74KB install with the first-run audio group for lines nobody can hear.
 
 Leave the two `.mp3` files on disk. Once unreferenced they cost nothing, and deleting generated audio is easy to regret.
 
-- [ ] **Step 6: Verify nothing but the guard survives**
+- [x] **Step 6: Verify nothing but the guard survives**
 
 ```bash
 grep -n "coldopen\|coldOpen" app.js n2-home-inn-stage.js *.test.mjs
@@ -612,7 +612,7 @@ grep -n "coldopen\|coldOpen" app.js n2-home-inn-stage.js *.test.mjs
 
 Expected: exactly two hits - the resume guard in `app.js` and the characterisation test in `walkthrough.test.mjs`.
 
-- [ ] **Step 7: Run the full suite**
+- [x] **Step 7: Run the full suite**
 
 ```bash
 node --test
@@ -620,7 +620,7 @@ node --test
 
 Expected: PASS, with three fewer tests than before.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add app.js n2-home-inn-stage.js n2-home-inn-stage.test.mjs pwa.test.mjs walkthrough.test.mjs
@@ -640,7 +640,7 @@ git commit -m "Clear out the cold open, unreachable since v326"
 - Consumes: `LanternWordTeaching.buildCard`, `N2HomeInnStage.getTeaching`, `state.teachQueue`
 - Produces: `state.teachQueue` (array of focus words remaining), `state.teachIndex`. When the queue empties, control passes to the existing `startStagePhase(loc, "learn")`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```javascript
 test("the Inn teaches each word before the first question that scores it", () => {
@@ -669,7 +669,7 @@ test("the Inn teaches each word before the first question that scores it", () =>
 });
 ```
 
-- [ ] **Step 2: Run it and watch it fail**
+- [x] **Step 2: Run it and watch it fail**
 
 ```bash
 node --test --test-name-pattern "teaches each word before" walkthrough.test.mjs
@@ -677,7 +677,7 @@ node --test --test-name-pattern "teaches each word before" walkthrough.test.mjs
 
 Expected: FAIL - `.teach-card` is null.
 
-- [ ] **Step 3: Render the card**
+- [x] **Step 3: Render the card**
 
 Add to `app.js` near `stageJobBoard`:
 
@@ -743,7 +743,7 @@ In `stageJobBoard`'s `btn-jobs-begin` handler, when the phase is `learn` and the
 
 Add `teachQueue:[]` and `teachIndex:0` to the state defaults near `encounterIndex` (app.js:132).
 
-- [ ] **Step 4: Style the card**
+- [x] **Step 4: Style the card**
 
 Add to `styles.css` beside the `.job-board` rules:
 
@@ -764,7 +764,7 @@ Add to `styles.css` beside the `.job-board` rules:
   .teach-focus{color:#ffd489;font-weight:700;border-bottom:2px solid rgba(255,212,137,.5)}
 ```
 
-- [ ] **Step 5: Run the test**
+- [x] **Step 5: Run the test**
 
 ```bash
 node --test --test-name-pattern "teaches each word before" walkthrough.test.mjs
@@ -772,7 +772,7 @@ node --test --test-name-pattern "teaches each word before" walkthrough.test.mjs
 
 Expected: PASS.
 
-- [ ] **Step 6: Run the full suite**
+- [x] **Step 6: Run the full suite**
 
 ```bash
 node --test
@@ -780,7 +780,7 @@ node --test
 
 Expected: PASS.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add app.js styles.css walkthrough.test.mjs
@@ -800,7 +800,7 @@ git commit -m "Teach each Inn word before the first question that scores it"
 - Consumes: `state.teachQueue`, `state.teachIndex`, `LanternCurriculumCatalog`
 - Produces: nothing persistent. This is the point of the task.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```javascript
 test("the teaching check costs nothing, however it is answered", () => {
@@ -838,7 +838,7 @@ test("the teaching check costs nothing, however it is answered", () => {
 });
 ```
 
-- [ ] **Step 2: Run it and watch it fail**
+- [x] **Step 2: Run it and watch it fail**
 
 ```bash
 node --test --test-name-pattern "check costs nothing" walkthrough.test.mjs
@@ -846,7 +846,7 @@ node --test --test-name-pattern "check costs nothing" walkthrough.test.mjs
 
 Expected: FAIL - `.teach-check` is null.
 
-- [ ] **Step 3: Point the card's button at the check**
+- [x] **Step 3: Point the card's button at the check**
 
 In `renderTeachingCard` from Task 6, the button currently advances straight to
 the next word. Replace that handler so studying leads to one attempt:
@@ -861,7 +861,7 @@ the next word. Replace that handler so studying leads to one attempt:
 The `state.teachIndex += 1` that used to live here moves into the check's own
 "next" button, added below, so a word advances only once it has been tried.
 
-- [ ] **Step 4: Render the check**
+- [x] **Step 4: Render the check**
 
 Add beneath `renderTeachingCard`:
 
@@ -917,7 +917,7 @@ Add beneath `renderTeachingCard`:
 
 Note: nothing in this function writes to `state` beyond `teachIndex`, and `saveProgress()` is never called.
 
-- [ ] **Step 5: Style the check**
+- [x] **Step 5: Style the check**
 
 ```css
   .teach-question{font-size:1.05rem;margin:0 0 14px}
@@ -926,7 +926,7 @@ Note: nothing in this function writes to `state` beyond `teachIndex`, and `saveP
   .teach-answer{margin:16px 0 12px;font-size:1.05rem;color:#ffd489}
 ```
 
-- [ ] **Step 6: Run the test**
+- [x] **Step 6: Run the test**
 
 ```bash
 node --test --test-name-pattern "check costs nothing" walkthrough.test.mjs
@@ -934,7 +934,7 @@ node --test --test-name-pattern "check costs nothing" walkthrough.test.mjs
 
 Expected: PASS.
 
-- [ ] **Step 7: Run the full suite**
+- [x] **Step 7: Run the full suite**
 
 ```bash
 node --test
@@ -942,7 +942,7 @@ node --test
 
 Expected: PASS.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add app.js styles.css walkthrough.test.mjs
@@ -957,11 +957,11 @@ git commit -m "Give each taught word one attempt that costs nothing"
 - Modify: `CHANGELOG.md`
 - Modify: `docs/handoffs/` - new handoff for the remaining 195 sentences
 
-- [ ] **Step 1: Add the changelog entry**
+- [x] **Step 1: Add the changelog entry**
 
 Newest at the top, as a `###` heading directly under the "Adding an entry" line. Cover: why the schedule gained two rungs and the ceiling arithmetic; that the teaching step exists and what it shows; that the check is unscored and why; that the cold open was already unreachable and is now gone along with 74KB of first-run audio; and that the five sentences are drafts awaiting native review.
 
-- [ ] **Step 2: Write the handoff for the remaining sentences**
+- [x] **Step 2: Write the handoff for the remaining sentences**
 
 Create `docs/handoffs/2026-09-10-teaching-sentences.md` listing all 195 focus words still needing a sentence and pattern, grouped by place, each with its current catalogue example so the author is reviewing a replacement rather than facing a blank page. Generate the list with:
 
@@ -985,7 +985,7 @@ var S=c.LanternEpisodeStages,cat=c.LanternCurriculumCatalog;
 
 Then hand-write the document's opening: the two specifications that are load-bearing rather than preferences - at least 12 characters, because the catalogue's median of nine is what this replaces, and the sentence must contain the word, because a validation test asks - plus the note that a `pattern` is required and is the part that makes an N2 word usable.
 
-- [ ] **Step 3: Run the full suite one last time**
+- [x] **Step 3: Run the full suite one last time**
 
 ```bash
 node --test
@@ -993,7 +993,7 @@ node --test
 
 Expected: PASS, `fail 0`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add CHANGELOG.md docs/handoffs/2026-09-10-teaching-sentences.md
