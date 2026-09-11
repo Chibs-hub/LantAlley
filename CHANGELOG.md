@@ -5,6 +5,18 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-11 - The title screen is the village, not the map (v353)
+
+The title opened on `lantern-alley-map-v1.jpg`, the top-down map painting, which is a diagram of the world rather than a view into it. It is now the owner's night village scene, exported without the title text that was painted into the share banner - the screen draws 言葉の路地 and LANTERN ALLEY as real text, so a background carrying its own title read it twice.
+
+The spec written for that export was followed exactly and needed no adjustment: 1536x1024 at 3:2, text-free. What made it work first time was naming where the screen puts things on top - the left 42% is darkened to rgba(6,13,28,.92) fading out by 78%, the bottom 45% is darkened too, Kon stands at `right:5% bottom:4%`, and a phone shifts the background to `54% center`. The lantern, the 茶屋 sign and the bridge were already in the right two thirds, so nothing needed recomposing.
+
+Checked at 320px, 390px and desktop: the titles stay over dark sky at every width, and the phone crop lands on the stairs and lanterns rather than empty sky.
+
+The map painting stays in the repository and in the shell - the map screen still uses it.
+
+Cache is v353; `node --test` passes (563).
+
 ### 2026-09-11 - The app wears the owner's own lantern, and shares the owner's own banner (v352)
 
 Both were drawn and neither had reached the repository. The icon family and the favicon are rebuilt from the owner's lantern illustration; the social preview is the owner's wide village banner at the 1200x630 the meta tags already declared, from a source whose aspect matched to four decimal places.

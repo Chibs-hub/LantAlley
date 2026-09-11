@@ -103,7 +103,7 @@
     background:
       linear-gradient(90deg,rgba(6,13,28,.92) 0%,rgba(6,13,28,.7) 42%,rgba(6,13,28,.14) 78%),
       linear-gradient(0deg,rgba(6,13,28,.72),transparent 55%),
-      url("assets/map/lantern-alley-map-v1.jpg") center/cover no-repeat;
+      url("assets/title/lantern-alley-title-v1.webp") center/cover no-repeat;
     box-shadow:0 28px 70px rgba(3,7,20,.62),0 0 0 1px rgba(247,200,119,.18);
   }
   #screen-title.title-scene::before{border-color:rgba(247,207,137,.36);z-index:5}

@@ -7,7 +7,7 @@
  * Bump CACHE_VERSION whenever any shell file changes, or returning players
  * will keep the old build.
  */
-var CACHE_VERSION = "lantern-alley-v352";
+var CACHE_VERSION = "lantern-alley-v353";
 // Teaching focus, saved block progress, and mobile shelf clearance.
 
 // audio-index.js assigns to `self`, so the worker and the page share one list
@@ -132,11 +132,11 @@ var SHELL = [
   "./manifest.webmanifest",
   "./assets/branding/lantern-mark-v2.png",
   "./assets/social/lantern-alley-share-v2.jpg",
-  "./icons/icon-192.png?v=352",
-  "./icons/icon-512.png?v=352",
-  "./icons/icon-192-maskable.png?v=352",
-  "./icons/icon-512-maskable.png?v=352",
-  "./icons/apple-touch-icon.png?v=352",
+  "./icons/icon-192.png?v=353",
+  "./icons/icon-512.png?v=353",
+  "./icons/icon-192-maskable.png?v=353",
+  "./icons/icon-512-maskable.png?v=353",
+  "./icons/apple-touch-icon.png?v=353",
   "./assets/kon/kon-idle.webp",
   "./assets/kon/kon-wave-left.webp",
   "./assets/kon/kon-wave-right.webp",
@@ -152,6 +152,7 @@ var SHELL = [
   "./assets/inn/scenes/office.jpg",
   "./assets/inn/scenes/courtyard.jpg",
   "./assets/map/lantern-alley-map-v1.jpg",
+  "./assets/title/lantern-alley-title-v1.webp",
   "./assets/entrance/wooden-gate-v1.webp",
   "./assets/entrance/player-actions-kimono-man-v2.webp",
   "./assets/entrance/player-actions-kimono-woman-v2.webp",

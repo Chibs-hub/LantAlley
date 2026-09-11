@@ -20,60 +20,17 @@ It is not a gap - it is a spare, recorded here so nobody commissions another.
 Still outstanding: the 16 garden images below, and one title-screen background
 specified next.
 
-## Title-screen background, without the baked-in title
+## Title-screen background - delivered
 
-**Asked for 2026-09-11.** The owner's wide village banner is in the repository
-as the share preview (`assets/social/lantern-alley-share-v2.jpg`) and is a much
-better title screen than the top-down map painting the title currently uses -
-but it cannot be used there as it stands, because "Lantern Alley" and the
-tagline are painted into the image, and the title screen already draws both as
-real text. Used as-is the title reads twice and the Japanese title 言葉の路地
-competes with English pixels.
+**Done 2026-09-11 (v353).** The owner exported the village scene with no text
+on it, 1536x1024 at exactly 3:2, and it is the title screen now:
+`assets/title/lantern-alley-title-v1.webp`. The top-down map painting it
+replaced stays in the repository - the map screen still uses it.
 
-What to export: the same night village scene, **no text of any kind**.
-
-| | |
-| --- | --- |
-| File | `assets/title/lantern-alley-title-v1.jpg` (or .webp) |
-| Size | 1600x1067 or larger, 3:2 - the current background is 1200x800 |
-| Drawn as | `center/cover` across the whole title panel, so it is cropped at the edges, not letterboxed |
-
-Where the screen puts things on top of it, so the composition can allow for
-them. Percentages are of the panel, and the panel is the full width of the
-frame:
-
-- **Left 42% is heavily darkened** and the darkening fades out by 78%:
-  `linear-gradient(90deg, rgba(6,13,28,.92) 0%, rgba(6,13,28,.7) 42%, rgba(6,13,28,.14) 78%)`.
-  The Japanese title, the English title, the kicker and the entry button all sit
-  in that band. Anything painted there will be nearly invisible, so keep the
-  detail that matters right of centre.
-- **The bottom 45% is darkened** as well: `linear-gradient(0deg, rgba(6,13,28,.72), transparent 55%)`.
-- **Kon stands at the lower right**, `right:5% bottom:4%`, between 190 and 320px
-  wide. On a phone she moves to `right:6% top:27%` at up to 40vw. Avoid putting
-  a focal point exactly there.
-- **On a phone the background shifts to `background-position: 54% center`**, so
-  the right-hand third is what a phone actually shows. That is the part worth
-  composing for.
-
-The lantern, the tea-house sign and the bridge in the existing banner all sit in
-the right two thirds already, so a text-free export of the same scene needs no
-recomposition - only the words removed.
-
-
-# Art still needed - v332
-
-Workspace: C:/Users/user/projects/IJLG
-Branch: codex/inn-learning-redesign. Do not merge into master.
-Build at time of writing: v332, pushed and live.
-
-Twenty-three images. Everything else in the game has production art: all 17
-existing decor photographs, the four painted room and yard backgrounds, the
-Inn's twelve objects (one sprite sheet plus the stained sheet), the cat's ten
-poses, Kon's nine, the entrance figures and the map.
-
-The list below is what still renders as shapes drawn in code. Each one is a
-real purchase a learner makes with money earned by studying, so each one is a
-reward that currently arrives as a line drawing.
+The composition landed without adjustment. 言葉の路地 and LANTERN ALLEY sit over
+the darkened left band, Kon stands over the wet cobbles at the lower right, and
+the phone's `background-position: 54% center` puts the tea-house stairs and
+lanterns in frame rather than empty sky. Checked at 320px, 390px and desktop.
 
 ## How this list was produced
 
