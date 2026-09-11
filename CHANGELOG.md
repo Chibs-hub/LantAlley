@@ -5,6 +5,22 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-11 - Six places the screen did not say what it meant (v359)
+
+Walked as a new learner on a phone: title, character, entrance, map, Inn, teaching card, first question. The teaching card is the clearest screen in the game. What surrounds it was not.
+
+**A wrong answer barely showed.** All four options kept the same background; the one picked differed by a border and a text colour, and the right answer was not marked at all - the learner had to read the sentence underneath to find out what it was, and that sentence is the part that scrolls off a phone. The tap now carries a ✗ on a red ground, the answer carries a ✓ on a green one, and the two nobody touched fade back. The wrong option used to fade to `opacity:.75`, which made the thing most worth looking at the faintest thing on the card; it is at full strength now.
+
+**English support was on the wrong side of the line.** The title screen speaks English. Then character select is Japanese only, and so is the whole map layer - 未訪問, 理解度, 覚えた言葉, 月見宿へ行く - for a learner sitting at 0 words. But inside a lesson, where reading Japanese is the entire exercise, the instructions were in English. That is backwards: the chrome is not the thing being taught. The navigation layer now carries a quiet gloss under the Japanese - the character screen, the map heading, the status chip, and the two metrics a learner cannot guess (理解度, and 覚えた言葉's bar). Nothing was added to the content.
+
+**The Inn stepper contradicted itself.** "Current: Inn Training - Three days" sat above five lamps labelled Training, 1, 2, 3, 4. Three days, four numbers. The numbers are the shifts that follow the training, so they say "Shift 1" now, and the line above says which one you are on.
+
+**194px of empty cream** sat between 覚えた言葉 0 / 40 and the button that acts on it - a quarter of a phone screen. The map frame is told to fill the viewport and the detail card was taking the slack. The slack goes to the alley painting now, which is worth looking at; the card is the height of what it holds, and the gap is 12px.
+
+**「あなた」 was unreadable.** The narration bar's bottom edge and the caption's top were the same pixel, so the bar's shadow cut the tops off and it read as 「ちなた」. It has the ground the コン (Kon) tag beside it always had: same border, same paper, same size. Two speakers, one visual language.
+
+Cache is v359.
+
 ### 2026-09-11 - The artifact builder is deleted, and two of its tests are kept
 
 The handoff has said since the Artifact was retired on 2026-08-27: "once the app is hosted, this file and the tests that read it should be deleted." The app is hosted. Gone: `build-artifact.mjs`, `build-artifact.py`, the five `pwa.test.mjs` tests that read the built file, and the `.gitignore` line that kept the 78 MB output out of the repository.

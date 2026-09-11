@@ -1967,7 +1967,21 @@
       statusText += " " + (medalIcons[currentMedal(place.key)] || "");
     }
     selectedMapAction = action;
-    $("map-detail-status").textContent = statusText;
+    /* The status chip is navigation, so it carries a gloss like the rest of
+     * the navigation layer. 未訪問 beside a place a learner has not chosen yet
+     * is the one word on this card that decides whether they press the
+     * button. */
+    var statusGloss = {
+      "未訪問": "not visited", "学習中": "in progress", "完了": "finished",
+      "準備中": "not ready", "わが家": "your home"
+    }[unlocked ? LanternAlleyMap.stateLabels[progressState] : "未開放"] || "locked";
+    $("map-detail-status").innerHTML = "";
+    $("map-detail-status").appendChild(document.createTextNode(statusText));
+    var glossNode = document.createElement("small");
+    glossNode.className = "metric-gloss";
+    glossNode.lang = "en";
+    glossNode.textContent = statusGloss;
+    $("map-detail-status").appendChild(glossNode);
     $("map-detail-name").textContent = place.name;
     $("map-detail-story").textContent = place.story;
     $("map-detail-focus").textContent = unlocked ? place.focus : "前の場所を100%理解すると開きます。";
@@ -4479,6 +4493,24 @@
         // says what was right with nothing showing what was picked, so a
         // learner who mis-tapped cannot tell that is what happened.
         button.className += right ? " is-picked is-right" : " is-picked is-wrong";
+        if(!right){
+          /* Both halves of the answer, on the options themselves.
+           *
+           * A wrong answer used to leave four options that still looked alike:
+           * the one picked differed by a border and a text colour, and the
+           * right one was not marked at all. The learner had to read the
+           * sentence underneath to find out which it was, and the sentence is
+           * the part that scrolls off a phone. Now the tap carries a ✗ and the
+           * answer carries a ✓, so the screen says it before it is read. */
+          button.innerHTML = button.innerHTML
+            + '<span class="teach-mark teach-mark-wrong" aria-label="ちがいます">✗</span>';
+          $("scene").querySelectorAll(".teach-option").forEach(function(option){
+            if(option === button || option.getAttribute("data-correct") !== "1") return;
+            option.className += " is-right is-revealed";
+            option.innerHTML = option.innerHTML
+              + '<span class="teach-mark" role="status" aria-label="正しい答え">✓</span>';
+          });
+        }
         if(right){
           /* A mark and on to the next word. Getting it right is the expected
            * case, and making the learner confirm it with a second tap is a
@@ -7010,12 +7042,20 @@
       return '<li class="inn-journey-stop' + stateName + '" aria-label="'
         + step.label + ': ' + label + '">'
         + '<span class="inn-journey-lamp" aria-hidden="true"></span>'
-        + '<span class="inn-journey-label">' + (index === 0 ? 'Training' : String(index)) + '</span>'
+        /* "1 2 3 4" beside a status line reading "Inn Training - Three days"
+         * read as a contradiction: three days, four numbers. The numbers are
+         * the four shifts that follow the training, so they say so. */
+        + '<span class="inn-journey-label">' + (index === 0 ? 'Training' : 'Shift ' + index) + '</span>'
         + '<span class="inn-journey-reward">' + (locked ? 'Reward locked' : step.reward.name) + '</span>'
         + '</li>';
     }).join("");
+    /* Where you are, and what the row underneath is counting. "Current: Inn
+     * Training - Three days" named the step and left the four numbered lamps
+     * beside it unexplained. */
     var status = routeComplete ? "Inn story complete. Your cat is home."
-      : "Current: " + current.label + " - " + current.detail;
+      : (currentIndex > 0
+        ? "You are on " + current.label + " - " + current.detail + ", shift " + currentIndex + " of 4."
+        : "You are on " + current.label + " - " + current.detail.toLowerCase() + ", then four shifts.");
     host.innerHTML = '<p class="inn-journey-status">' + status + '</p>'
       + '<ol class="inn-journey-stops">' + rows + '</ol>';
   }

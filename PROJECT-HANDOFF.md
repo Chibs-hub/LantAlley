@@ -49,6 +49,7 @@ each one says what was checked and what was not.
 
 | Version | What it did |
 | --- | --- |
+| v359 | Six clarity faults found by walking the game as a new learner: a wrong answer now marks both what was picked and what was right, the navigation layer carries an English gloss (the lesson layer does not), the Inn stepper stops contradicting itself, the map's dead space goes to the artwork, and 「あなた」 is readable. |
 | v358 | 路地駅 gets its episodes back - its script tag was dropped on 2026-09-07 and the place had been empty since. Nineteen corrupted readings fixed at the builder. The five artifact tests skip on a clone that has not built one. |
 | v357 | The daily practice's reading question is typed rather than picked, in kana or romaji - the one card that asks the learner to produce Japanese. Readings that are not kana (19 rows the source corrupted) no longer become questions. |
 | v356 | Debug Mode is back on the title menu for the beta. `available` in `debug-mode.js` remains the switch that removes it for release. |
