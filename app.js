@@ -1959,11 +1959,14 @@
       // question of a day over and over against a board nobody pressed.
       var begin = $("btn-jobs-begin");
       if(begin) begin.click();
-      // Day 1 now teaches its five words before asking about any of them.
-      for(var taught = 0; taught < 10; taught++){
+      // Day 1 now teaches its five words before asking about any of them,
+      // and each card leads to one unscored check that has to be answered.
+      for(var taught = 0; taught < 20; taught++){
         var next = $("btn-teach-next");
-        if(!next) break;
-        next.click();
+        if(next){ next.click(); continue; }
+        var option = $("scene").querySelector(".teach-option");
+        if(!option) break;
+        option.click();
       }
     }
   }
@@ -3713,8 +3716,63 @@
 
     $("btn-teach-next").addEventListener("click", function(event){
       event.stopImmediatePropagation();
-      state.teachIndex += 1;
-      renderTeachingCard(loc);
+      renderTeachingCheck(loc, card);
+    });
+  }
+
+  /* One retrieval attempt, immediately, worth nothing.
+   *
+   * Worth nothing on purpose. review-engine.js refuses to treat repetition
+   * inside one session as retrieval - repeating an item minutes after getting
+   * it right is recognition, not retrieval - so recording this would
+   * contradict the engine's own rule and inflate the schedule with successes
+   * that prove nothing. Nothing here writes to the save.
+   *
+   * A miss is answered and left. Sending it round again is exactly what the
+   * cold open did, and what made the opening feel stuck.
+   */
+  function renderTeachingCheck(loc, card){
+    var others = loc.encounters
+      .filter(function(item){ return item.focusWord !== card.word; })
+      .map(function(item){ return item.focusWord; });
+    var options = [card.word].concat(others.slice(0, 2));
+    // Deterministic placement from the word itself, so the answer is not
+    // always first and the same word always sits in the same place.
+    var at = card.word.length % options.length;
+    options.splice(at, 0, options.splice(0, 1)[0]);
+
+    $("scene").innerHTML = '<div class="episode-open"><div class="episode-open-card teach-card">'
+      + '<p class="teach-sense" lang="en">' + card.sense + '</p>'
+      + '<p class="teach-question">どの言葉ですか。</p>'
+      + '<div class="teach-check">' + options.map(function(word){
+          return '<button type="button" class="btn teach-option" data-correct="'
+            + (word === card.word ? "1" : "0") + '">' + word + '</button>';
+        }).join("") + '</div>'
+      + '<div class="teach-answer-slot"></div>'
+      + '</div></div>';
+
+    /* Selected by their own class rather than as ".teach-check button".
+     * The test harness's selector engine has no descendant combinator, so a
+     * two-part selector here would bind no handler under test while working
+     * in the browser - which is the shape of bug tests exist to catch. */
+    $("scene").querySelectorAll(".teach-option").forEach(function(button){
+      button.addEventListener("click", function(event){
+        event.stopImmediatePropagation();
+        if($("scene").querySelector(".teach-answer")) return;
+        var right = button.getAttribute("data-correct") === "1";
+        // Which one they chose, left on screen. Without this the answer line
+        // says what was right with nothing showing what was picked, so a
+        // learner who mis-tapped cannot tell that is what happened.
+        button.className += right ? " is-picked is-right" : " is-picked is-wrong";
+        $("scene").querySelector(".teach-answer-slot").innerHTML =
+          '<p class="teach-answer">' + (right ? "そうです。" : "正しい答えは「" + card.word + "」です。")
+          + '</p><button class="btn btn-primary" id="btn-teach-next">つぎへ</button>';
+        $("btn-teach-next").addEventListener("click", function(next){
+          next.stopImmediatePropagation();
+          state.teachIndex += 1;
+          renderTeachingCard(loc);
+        });
+      });
     });
   }
 

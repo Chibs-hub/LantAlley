@@ -1652,6 +1652,18 @@
    so what is learned is the word doing its job in a sentence. */
 .teach-focus{color:#9a5f30; font-weight:700; border-bottom:2px solid rgba(154,95,48,.45);}
 .teach-card .btn{display:block; margin:0 auto;}
+/* The check that follows the card. Cream like the card, and stacked rather
+   than in a row: three N2 words side by side on a phone wrap to two lines
+   each and stop reading as three separate choices. */
+.teach-question{margin:0 0 14px; font-size:1rem; color:#3f3125;}
+.teach-check{display:flex; flex-direction:column; gap:8px; align-items:stretch;}
+.teach-option{font-family:'Shippori Mincho',serif; font-size:1.15rem; padding:12px;}
+.teach-answer{margin:16px 0 12px; font-size:1rem; color:#8a5a2b;}
+/* The chosen option stays marked. Colour is not the only signal: the answer
+   line beneath says in words which word was right. */
+.teach-option.is-picked{box-shadow:none; transform:translateY(2px);}
+.teach-option.is-right{border-color:var(--moss); color:#3f5a34;}
+.teach-option.is-wrong{border-color:#b8773f; color:#8a5a2b; opacity:.75;}
 
 /* A question being asked again because it was missed says so, plainly and
    before the request. The same task twice with nothing marking it is the

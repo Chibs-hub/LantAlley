@@ -747,11 +747,15 @@ async function enterTheInn(game, opts) {
   const openingBoard = game.$("btn-jobs-begin");
   if (openingBoard) { openingBoard.click(); game.clock.advance(900); }
   if (!(opts && opts.stopAtTeaching)) {
-    for (let taught = 0; taught < 10; taught += 1) {
+    for (let taught = 0; taught < 20; taught += 1) {
       const next = game.$("btn-teach-next");
-      if (!next) break;
-      next.click();
-      game.clock.advance(900);
+      if (next) { next.click(); game.clock.advance(900); continue; }
+      // Each card leads to one unscored check, which has to be answered
+      // before the next word is taught.
+      const option = game.doc.querySelectorAll(".teach-option")[0];
+      if (!option) break;
+      option.click();
+      game.clock.advance(200);
     }
   }
   await tick();
@@ -2891,4 +2895,30 @@ test("the Inn teaches each word before the first question that scores it", async
     "the word is highlighted inside its sentence, not only glossed beside it");
   assert.equal(game.doc.querySelectorAll(".teach-card img").length, 0,
     "no artwork exists yet and the card must not leave a broken slot");
+});
+
+test("the teaching check costs nothing, however it is answered", async () => {
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game, {stopAtTeaching:true});
+  game.$("btn-teach-next").click();
+  game.clock.advance(200);
+
+  const before = JSON.parse(game.storage.getItem("lanternAlley.v3"));
+  const options = game.doc.querySelectorAll(".teach-option");
+  assert.ok(options.length >= 2, "a check offers a choice");
+
+  // Answered wrongly on purpose: the cold open's failure was that a miss came
+  // back, and nothing here may repeat or record.
+  const wrong = options.find((b) => b.getAttribute("data-correct") !== "1") || options[0];
+  wrong.click();
+  game.clock.advance(200);
+
+  const after = JSON.parse(game.storage.getItem("lanternAlley.v3"));
+  assert.deepEqual(after.reviewProgress || {}, before.reviewProgress || {},
+    "a check taken seconds after study is recognition, not retrieval");
+  assert.equal(after.money, before.money, "studying is not paid work");
+  assert.deepEqual(after.masteredByStage || {}, before.masteredByStage || {},
+    "and it does not count toward the mastery gate");
+  assert.ok(game.doc.querySelector(".teach-answer"),
+    "a miss is answered rather than repeated");
 });
