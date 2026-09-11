@@ -5,6 +5,22 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-10 - Day 3 gets its own hour of the day (v345)
+
+Day 1 and Day 3 walked the same five situations in the same sequence - open on the cushions, end on tomorrow's favour - so the day that tests what was learned played as the first day again. Day 2 was reshaped for exactly this reason and its comment says so; this is the same fix arriving late for the third day.
+
+**Rewritten, not reordered.** Each Day 3 line is timestamped, so shuffling the array alone made the day jump from after dark to the next morning - tried once before, as the order test's comment records, and reverted. The five narrations are new and carry a new timeline: 三日目の朝 (corridor, the bulb), 午前のうちに (the dining times), 昼過ぎ (tomorrow's station run), 夕方の支度 (the cushions), 夜も遅く (the last cup of tea). The order is `CHALLENGE_ORDER = [1, 3, 4, 0, 2]`, indexed by encounter so each word keeps its own mechanic wherever it lands.
+
+**Two request mismatches went with it.** The old third line set up a cold soup for a question about tea, and the old fifth asked for luggage to be carried when the request is to see a guest to the station.
+
+The order test now pins the new sequence, its beats, and two things that were true of neither day before: that Day 3 does not open where Day 1 opens, and does not end where Day 1 ends. Change the order without the narrations and the beats fail; change the narrations without the order and the same test says so.
+
+**The audio was regenerated**, so these five lines are spoken rather than read by the device voice: 5 rendered, 615 unchanged, and 7 pruned - including the two cold-open clips that v341 left on disk. They were unreferenced from that release; the generator collects what is spoken and removes what is not, which is the right owner for that decision.
+
+**Still drafts awaiting native review:** these five narrations, and the ten teaching sentences from v339 and v344.
+
+Cache is v345; `node --test` passes (545).
+
 ### 2026-09-10 - The episode teaches its five new words before the clock starts (v344)
 
 Reported from play, and the code already knew: the word board named 案内, 注文, 掃除, 確認 and 断る as はじめて and the next screen was a timed question about one of them. The board's own comment said as much - naming them was most of the value, teaching them was content work. This is that content.

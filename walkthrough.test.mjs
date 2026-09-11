@@ -797,13 +797,15 @@ function resumedScheduleChallengeSave() {
     starred: ["entrance"],
     stages: {
       "home-inn": {
-        // Day 3 asks about all five words now, so the schedule task sits at
-        // index 3 rather than 1. Pinned by name in the assertions below, but
-        // this index is what actually puts it on screen.
+        /* The schedule task is Day 3's second, since the day was rewritten
+         * onto its own timeline: corridor, desk, tomorrow's favour, dining
+         * room, tea. Pinned by name in the assertions below, but this index
+         * is what actually puts it on screen, so it moves when the day's
+         * order does. */
         phase: "challenge",
-        question: 3,
-        challengeScore: 3,
-        correctWords: ["揃える", "取り替える", "温める"],
+        question: 1,
+        challengeScore: 1,
+        correctWords: ["取り替える"],
         trainingWords: ["揃える", "取り替える", "温める", "調整", "引き受ける"],
         misses: [],
         mastered: false,

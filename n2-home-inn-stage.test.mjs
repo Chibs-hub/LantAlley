@@ -229,7 +229,15 @@ test("Moonview Inn has evidence-based practice and challenge phases", () => {
   assert.deepEqual([...stage.practice.map((item) => item.focusWord)].sort(), [...words].sort());
   assert.notDeepEqual(stage.practice.map((item) => item.focusWord), words,
     "Day 2 must not walk the same order as Day 1");
-  assert.deepEqual(stage.challenge.map((item) => item.focusWord), words);
+  /* Day 3 walks its own hour too. It used to walk Day 1's exactly - open on
+   * the cushions, end on tomorrow's favour - which made the day that tests
+   * the words play as the first day again. Same five words, third order. */
+  assert.deepEqual([...stage.challenge.map((item) => item.focusWord)].sort(), [...words].sort());
+  assert.notDeepEqual(stage.challenge.map((item) => item.focusWord), words,
+    "Day 3 must not walk the same order as Day 1");
+  assert.notDeepEqual(stage.challenge.map((item) => item.focusWord),
+    stage.practice.map((item) => item.focusWord),
+    "nor the same order as Day 2");
   assert.ok(stage.challenge.every((item) => item.romaji === "" && item.hint === ""));
   assert.equal(
     stage.challenge.every((item) => !stage.practice.some((practice) => practice.jp === item.jp)),
@@ -1032,20 +1040,29 @@ test("the challenge day runs in story order", () => {
   vm.createContext(context);
   vm.runInContext(readFileSync(stageUrl, "utf8"), context);
   const stage = context.N2HomeInnStage;
-  // Each narration is tied to its own task, so the question order cannot be
-  // shuffled independently of the story. A previous order of 2, 0, 4, 1, 3 made
-  // day 3 jump from after dark, to the next morning, to before closing.
+  /* Each narration is tied to its own task, so the question order cannot be
+   * shuffled independently of the story - a previous order of 2, 0, 4, 1, 3
+   * made day 3 jump from after dark, to the next morning, to before closing.
+   * The order below therefore came with rewritten narrations rather than
+   * from moving the array around, and the beats are what keeps the two in
+   * step: change one and this test names the other. */
   const order = Array.from(stage.getPhaseItems("challenge"), (item) => item.focusWord);
-  assert.deepEqual(order, ["揃える", "取り替える", "温める", "調整", "引き受ける"]);
+  assert.deepEqual(order, ["取り替える", "調整", "引き受ける", "揃える", "温める"]);
 
   const story = stage.getPhaseItems("challenge").map((item) => item.narration).join(" ");
-  const beats = ["次の朝です", "廊下が暗く", "日暮れ後", "夕食の時間", "最後のお客様"];
+  const beats = ["三日目の朝", "午前のうちに", "昼過ぎ", "夕方の支度", "夜も遅く"];
   let cursor = -1;
   for (const beat of beats) {
     const at = story.indexOf(beat, cursor + 1);
     assert.ok(at > cursor, `challenge beat "${beat}" is out of order`);
     cursor = at;
   }
+
+  // And it no longer opens where Day 1 opens or ends where Day 1 ends: that
+  // shared shape is what made the third day feel like the first.
+  const day1 = Array.from(stage.getPhaseItems("learn"), (item) => item.focusWord);
+  assert.notEqual(order[0], day1[0], "day 3 opens on its own task");
+  assert.notEqual(order[order.length - 1], day1[day1.length - 1], "and ends on its own");
 });
 
 test("each day withdraws one layer of support", () => {

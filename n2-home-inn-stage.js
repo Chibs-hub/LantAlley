@@ -436,13 +436,39 @@
   // Desk, kitchen, dining room, guest room, then tomorrow's favour.
   var DAY2_ORDER = [3, 2, 0, 1, 4];
 
+  /* Day 3's own hour of the day, and deliberately not Day 1's.
+   *
+   * Day 1 and Day 3 both opened on the cushions and ended on tomorrow's
+   * favour, so the day meant to test what was learned played as the first day
+   * again. Day 2 was reshaped for exactly this reason; this is the same fix
+   * arriving late for Day 3.
+   *
+   * Rewritten rather than reordered: every line is timestamped, so shuffling
+   * the array alone made the day jump from after dark to the next morning -
+   * tried once, as the order test's comment records, and reverted. Indexed by
+   * encounter, not by position: the day is played in CHALLENGE_ORDER, so the
+   * corridor below is line 1 because the bulb is encounter 1, and it is what
+   * a learner meets first.
+   *
+   * Two mismatches with the requests went with it. The old third line set up
+   * a cold soup for a question about tea, and the old fifth asked for luggage
+   * to be carried when the request is to see a guest to the station.
+   */
   var evidenceNarrationsB = [
-    "コン：「次の朝です。朝食のあと、子どもたちが大きさの違う座布団を二つのマットに残しました。」",
-    "コン：「廊下が暗くなっています。散歩に出たお客様がもうすぐ戻りますが、この電球が切れてしまいました。」",
-    "コン：「散歩のお客様が日暮れ後に戻りました。着替えている間に、夕食のスープが冷めてしまいました。」",
-    "コン：「夕食の時間に、ＡグループとＢグループから同じ時刻の希望をいただきました。食事処は一組ずつご案内します。」",
-    "コン：「最後のお客様も部屋に入りました。残る仕事は一つです。明日の朝、荷物を駅まで運ぶ人が必要です。」"
+    // Played fourth: early evening, laying the dining room out again.
+    "コン：「夕方の支度です。昼の宴会のあと、大きさの違う座布団が二つのマットに残っています。」",
+    // Played first: the morning of the third day.
+    "コン：「三日目の朝です。廊下の電球が切れていました。暗くなる前に直しておきましょう。」",
+    // Played last: late evening, the final guest of the three days.
+    "コン：「夜も遅くなりました。最後のお客様のお茶が冷めてしまったそうです。」",
+    // Played second: late morning, before the dining room is committed.
+    "コン：「午前のうちに今夜の夕食の時間を決めます。ＡグループとＢグループが同じ時刻をご希望です。食事処は一組ずつご案内します。」",
+    // Played third: early afternoon, arranging tomorrow while there is time.
+    "コン：「昼過ぎに一息つきました。明日の朝、駅までお客様をお送りする人が必要です。」"
   ];
+
+  // Corridor, desk, tomorrow's favour, dining room, then the last cup of tea.
+  var CHALLENGE_ORDER = [1, 3, 4, 0, 2];
 
   // Day 2 asks a different question, so it needs its own sentence. Reusing the
   // Day 1 request was incoherent: it commanded an action and then asked for a
@@ -759,7 +785,7 @@
     return phaseItem(index, false, "practice");
   });
 
-  var challenge = [0, 1, 2, 3, 4].map(function(index){
+  var challenge = CHALLENGE_ORDER.map(function(index){
     return phaseItem(index, true, "challenge", index === 2 || index === 4 ? "choice" : "task");
   });
 
