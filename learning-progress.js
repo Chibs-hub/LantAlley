@@ -63,6 +63,13 @@
       // writes them, because last time that was not done these were silently
       // dropped on every reload.
       reviewProgress: {},
+      // The correction list's own two fields, which belong to the list rather
+      // than the schedule: the words the learner waved off it, and the day
+      // its nudge last spoke. This object is a whitelist - a field missing
+      // from it is dropped on every reload, which is what the comment above
+      // is about, twice.
+      fixDismissed: [],
+      fixNudgedOn: null,
       dailyPractice: null,
       streak: 0,
       freezes: 0,
@@ -151,6 +158,8 @@
       next.stageStarted = (stored.stageStarted || []).slice();
       next.episode = stored.episode ? clone(stored.episode) : null;
       next.reviewProgress = clone(stored.reviewProgress || {});
+      next.fixDismissed = (stored.fixDismissed || []).slice();
+      next.fixNudgedOn = stored.fixNudgedOn || null;
       next.dailyPractice = stored.dailyPractice ? clone(stored.dailyPractice) : null;
       next.streak = Number(stored.streak) || 0;
       next.freezes = Number(stored.freezes) || 0;

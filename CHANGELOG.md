@@ -5,6 +5,28 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-10 - 直す言葉: one list of the words still owed, from every place (v348)
+
+Requested: a simple spot outside the stages for the words that went wrong, gathered from every stage, workable until empty, with a way to strike one off by hand.
+
+**Three lists already existed and none of them was this.** The repair queue clears one session's mistakes before the learner leaves it. The due list is whatever the spacing schedule wants back today, missed or not. And the daily session front-loads due items but pads itself with filler from the whole partition, so a learner with three mistakes did three of them and seventeen other cards. The new list holds exactly the misses, holds them until they are answered right, and is the only list the learner can edit. `getCorrectionList` in review-engine.js is all it takes to read: `recordOutcome` already clears `errorTag` on success, so nothing new is recorded anywhere.
+
+**One correct answer takes a word off.** That is what makes the list finishable, and it was the owner's call between that and waiting for the schedule's two delayed successes - a list that cannot be emptied today reads as broken. The word still returns on the schedule days later, so the list and the schedule stay separate promises.
+
+**Six options, not four.** Also the owner's call, and right: this is the one round where a right answer strikes a word off, so a one-in-four guess was too cheap a way to clear something the learner does not hold. `CHOICES` is a parameter now rather than a constant, so the daily session keeps the four its questions were written around. And the round always asks the meaning card where there is one, rather than whichever of the three kinds a coin lands on - reading and cloze would let a word leave the list on a form the learner happened to recognise.
+
+**A count on the map, and one line a day.** Not a dialog at launch: an interruption that arrives before the learner has done anything is the one most likely to be waved away, and the count carries it the rest of the day. Both were offered and the owner picked this one.
+
+Three things found while building it, all of them the tests' doing:
+
+- **`migrateProgress` is a whitelist**, and a field missing from it is dropped on every reload. Its own comment says so, twice, about two earlier fields lost the same way. `fixDismissed` and `fixNudgedOn` are in it now.
+- **A save with no `stages` key takes the pre-v3 path** and is rebuilt, which is why the first version of these tests saw an empty `reviewProgress`. Worth knowing for any future seed.
+- **`placeName` read `label`**; a map destination carries `name`, so the list showed the learner the internal key `home-inn` instead of 月見宿.
+
+Striking a word off by hand does not record a success. A dismissal that advanced the schedule would be the app answering a question on the learner's behalf.
+
+Cache is v348; `node --test` passes (551).
+
 ### 2026-09-10 - The Inn teaches all forty of its words, a block at a time (v347)
 
 The Inn is finished. Thirty more sentences and patterns, so every word all four shifts ask about is taught before it is asked - 案内 through 務める, set in the scene each word's own question happens in: the 判子 sentence is about the drawer at the front desk, because that is where its question is.

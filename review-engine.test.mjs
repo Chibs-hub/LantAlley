@@ -162,3 +162,32 @@ test("the schedule lets a daily learner reach far more than one session's worth 
   assert.ok(reachableWords(review, 20, 365, 3579) > 900,
     "a year of perfect daily practice should reach past 900 words, not stall near 280");
 });
+
+test("the correction list holds every word whose last answer was wrong", () => {
+  const engine = load();
+  const day = 86400000;
+  const monday = Date.UTC(2026, 0, 5, 9);
+
+  let progress = {};
+  // Missed on Monday, and again a week later, with a correct one in between
+  // on a different word.
+  progress = engine.recordOutcome(progress, {id: "w-a", correct: false, now: monday});
+  progress = engine.recordOutcome(progress, {id: "w-b", correct: true, now: monday});
+  progress = engine.recordOutcome(progress, {id: "w-c", correct: false, now: monday + 7 * day});
+
+  assert.deepEqual([...engine.getCorrectionList(progress)], ["w-a", "w-c"],
+    "only the misses, oldest miss first");
+
+  /* One correct answer is what clears it, which is the whole contract with the
+   * list: it has to be emptiable. The word still comes back - recordOutcome
+   * schedules it - but it is no longer something the learner owes. */
+  progress = engine.recordOutcome(progress, {id: "w-a", correct: true, now: monday + 8 * day});
+  assert.deepEqual([...engine.getCorrectionList(progress)], ["w-c"]);
+
+  // And a word that was never missed never appears, however often it is asked.
+  progress = engine.recordOutcome(progress, {id: "w-b", correct: true, now: monday + 9 * day});
+  assert.equal(engine.getCorrectionList(progress).includes("w-b"), false);
+
+  assert.deepEqual([...engine.getCorrectionList({})], []);
+  assert.deepEqual([...engine.getCorrectionList(null)], []);
+});

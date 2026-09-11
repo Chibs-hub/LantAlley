@@ -3186,3 +3186,151 @@ test("the episode teaches the words its board calls new, before the clock", asyn
   assert.ok(glosses.some((g) => !boardGlosses.has(g)),
     "at least one wrong answer comes from outside the words being taught, saw " + glosses.join(" / "));
 });
+
+
+/* ---- The correction list: the words still owed, from every place ----
+ *
+ * Reported as wanting one place for the words that went wrong, gathered from
+ * every stage, workable until empty, with a way to strike one off by hand.
+ */
+function savedMissSeed(extra) {
+  const now = Date.UTC(2026, 0, 20, 9);
+  return Object.assign({
+    version: 3,
+    characterSelected: true,
+    playerCharacter: "woman",
+    visited: ["entrance", "home-inn"],
+    starred: ["entrance"],
+    // `stages` has to be present, or migrateProgress treats the record as
+    // pre-v3 and rebuilds it - dropping reviewProgress, which is the whole
+    // point of this seed.
+    stages: {},
+    stageStarted: ["home-inn"],
+    reviewProgress: {
+      "v-soroeru": {
+        step: 0, firstSuccess: null, lastAnswered: now, delayedSuccesses: 0,
+        lastDelayedSuccess: null, due: now, errorTag: "incorrect",
+      },
+      // Answered right and never missed: it belongs to the schedule, not to
+      // the list, and must not appear on it however often it comes back.
+      "v-torikaeru": {
+        step: 1, firstSuccess: now, lastAnswered: now, delayedSuccesses: 1,
+        lastDelayedSuccess: now, due: now, errorTag: null,
+      },
+    },
+  }, extra || {});
+}
+
+function openCorrectionList(game) {
+  game.$("btn-start").click();
+  game.clock.advance(900);
+  const fix = game.$("map-detail-fix");
+  assert.equal(fix.hidden, false, "the map offers the list when something is owed");
+  fix.click();
+  game.clock.advance(600);
+}
+
+test("the correction list gathers the words that went wrong, and says where from", () => {
+  const game = boot(savedMissSeed(), "?skip=1");
+  openCorrectionList(game);
+
+  const rows = game.doc.querySelectorAll(".fix-row");
+  assert.equal(rows.length, 1, "only the miss, not everything the schedule wants back");
+  const row = rows[0].textContent;
+  assert.ok(row.includes("揃える"));
+  assert.ok(row.includes("to put things in order"), "with its meaning, so the list can be read");
+  // Where it was missed, by the map's own Japanese name rather than the key.
+  assert.ok(row.includes("月見宿"), "and the place it came from, saw " + row);
+});
+
+test("answering a missed word right once takes it off the list, and keeps it in the schedule", () => {
+  const game = boot(savedMissSeed(), "?skip=1");
+  openCorrectionList(game);
+
+  game.$("btn-fix-start").click();
+  game.clock.advance(900);
+
+  /* Six options, not four. This is the one round where a right answer strikes
+   * a word off a list, so a one-in-four guess is too cheap a way to clear
+   * something the learner does not hold yet. */
+  const options = game.doc.querySelectorAll(".question-control");
+  assert.equal(options.length, 6);
+
+  const before = JSON.parse(game.storage.getItem("lanternAlley.v3"));
+  assert.ok(before.reviewProgress["v-soroeru"].errorTag, "still owed before the answer");
+
+  /* The meaning card, every time: this round asks one question per word and a
+   * right answer strikes it off, so it asks the check the learner failed
+   * rather than whichever of the three kinds a coin lands on. */
+  assert.ok(game.$("jp-line").textContent.includes("意味"), "it asks what the word means");
+  const correct = options.find((b) => b.textContent === "to put things in order");
+  assert.ok(correct, "the right answer is among them");
+  correct.click();
+  game.clock.advance(900);
+  game.$("btn-next").click();
+  game.clock.advance(900);
+
+  // Back on its own list, which is now empty - that is how the round reports
+  // itself, rather than with a score card.
+  assert.equal(game.doc.querySelectorAll(".fix-row").length, 0);
+  assert.ok(game.$("scene").textContent.includes("今は空です"));
+
+  const after = JSON.parse(game.storage.getItem("lanternAlley.v3"));
+  const entry = after.reviewProgress["v-soroeru"];
+  assert.ok(!entry.errorTag, "the word is no longer owed");
+  /* And it still comes back. One right answer is not mastery, so the list and
+   * the spacing schedule stay separate promises: the list can be emptied
+   * today and the word returns tomorrow. */
+  assert.ok(entry.due > Date.now(), "the schedule still holds it for later");
+  assert.equal(after.masteredByStage && (after.masteredByStage["home-inn"] || []).includes("v-soroeru"),
+    false, "and clearing the list is not mastery");
+});
+
+test("a learner can strike a word off the list without the app answering for them", () => {
+  const game = boot(savedMissSeed(), "?skip=1");
+  openCorrectionList(game);
+
+  const drop = game.doc.querySelectorAll(".fix-drop")[0];
+  assert.ok(drop, "each row offers its own way off the list");
+  assert.ok(drop.getAttribute("aria-label").includes("揃える"),
+    "named after its word, since every row's button reads the same otherwise");
+  drop.click();
+  game.clock.advance(600);
+
+  assert.equal(game.doc.querySelectorAll(".fix-row").length, 0);
+  const saved = JSON.parse(game.storage.getItem("lanternAlley.v3"));
+  assert.deepEqual(saved.fixDismissed, ["v-soroeru"], "the dismissal survives a reload");
+  /* And it did not record a success. A dismissal that also advanced the
+   * schedule would be the app answering a question on the learner's behalf. */
+  assert.ok(saved.reviewProgress["v-soroeru"].errorTag,
+    "the schedule still knows the word was missed");
+
+  const reloaded = boot(saved, "?skip=1");
+  reloaded.$("btn-start").click();
+  reloaded.clock.advance(900);
+  assert.equal(reloaded.$("map-detail-fix").hidden, true,
+    "and the map stops offering a list with nothing on it");
+});
+
+test("the list is mentioned once a day, not at every launch", () => {
+  const game = boot(savedMissSeed(), "?skip=1");
+  game.$("btn-start").click();
+  game.clock.advance(900);
+
+  const nudge = game.$("map-fix-nudge");
+  assert.equal(nudge.hidden, false, "the first arrival at the map says something");
+  assert.ok(nudge.textContent.includes("直す言葉"));
+
+  /* Once. A launch-time dialog was the other option and this is not it: an
+   * interruption before the learner has done anything is the one most likely
+   * to be waved away, and the count on the button carries it the rest of the
+   * day. */
+  const saved = JSON.parse(game.storage.getItem("lanternAlley.v3"));
+  assert.ok(saved.fixNudgedOn, "the day it spoke is remembered");
+
+  const later = boot(saved, "?skip=1");
+  later.$("btn-start").click();
+  later.clock.advance(900);
+  assert.equal(later.$("map-fix-nudge").hidden, true, "and it does not say it again today");
+  assert.equal(later.$("map-detail-fix").hidden, false, "the count is still there");
+});

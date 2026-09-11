@@ -372,6 +372,9 @@
         pendingInnJourney = v3.innJourney || null;
         pendingLastPlace = v3.lastPlace || null;
         pendingReviewProgress = v3.reviewProgress || {};
+        pendingFixDismissed = {};
+        (v3.fixDismissed || []).forEach(function(id){ pendingFixDismissed[id] = true; });
+        pendingFixNudgedOn = v3.fixNudgedOn || null;
         pendingDaily = {
           dailyPractice: v3.dailyPractice || null,
           streak: v3.streak || 0,
@@ -495,6 +498,11 @@
         // reload during an episode threw away the whole hour.
         episode: savedEpisode,
         reviewProgress: state.reviewProgress || {},
+        // Words the learner has waved off the correction list, and the day the
+        // nudge last spoke. Both are about the list rather than the schedule,
+        // which is why neither touches reviewProgress.
+        fixDismissed: Object.keys(state.fixDismissed || {}),
+        fixNudgedOn: state.fixNudgedOn || null,
         dailyPractice: state.dailyPractice || null,
         streak: state.streak || 0,
         freezes: state.freezes || 0,
@@ -740,6 +748,8 @@
   var pendingEpisodesDone = {};
   var pendingStageStarted = {};
   var pendingReviewProgress = {};
+  var pendingFixDismissed = {};
+  var pendingFixNudgedOn = null;
   var pendingDaily = {dailyPractice:null, streak:0, freezes:0, lastActiveDate:null};
   var migratedFromV2 = false;
   var pendingItemStates = {};
@@ -799,6 +809,8 @@
     selectedMapKey = state.lastPlace;
   }
   state.reviewProgress = pendingReviewProgress;
+  state.fixDismissed = pendingFixDismissed;
+  state.fixNudgedOn = pendingFixNudgedOn;
 
   /* `?unlockall=1` fills the cupboard so placement can be tested. See
    * unlockEverythingForTesting. Console callers get the same thing by name.
@@ -1754,6 +1766,7 @@
   $("btn-skip-question").addEventListener("click", skipCurrentQuestion);
   $("btn-skip-stage").addEventListener("click", skipWholeStage);
   $("btn-restart-stage").addEventListener("click", restartWholeStage);
+  $("map-detail-fix").addEventListener("click", function(){ renderCorrectionList(); });
   $("btn-next").addEventListener("click", function(){
     if(practiceState){ advancePractice(); return; }
     if(previewState){ advanceEpisodePreview(); return; }
@@ -1845,7 +1858,41 @@
         ? LanternDailyPractice.SESSION_SIZE : 20;
       practiceBtn.textContent = "Daily practice - " + sessionSize + " questions";
     }
+
+    /* The words still owed, counted on the button. A label alone would say
+     * nothing about whether it is worth pressing, and the count is the whole
+     * reason to press it. */
+    var fixBtn = $("map-detail-fix");
+    if(fixBtn){
+      var owed = correctionList().length;
+      fixBtn.hidden = owed === 0;
+      fixBtn.textContent = "\u76f4\u3059\u8a00\u8449 " + owed;
+      paintFixNudge(owed);
+    }
     renderMapDetail();
+  }
+
+  /* Said once a day, on arriving at the map.
+   *
+   * Not a dialog at launch. An interruption that arrives before the learner
+   * has done anything is the one most likely to be waved away, and this is a
+   * chore reminder rather than something that cannot wait - the count on the
+   * button is what carries it the rest of the day.
+   */
+  function paintFixNudge(owed){
+    var nudge = $("map-fix-nudge");
+    if(!nudge) return;
+    var today = typeof LanternDailyPractice !== "undefined"
+      ? LanternDailyPractice.dayKey(Date.now()) : null;
+    if(!owed || !today || state.fixNudgedOn === today){
+      nudge.hidden = true;
+      return;
+    }
+    state.fixNudgedOn = today;
+    saveProgress();
+    nudge.hidden = false;
+    nudge.textContent = "\u30b3\u30f3\uff1a\u300c\u76f4\u3059\u8a00\u8449\u304c" + owed
+      + "\u8a9e\u3042\u308a\u307e\u3059\u3002\u4eca\u65e5\u306e\u3046\u3061\u306b\u3044\u304f\u3064\u304b\u76f4\u3057\u3066\u304a\u304d\u307e\u3057\u3087\u3046\u3002\u300d";
   }
 
   function selectMapDestination(key){
@@ -2547,6 +2594,190 @@
     return cards;
   }
 
+  /* ---- 直す言葉: the words still owed, from every place ----
+   *
+   * Reported as wanting one simple spot for the words that went wrong,
+   * gathered from every stage, that the learner can work through until it is
+   * empty and can strike a word off themselves.
+   *
+   * Three lists already existed and none of them was this. The repair queue
+   * clears one session's mistakes before the learner leaves it. The due list
+   * is whatever the schedule wants back today, missed or not, and the daily
+   * session pads itself with filler from the whole partition - so a learner
+   * with three mistakes did three of them and seventeen other cards. This one
+   * holds exactly the misses, holds them until they are answered right, and
+   * is the only list the learner can edit.
+   *
+   * One correct answer takes a word off, which is what makes the list
+   * finishable. The word still comes back on the spacing schedule days later,
+   * because one right answer is not mastery - the list and the schedule are
+   * different promises and this keeps them that way.
+   */
+  function correctionList(){
+    if(typeof LanternReviewEngine === "undefined"
+      || typeof LanternCurriculumCatalog === "undefined") return [];
+    var open = {};
+    practicePartitions().forEach(function(key){
+      LanternCurriculumCatalog.getPartition(key).forEach(function(item){ open[item.id] = key; });
+    });
+    var dismissed = state.fixDismissed || {};
+    return LanternReviewEngine.getCorrectionList(state.reviewProgress || {})
+      .filter(function(id){ return open[id] && !dismissed[id]; })
+      .map(function(id){
+        var item = LanternCurriculumCatalog.getItem(id);
+        if(!item) return null;
+        return {
+          id: id,
+          word: item.canonical,
+          reading: item.reading || "",
+          sense: (item.meanings && item.meanings[0]) || "",
+          place: placeName(open[id])
+        };
+      })
+      .filter(function(row){ return !!row; });
+  }
+
+  function placeName(key){
+    // `name`, not `label`: a map destination carries the Japanese name, and
+    // reading the wrong field showed the learner the internal key.
+    var place = LanternAlleyMap.getDestination(key);
+    return (place && place.name) || key;
+  }
+
+  /* Ten at a time. The list is meant to be worked through rather than sat in
+   * front of: a learner owing thirty words gets a session they can finish and
+   * a list that visibly shrank when they come back to it. */
+  var FIX_SESSION_SIZE = 10;
+
+  function renderCorrectionList(){
+    var rows = correctionList();
+    practiceState = null;
+    previewState = null;
+    screenCharacter.hidden = true;
+    screenTitle.style.display = "none";
+    screenMap.style.display = "none";
+    screenGame.style.display = "block";
+    screenGame.classList.remove("entrance-stage");
+    screenGame.classList.remove("inn-stage");
+
+    $("stage-phase-row").style.display = "none";
+    $("encounter-status").style.display = "none";
+    $("hint-btn").style.display = "none";
+    $("hint-box").classList.remove("show");
+    $("feedback-row").classList.remove("show");
+    $("feedback-text").textContent = "";
+    $("next-row").style.display = "none";
+    $("romaji-line").textContent = "";
+    $("meaning-line").textContent = "";
+    $("meaning-line").classList.remove("show");
+    $("scene-label").textContent = "直す言葉";
+    $("narration").textContent = "";
+
+    if(!rows.length){
+      // The empty state is the goal here, so it says that rather than "none".
+      $("jp-line").textContent = "コン：「直す言葉はありません。よくできています。」";
+      $("scene").innerHTML = '<div class="episode-open"><div class="episode-open-card fix-card">'
+        + '<p class="episode-open-kicker">直す言葉</p>'
+        + '<h2 class="episode-open-title">今は空です</h2>'
+        + '<p class="episode-open-note">間違えた言葉はここに集まります。直せば、このリストから消えます。</p>'
+        + '<button class="btn btn-primary" id="btn-fix-back">路地へ戻る</button>'
+        + '</div></div>';
+      $("btn-fix-back").addEventListener("click", function(event){
+        event.stopImmediatePropagation();
+        showMap();
+      });
+      return;
+    }
+
+    $("jp-line").textContent = "コン：「間違えた言葉です。一回正しく答えられたら、このリストから消します。」";
+    var items = rows.map(function(row){
+      return '<li class="fix-row">'
+        + '<span class="fix-text">'
+        + '<span class="fix-word"><ruby>' + row.word + '<rt>' + row.reading + '</rt></ruby></span>'
+        + '<span class="fix-gloss" lang="en">' + row.sense + '</span>'
+        + '</span>'
+        + '<span class="fix-place">' + row.place + '</span>'
+        + '<button type="button" class="fix-drop" data-fix-drop="' + row.id + '"'
+        + ' aria-label="' + row.word + 'をリストから外す">もう大丈夫</button>'
+        + '</li>';
+    }).join("");
+
+    $("scene").innerHTML = '<div class="episode-open"><div class="episode-open-card fix-card">'
+      + '<p class="episode-open-kicker">直す言葉</p>'
+      + '<h2 class="episode-open-title">' + rows.length + '語</h2>'
+      // Kon's panel is hidden on this screen, so her one line about the
+      // list rides in the card rather than being lost with it.
+      + '<p class="fix-lead">一回正しく答えられたら、このリストから消します。</p>'
+      + '<ul class="fix-list">' + items + '</ul>'
+      + '<p class="job-goal">選択肢は六つです。覚えている言葉は「もう大丈夫」で外せます。</p>'
+      + '<button class="btn btn-primary" id="btn-fix-start">'
+      + Math.min(rows.length, FIX_SESSION_SIZE) + '語を練習する</button>'
+      + '<button class="btn btn-ghost" id="btn-fix-back">路地へ戻る</button>'
+      + '</div></div>';
+
+    $("btn-fix-start").addEventListener("click", function(event){
+      event.stopImmediatePropagation();
+      startCorrectionPractice();
+    });
+    $("btn-fix-back").addEventListener("click", function(event){
+      event.stopImmediatePropagation();
+      showMap();
+    });
+    $("scene").querySelectorAll(".fix-drop").forEach(function(button){
+      button.addEventListener("click", function(event){
+        event.stopImmediatePropagation();
+        /* The learner's own call, and it does not touch the schedule: the word
+         * leaves the list and still comes back when the spacing says so. A
+         * dismissal that also recorded a success would be the app answering a
+         * question on the learner's behalf. */
+        var id = button.getAttribute("data-fix-drop");
+        if(!state.fixDismissed) state.fixDismissed = {};
+        state.fixDismissed[id] = true;
+        saveProgress();
+        renderCorrectionList();
+      });
+    });
+  }
+
+  function startCorrectionPractice(){
+    if(typeof LanternCatalogPractice === "undefined") return;
+    var rows = correctionList().slice(0, FIX_SESSION_SIZE);
+    var cards = [];
+    rows.forEach(function(row){
+      var item = LanternCurriculumCatalog.getItem(row.id);
+      if(!item) return;
+      // Six options rather than four: this is the one round where a right
+      // answer strikes a word off a list, so a one-in-four guess is too cheap
+      // a way to clear something the learner does not hold yet.
+      var built = LanternCatalogPractice.buildPracticeCards(item, LanternCurriculumCatalog, undefined, 6);
+      if(!built.length) return;
+      /* The meaning card where there is one, rather than whichever of the
+       * three kinds a coin lands on.
+       *
+       * This round asks one question per word and a right answer strikes it
+       * off, so which question it asks is not a detail: "what does this mean"
+       * is the check the learner failed in the first place. Reading and cloze
+       * are worth practising and the daily session does mix them; here they
+       * would let a word leave the list on a reading the learner happened to
+       * recognise. */
+      var prefer = ["meaning", "cloze", "reading"];
+      var chosen = null;
+      for(var k = 0; k < prefer.length && !chosen; k++){
+        built.forEach(function(candidate){
+          if(!chosen && candidate.kind === prefer[k]) chosen = candidate;
+        });
+      }
+      cards.push(chosen || built[0]);
+    });
+    if(!cards.length){ renderCorrectionList(); return; }
+    practiceState = {cards: cards, index: 0, correct: 0, answered: false, correction: true};
+    screenTitle.style.display = "none";
+    screenMap.style.display = "none";
+    screenGame.style.display = "block";
+    screenGame.classList.remove("entrance-stage");
+    renderPracticeCard();
+  }
+
   function startCatalogPractice(){
     if(typeof LanternCatalogPractice === "undefined") return;
     var size = (typeof LanternDailyPractice !== "undefined") ? LanternDailyPractice.SESSION_SIZE : 8;
@@ -2569,11 +2800,13 @@
     // own Learn/Practice/Challenge/Review flow, which this is not.
     $("btn-skip-question").hidden = true;
     $("btn-skip-stage").hidden = true;
-    $("stage-phase-badge").textContent = "Daily practice";
+    $("stage-phase-badge").textContent = practiceState.correction
+      ? "\u76f4\u3059\u8a00\u8449" : "Daily practice";
     $("encounter-status").style.display = "block";
     $("encounter-progress").textContent = String(practiceState.index + 1);
     $("encounter-total").textContent = String(practiceState.cards.length);
-    $("scene-label").textContent = "Moonview Inn - Daily practice";
+    $("scene-label").textContent = practiceState.correction
+      ? "\u76f4\u3059\u8a00\u8449" : "Moonview Inn - Daily practice";
     $("narration").textContent = card.sourceNote;
     $("romaji-line").textContent = "";
     $("meaning-line").textContent = "";
@@ -2674,6 +2907,14 @@
 
   function advancePractice(){
     if(practiceState.index >= practiceState.cards.length - 1){
+      /* Back to the list, which is the point of the round: what it shows now
+       * is what is left, and the words just answered are gone from it. The
+       * daily session's score card is for the daily session - this one is
+       * measured by the list being shorter. */
+      if(practiceState.correction){
+        renderCorrectionList();
+        return;
+      }
       if(!practiceState.finished){
         // Show the score before leaving. Dropping straight back to the map
         // made the session end with no sense of how it went.

@@ -133,6 +133,27 @@
       .sort(function(a, b){ return progress[a].due - progress[b].due; });
   }
 
+  /* The words that are still wrong: every item whose last answer was a miss.
+   *
+   * A third list, and deliberately not either of the other two. The repair
+   * queue clears one session's mistakes before the learner leaves it, and the
+   * due list is everything the schedule wants back today whether it was ever
+   * missed or not. This is what a learner would call their mistakes: it
+   * accumulates across every place, it does not empty on its own, and one
+   * correct answer is what takes a word off it - `recordOutcome` clears
+   * `errorTag` on success, which is the only thing this reads.
+   *
+   * Oldest first, by when the miss happened, so a word carried for a week
+   * comes before one missed a minute ago.
+   */
+  function getCorrectionList(progress){
+    return Object.keys(progress || {})
+      .filter(function(id){ return !!(progress[id] && progress[id].errorTag); })
+      .sort(function(a, b){
+        return (progress[a].lastAnswered || 0) - (progress[b].lastAnswered || 0);
+      });
+  }
+
   function isMastered(itemProgress){
     if(!itemProgress || !itemProgress.firstSuccess) return false;
     if(itemProgress.errorTag) return false;
@@ -148,6 +169,7 @@
     answerRepair: answerRepair,
     recordOutcome: recordOutcome,
     getDueItems: getDueItems,
+    getCorrectionList: getCorrectionList,
     isMastered: isMastered
   };
 })(typeof self !== "undefined" ? self : this);

@@ -16,6 +16,13 @@
 (function(root){
   "use strict";
 
+  /* Four options by default, and callers may ask for more.
+   *
+   * The correction round asks for six: it is the one place where a right
+   * answer takes a word off a list, so a one-in-four guess is too cheap a way
+   * to clear something you do not know. Everywhere else four is the shape the
+   * questions were written around.
+   */
   var CHOICES = 4;
 
   function pick(list, count, random){
@@ -63,9 +70,13 @@
     return {options: options, correctIndex: options.indexOf(answer)};
   }
 
-  function card(kind, item, prompt, answer, distractors, random){
-    if(distractors.length < CHOICES - 1) return null;
-    var built = assemble(answer, distractors.slice(0, CHOICES - 1), random);
+  function card(kind, item, prompt, answer, distractors, random, choices){
+    var want = choices || CHOICES;
+    /* Not fewer than four, even where the partition cannot fill six: a place
+     * with thin vocabulary would otherwise produce a two-option question,
+     * which is a coin toss dressed as a check. */
+    if(distractors.length < Math.min(want, CHOICES) - 1) return null;
+    var built = assemble(answer, distractors.slice(0, want - 1), random);
     return {
       id: item.id + "-" + kind,
       kind: kind,
@@ -77,25 +88,26 @@
     };
   }
 
-  function buildPracticeCards(item, catalog, random){
+  function buildPracticeCards(item, catalog, random, choices){
     random = random || Math.random;
     if(!item) return [];
+    var want = choices || CHOICES;
     var cards = [];
 
     // Reading: only where there is a reading to ask for. A kana headword is its
     // own reading, so the question would answer itself.
     if(item.hasKanji && item.reading){
-      var readings = neighbours(item, catalog, CHOICES - 1, random, function(other){ return other.reading; });
+      var readings = neighbours(item, catalog, want - 1, random, function(other){ return other.reading; });
       var readingCard = card("reading", item, "「" + item.canonical + "」の読み方はどれですか。",
-        item.reading, readings, random);
+        item.reading, readings, random, want);
       if(readingCard) cards.push(readingCard);
     }
 
     var meaning = firstMeaning(item);
     if(meaning){
-      var meanings = neighbours(item, catalog, CHOICES - 1, random, firstMeaning);
+      var meanings = neighbours(item, catalog, want - 1, random, firstMeaning);
       var meaningCard = card("meaning", item, "「" + item.canonical + "」の意味はどれですか。",
-        meaning, meanings, random);
+        meaning, meanings, random, want);
       if(meaningCard) cards.push(meaningCard);
     }
 
@@ -105,9 +117,9 @@
     // Requiring a kanji makes the match a word rather than a fragment.
     var sentence = exampleSentence(item);
     if(sentence && item.hasKanji && item.canonical.length >= 2 && sentence.indexOf(item.canonical) >= 0){
-      var words = neighbours(item, catalog, CHOICES - 1, random, function(other){ return other.canonical; });
+      var words = neighbours(item, catalog, want - 1, random, function(other){ return other.canonical; });
       var clozeCard = card("cloze", item, sentence.split(item.canonical).join("（　　）"),
-        item.canonical, words, random);
+        item.canonical, words, random, want);
       if(clozeCard) cards.push(clozeCard);
     }
 
