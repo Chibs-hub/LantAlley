@@ -5868,8 +5868,12 @@
    * replacing them - it tints and textures what is already there, and stops
    * above the tatami. 無地 draws nothing at all, which is the room as painted. */
   function wallpaperLayer(){
-    var svg = LanternHomeDecor.wallpaperSvg(state.activeWallpaper || "wallpaper-plain");
-    return svg ? '<div class="home-wallpaper" aria-hidden="true">' + svg + '</div>' : "";
+    var id = state.activeWallpaper || "wallpaper-plain";
+    var svg = LanternHomeDecor.wallpaperSvg(id);
+    // A pale design cannot show through the default multiply, so the sheet
+    // says how it meets the panel. See wallpaperBlend in home-decor.js.
+    var blend = LanternHomeDecor.wallpaperBlend ? LanternHomeDecor.wallpaperBlend(id) : "multiply";
+    return svg ? '<div class="home-wallpaper blend-' + blend + '" aria-hidden="true">' + svg + '</div>' : "";
   }
 
   function renderHomeInterior(){

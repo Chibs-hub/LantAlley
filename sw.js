@@ -7,7 +7,7 @@
  * Bump CACHE_VERSION whenever any shell file changes, or returning players
  * will keep the old build.
  */
-var CACHE_VERSION = "lantern-alley-v350";
+var CACHE_VERSION = "lantern-alley-v351";
 // Teaching focus, saved block progress, and mobile shelf clearance.
 
 // audio-index.js assigns to `self`, so the worker and the page share one list
@@ -85,6 +85,7 @@ var SHELL = [
   "./assets/home/decor/sakura-bonsai-v1.webp",
   "./assets/home/decor/pine-bonsai-v1.webp",
   "./assets/home/decor/wallpaper-asanoha-blue-v1.webp",
+  "./assets/home/decor/wallpaper-sakura-v1.webp",
   // The room's own shelf. Not stock like the rest of this list - it is a
   // fixture drawn in every interior, so a learner offline without it sees
   // their teapot and daruma floating where its planks should be.
@@ -131,11 +132,11 @@ var SHELL = [
   "./manifest.webmanifest",
   "./assets/branding/lantern-mark-v1.png",
   "./assets/social/lantern-alley-share-v1.jpg",
-  "./icons/icon-192.png?v=350",
-  "./icons/icon-512.png?v=350",
-  "./icons/icon-192-maskable.png?v=350",
-  "./icons/icon-512-maskable.png?v=350",
-  "./icons/apple-touch-icon.png?v=350",
+  "./icons/icon-192.png?v=351",
+  "./icons/icon-512.png?v=351",
+  "./icons/icon-192-maskable.png?v=351",
+  "./icons/icon-512-maskable.png?v=351",
+  "./icons/apple-touch-icon.png?v=351",
   "./assets/kon/kon-idle.webp",
   "./assets/kon/kon-wave-left.webp",
   "./assets/kon/kon-wave-right.webp",

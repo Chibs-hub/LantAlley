@@ -5,6 +5,18 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-11 - The 桜 wallpaper is painted, and a pale design can show at all (v351)
+
+桜 was the last wallpaper still drawing generated blossoms. The owner's sheet is in as `wallpaper-sakura-v1.webp`, and the art queue for wallpaper is now empty - which is also why the shop test no longer insists on finding an unpainted design to prove its filter bites.
+
+**Dropping the file in was not enough, and the reason is worth writing down.** The wallpaper layer is `mix-blend-mode: multiply` at 55% opacity, chosen when the only design was 麻の葉 - dark blue lines that bite into a light panel. Multiply can only darken, so a sheet of pale pink on cream disappeared: it rendered, the swatch looked right, and the wall looked bare. Measured, the 桜 sheet has a tonal spread of 14 against 麻の葉's 66, and 2.3% of its pixels are dark enough to register against 30.6%.
+
+The alternative was pushing the artwork to nearly three times its own saturation, which is re-authoring the picture rather than presenting it. So a wallpaper declares how it meets the panel instead: `blend:"normal"` for a pale sheet, laid on at 82% so the panel's own lighting still reads through, and multiply stays the default for everything else. 無地 still draws nothing at all.
+
+Verified in the browser rather than reasoned about: 桜 reads on all six panels with the room's lighting intact, 麻の葉 is unchanged at multiply 55%, and 無地 renders no layer.
+
+Cache is v351; `node --test` passes (563).
+
 ### 2026-09-11 - Teaching and review reliability audit (v350)
 
 Teaching cards now receive focus, settled answers are disabled but readable,

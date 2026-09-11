@@ -192,6 +192,18 @@
        + '</g>'},
 
     {id:"wallpaper-sakura", name:"桜", price:220,
+     image:"assets/home/decor/wallpaper-sakura-v1.webp",
+     /* Laid on the panel rather than multiplied into it.
+      *
+      * The layer's default is multiply, which only ever darkens - that is why
+      * 麻の葉 reads: dark blue lines biting into a light panel. This sheet is
+      * pale pink on cream, so multiplied it disappears: measured against the
+      * 麻の葉 sheet it has a tonal spread of 14 against 66, and 2% of its
+      * pixels are dark enough to show against 31%. The alternative was to
+      * push the artwork's saturation to nearly three times its own to make
+      * multiply bite, which is re-authoring the picture rather than
+      * presenting it. */
+     blend:"normal",
      tile:64,
      pattern:'<g fill="#c98a92" opacity="0.7">'
        + blossom(16, 14, 7) + blossom(48, 34, 6) + blossom(30, 54, 5)
@@ -354,6 +366,14 @@
 
   /* A whole wall of the chosen pattern, as a tiling SVG. Returns "" for 無地,
    * which is the room's own walls and needs no layer at all. */
+  // How the sheet meets the painted panel: "multiply" tints what is there,
+  // "normal" sits on top of it. A pattern of dark lines wants the first; a
+  // pale one is invisible under it. Default stays multiply.
+  function wallpaperBlend(id){
+    var paper = getWallpaper(id);
+    return (paper && paper.blend) || "multiply";
+  }
+
   function wallpaperSvg(id){
     var paper = getWallpaper(id);
     if(paper && paper.image){
@@ -539,6 +559,7 @@
     wallpapers: wallpapers,
     getWallpaper: getWallpaper,
     wallpaperSvg: wallpaperSvg,
+    wallpaperBlend: wallpaperBlend,
     ownsWallpaper: ownsWallpaper,
     buyWallpaper: buyWallpaper,
     isWallpaper: isWallpaper,

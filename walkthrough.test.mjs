@@ -1971,14 +1971,20 @@ test("the shop's wallpaper shelf offers only wallpaper that has a picture", () =
     assert.ok(decor.getWallpaper(id).image, id + " is on sale but has no picture");
   }
 
+  /* The queue is empty: 桜 was the last unpainted design and got its artwork
+   * in v351, so every wallpaper but the bare room now has a picture. This
+   * used to insist on finding an unpainted one to prove the filter bites,
+   * which is a guard that fails the day the art queue is finished. The filter
+   * is still asserted for anything added later. */
   const unpainted = decor.wallpapers()
     .filter((w) => w.id !== "wallpaper-plain" && !decor.getWallpaper(w.id).image)
     .map((w) => w.id);
-  assert.ok(unpainted.length > 0,
-    "expected at least one unpainted wallpaper, or this test proves nothing");
+  assert.deepEqual([...unpainted], [], "every wallpaper on the shelf is painted");
   for (const id of unpainted) {
     assert.ok(!offered.includes(id), id + " has no picture but is still sold");
   }
+  // And the shelf is actually showing them, not empty for a different reason.
+  assert.ok(offered.includes("wallpaper-sakura"), "桜 is on sale now that it is painted");
 });
 
 /* A stack of grown trees to plant by hand.

@@ -530,3 +530,34 @@ test("objects rest on their artwork, not on the bottom of a padded box", () => {
       `${id} is cut tight, so its base is the bottom of the picture`);
   }
 });
+
+
+test("a pale wallpaper is laid on the panel, not multiplied into it", () => {
+  /* The layer's default is multiply, which only ever darkens - that is why
+   * 麻の葉 reads, being dark lines on a light panel. 桜 is pale pink on cream:
+   * measured against the 麻の葉 sheet it has a tonal spread of 14 against 66,
+   * and 2% of its pixels are dark enough to show against 31%. Multiplied it
+   * was invisible on the wall while looking correct in its own swatch, and
+   * the alternative was pushing the artwork to nearly three times its own
+   * saturation, which is re-authoring the picture rather than showing it.
+   */
+  assert.equal(decor.wallpaperBlend("wallpaper-sakura"), "normal");
+  assert.equal(decor.wallpaperBlend("wallpaper-asanoha"), "multiply",
+    "a dark line pattern still tints the panel it sits on");
+  assert.equal(decor.wallpaperBlend("wallpaper-plain"), "multiply", "and so does the default");
+  assert.equal(decor.wallpaperBlend("no-such-paper"), "multiply");
+
+  // The app has to put that choice on the element the blend is set on, and the
+  // stylesheet has to have something for it to name.
+  const app = fs.readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  assert.match(app, /home-wallpaper blend-' \+ blend/);
+  const css = fs.readFileSync(new URL("./styles.css", import.meta.url), "utf8");
+  assert.match(css, /\.home-wallpaper\.blend-normal\{mix-blend-mode:normal/);
+
+  // And 桜 is a photograph now rather than the generated blossoms it shipped
+  // with, so it takes the raster path.
+  // wallpapers is a getter, not the array itself.
+  const sakura = decor.getWallpaper("wallpaper-sakura");
+  assert.ok(sakura.image, "桜 has artwork");
+  assert.match(decor.wallpaperSvg("wallpaper-sakura"), /is-raster/);
+});
