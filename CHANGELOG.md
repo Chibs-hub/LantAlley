@@ -5,6 +5,20 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-11 - The title screen answers a tap before the fonts arrive (v354)
+
+Four things wrong with the first screen, found by loading it rather than by reading it.
+
+**The web fonts held the whole screen hostage.** `fonts.googleapis.com` was linked as an ordinary stylesheet, which is render-blocking, and a pending stylesheet also holds back every script below it - which is all of them. The screen painted, so it looked ready, but the button did nothing until the font request finished. Against a host that hangs, `domInteractive` was 12,659 ms; with the link fetched non-blocking it was 62-79 ms, same files, same 1.19 MB catalogue. That is not a hypothetical host: a school or office proxy, a captive portal, or a country that blocks Google is enough. The link now loads as `media="print"` and is promoted on load, with a plain link in `<noscript>`. Self-hosting would also fix it and would additionally work offline, but these are Japanese families - the served CSS is a hundred-odd `unicode-range` slices - so that is a project, not a patch.
+
+**Kon was hovering in mid-air on a phone.** She had been lifted to `top:27%` when the panel below her was four rows tall and she was covering `保存データ`. Those rows have since moved into the Menu, the panel is two rows again, and the reason had quietly expired - leaving her floating over the middle of the scene with a dead gap underneath. She is back in the corner on the path, as on a wide screen, at `bottom:8%`, which clears the feedback pill fixed 14 px off the bottom right. The panel already outranks her, so the buttons stay readable where she reaches behind them.
+
+**The credit line was cut in half at every phone width.** `min-height:calc(100svh - 24px)` subtracted the body's padding and nothing else, so the title screen was taller than the space left for it: 866 px of document in an 844 px viewport at 390x844, 590 in 568 at 320x568. The subtraction is now `--title-chrome`, which is the whole of what stands outside the frame - padding, the footer's margin, and the footer's own line. Checked at 320, 390, 430 and desktop: zero overflow in both axes.
+
+**Debug Mode was on the learner's menu.** `debug-mode.js` ships with `available = true`, and that alone unhid the button, so anyone opening the menu was offered a developer toggle. It now appears only once debug is actually on - reached with `?debug=1`, which is how a tester reaches it anyway - and the button is what turns it back off. Setting `available` to false still removes it from the build entirely.
+
+Cache is v354.
+
 ### 2026-09-11 - The title screen is the village, not the map (v353)
 
 The title opened on `lantern-alley-map-v1.jpg`, the top-down map painting, which is a diagram of the world rather than a view into it. It is now the owner's night village scene, exported without the title text that was painted into the share banner - the screen draws 言葉の路地 and LANTERN ALLEY as real text, so a background carrying its own title read it twice.

@@ -926,7 +926,14 @@
     url.hash = "";
     window.location.href = url.href;
   }
-  $("btn-debug-mode").hidden = !(window.LanternDebug && window.LanternDebug.available);
+  /* Debug Mode is a tester's switch, and the menu is a learner's menu. The
+   * button used to appear for everyone the build shipped with debug compiled
+   * in, which is every build - so a learner opening About was offered a
+   * developer toggle. It now shows only once debug is actually on, which is
+   * reached the way a tester reaches it anyway, with ?debug=1, and the button
+   * is what turns it back off. Setting `available` to false in debug-mode.js
+   * still removes it from the build entirely. */
+  $("btn-debug-mode").hidden = !(window.LanternDebug && window.LanternDebug.available && debugEnabled);
   $("btn-debug-mode").textContent = "Debug Mode: " + (debugEnabled ? "On" : "Off");
   $("btn-debug-mode").setAttribute("aria-pressed", String(debugEnabled));
   $("btn-debug-mode").addEventListener("click", function(){ switchDebugMode(!debugEnabled); });

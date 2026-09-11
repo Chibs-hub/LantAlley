@@ -11,6 +11,12 @@
     --moss:#7ea184;
     --text-dim:#c3ccdf;
     --radius-card:14px;
+    /* What stands outside the title screen on a phone, and therefore what its
+       height has to leave room for: the body's 8px top and 18px bottom
+       padding, the credit footer's 18px margin, and the footer's own line.
+       Measured rather than guessed - the old figure covered the padding only,
+       which is why the credit line was sliced in half at every phone width. */
+    --title-chrome:60px;
   }
 
   *{box-sizing:border-box;}
@@ -154,18 +160,24 @@
   [hidden]{display:none !important}
 
   @media(max-width:620px){
-    #screen-title.title-scene{min-height:calc(100svh - 24px);padding:34px 25px 28px;background-position:54% center}
+    /* The 24px this used to subtract covered the body's padding and nothing
+       else, so the title screen was taller than the space left for it and
+       the credit line under it was cut in half at every phone size. The
+       subtraction is the whole of what sits outside the frame: PHONE_CHROME
+       - see the comment on the custom property. */
+    #screen-title.title-scene{min-height:calc(100svh - var(--title-chrome));padding:34px 25px 28px;background-position:54% center}
     #screen-title.title-scene h1{font-size:clamp(2.35rem,14vw,3.7rem)}
     .title-kicker{font-size:.62rem}
-    /* Kon was placed when the panel below her was two buttons tall. It has
-       four rows now - install and save arrived - and she was sitting across
-       all of them, hiding 保存データ entirely.
-       Moved out of the corner and up into the empty stretch of scene between
-       the title and the buttons, which is the only part of this screen with
-       nothing in it. Anchored to the top so she stays under the title as the
-       panel below grows; the corner was the thing that kept colliding with
-       it. */
-    .title-kon{right:6%;top:27%;bottom:auto;width:min(40vw,180px);z-index:0}
+    /* Kon sits on the path in the bottom corner, as she does on a wide
+       screen. She was lifted to top:27% when the panel below her was four
+       rows tall - install and save were buttons of their own then - and she
+       covered them. Those rows moved into the Menu, the panel is two rows
+       again, and anchored to the top she was left hovering in mid-air over
+       the middle of the scene with nothing under her.
+       The panel keeps its own z-index above her, so the buttons stay
+       readable where she reaches behind them, and bottom:8% clears the
+       feedback pill fixed 14px off the bottom right. */
+    .title-kon{right:-4%;bottom:8%;top:auto;width:min(50vw,220px);z-index:0}
     .title-entry-panel{width:100%}
     /* The text controls have no background of their own, so whatever is
        behind them is what they are read against. On the title screen that is
