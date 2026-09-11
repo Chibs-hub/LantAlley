@@ -1479,3 +1479,25 @@ test("a wrong option is a different action, not a later one", () => {
   assert.equal(undertake.options.length, 4);
   assert.equal(undertake.options.filter((option) => option.nearMiss).length, 1);
 });
+
+test("every word the Inn teaches carries an authored sentence and pattern", () => {
+  const context = {};
+  context.self = context;
+  vm.createContext(context);
+  vm.runInContext(readFileSync(new URL("./curriculum-catalog.js", import.meta.url), "utf8"), context);
+  vm.runInContext(readFileSync(new URL("./word-teaching.js", import.meta.url), "utf8"), context);
+  vm.runInContext(readFileSync(new URL("./moonview-inn-interactions.js", import.meta.url), "utf8"), context);
+  vm.runInContext(readFileSync(stageUrl, "utf8"), context);
+
+  const stage = context.N2HomeInnStage;
+  const catalog = context.LanternCurriculumCatalog;
+  const words = stage.encounters.map((e) => ({
+    word: e.focusWord,
+    item: catalog.getItem(stage.getTargetId(e.focusWord)),
+  }));
+  const entries = {};
+  words.forEach((row) => { entries[row.word] = stage.getTeaching(row.word); });
+
+  assert.deepEqual([...context.LanternWordTeaching.validateEntries(words, entries)], [],
+    "a stage may not teach a word it has written no sentence for");
+});

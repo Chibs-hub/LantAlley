@@ -69,6 +69,46 @@
     return DAY_KINDS[phase] || DAY_KINDS.learn;
   }
 
+  /* The sentence each word is taught with, and the pattern it lives in.
+   *
+   * Authored here rather than taken from the catalogue because the catalogue
+   * cannot carry this. Its examples for these five run to a median of nine
+   * characters, which is too short to show the grammar N2 tests, and two are
+   * actively wrong for this stage: the catalogue exampled a whole idiom that
+   * means to speak in unison, and it tuned a clarinet. The three that are
+   * kept below are the catalogue's project-written entries, which were
+   * authored for this inn in the first place.
+   *
+   * The pattern is the part that makes an N2 word usable and the part no
+   * picture can convey, so it is a required field rather than a nicety.
+   */
+  var TEACHING = {
+    "揃える": {
+      sentence:"お客様の分のスリッパを四つ揃えてください。",
+      pattern:"〜を揃える"
+    },
+    "取り替える": {
+      sentence:"古いタオルを新しいタオルに取り替えてください。",
+      pattern:"〜を〜に取り替える"
+    },
+    "温める": {
+      sentence:"お茶をコンロでもう一度温めてください。",
+      pattern:"〜を温める"
+    },
+    "調整": {
+      sentence:"夕食の開始時刻を調整していただけますか。",
+      pattern:"〜を調整する"
+    },
+    "引き受ける": {
+      sentence:"今夜の夕食の配膳を引き受けていただけませんか。",
+      pattern:"〜を引き受ける"
+    }
+  };
+
+  function getTeaching(focusWord){
+    return TEACHING[focusWord] || null;
+  }
+
   var DAY_ANNOUNCEMENTS = {
     learn:"コン：「一日目です。今日は基礎から始めましょう。」",
     practice:"コン：「二日目です。今日は実際の仕事の中で練習しましょう。」",
@@ -910,6 +950,7 @@
     getWrongAnswerFeedback:getWrongAnswerFeedback,
     getTargetId:getTargetId,
     getCardSense:getCardSense,
+    getTeaching:getTeaching,
     balanceOptions:balanceOptions
   };
 })(typeof window !== "undefined" ? window : globalThis);
