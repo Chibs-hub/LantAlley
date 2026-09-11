@@ -40,12 +40,9 @@ branch, so a shell file that is not committed is a 404 that kills the service
 worker install for every tester. `pwa.test.mjs` asks `git ls-files` rather than
 the disk for exactly that reason.
 
-`node --test` runs 563: 558 pass and 5 fail. The five are the standalone
-artifact checks in `pwa.test.mjs`, which read a built
-`lantern-alley-artifact.html` that is not in the tree; they fail identically on
-an untouched checkout, so they are the build's absence, not a regression. Every
-version from v339 to v350 was verified in a browser as well as by the suite;
-the changelog entry for each one says what was checked and what was not.
+`node --test` runs 566 and all of them pass. Every version from v339 to v350
+was verified in a browser as well as by the suite; the changelog entry for
+each one says what was checked and what was not.
 
 **What changed across v339-v350**, newest first. Full reasons in
 [CHANGELOG.md](CHANGELOG.md).
@@ -372,7 +369,6 @@ Browser progress is not part of the project folder. Copying the folder transfers
 | File | Purpose |
 | --- | --- |
 | `research/balance-answers.mjs` | Moves each correct answer to a position derived from its question id. Run after authoring. |
-| `build-artifact.mjs` | Builds `lantern-alley-artifact.html`, inlining every script, style, image and audio clip. The maintained builder; the `.py` one still works but needs the full interpreter path. |
 | `generate-audio.py` | Renders every spoken line to MP3 with `ja-JP-NanamiNeural`. Hashes the text, so only changed lines cost anything. Needs network. |
 | `collect-spoken-lines.js` | Collects the spoken Japanese. Walks every registered stage. |
 | `audio-index.js` | Generated. Maps each line to its clip; imported by the page and by `sw.js`. |
@@ -399,21 +395,21 @@ The suite guards three different things.
 
 That last suite exists because roughly 260 assertions match the *source text* of `app.js`, which is how `challenge is not defined` once shipped green - the string the test looked for was still in the file while the question rendered a running clock and no buttons. When the walkthrough was written, the bug's exact shape was reinjected: all 42 assertions in the suites covering that code passed, and the walkthrough failed with the real `ReferenceError`.
 
-**Verify through the built artifact, not the dev server.** The dev server has repeatedly served stale files even after unregistering the service worker; the artifact has no service worker at all.
+**Watch for a stale service worker when you verify.** The dev server has repeatedly served files that were already edited. The advice here used to be "verify through the built artifact", which had no service worker at all; the artifact is gone, so instead: hard-reload, or unregister the worker in DevTools > Application, and bump `CACHE_VERSION` as the mechanical rules require.
 
 ## 8. Delivery: the app, not the Artifact
 
-**The Artifact was retired on 2026-08-27.** The game needs more room than it can have there: 506 spoken lines still have no audio, and the reward layer is about to add a furniture catalogue. A 16 MB hard ceiling cannot hold either.
+**The Artifact was retired on 2026-08-27** and its builder was deleted on 2026-09-11. The game needed more room than it could have there: 506 spoken lines still have no audio, and the reward layer added a furniture catalogue. A 16 MB hard ceiling could hold neither.
 
-**What the product is now.** `index.html` and its sibling files, played from disk or served over http, installable as a PWA. There is no size ceiling.
+**What the product is now.** `index.html` and its sibling files, served over http and installable as a PWA. GitHub Pages publishes the working branch, so the repository is the deployment. There is no size ceiling.
 
-`build-artifact.mjs` still works. It no longer refuses to emit a file over 15 MB: that ceiling was the publishing limit of the host that served the artifact when the artifact was the delivery surface, and the game ships from GitHub Pages now. The build reports its size and what is heaviest in it, and emits whatever it comes to. It is an **optional demo build**, not the delivery path. Nothing needs to be rebuilt or republished to ship a change.
+**What went with the builder.** `build-artifact.mjs`, `build-artifact.py`, the five `pwa.test.mjs` tests that read the built file, and the `.gitignore` line that kept it out of the repository. This was the plan written here the day the Artifact was retired - "once the app is hosted, this file and the tests that read it should be deleted" - carried out once the app was hosted.
 
-**Its size never drove a decision again, and now it cannot.** It did once: the build broke at 15.89 MB and that was treated as a problem to solve rather than as a retired build refusing to hold a game that had outgrown it. The fix that came out of it - cutting oversized backgrounds - was worth doing for the app on its own terms, but the trigger was the wrong one. The ceiling was removed on 2026-09-11, by which point the build stood at 78 MB: it had been failing on a limit belonging to a host this project stopped using.
+Two of those tests were checking things that were never about the artifact, and those assertions were kept rather than deleted: the service worker's list of fox poses, now `pwa.test.mjs`'s own test, and two entrance-complete CSS rules, now checked against `styles.css` in `entrance-stage.test.mjs`. Each exists because of a bug someone saw - a fox that vanished offline, a button clipped below a phone viewport - and none of that stopped being true when the delivery surface changed.
 
-**Why it still exists at all:** it is currently the only way to open the game on a phone that is not on this Wi-Fi. Section 2 covers the LAN address, which is better for everyday testing. Once the app is hosted, this file and the tests that read it should be deleted.
+**The size ceiling is gone with it.** It drove a decision once: the build broke at 15.89 MB and that was treated as a problem to solve rather than as a retired build refusing to hold a game that had outgrown it. The fix - cutting oversized backgrounds - was worth doing for the app on its own terms, but the trigger was wrong. By the time the builder was deleted the artifact stood at 78 MB, failing against a limit belonging to a host this project had stopped using.
 
-**The order that was agreed:** keep testing locally until the game is ready, then host it. `_headers` is already written for that day - Cloudflare Pages and Netlify both read it, and it handles the stale-service-worker trap that would otherwise pin every returning learner to an old release.
+**`_headers`** is still in the tree and still unread by GitHub Pages, which is Cloudflare's and Netlify's file. It handles the stale-service-worker trap that would otherwise pin a returning learner to an old release, so it matters again the day this moves hosts.
 
 ### Verifying a change
 

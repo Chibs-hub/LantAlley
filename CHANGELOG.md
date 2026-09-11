@@ -5,6 +5,20 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-11 - The artifact builder is deleted, and two of its tests are kept
+
+The handoff has said since the Artifact was retired on 2026-08-27: "once the app is hosted, this file and the tests that read it should be deleted." The app is hosted. Gone: `build-artifact.mjs`, `build-artifact.py`, the five `pwa.test.mjs` tests that read the built file, and the `.gitignore` line that kept the 78 MB output out of the repository.
+
+**Two of the five were not really about the artifact, and those assertions stayed.**
+
+The first checked that `sw.js` pre-caches all eight fox poses. A pose missing from the worker's list is a fox that renders online and disappears offline, and nothing else checked it - `entrance-stage.test.mjs` checks that the pose files exist and that the app asks for them, which is a different failure. It is now a test of its own in `pwa.test.mjs`, reading `sw.js`.
+
+The second checked two CSS rules through the built file: `.entrance-complete .learning-context` pinned above the controls, and the bow pose's frame and animation. Both exist because of a bug someone saw - Kon's closing line sitting over the buttons meant to replace it, and a pose that lost its animation - and both live in `styles.css`, so they are checked there now, in `entrance-stage.test.mjs`.
+
+The rest of what those five asserted was either about inlining itself (the map artwork embedded as base64, no raw asset paths left behind) or already covered against the real sources: the map's destinations and its `aria-live` region in `lantern-map.test.mjs`, the dialogue flow exercised for real in `entrance-stage.test.mjs`, the cache version in `pwa.test.mjs`.
+
+`node --test` is 566 and green, with nothing skipped for the first time in this repository's history.
+
 ### 2026-09-11 - The artifact's size ceiling is gone, because the host it belonged to is
 
 `build-artifact.mjs` refused to finish above 15 MB and `pwa.test.mjs` asserted the result stayed under 16 MB. That number was the publishing limit of the host that served the artifact back when the artifact was how the game reached people. The game ships from GitHub Pages now, so the build was failing against a constraint this project no longer has - at 78 MB, five times past a line that had stopped meaning anything.

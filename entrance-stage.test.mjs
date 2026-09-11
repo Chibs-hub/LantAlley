@@ -456,6 +456,26 @@ test("the finished Entrance keeps Kon's reply, the result and the continue butto
   );
 });
 
+test("the completed Entrance keeps its controls and Kon's line apart on a phone", () => {
+  /* Kept from the artifact suite deleted on 2026-09-11, where these two rules
+   * were checked only in the built file. Both exist because of a bug that was
+   * seen rather than reasoned about: the Alley button clipped below the phone
+   * viewport, and Kon's closing line sat over the controls that were meant to
+   * replace it. The rules are in styles.css, so that is where they are
+   * checked now. */
+  const css = readFileSync(new URL("./styles.css", import.meta.url), "utf8");
+  assert.match(
+    css,
+    /\.entrance-stage\.entrance-complete \.learning-context\{position:fixed;left:8px;right:8px;bottom:calc\(124px/,
+    "Kon's final line can cover the completed Entrance controls",
+  );
+  assert.match(
+    css,
+    /\.action-bow \.entrance-player-art\{background-position:33\.333% center;animation:player-pose-pop/,
+    "the bow pose loses its frame or its animation",
+  );
+});
+
 test("the Entrance's spoken lines are left alone for their audio clips", () => {
   // The lantern explanation was drafted as a fourth tutorial line and moved
   // to the map instead: pwa.test.mjs requires every spoken Entrance line to

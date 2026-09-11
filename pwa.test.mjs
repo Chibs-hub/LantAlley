@@ -6,24 +6,6 @@ import vm from "node:vm";
 
 const read = (name) => readFileSync(new URL("./" + name, import.meta.url), "utf8");
 
-/* The standalone artifact is a build product, and a gitignored one.
- *
- * The five tests below read `lantern-alley-artifact.html`, which
- * `build-artifact.mjs` writes and `.gitignore` deliberately keeps out of the
- * repository - "rebuild it, never edit it". On any fresh clone it does not
- * exist, so those five failed on a checkout that had nothing wrong with it,
- * and a suite that is always five red is a suite nobody reads.
- *
- * They are skipped when the file is absent and run when it is there, so the
- * builder is still checked by whoever has just run it. The skip names the
- * command, because a skipped test that does not say how to un-skip itself is
- * the same silence in a quieter voice.
- */
-const ARTIFACT = "lantern-alley-artifact.html";
-const artifactBuilt = existsSync(new URL("./" + ARTIFACT, import.meta.url));
-const needsArtifact = artifactBuilt
-  ? {}
-  : { skip: ARTIFACT + " is not built - run `node build-artifact.mjs` to check it" };
 
 const pngSize = (name) => {
   const bytes = readFileSync(new URL("./" + name, import.meta.url));
@@ -504,28 +486,14 @@ test("every episode module in the repository is loaded by the page", () => {
   }
 });
 
-test("the self-contained artifact embeds the selectable alley map", needsArtifact, () => {
-  const artifact = read("lantern-alley-artifact.html");
-  const mapAsset = "assets/map/lantern-alley-map-v1.jpg";
-  const encoded = readFileSync(new URL("./" + mapAsset, import.meta.url)).toString("base64");
-
-  for (const name of ["路地の入口", "月見宿", "灯り市", "夕月茶屋", "路地駅", "灯守神社"]) {
-    assert.ok(artifact.includes(name), "artifact omits map destination " + name);
-  }
-  assert.match(artifact, /id="map-detail"[^>]*aria-live="polite"/);
-  assert.match(artifact, /LanternAlleyMap\.destinations/);
-  assert.ok(artifact.includes(encoded), "artifact does not embed the exact map artwork");
-  assert.doesNotMatch(artifact, /assets\/map\/lantern-alley-map-v1\.jpg/);
-});
-
-test("the offline delivery contains the cinematic opening, Entrance, and room lighting", needsArtifact, () => {
+test("the offline shell carries every fox pose the game can show", () => {
+  /* Kept from the artifact suite that was deleted on 2026-09-11, because this
+   * assertion was never about the artifact. A pose missing from the worker's
+   * list is a fox that renders online and vanishes offline, and nothing else
+   * checks the worker's list against the poses - entrance-stage.test.mjs
+   * checks that the files exist and that the app asks for them, which is a
+   * different failure. */
   const sw = read("sw.js");
-  const artifact = read("lantern-alley-artifact.html");
-
-  // Pinned to a literal this test had to be edited on every bump. What
-  // actually matters is that the cache name carries a version at all - the
-  // separate test that ties it to index.html guards the rest.
-  assert.match(sw, /lantern-alley-v\d+/);
   for (const pose of [
     "fox-neutral-idle-transparent-v2.webp",
     "fox-wave-closed-smile-transparent-v2.webp",
@@ -538,62 +506,10 @@ test("the offline delivery contains the cinematic opening, Entrance, and room li
   ]) {
     assert.ok(sw.includes("./assets/fox/" + pose), "offline shell omits " + pose);
   }
-  assert.match(artifact, /id="screen-title" class="frame title-scene"/);
-  assert.match(artifact, /id="btn-start">路地へ入る<\/button>/);
-  assert.match(artifact, /id="entrance-progress"/);
-  assert.match(artifact, /getTutorialProgress/);
-  assert.match(artifact, /action-bow \.entrance-player-art\{background-position:33\.333% center;animation:player-pose-pop 1\.2s/);
-  assert.doesNotMatch(artifact, /var PLAYER_SVG/);
-  assert.match(artifact, /getRoomLightState/);
-  assert.match(artifact, /room-light-dim/);
-  assert.match(artifact, /room-light-bright/);
 });
 
-test("the standalone artifact keeps the completed Entrance controls visible on a phone", needsArtifact, () => {
-  const artifact = read("lantern-alley-artifact.html");
 
-  assert.match(
-    artifact,
-    /\.entrance-stage\.entrance-complete \.next-row\{position:fixed;left:0;right:0;z-index:20/,
-    "the built artifact can clip the Alley button below the phone viewport",
-  );
-  assert.match(
-    artifact,
-    /\.entrance-stage\.entrance-complete \.learning-context\{position:fixed;left:8px;right:8px;bottom:calc\(124px/,
-    "Kon's final line can cover the completed Entrance controls",
-  );
-});
 
-test("the self-contained artifact includes the illustrated room", needsArtifact, () => {
-  const artifact = read("lantern-alley-artifact.html");
-  const context = {};
-  vm.createContext(context);
-  vm.runInContext(read("n2-home-inn-stage.js"), context);
-  const visual = context.N2HomeInnStage.encounters[0].interaction.room.visual;
-  assert.match(artifact, /inn-room-illustrated/);
-  assert.match(artifact, /data:image\/webp;base64,/);
-  assert.match(artifact, /window\.addEventListener\("pointermove", move\)/);
-  assert.match(artifact, /\.answer-workspace \.inn-room-illustrated \.inn-hotspot:has\(\.inn-caption\)/);
-  for (const asset of [visual.background, visual.spriteSheet]) {
-    const encoded = readFileSync(new URL("./" + asset, import.meta.url)).toString("base64");
-    assert.ok(artifact.includes(encoded), "artifact does not embed " + asset);
-  }
-  assert.doesNotMatch(artifact, /assets\/inn\/room-(?:empty|objects)-v[12]\.png/);
-  /* The 16 MB assertion that stood here is gone with the ceiling it checked.
-   * It was the publishing limit of the host that served the artifact when the
-   * artifact was the delivery surface; the game ships from GitHub Pages now,
-   * so the number described a constraint this project no longer has. What is
-   * still worth asserting about this build is what it contains, which is
-   * everything above. */
-});
-
-test("the self-contained artifact includes click-to-finish dialogue", needsArtifact, () => {
-  const artifact = read("lantern-alley-artifact.html");
-  assert.match(artifact, /id="dialogue-panel"/);
-  assert.match(artifact, /id="dialogue-continue"/);
-  assert.match(artifact, /createDialogueFlow/);
-  assert.match(artifact, /dialogueFlow\.setContinuation\(once\)/);
-});
 
 test("the game screen separates context from the answer workspace", () => {
   const html = read("index.html");
