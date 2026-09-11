@@ -1019,9 +1019,15 @@
   paintAnalyticsToggle();
   trackTelemetry("app_opened");
 
-  // Before any screen can show her. See installFoxAvatar: the slot ships with
-  // a placeholder emoji, and the paths that skipped enterLocation showed it.
-  installFoxAvatar(false);
+  /* Before any screen can show her. See installFoxAvatar: the slot ships with
+   * a placeholder emoji, and the paths that skipped enterLocation showed it.
+   *
+   * Through the same helper the rest of the file asks, not a hardcoded false.
+   * Hardcoding it traded one wrong portrait for another: those same paths -
+   * the ones that never reach enterLocation - then showed her matted onto the
+   * gold disc the pre-art placeholder used, over a photograph of a room.
+   */
+  installFoxAvatar(usesTransparentFox());
 
   (function(){
     var label = $("app-version");
@@ -1138,32 +1144,71 @@
       });
     }).catch(function(){});
 
+    function say(text){
+      if(!note) return;
+      note.hidden = false;
+      note.textContent = text;
+    }
+
+    /* A long wait with no end to it reads as a hang.
+     *
+     * The shell is 127 files, so on a slow connection the download runs for a
+     * while - reported as the check sitting on "A new version is downloading"
+     * long enough to look stuck. It was not stuck, and it said nothing about
+     * that. Now it says the wait is safe to walk away from, and then says how
+     * it ended either way: an install that fails leaves its worker redundant,
+     * which used to leave this line describing a download that had already
+     * given up.
+     */
+    function watchInstall(worker){
+      if(!worker) return;
+      function report(){
+        if(worker.state === "installed" || worker.state === "activated"){
+          say("Ready. Press Update now to switch to it.");
+          return true;
+        }
+        if(worker.state === "redundant"){
+          say("The download did not finish. Try again.");
+          return true;
+        }
+        return false;
+      }
+      // Checked before listening as well: a worker that finished while the
+      // promise above was settling fires no further statechange.
+      if(report()) return;
+      say("Downloading in the background. You can keep playing - this will say when it is ready.");
+      worker.addEventListener("statechange", report);
+    }
+
     /* Asking, rather than only being told.
      *
      * update() resolves whether or not there was anything new, so the answer
      * is read off the registration afterwards: a worker installing or waiting
-     * means a new build arrived, and the dialog above says so. With nothing
-     * new the note says that plainly - a button that reports nothing reads as
-     * a button that did nothing.
+     * means a new build arrived, and the dialog above says so when it is
+     * usable. With nothing new the note says that plainly - a button that
+     * reports nothing reads as a button that did nothing.
      */
     if(check){
       check.addEventListener("click", function(){
-        if(note){
-          note.hidden = false;
-          note.textContent = "Checking...";
-        }
+        check.disabled = true;
+        say("Checking...");
         readyFor.then(function(reg){
           if(!reg || !reg.update) throw new Error("no worker");
           return reg.update().then(function(){
-            if(reg.installing || reg.waiting){
-              dismissed = false;
-              if(note) note.textContent = "A new version is downloading.";
+            var incoming = reg.installing || reg.waiting;
+            if(!incoming){
+              say("You are on the newest build.");
               return;
             }
-            if(note) note.textContent = "You are on the newest build.";
+            // A build found by asking is one the asker wants, so an earlier
+            // Later does not suppress the offer for it.
+            dismissed = false;
+            watchInstall(incoming);
           });
         }).catch(function(){
-          if(note) note.textContent = "Could not check right now.";
+          say("Could not check right now.");
+        }).then(function(){
+          check.disabled = false;
         });
       });
     }
@@ -2062,6 +2107,8 @@
       if($("scene").querySelector(".teach-card") && state.teachQueue){
         state.teachIndex = state.teachQueue.length;
         renderTeachingCard(loc);
+        var done = $("btn-teach-done");
+        if(done) done.click();
       }
     }
   }
@@ -3781,7 +3828,13 @@
    */
   function renderTeachingCard(loc){
     var word = state.teachQueue[state.teachIndex];
-    if(!word){ startStagePhase(loc, "learn"); return; }
+    // Taught nothing - every word already credited - so there is nothing to
+    // hand over from and the day starts directly.
+    if(!word){
+      if(state.teachIndex > 0){ renderTeachingHandover(loc); return; }
+      startStagePhase(loc, "learn");
+      return;
+    }
     var targetId = loc.getTargetId ? loc.getTargetId(word) : null;
     var item = targetId && typeof LanternCurriculumCatalog !== "undefined"
       ? LanternCurriculumCatalog.getItem(targetId) : null;
@@ -3830,6 +3883,47 @@
    * A miss is answered and left. Sending it round again is exactly what the
    * cold open did, and what made the opening feel stuck.
    */
+  /* The five cards end and the day begins, and nothing said so.
+   *
+   * The last check gave way to a scored question with no seam at all -
+   * reported as there being no transition between learning the words and the
+   * first day. Studying and being marked are different things and the learner
+   * has to know which one they are in, which is the same reason each day
+   * announces itself. This is the one screen that says the studying is over.
+   */
+  function renderTeachingHandover(loc){
+    var meta = loc.getDayMeta ? loc.getDayMeta("learn") : null;
+    var taught = state.teachQueue.slice();
+    $("stage-phase-badge").textContent = meta ? meta.label + "・" + meta.mode + " " + meta.stars : "一日目";
+    $("jp-line").textContent = "コン：「五つとも見ましたね。では、仕事をはじめましょう。」";
+    $("romaji-line").textContent = "";
+    $("romaji-line").style.display = "none";
+    $("meaning-line").classList.remove("show");
+    $("feedback-row").classList.remove("show");
+    $("next-row").style.display = "none";
+
+    $("scene").innerHTML = '<div class="episode-open"><div class="episode-open-card teach-card">'
+      + '<p class="episode-open-kicker">覚えた言葉</p>'
+      + '<h2 class="episode-open-title">五つの言葉</h2>'
+      + '<ul class="teach-recap">' + taught.map(function(item){
+          // Its own class rather than a ".teach-recap li" selector: the test
+          // harness has no descendant combinator, so a two-part selector
+          // reads as empty under test while looking right in the browser.
+          return '<li class="teach-recap-word">' + item + '</li>';
+        }).join("") + '</ul>'
+      // What changes, in the one sentence that matters: from here it counts.
+      + '<p class="episode-open-note">ここからは仕事です。覚えた言葉を使って、実際にやってみましょう。</p>'
+      + '<button class="btn btn-primary" id="btn-teach-done">一日目をはじめる</button>'
+      + '</div></div>';
+
+    $("btn-teach-done").addEventListener("click", function(event){
+      event.stopImmediatePropagation();
+      state.teachQueue = [];
+      state.teachIndex = 0;
+      startStagePhase(loc, "learn");
+    });
+  }
+
   function renderTeachingCheck(loc, card){
     /* The word is given and the meaning is chosen, not the other way round.
      *

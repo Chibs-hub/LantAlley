@@ -5,6 +5,18 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-10 - The studying hands over to the day, and Kon stops wearing the placeholder's disc (v343)
+
+**Nothing marked the end of the teaching.** The fifth check gave way to a scored question with no seam at all - reported as there being no transition between learning the five words and the first day. Studying and being marked are different things and the learner has to know which one they are in, which is the same reason every day announces itself. There is one screen between them now: the five words listed once more, one sentence saying that from here it counts, and a button that starts Day 1. Kon says the same thing in her own bubble.
+
+**Kon was wearing the placeholder's disc.** My own bug, from v342 and reported the same day. The boot install added in v342 passed a hardcoded `false` for the transparent-fox flag, but `shouldUseTransparentFox` returns `true` for everywhere - so the paths that never reach `enterLocation`, the very ones that boot install exists to cover, traded one wrong portrait for another: the emoji became a cut-out fox matted onto the gold disc the pre-art placeholder used, over a photograph of a room. It asks the same helper the rest of the file asks now, and the test names the matting rather than only the image.
+
+**The update check ends in an answer.** Reported as sitting on "A new version is downloading" long enough to look stuck. It was not stuck - the shell is 127 files and a slow connection takes a while - but nothing said so and nothing said when it ended. It now says the wait is safe to walk away from, then reports how it finished: ready to switch to, or that the download did not finish. That last one is not hypothetical: an install that fails leaves its worker redundant, and the old code left the line claiming a download that had already given up. Verified by pointing the shell at a file that 404s.
+
+And the same trap caught twice in one day, so it is worth stating plainly: **the test harness's selector engine has no descendant combinator.** `.teach-recap li` matched nothing under test while looking correct in the browser, exactly as `.teach-check button` had a few hours earlier. Anything the tests need to find gets its own class.
+
+Cache is v343; `node --test` passes (544).
+
 ### 2026-09-10 - Kon wears her portrait everywhere, and debug can start a place over (v342)
 
 **The fox emoji was still showing.** Reported from an episode entered in debug mode, and it was not a stale asset: `index.html` ships the dialogue shell's avatar slot holding a gold circle with a fox emoji in it, a placeholder from before there was any art. `enterLocation` was the only thing that ever replaced it, so every way into a scene that skips `enterLocation` - resuming straight into an episode, a debug jump - showed the placeholder rather than her. The installer is its own function now and runs at boot as well, so there is no moment for the emoji to appear in. The old `assets/kon/kon-*.webp` files are still in the service worker shell and referenced by nothing; left alone here rather than mixed into this change.

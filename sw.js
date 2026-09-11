@@ -7,7 +7,7 @@
  * Bump CACHE_VERSION whenever any shell file changes, or returning players
  * will keep the old build.
  */
-var CACHE_VERSION = "lantern-alley-v342";
+var CACHE_VERSION = "lantern-alley-v343";
 
 // audio-index.js assigns to `self`, so the worker and the page share one list
 // of clip paths. Importing it here means new lines are cached automatically
@@ -130,11 +130,11 @@ var SHELL = [
   "./manifest.webmanifest",
   "./assets/branding/lantern-mark-v1.png",
   "./assets/social/lantern-alley-share-v1.jpg",
-  "./icons/icon-192.png?v=342",
-  "./icons/icon-512.png?v=342",
-  "./icons/icon-192-maskable.png?v=342",
-  "./icons/icon-512-maskable.png?v=342",
-  "./icons/apple-touch-icon.png?v=342",
+  "./icons/icon-192.png?v=343",
+  "./icons/icon-512.png?v=343",
+  "./icons/icon-192-maskable.png?v=343",
+  "./icons/icon-512-maskable.png?v=343",
+  "./icons/apple-touch-icon.png?v=343",
   "./assets/kon/kon-idle.webp",
   "./assets/kon/kon-wave-left.webp",
   "./assets/kon/kon-wave-right.webp",

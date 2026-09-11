@@ -753,6 +753,8 @@ async function enterTheInn(game, opts) {
       if (next) { next.click(); game.clock.advance(900); continue; }
       // Each card leads to one unscored check, which has to be answered
       // before the next word is taught.
+      const done = game.$("btn-teach-done");
+      if (done) { done.click(); game.clock.advance(900); continue; }
       const option = game.doc.querySelectorAll(".teach-option")[0];
       if (!option) break;
       option.click();
@@ -2743,6 +2745,21 @@ test("an update is offered rather than forced", () => {
   assert.match(html, /id="btn-check-update"/);
   assert.match(app, /reg\.update\(\)\.then/);
 
+  /* The shell is over a hundred files, so on a slow connection the download
+   * runs long enough to look stuck - reported as exactly that. The check has
+   * to end in a definite answer whichever way it goes, including the install
+   * that fails and leaves its worker redundant. */
+  for(const message of [
+    "You are on the newest build.",
+    "Downloading in the background. You can keep playing - this will say when it is ready.",
+    "Ready. Press Update now to switch to it.",
+    "The download did not finish. Try again.",
+    "Could not check right now.",
+  ]) assert.ok(app.includes(message), message);
+  assert.match(app, /worker\.state === "redundant"/);
+  // A state reached while the promise was settling fires no further event.
+  assert.match(app, /if\(report\(\)\) return;/);
+
   /* A dialog over a half-finished answer loses the attempt behind it, so one
    * that arrives mid-question waits for a moment when nothing is pending. */
   assert.match(app, /function safeMoment\(\)/);
@@ -2994,6 +3011,12 @@ test("Kon wears her portrait from the moment the app boots", () => {
   assert.ok(slot.innerHTML.includes("kon-photo-img"), "the portrait is installed, not the placeholder");
   assert.equal(slot.innerHTML.includes("\u{1F98A}"), false, "and the emoji is gone before any screen can show it");
   assert.ok(slot.className.includes("avatar-animated"));
+  /* And matted the way the rest of the app mats her. Installing with a
+   * hardcoded false traded one wrong portrait for another: the paths that
+   * never reach enterLocation then showed her on the gold disc the pre-art
+   * placeholder used, over a photograph of a room. */
+  assert.ok(slot.className.includes("entrance-fox"),
+    "she is cut out, not matted onto the placeholder's disc");
 });
 
 test("debug mode offers a way back to the start of a place", async () => {
@@ -3021,4 +3044,36 @@ test("debug mode offers a way back to the start of a place", async () => {
   const saved = JSON.parse(game.storage.getItem("lanternAlley.debug.v3"));
   assert.deepEqual(saved.stages || {}, {}, "the resume record is gone, not rewritten");
   assert.ok(game.doc.querySelector("#btn-accept-helper"), "the place opens on its own introduction");
+});
+
+test("the studying ends on a screen that says the day is starting", async () => {
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game, {stopAtTeaching:true});
+
+  // Through all five words and their checks.
+  for (let guard = 0; guard < 20; guard += 1) {
+    if (game.$("btn-teach-done")) break;
+    const next = game.$("btn-teach-next");
+    if (next) { next.click(); game.clock.advance(900); continue; }
+    const option = game.doc.querySelectorAll(".teach-option")[0];
+    if (!option) break;
+    option.click();
+    game.clock.advance(1200);
+  }
+
+  /* The last check used to give way to a scored question with no seam at all.
+   * Studying and being marked are different things and the learner has to
+   * know which one they are in. */
+  const handover = game.$("btn-teach-done");
+  assert.ok(handover, "the teaching hands over rather than stopping mid-air");
+  const card = game.doc.querySelector(".teach-card");
+  assert.equal(game.doc.querySelectorAll(".teach-recap-word").length, 5,
+    "the five words are listed once more as the studying ends");
+  assert.ok(card.textContent.includes("\u63c3\u3048\u308b"));
+
+  handover.click();
+  game.clock.advance(900);
+  assert.equal(game.doc.querySelector(".teach-card"), null, "and then the day starts");
+  assert.equal(game.$("encounter-progress").textContent, "1");
+  assert.ok(game.doc.querySelectorAll(".inn-new-word").length);
 });
