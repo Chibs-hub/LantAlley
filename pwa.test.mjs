@@ -148,8 +148,8 @@ test("the PWA and social preview share the finished Lantern Alley identity", () 
   const manifest = JSON.parse(read("manifest.webmanifest"));
   const sw = read("sw.js");
   const iconBuilder = read("make-icons.py");
-  const iconSource = "assets/branding/lantern-mark-v1.png";
-  const shareImage = "assets/social/lantern-alley-share-v1.jpg";
+  const iconSource = "assets/branding/lantern-mark-v2.png";
+  const shareImage = "assets/social/lantern-alley-share-v2.jpg";
   const publicShareImage = "https://chibs-hub.github.io/LantAlley/" + shareImage;
   const build = /lantern-alley-v(\d+)/.exec(sw)?.[1];
 

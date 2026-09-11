@@ -12,7 +12,11 @@ from PIL import Image
 
 
 ROOT = Path(__file__).resolve().parent
-SRC = ROOT / "assets" / "branding" / "lantern-mark-v1.png"
+# v2 is the owner's own lantern illustration, rebuilt to the rule below: full
+# bleed, no rounded corners of its own, and the lantern inside the maskable
+# safe zone. The supplied artwork had rounded corners and a lantern that
+# reached top and bottom, either of which a circular mask would have cut.
+SRC = ROOT / "assets" / "branding" / "lantern-mark-v2.png"
 OUT_DIR = ROOT / "icons"
 BG = (14, 24, 48, 255)  # --ai-indigo-deep, matches the page and theme-color
 SIZES = [192, 512]

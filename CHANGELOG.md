@@ -5,6 +5,22 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-11 - The app wears the owner's own lantern, and shares the owner's own banner (v352)
+
+Both were drawn and neither had reached the repository. The icon family and the favicon are rebuilt from the owner's lantern illustration; the social preview is the owner's wide village banner at the 1200x630 the meta tags already declared, from a source whose aspect matched to four decimal places.
+
+**The icon needed a new master, not a new file.** `make-icons.py` deliberately does not pad for the maskable slots, and both a comment and a test record why: the previous master was already full-bleed with the lantern inside the safe zone, and padding it again made the lantern unreadably small on a phone. The supplied artwork breaks both halves of that assumption - it has rounded corners of its own, which Android's mask would cut a second time, and its lantern reaches the top and bottom edges, where a circular mask would take the handle and the tassel. Measured: at the lantern's width the 80% safe circle only covers 19.6% to 80.4% vertically, and the art spans roughly 10% to 90%.
+
+So the padding went into a new master, `lantern-mark-v2.png`: cropped past its own rounding, the lantern inset to the safe zone, and the surround filled with the same artwork blurred rather than a flat colour - a flat pad read as a brown border around a floating card, which is what the first two attempts looked like. The builder's rule stays true, the test that protects it stays valid, and every icon comes from one master as before.
+
+Stamps go to v352 so installed testers actually get the new icon: the manifest's icon URLs are versioned for exactly this, and an icon swap without a bump leaves Chromium showing the old art.
+
+The old `lantern-mark-v1.png` and `lantern-alley-share-v1.jpg` stay in the repository, unreferenced. They cost nothing there and deleting an asset an older cached page may still ask for is easy to regret.
+
+Also recorded: a hanging-lantern photograph arrived with these and has no slot in the game. It is noted in the art handoff as a spare rather than a gap, so nobody commissions another.
+
+Cache is v352; `node --test` passes (563).
+
 ### 2026-09-11 - The 桜 wallpaper is painted, and a pale design can show at all (v351)
 
 桜 was the last wallpaper still drawing generated blossoms. The owner's sheet is in as `wallpaper-sakura-v1.webp`, and the art queue for wallpaper is now empty - which is also why the shop test no longer insists on finding an unpainted design to prove its filter bites.

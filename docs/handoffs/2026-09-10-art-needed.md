@@ -1,3 +1,24 @@
+**Updated 2026-09-11 (v352).** Three of the items below arrived and are in:
+
+- The 桜 wallpaper is painted (`assets/home/decor/wallpaper-sakura-v1.webp`), so
+  the wallpaper queue is empty. It needed `blend:"normal"` as well as the file -
+  the wall layer multiplies, which can only darken, and a pale sheet vanished
+  under it. See the v351 change log entry.
+- The app icon family and the favicon are rebuilt from the owner's own lantern
+  illustration, via a new master `assets/branding/lantern-mark-v2.png`. The
+  supplied art had rounded corners and a lantern reaching top and bottom, either
+  of which Android's circular mask would have cut, so the master insets it to
+  the 80% safe zone over a blurred continuation of itself rather than a flat
+  pad. `make-icons.py` builds the set from that master.
+- The social preview is the owner's wide village banner
+  (`assets/social/lantern-alley-share-v2.jpg`, 1200x630).
+
+**Held and unused:** a hanging-lantern photograph (1254x1254, on the owner's
+desktop as `img/lantern.png`). Nothing in the game has a slot that size yet.
+It is not a gap - it is a spare, recorded here so nobody commissions another.
+
+Still outstanding: the 16 garden images below.
+
 # Art still needed - v332
 
 Workspace: C:/Users/user/projects/IJLG
