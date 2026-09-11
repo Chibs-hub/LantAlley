@@ -5,6 +5,20 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-11 - The reading is typed, not picked (v357)
+
+Everything the daily practice asked was four options and a tap, and so are 190 of the 200 authored questions. That is recognition: you can pick 「あたためる」 out of a line-up long after you have lost the ability to say it. The multiple-choice reading question is now a box the learner writes the reading into, which is the only card in the game that asks them to produce Japanese rather than notice it.
+
+**It replaces the choice question rather than joining it.** Two reading cards would halve how often the harder one comes up, which is the only thing this change is for. The card count is unchanged at 9,095 - two fewer than before, for the reason below.
+
+**Romaji is accepted, because the alternative is a wall.** A learner on an English phone keyboard cannot type ひらがな without installing a Japanese IME first, and an app that demands that before the third card has lost them. Typing "atatameru" is still production - the sounds have to come from memory either way - so nothing is given away by taking it. Kana typed directly works too, and katakana is folded to hiragana.
+
+The converter follows an IME where an IME is right and a learner where it is not. Doubled consonants make っ; "nn" needs one more character to decide, the same way an IME does, so 案内 is "annai" rather than あんあい. But the apostrophe in "kin'youbi" is a rule about a keyboard, not about Japanese, so a second pass reads every loose n as ん and 金曜日 is accepted either way. Each card has one expected answer, so that pass can only forgive an ambiguity, never accept a different word.
+
+**Nineteen catalogue rows do not have a reading in the reading field** and never did. The source leaked part-of-speech markers into it - 「うん」's reading is recorded as "（感）", 「だいいち」's as "（副）" - along with a gloss, bracketed okurigana, and one row that is mojibake outright: 賛成 = "Uӣ[い". Two of the nineteen have kanji, which means that until now they were built into a reading question whose correct answer was wrong, and a learner who knew さんせい was marked wrong for it. Any reading that is not clean kana now produces no reading question of either kind. The rows are still wrong in the data; a fix belongs in `research/n2-supplement.json`, which overrides by headword.
+
+Cache is v357.
+
 ### 2026-09-11 - Debug Mode goes back on the menu (v356)
 
 v354 hid the Debug Mode entry until `?debug=1` was already in the URL, so that a learner opening the menu was not offered a developer toggle. The owner uses it, and while this is a beta the people opening that menu are the people testing the game: making them edit a URL to reach the switch costs more than the switch costs anyone else. It is visible again whenever the build ships with debug compiled in.

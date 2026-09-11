@@ -35,6 +35,152 @@
     return out;
   }
 
+  /* ---- Typing the reading ----
+   *
+   * The one card in this file that asks the learner to produce Japanese
+   * rather than recognise it. Everything else here, and 190 of the 200
+   * authored questions, is four options and a tap: you can pick 「あたためる」
+   * out of a line-up long after you have lost the ability to say it. A card
+   * you have to answer from nothing is the difference between knowing a word
+   * and knowing it when you meet it.
+   *
+   * It replaces the multiple-choice reading question rather than joining it.
+   * Keeping both would halve how often the harder one comes up, which is the
+   * only thing this change is for.
+   *
+   * Romaji is accepted because the alternative is a wall: a learner on an
+   * English phone keyboard cannot type ひらがな without installing a Japanese
+   * IME first, and an app that demands that before the third card has lost
+   * them. Typing "atatameru" is still production - the sounds have to come
+   * from memory either way - so nothing is given away by taking it.
+   */
+
+  // A reading field that is not clean kana is not a reading. Nineteen of the
+  // catalogue's rows carry something else there, inherited from the source: a
+  // part-of-speech marker that leaked out of the column ("（感）", "（副）"),
+  // a gloss ("（カーペット）"), bracketed okurigana ("あたたか(い)"), and one
+  // row whose reading is mojibake outright (賛成 = "Uӣ[い"). Two of the
+  // nineteen have kanji, so before this guard they were built into reading
+  // questions whose correct answer was wrong. They now produce no reading
+  // question of either kind.
+  var KANA_READING = /^[\u3041-\u3096\u30a1-\u30fa\u30fc]+$/;
+
+  // Longest first: sya must be found before sy, and shi before sh.
+  var ROMAJI = {
+    kya:"きゃ",kyu:"きゅ",kyo:"きょ",gya:"ぎゃ",gyu:"ぎゅ",gyo:"ぎょ",
+    sha:"しゃ",shu:"しゅ",sho:"しょ",sya:"しゃ",syu:"しゅ",syo:"しょ",
+    ja:"じゃ",ju:"じゅ",jo:"じょ",jya:"じゃ",jyu:"じゅ",jyo:"じょ",
+    zya:"じゃ",zyu:"じゅ",zyo:"じょ",
+    cha:"ちゃ",chu:"ちゅ",cho:"ちょ",tya:"ちゃ",tyu:"ちゅ",tyo:"ちょ",
+    nya:"にゃ",nyu:"にゅ",nyo:"にょ",hya:"ひゃ",hyu:"ひゅ",hyo:"ひょ",
+    bya:"びゃ",byu:"びゅ",byo:"びょ",pya:"ぴゃ",pyu:"ぴゅ",pyo:"ぴょ",
+    mya:"みゃ",myu:"みゅ",myo:"みょ",rya:"りゃ",ryu:"りゅ",ryo:"りょ",
+    shi:"し",chi:"ち",tsu:"つ",
+    ka:"か",ki:"き",ku:"く",ke:"け",ko:"こ",
+    ga:"が",gi:"ぎ",gu:"ぐ",ge:"げ",go:"ご",
+    sa:"さ",si:"し",su:"す",se:"せ",so:"そ",
+    za:"ざ",zi:"じ",zu:"ず",ze:"ぜ",zo:"ぞ",ji:"じ",
+    ta:"た",ti:"ち",tu:"つ",te:"て",to:"と",
+    da:"だ",di:"ぢ",du:"づ",de:"で",dou:"どう",
+    na:"な",ni:"に",nu:"ぬ",ne:"ね",no:"の",
+    ha:"は",hi:"ひ",hu:"ふ",fu:"ふ",he:"へ",ho:"ほ",
+    ba:"ば",bi:"び",bu:"ぶ",be:"べ",bo:"ぼ",
+    pa:"ぱ",pi:"ぴ",pu:"ぷ",pe:"ぺ",po:"ぽ",
+    ma:"ま",mi:"み",mu:"む",me:"め",mo:"も",
+    ya:"や",yu:"ゆ",yo:"よ",
+    ra:"ら",ri:"り",ru:"る",re:"れ",ro:"ろ",
+    wa:"わ",wo:"を",
+    a:"あ",i:"い",u:"う",e:"え",o:"お",
+    "do":"ど"
+  };
+  var VOWELS = "aiueo";
+
+  function toHiragana(text){
+    var out = "";
+    for(var i = 0; i < text.length; i++){
+      var code = text.charCodeAt(i);
+      // Katakana block onto hiragana; everything else is copied through.
+      out += (code >= 0x30a1 && code <= 0x30f6)
+        ? String.fromCharCode(code - 0x60) : text.charAt(i);
+    }
+    return out;
+  }
+
+  function romajiToKana(text, forceN){
+    var out = "";
+    var i = 0;
+    while(i < text.length){
+      var c = text.charAt(i);
+      // A doubled consonant is a small tsu: "kitte" -> きって.
+      if(c !== "n" && VOWELS.indexOf(c) < 0 && c === text.charAt(i + 1)){
+        out += "っ"; i += 1; continue;
+      }
+      /* "n" is ん unless a vowel or y follows, where it starts a syllable.
+       *
+       * "nn" needs one more character to decide, the same way an IME does:
+       * in "annai" the second n begins ない, so only the first is ん and
+       * あんない comes out; in "kanngaeru" nothing follows it that could
+       * start a syllable, so the pair is one ん. Deciding on the pair alone
+       * turns 案内 into あんあい. */
+      if(c === "n"){
+        var after = text.charAt(i + 1);
+        if(after === "'"){ out += "ん"; i += 2; continue; }
+        if(after === "n"){
+          var third = text.charAt(i + 2);
+          out += "ん";
+          i += (third && (VOWELS.indexOf(third) >= 0 || third === "y")) ? 1 : 2;
+          continue;
+        }
+        if(forceN || !after || (VOWELS.indexOf(after) < 0 && after !== "y")){ out += "ん"; i += 1; continue; }
+      }
+      var matched = false;
+      for(var take = 3; take >= 1; take--){
+        var chunk = text.substr(i, take);
+        if(chunk.length === take && ROMAJI[chunk]){
+          out += ROMAJI[chunk]; i += take; matched = true; break;
+        }
+      }
+      // An unknown letter is kept so the learner can see what was read.
+      if(!matched){ out += c; i += 1; }
+    }
+    return out;
+  }
+
+  /* What the learner typed, as kana.
+   *
+   * Whitespace goes because a phone keyboard adds a trailing space more often
+   * than a learner means one, and both halves are normalised the same way so
+   * the comparison cannot be thrown by the form the answer is stored in.
+   */
+  function normalizeReading(text, forceN){
+    var value = String(text == null ? "" : text)
+      .replace(/[\s\u3000\u30fb\u00b7]/g, "")
+      .toLowerCase();
+    // Romaji only where the learner actually typed letters. Mixed input - a
+    // half-converted IME buffer - is converted the same way.
+    if(/[a-z]/.test(value)) value = romajiToKana(value, forceN);
+    return toHiragana(value);
+  }
+
+  /* Both readings of an ambiguous "n" are accepted.
+   *
+   * An IME resolves "kinyoubi" to きにょうび and wants "kin'youbi" for
+   * きんようび, which is correct and is also a rule about a keyboard rather
+   * than about Japanese. A learner who knows 金曜日 is きんようび and types
+   * what they hear should not be marked wrong for not knowing where the
+   * apostrophe goes, so the strict parse is tried first and then the one that
+   * reads every loose n as ん. Each card has one expected answer, so the
+   * second pass can only forgive the ambiguity, not accept a different word.
+   */
+  function checkReading(input, expected){
+    var target = normalizeReading(expected);
+    if(!target) return false;
+    var strict = normalizeReading(input);
+    if(strict && strict === target) return true;
+    var loose = normalizeReading(input, true);
+    return !!loose && loose === target;
+  }
+
   function firstMeaning(item){
     return (item.meanings && item.meanings[0]) || "";
   }
@@ -95,12 +241,17 @@
     var cards = [];
 
     // Reading: only where there is a reading to ask for. A kana headword is its
-    // own reading, so the question would answer itself.
-    if(item.hasKanji && item.reading){
-      var readings = neighbours(item, catalog, want - 1, random, function(other){ return other.reading; });
-      var readingCard = card("reading", item, "「" + item.canonical + "」の読み方はどれですか。",
-        item.reading, readings, random, want);
-      if(readingCard) cards.push(readingCard);
+    // own reading, so the question would answer itself, and a reading field
+    // that is not kana is not one - see KANA_READING.
+    if(item.hasKanji && item.reading && KANA_READING.test(item.reading)){
+      cards.push({
+        id: item.id + "-reading-input",
+        kind: "reading-input",
+        target: item.id,
+        prompt: "「" + item.canonical + "」の読み方を書いてください。",
+        answer: item.reading,
+        sourceNote: item.source === "project" ? "プロジェクト補足" : "OpenJLPT " + item.level
+      });
     }
 
     var meaning = firstMeaning(item);
@@ -157,6 +308,10 @@
 
   root.LanternCatalogPractice = {
     CHOICES: CHOICES,
+    KANA_READING: KANA_READING,
+    romajiToKana: romajiToKana,
+    normalizeReading: normalizeReading,
+    checkReading: checkReading,
     buildPracticeCards: buildPracticeCards,
     getPracticeSession: getPracticeSession
   };

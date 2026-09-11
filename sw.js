@@ -7,7 +7,7 @@
  * Bump CACHE_VERSION whenever any shell file changes, or returning players
  * will keep the old build.
  */
-var CACHE_VERSION = "lantern-alley-v356";
+var CACHE_VERSION = "lantern-alley-v357";
 // Teaching focus, saved block progress, and mobile shelf clearance.
 
 // audio-index.js assigns to `self`, so the worker and the page share one list
@@ -132,11 +132,11 @@ var SHELL = [
   "./manifest.webmanifest",
   "./assets/branding/lantern-mark-v2.png",
   "./assets/social/lantern-alley-share-v2.jpg",
-  "./icons/icon-192.png?v=356",
-  "./icons/icon-512.png?v=356",
-  "./icons/icon-192-maskable.png?v=356",
-  "./icons/icon-512-maskable.png?v=356",
-  "./icons/apple-touch-icon.png?v=356",
+  "./icons/icon-192.png?v=357",
+  "./icons/icon-512.png?v=357",
+  "./icons/icon-192-maskable.png?v=357",
+  "./icons/icon-512-maskable.png?v=357",
+  "./icons/apple-touch-icon.png?v=357",
   "./assets/kon/kon-idle.webp",
   "./assets/kon/kon-wave-left.webp",
   "./assets/kon/kon-wave-right.webp",

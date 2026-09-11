@@ -2783,7 +2783,7 @@
        * are worth practising and the daily session does mix them; here they
        * would let a word leave the list on a reading the learner happened to
        * recognise. */
-      var prefer = ["meaning", "cloze", "reading"];
+      var prefer = ["meaning", "cloze", "reading-input"];
       var chosen = null;
       for(var k = 0; k < prefer.length && !chosen; k++){
         built.forEach(function(candidate){
@@ -2841,7 +2841,12 @@
     $("next-row").style.display = "none";
     if(dialogueFlow) dialogueFlow.start(card.prompt, false);
 
-    var help = {reading:"Choose the reading.", meaning:"Choose the meaning.", cloze:"Choose the word that fits the blank."}[card.kind];
+    var help = {
+      "reading-input": "Type the reading. Kana or romaji - \u300catatameru\u300d and \u300c\u3042\u305f\u305f\u3081\u308b\u300d both count.",
+      reading: "Choose the reading.",
+      meaning: "Choose the meaning.",
+      cloze: "Choose the word that fits the blank."
+    }[card.kind];
     $("scene").innerHTML = '<div class="inn-workspace">'
       + '<p class="inn-instruction"><span>' + help + '</span></p>'
       + '<div class="question-controls" id="practice-controls"></div>'
@@ -2849,6 +2854,90 @@
 
     practiceState.answered = false;
     var host = $("practice-controls");
+
+    /* One settle path for both kinds of answer.
+     *
+     * The schedule, the coin, the coverage mark and the save all have to
+     * happen identically whether the learner tapped an option or typed the
+     * reading; the only thing that differs is how "right" was decided and
+     * what the feedback line says when it is not. */
+    function settle(right, correctLabel){
+      if(practiceState.answered) return;
+      practiceState.answered = true;
+      if(right) practiceState.correct += 1;
+      // Mark the item either way: the learner has now met it, and the
+      // coverage report distinguishes seen from tested.
+      markItemState(card.target, right ? "tested" : "seen");
+      // Feed the spacing schedule either way: a miss has to bring the word
+      // back tomorrow, which is the whole point of recording it.
+      state.reviewProgress = LanternReviewEngine.recordOutcome(state.reviewProgress || {}, {
+        id: card.target, correct: right, now: Date.now()
+      });
+      if(right) earnPracticeCoins(1);
+      // Saving learning progress must not depend on a coin payout.
+      saveProgress();
+      $("jp-line").textContent = "「" + item.canonical + "」（" + item.reading + "）" + (item.meanings[0] || "");
+      showFeedback(right, right ? "正解です。" : "正しい答えは「" + correctLabel + "」です。");
+      $("btn-next").textContent = practiceState.index >= practiceState.cards.length - 1 ? "稽古を終える →" : "次へ →";
+      $("next-row").style.display = "block";
+    }
+
+    if(card.kind === "reading-input"){
+      /* The learner writes the reading instead of picking it.
+       *
+       * `lang` and `inputmode` ask a phone for its Japanese keyboard where
+       * one is installed; autocorrect and autocapitalise are off because
+       * both mangle romaji, and spellcheck would underline every answer.
+       */
+      var field = document.createElement("input");
+      field.type = "text";
+      field.className = "reading-input";
+      field.id = "practice-reading-input";
+      field.setAttribute("lang", "ja");
+      field.setAttribute("inputmode", "text");
+      field.setAttribute("autocomplete", "off");
+      field.setAttribute("autocorrect", "off");
+      field.setAttribute("autocapitalize", "off");
+      field.setAttribute("spellcheck", "false");
+      field.setAttribute("enterkeyhint", "done");
+      field.setAttribute("aria-label", "読み方");
+      field.placeholder = "\u3088\u307f\u304b\u305f / yomikata";
+
+      var submit = document.createElement("button");
+      submit.type = "button";
+      submit.className = "question-control is-primary reading-submit";
+      submit.textContent = "\u7b54\u3048\u308b";
+
+      function answerTyped(){
+        if(practiceState.answered) return;
+        var typed = field.value;
+        // An empty box is not a wrong answer, it is no answer: marking it
+        // would put the word back on the correction list for a stray tap.
+        if(!typed || !typed.trim()) { field.focus(); return; }
+        var right = LanternCatalogPractice.checkReading(typed, card.answer);
+        field.disabled = true;
+        submit.disabled = true;
+        settle(right, card.answer);
+      }
+
+      submit.addEventListener("click", function(event){
+        event.stopImmediatePropagation();
+        answerTyped();
+      });
+      field.addEventListener("keydown", function(event){
+        if(event.key !== "Enter") return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        answerTyped();
+      });
+
+      host.appendChild(field);
+      host.appendChild(submit);
+      // Straight into typing, so the keyboard is already up on a phone.
+      field.focus();
+      return;
+    }
+
     card.options.forEach(function(label, index){
       var button = document.createElement("button");
       button.type = "button";
@@ -2857,26 +2946,7 @@
       button.setAttribute("aria-label", label);
       button.addEventListener("click", function(event){
         event.stopImmediatePropagation();
-        if(practiceState.answered) return;
-        practiceState.answered = true;
-        var right = index === card.correctIndex;
-        if(right) practiceState.correct += 1;
-        // Mark the item either way: the learner has now met it, and the
-        // coverage report distinguishes seen from tested.
-        markItemState(card.target, right ? "tested" : "seen");
-        // Feed the spacing schedule either way: a miss has to bring the word
-        // back tomorrow, which is the whole point of recording it.
-        state.reviewProgress = LanternReviewEngine.recordOutcome(state.reviewProgress || {}, {
-          id: card.target, correct: right, now: Date.now()
-        });
-        if(right) earnPracticeCoins(1);
-        // Saving learning progress must not depend on a coin payout.
-        saveProgress();
-        $("jp-line").textContent = "「" + item.canonical + "」（" + item.reading + "）" + (item.meanings[0] || "");
-        showFeedback(right, right ? "正解です。"
-          : "正しい答えは「" + card.options[card.correctIndex] + "」です。");
-        $("btn-next").textContent = practiceState.index >= practiceState.cards.length - 1 ? "稽古を終える →" : "次へ →";
-        $("next-row").style.display = "block";
+        settle(index === card.correctIndex, card.options[card.correctIndex]);
       });
       host.appendChild(button);
     });

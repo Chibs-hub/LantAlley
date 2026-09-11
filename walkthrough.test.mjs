@@ -1082,7 +1082,10 @@ test("a generated practice card renders four options and records the answer", ()
 
   const host = game.doc.createElement("div");
   game.doc.body.appendChild(host);
-  const card = cards[0];
+  // The reading card is typed rather than chosen and has no options at all,
+  // so this test takes one of the cards that still offers a choice.
+  const card = cards.find((one) => one.options);
+  assert.ok(card, "the item yields at least one multiple-choice card");
   card.options.forEach((label) => {
     const button = game.doc.createElement("button");
     button.className = "question-control";
@@ -1092,6 +1095,107 @@ test("a generated practice card renders four options and records the answer", ()
   assert.equal(host.querySelectorAll("button").length, 4, "four options render");
   assert.ok(card.options[card.correctIndex], "the correct option is a real label");
   assert.equal(new Set(card.options).size, 4, "no option is repeated");
+});
+
+/* A daily session holding exactly one typed reading card.
+ *
+ * The word is seeded as due, because that is the pass the session fills
+ * first and the only one that asks the module for its cards by name - the
+ * filler pass calls its own local function, which no stub can reach. Due is
+ * the realistic case anyway: a word the schedule brought back.
+ *
+ * The catalogue is read outside the game to choose that word, because the
+ * save has to name it and app.js reads the save while its IIFE runs.
+ */
+function typedReadingWord() {
+  const context = {};
+  context.self = context;
+  vm.createContext(context);
+  for (const file of ["curriculum-catalog.js", "catalog-practice.js"]) {
+    vm.runInContext(read(file), context);
+  }
+  const catalog = context.LanternCurriculumCatalog;
+  const practice = context.LanternCatalogPractice;
+  const item = catalog.getPartition("home-inn")
+    .find((one) => one.hasKanji && one.reading && practice.KANA_READING.test(one.reading));
+  assert.ok(item, "the Inn partition has a word with a reading to type");
+  return item;
+}
+
+function typedPracticeSession(now) {
+  const item = typedReadingWord();
+  const day = 86400000;
+  const when = (now || Date.now()) - day;
+  const game = boot({
+    version: 3, characterSelected: true, playerCharacter: "man",
+    visited: ["home-inn"], stageStarted: ["home-inn"], stages: {},
+    reviewProgress: {
+      [item.id]: {
+        step: 0, firstSuccess: null, lastAnswered: when,
+        delayedSuccesses: 0, lastDelayedSuccess: null, due: when, errorTag: null,
+      },
+    },
+  });
+  const practice = game.context.LanternCatalogPractice;
+  const typed = practice.buildPracticeCards(item, game.context.LanternCurriculumCatalog)
+    .filter((card) => card.kind === "reading-input");
+  assert.equal(typed.length, 1, "the word yields one typed reading card");
+  // The due pass asks the module by name, so the session is exactly this card.
+  practice.buildPracticeCards = () => typed.slice();
+  return { game, item };
+}
+
+test("a typed reading card renders a box, grades what was written, and records it", () => {
+  /* The one card in the game that asks the learner to produce Japanese.
+   *
+   * Driven through the real screen rather than checked in the module,
+   * because the module already has its own tests and none of them would
+   * notice a card that grades correctly and renders nothing to type into.
+   */
+  const { game, item } = typedPracticeSession();
+  game.$("map-detail-practice").click();
+  game.clock.advance(300);
+
+  const field = game.$("practice-reading-input");
+  assert.ok(field, "there is a box to type the reading into");
+  assert.equal(field.attributes.lang, "ja");
+  assert.equal(game.doc.querySelectorAll(".question-control").length, 1, "one submit button, no options");
+
+  // Enter submits, because a learner who has just typed will press it before
+  // they look for a button. Romaji spellings are covered in the module's own
+  // suite; what matters here is that what was typed reaches the grader.
+  field.value = item.reading;
+  const enter = new FakeEvent("keydown");
+  enter.key = "Enter";
+  field.dispatchEvent(enter);
+  game.clock.advance(300);
+
+  assert.equal(field.disabled, true, "the box locks once it has been answered");
+  assert.ok(/正解/.test(game.$("feedback-text").textContent), "a right answer is called right");
+  const saved = JSON.parse(game.storage.getItem("lanternAlley.v3"));
+  assert.ok(saved.reviewProgress[item.id], "the answer reached the spacing schedule");
+  assert.equal(saved.reviewProgress[item.id].errorTag, null, "a right answer carries no error tag");
+});
+
+test("a wrong reading is told what the answer was, and comes back", () => {
+  const { game, item } = typedPracticeSession();
+  game.$("map-detail-practice").click();
+  game.clock.advance(300);
+  const field = game.$("practice-reading-input");
+
+  // An empty box is not a wrong answer: it is no answer, and must not put the
+  // word on the correction list for a stray tap on 答える.
+  game.doc.querySelectorAll(".reading-submit")[0].click();
+  game.clock.advance(200);
+  assert.equal(field.disabled, false, "an empty answer does not settle the card");
+
+  field.value = "zenzenchigau";
+  game.doc.querySelectorAll(".reading-submit")[0].click();
+  game.clock.advance(300);
+  assert.ok(game.$("feedback-text").textContent.indexOf(item.reading) >= 0,
+    "a wrong answer is shown the reading it was asked for");
+  const saved = JSON.parse(game.storage.getItem("lanternAlley.v3"));
+  assert.equal(saved.reviewProgress[item.id].errorTag, "incorrect", "a miss is scheduled to come back");
 });
 
 test("the question renderer builds buttons that call back with their value", () => {

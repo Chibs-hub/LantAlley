@@ -30,12 +30,70 @@ test("three card types are generated from data the catalog already has", () => {
   const cards = practice.buildPracticeCards(item, catalog);
 
   const kinds = cards.map((c) => c.kind).sort();
-  assert.equal(kinds.join(","), "cloze,meaning,reading");
+  assert.equal(kinds.join(","), "cloze,meaning,reading-input");
   for (const card of cards) {
+    assert.equal(card.target, item.id);
+    if (card.kind === "reading-input") {
+      // The one card with no options to pick from: the learner writes it.
+      assert.equal(card.options, undefined, "a typed card must not offer options");
+      assert.equal(card.answer, item.reading);
+      continue;
+    }
     assert.equal(card.options.length, 4, `${card.kind} needs four choices`);
     assert.ok(card.options[card.correctIndex], `${card.kind} has no correct answer`);
     assert.equal(new Set(card.options).size, 4, `${card.kind} repeats an option`);
-    assert.equal(card.target, item.id);
+  }
+});
+
+test("the reading is typed rather than chosen, in kana or in romaji", () => {
+  const { LanternCatalogPractice: practice } = load();
+  /* Romaji is accepted so that a learner without a Japanese keyboard can
+   * answer at all. Typing the sounds from memory is still production, which
+   * is the entire point of this card - a four-option reading question can be
+   * answered by recognition long after the word itself is gone. */
+  for (const [typed, reading] of [
+    ["あたためる", "あたためる"],
+    ["アタタメル", "あたためる"],
+    ["atatameru", "あたためる"],
+    ["  atatameru  ", "あたためる"],
+    ["ATATAMERU", "あたためる"],
+    ["kitte", "きって"],        // a doubled consonant is a small tsu
+    ["zasshi", "ざっし"],
+    ["shinbun", "しんぶん"],     // n before a consonant is ん
+    ["sinbun", "しんぶん"],      // and si, ti, tu spellings are accepted
+    ["annai", "あんない"],       // nn + vowel: only the first n is ん
+    ["kanngaeru", "かんがえる"],  // nn + consonant: the pair is one ん
+    ["jugyou", "じゅぎょう"],
+    ["zyugyou", "じゅぎょう"],
+  ]) {
+    assert.ok(practice.checkReading(typed, reading), `${typed} should read as ${reading}`);
+  }
+
+  // An apostrophe is a keyboard rule, not a fact about Japanese: a learner who
+  // knows 金曜日 is きんようび is not wrong for leaving it out.
+  assert.ok(practice.checkReading("kinyoubi", "きんようび"));
+  assert.ok(practice.checkReading("kin'youbi", "きんようび"));
+
+  // Wrong is still wrong, and an empty box is not an answer.
+  assert.equal(practice.checkReading("torikaeru", "あたためる"), false);
+  assert.equal(practice.checkReading("kaeru", "かえす"), false);
+  assert.equal(practice.checkReading("", "あたためる"), false);
+  assert.equal(practice.checkReading("   ", "あたためる"), false);
+});
+
+test("a reading that is not kana never becomes a question", () => {
+  const { LanternCurriculumCatalog: catalog, LanternCatalogPractice: practice } = load();
+  /* Nineteen catalogue rows carry something other than a reading in the
+   * reading field, inherited from the source: part-of-speech markers that
+   * leaked out of the column, a gloss, bracketed okurigana, and one row that
+   * is mojibake. Two of them have kanji, so before this guard they were built
+   * into a reading question whose correct answer was wrong. */
+  const broken = catalog.items.filter(
+    (item) => item.hasKanji && item.reading && !practice.KANA_READING.test(item.reading));
+  assert.ok(broken.length > 0, "the fixture for this test has gone: no broken readings left");
+  for (const item of broken) {
+    const kinds = practice.buildPracticeCards(item, catalog).map((card) => card.kind);
+    assert.ok(!kinds.includes("reading-input"), `${item.canonical} asks for a reading it does not have`);
   }
 });
 
@@ -69,7 +127,8 @@ test("distractors come from the same partition and never repeat the answer", () 
   const item = catalog.items.find((i) => i.hasKanji && i.examples.length);
   const cards = practice.buildPracticeCards(item, catalog);
 
-  for (const card of cards) {
+  // The typed card has no distractors to check - it has no options at all.
+  for (const card of cards.filter((c) => c.options)) {
     const answer = card.options[card.correctIndex];
     const others = card.options.filter((_, i) => i !== card.correctIndex);
     assert.equal(others.includes(answer), false, `${card.kind} repeats its answer as a distractor`);

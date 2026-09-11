@@ -1518,11 +1518,34 @@
   cursor:pointer;
 }
 .question-control.is-primary{box-shadow:0 3px 0 rgba(55,30,18,.55);}
+/* The typed answer. Built to sit in the same row as the option buttons and
+   read as one of them, because it is the same question in a harder form: the
+   same washi ground, the same wood border, the same corner. The field takes
+   the row and the 答える button sits beside it, and on a phone they stack -
+   a 44px minimum on both, since this is the one control in the game a
+   learner touches with a keyboard already covering half the screen. */
+.reading-input{
+  flex:3 1 12em; min-width:0; min-height:44px;
+  padding:0.7em 1.1em;
+  border:2px solid #8c562d; border-radius:0.6em;
+  background:#fffaf0;
+  color:#2d2926;
+  font-family:'Shippori Mincho',serif; font-size:1.15rem; line-height:1.4;
+}
+.reading-input::placeholder{color:#a8937a; font-family:'Zen Maru Gothic',sans-serif; font-size:.9rem;}
+.reading-input:focus-visible{outline:3px solid var(--lantern); outline-offset:2px;}
+.reading-input:disabled{background:#efe6d4; color:#6b5844;}
+.question-control.reading-submit{flex:1 1 6em; text-align:center; white-space:nowrap;}
+/* Answered, and visibly so: the button and the box grey together, because the
+   learner's eye is on the box and a live-looking button beside a dead one
+   invites a second press. */
+.question-control:disabled{background:#efe6d4; color:#6b5844; border-color:#a98a6b; box-shadow:none; cursor:default;}
 .question-control:focus-visible{outline:3px solid var(--lantern); outline-offset:2px;}
 @media(max-width:760px){
   /* One per row on a phone: two long Japanese replies side by side wrap into
      unreadable columns. */
   .question-control{flex:1 1 100%;}
+  .reading-input{flex:1 1 100%;}
 }
 
 /* ---------- shared wood framing ----------
