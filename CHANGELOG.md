@@ -5,6 +5,24 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-11 - The alley is lit; the interface is what the light touches (v355)
+
+The opening screen was three visual languages at once: a painted night village, a front-lit plush fox cut out on top of it, and a glossy orange pill button that could have come from any app. This is one scene instead.
+
+**The painting was being erased to make room for the text.** `rgba(6,13,28,.92)` ran across the left 42% of the frame, and that is exactly where the artwork keeps the big paper lantern, the sakura branch and the stone lantern - the three objects that say what this game is. The text moved down onto the wet stones in the bottom left, which are dark and nearly featureless, so it needs no slab to be read against, and the upper two thirds of the painting - moon, pagoda, 茶屋 sign, the stairs up the hill - is left alone.
+
+**Every colour is sampled from the artwork now**, not chosen beside it: the sky is `#001140`, the lantern paper `#f98e2c`, the moon `#ddc8bb`. The old veil was mixed from a colder, greyer black, which is what made it read as a sheet laid over the night rather than more of it.
+
+**The button is a lit paper lantern**, the same washi and flame as the ones hanging in the scene, throwing its own light onto the stones. It is the brightest thing on the screen and the only thing on it that is bright, which is the whole job of this screen. Menu dropped to a quiet underlined word, because it is not the way in.
+
+**Kon stands on the stones and invites the learner in**, which is what the button beside her says. She was sitting, front-lit at full daylight brightness, and cut out against a scene lit by lanterns - the one thing here that looked pasted onto the painting rather than standing in it. The bow pose was already drawn and already in the shell. She is graded down to the night, takes a warm edge from the lantern side, and has an ellipse under her feet for ground. That ellipse is the pseudo-element that used to draw a mouth onto the mouthless pose.
+
+**The wordmark is lit rather than shadowed.** Two warm blooms and one tight dark edge, because the light in this picture comes from lanterns and a black drop shadow implies a source the painting has not got. `LANTERN ALLEY` lost its capitals and its bold - it is the name in roman letters, not a label - and the tracked-out `JAPANESE STORY ADVENTURE` above the title is gone. In its place, one line that tells a learner who cannot read the title yet what they will actually do: *Follow the lanterns. Learn the words.*
+
+At 320px the title used to break after 言葉, which reads as two words rather than one name. It cannot break now, and the clamp is sized so five characters and their tracking fit the narrowest phone on one line.
+
+Checked at 320, 360, 390, 430 and desktop, with the service worker cleared between loads. Cache is v355.
+
 ### 2026-09-11 - The title screen answers a tap before the fonts arrive (v354)
 
 Four things wrong with the first screen, found by loading it rather than by reading it.

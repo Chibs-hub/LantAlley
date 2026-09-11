@@ -26,10 +26,10 @@ test("character choice uses the gate scene instead of two oversized paper cards"
 test("opening is a cinematic Japanese entry into the illustrated alley", () => {
   assert.match(html, /id="screen-title" class="frame title-scene"/);
   assert.match(html, /<h1[^>]*>言葉の路地<\/h1>/);
-  assert.match(html, />LANTERN ALLEY</);
+  assert.match(html, />Lantern Alley</);
   assert.match(html, /id="btn-start">路地へ入る<\/button>/);
   assert.match(html, /assets\/map\/lantern-alley-map-v1\.jpg/);
-  assert.match(html, /class="title-kon"[\s\S]*?fox-neutral-no-mouth-transparent\.webp/);
+  assert.match(html, /class="title-kon"[\s\S]*?fox-invite-bow-transparent-v2\.webp/);
   assert.match(html, /\.title-kon::after\{/);
   assert.match(html, /id="progress-note"[^>]*hidden/);
   assert.match(html, /路地へ戻る/);

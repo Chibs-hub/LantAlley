@@ -95,59 +95,176 @@
   /* showMap() reveals this with an inline display:flex - the stylesheet
      hides it below - so the direction is set here to keep both in one place. */
   #screen-map{width:100%;max-width:min(1100px,calc((100vh - 220px)*1.5));margin-inline:auto;flex-direction:column}
+  /* The title screen is the painting, lit.
+   *
+   * Every colour below is sampled from the artwork rather than picked next to
+   * it: the sky is #001140, the lantern paper #f98e2c, the moon #ddc8bb, the
+   * bridge #66130d. A veil mixed from a different black - the old one was a
+   * cold rgba(6,13,28) - reads as a grey sheet laid over a blue night, which
+   * is what made the screen look like UI on top of art instead of one scene.
+   *
+   * What was here before painted rgba(6,13,28,.92) across the left 42% to
+   * clear a column for the text. That column is where the painting keeps the
+   * big paper lantern, the sakura branch and the stone lantern - the three
+   * things that say what this game is. The text moved down onto the wet
+   * stones at the bottom left instead, which are dark and almost featureless,
+   * so it needs no slab to be read against, and the whole upper frame is left
+   * to the art. */
   #screen-title.title-scene{
+    --night:#001140;
+    --night-deep:#000a22;
+    --flame:#f98e2c;
+    --flame-pale:#ffdca6;
+    --moon:#ddc8bb;
     min-height:min(640px,calc(100svh - 36px));
     overflow:hidden;
     isolation:isolate;
-    padding:clamp(28px,6vw,62px);
+    padding:clamp(26px,5vw,54px);
     display:flex;
     flex-direction:column;
-    justify-content:space-between;
+    justify-content:flex-end;
     align-items:flex-start;
+    gap:clamp(18px,3.4vh,30px);
     text-align:left;
     color:#fff6df;
     background:
-      linear-gradient(90deg,rgba(6,13,28,.92) 0%,rgba(6,13,28,.7) 42%,rgba(6,13,28,.14) 78%),
-      linear-gradient(0deg,rgba(6,13,28,.72),transparent 55%),
+      /* Night pooling in the bottom left corner, where the text stands - the
+         shape a lantern's light leaves behind rather than a straight edge. */
+      radial-gradient(115% 78% at 4% 104%,rgba(0,10,34,.94) 0%,rgba(0,10,34,.72) 34%,rgba(0,10,34,.28) 58%,rgba(0,17,64,0) 76%),
+      linear-gradient(0deg,rgba(0,10,34,.78) 0%,rgba(0,10,34,.24) 26%,rgba(0,17,64,0) 52%),
+      /* A vignette closes the frame without touching the middle of the scene. */
+      radial-gradient(140% 120% at 50% 42%,rgba(0,17,64,0) 46%,rgba(0,10,34,.42) 100%),
       url("assets/title/lantern-alley-title-v1.webp") center/cover no-repeat;
     box-shadow:0 28px 70px rgba(3,7,20,.62),0 0 0 1px rgba(247,200,119,.18);
   }
   #screen-title.title-scene::before{border-color:rgba(247,207,137,.36);z-index:5}
-  .title-scene-shade{position:absolute;inset:0;z-index:-1;background:radial-gradient(circle at 78% 34%,rgba(243,177,77,.12),transparent 26%);pointer-events:none}
-  .title-copy{position:relative;z-index:2;max-width:520px;text-shadow:0 4px 22px rgba(0,0,0,.78)}
-  .title-kicker{margin:0 0 8px;color:#f1cd8b;font-size:.72rem;font-weight:800;letter-spacing:.18em;text-transform:uppercase}
+  /* The warmth the alley's own lanterns throw back onto the near stones. */
+  .title-scene-shade{position:absolute;inset:0;z-index:-1;pointer-events:none;
+    background:radial-gradient(58% 40% at 76% 62%,rgba(249,142,44,.14),transparent 68%)}
+
+  .title-copy{position:relative;z-index:2;max-width:min(560px,92%)}
+  /* Lit, not shadowed. The wordmark takes its glow from the lanterns around
+     it - two warm blooms and one tight dark edge for legibility - where a
+     black drop shadow would have lit it from a source the painting has not
+     got. */
   #screen-title.title-scene h1{
     font-family:'Shippori Mincho', serif;
-    font-size:clamp(2.7rem,8vw,5rem);
+    font-size:clamp(2.5rem,7.4vw,4.4rem);
     font-weight:800;
-    line-height:1;
-    color:#fff0cf;
-    letter-spacing:.08em;
+    line-height:1.02;
+    color:#ffeccd;
+    letter-spacing:.13em;
+    text-indent:.13em;
+    text-shadow:0 0 30px rgba(249,142,44,.34),0 0 72px rgba(249,142,44,.18),0 2px 12px rgba(0,6,20,.92);
   }
-  .title-english{margin:9px 0 0;color:#efd8ad;font-family:'Shippori Mincho',serif;font-size:.82rem;font-weight:800;letter-spacing:.24em}
-  .title-kon{position:absolute;right:5%;bottom:4%;z-index:1;width:clamp(190px,34%,320px);filter:drop-shadow(0 14px 13px rgba(0,0,0,.52));pointer-events:none;user-select:none}
+  .title-english{
+    margin:17px 0 0;
+    color:var(--moon);
+    font-family:'Shippori Mincho',serif;
+    font-size:clamp(.76rem,1.5vw,.88rem);
+    font-weight:500;
+    letter-spacing:.34em;
+    text-indent:.34em;
+    text-shadow:0 2px 10px rgba(0,6,20,.8);
+  }
+  .title-lede{
+    margin:14px 0 0;
+    max-width:34ch;
+    color:rgba(255,240,214,.76);
+    font-size:clamp(.8rem,1.6vw,.92rem);
+    font-weight:500;
+    line-height:1.55;
+    text-shadow:0 2px 12px rgba(0,6,20,.9);
+  }
+
+  /* Kon stands on the stones at the mouth of the alley. Graded down to the
+     night the painting is lit by - she arrived at full daylight brightness -
+     with a warm edge from the lantern side, and an ellipse under her feet so
+     she has ground to stand on. The ellipse replaces a pseudo-element that
+     used to draw a mouth onto the mouthless pose. */
+  .title-kon{
+    position:absolute;right:2%;bottom:6%;z-index:1;
+    width:clamp(128px,19%,188px);
+    filter:brightness(.84) saturate(.9) drop-shadow(8px -2px 16px rgba(249,142,44,.26)) drop-shadow(0 16px 18px rgba(0,6,20,.55));
+    pointer-events:none;user-select:none;
+  }
   .title-kon img{display:block;width:100%;height:auto}
-  .title-kon::after{content:"";position:absolute;left:50%;top:46%;width:8%;height:5%;border-bottom:2px solid #4a281d;border-radius:0 0 50% 50%;transform:translateX(-50%)}
-  .title-entry-panel{position:relative;z-index:3;display:flex;flex-direction:column;align-items:flex-start;gap:10px;max-width:430px}
+  .title-kon::after{
+    content:"";position:absolute;left:50%;bottom:-2%;
+    width:62%;height:7%;
+    background:radial-gradient(closest-side,rgba(0,6,20,.62),rgba(0,6,20,0));
+    transform:translateX(-50%);
+  }
+
+  .title-entry-panel{position:relative;z-index:3;display:flex;flex-direction:column;align-items:flex-start;gap:12px;max-width:430px}
   .progress-note{
     max-width:38ch;
     padding:7px 11px;
     border:1px solid rgba(246,203,126,.4);
     border-radius:999px;
-    background:rgba(9,18,34,.76);
+    background:rgba(0,10,34,.76);
     color:#f2dfbc;
     font-size:.76rem;
     font-weight:700;
     backdrop-filter:blur(5px);
   }
   .title-scene .title-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
-  .title-scene .btn-primary{min-width:176px;background:linear-gradient(180deg,#d56843,#9f3e2f);box-shadow:0 8px 22px rgba(0,0,0,.34),inset 0 1px rgba(255,255,255,.35)}
-  .title-scene .btn-ghost{padding:9px 15px;border-color:rgba(247,215,159,.45);color:#fff0cf;background:rgba(9,18,34,.62)}
+  /* The one bright thing on the screen, and the thing the screen is for: a
+     lit paper lantern, the same washi and flame as the ones hanging in the
+     painting, throwing its own light onto the stones under it. The glossy
+     orange pill it replaces was the only object here that could have come
+     from any other app. */
+  .title-scene .btn-primary{
+    min-width:184px;
+    padding:15px 30px;
+    border:1px solid rgba(255,222,170,.72);
+    border-radius:7px;
+    background:linear-gradient(180deg,#ffe7bd 0%,#ffcf8d 46%,#f6ab55 100%);
+    color:#3a1a06;
+    font-family:'Shippori Mincho',serif;
+    font-weight:800;
+    letter-spacing:.18em;
+    text-indent:.18em;
+    box-shadow:
+      0 0 0 1px rgba(58,26,6,.22),
+      0 0 30px rgba(249,142,44,.42),
+      0 0 78px rgba(249,142,44,.26),
+      0 14px 30px rgba(0,6,20,.44),
+      inset 0 1px rgba(255,255,255,.6);
+    transition:box-shadow .22s ease,transform .22s ease;
+  }
+  .title-scene .btn-primary:hover,.title-scene .btn-primary:focus-visible{
+    transform:translateY(-1px);
+    box-shadow:
+      0 0 0 1px rgba(58,26,6,.22),
+      0 0 38px rgba(249,142,44,.56),
+      0 0 96px rgba(249,142,44,.34),
+      0 16px 34px rgba(0,6,20,.46),
+      inset 0 1px rgba(255,255,255,.7);
+  }
+  /* Everything that is not the way in stays out of the light. */
+  .title-scene .btn-ghost{
+    padding:8px 2px;
+    border:0;border-bottom:1px solid rgba(221,200,187,.34);
+    border-radius:0;
+    background:none;
+    color:rgba(255,240,214,.72);
+    font-size:.84rem;
+    font-weight:600;
+    letter-spacing:.06em;
+    box-shadow:none;
+  }
+  .title-scene .btn-ghost:hover,.title-scene .btn-ghost:focus-visible{
+    color:#ffeccd;border-bottom-color:rgba(255,220,166,.8);background:none;
+  }
 
   .character-scene{min-height:min(760px,calc(100svh - 24px));display:grid;place-items:end center;padding:18px;background:linear-gradient(rgba(6,12,25,.08),rgba(6,12,25,.52)),url("assets/entrance/wooden-gate-v1.webp") center/cover;color:#fff0cf}
   .character-panel{width:min(880px,100%);padding:14px 18px 16px;border:2px solid #8c562d;border-radius:16px;background:rgba(49,27,18,.78);backdrop-filter:blur(9px) saturate(115%);box-shadow:inset 0 1px rgba(255,226,167,.25),0 18px 45px rgba(0,0,0,.46)}
   .character-guide{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:8px;text-align:left}
   .character-guide img{width:76px;height:76px;object-fit:contain;filter:drop-shadow(0 6px 5px rgba(0,0,0,.35))}
+  /* Still worn by the character screen, which is where this label now lives
+     alone - the title screen used to carry one too. */
+  .title-kicker{margin:0 0 8px;color:#f1cd8b;font-size:.72rem;font-weight:800;letter-spacing:.18em}
   .character-guide .title-kicker{margin:0;color:#f1bd70}
   .character-panel h2{margin:2px 0 0;font-family:'Shippori Mincho',serif;font-size:clamp(1.2rem,3vw,1.75rem)}
   .character-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
@@ -165,25 +282,25 @@
        the credit line under it was cut in half at every phone size. The
        subtraction is the whole of what sits outside the frame: PHONE_CHROME
        - see the comment on the custom property. */
-    #screen-title.title-scene{min-height:calc(100svh - var(--title-chrome));padding:34px 25px 28px;background-position:54% center}
-    #screen-title.title-scene h1{font-size:clamp(2.35rem,14vw,3.7rem)}
+    /* A phone crops the painting to its middle, which is where the alley
+       runs: the stairs, the tea-house lanterns and the wet stones stay in
+       frame, and the text still stands on the dark stones at the bottom. */
+    #screen-title.title-scene{min-height:calc(100svh - var(--title-chrome));padding:30px 22px 24px;background-position:58% center;gap:16px}
+    /* Never let the title break. At 320px it split after 言葉, which reads as
+       two words rather than one name; the clamp is sized so five characters
+       and their tracking fit the narrowest phone in one line. */
+    #screen-title.title-scene h1{font-size:clamp(1.95rem,11.4vw,3.4rem);white-space:nowrap}
+    .title-english{letter-spacing:.34em;text-indent:.34em}
+    .title-lede{margin-top:11px;max-width:26ch}
     .title-kicker{font-size:.62rem}
-    /* Kon sits on the path in the bottom corner, as she does on a wide
-       screen. She was lifted to top:27% when the panel below her was four
-       rows tall - install and save were buttons of their own then - and she
-       covered them. Those rows moved into the Menu, the panel is two rows
-       again, and anchored to the top she was left hovering in mid-air over
-       the middle of the scene with nothing under her.
-       The panel keeps its own z-index above her, so the buttons stay
-       readable where she reaches behind them, and bottom:8% clears the
+    /* Kon keeps the far corner of the stones. She is small here because the
+       button beside her is the errand and she is the welcome, and because
+       the two of them share one line of ground; bottom:11% clears the
        feedback pill fixed 14px off the bottom right. */
-    .title-kon{right:-4%;bottom:8%;top:auto;width:min(50vw,220px);z-index:0}
+    .title-kon{right:-2%;bottom:12%;top:auto;width:min(33vw,148px);z-index:0}
     .title-entry-panel{width:100%}
-    /* The text controls have no background of their own, so whatever is
-       behind them is what they are read against. On the title screen that is
-       a painted night scene and a fox. Give them their own ground. */
     .title-scene .title-actions{width:100%;align-items:flex-start;flex-direction:column}
-    .title-scene .btn-primary{width:min(68%,250px)}
+    .title-scene .btn-primary{width:min(72%,264px);padding:14px 22px}
   }
 
   .btn{
