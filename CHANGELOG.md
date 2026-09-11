@@ -5,6 +5,16 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-11 - The artifact's size ceiling is gone, because the host it belonged to is
+
+`build-artifact.mjs` refused to finish above 15 MB and `pwa.test.mjs` asserted the result stayed under 16 MB. That number was the publishing limit of the host that served the artifact back when the artifact was how the game reached people. The game ships from GitHub Pages now, so the build was failing against a constraint this project no longer has - at 78 MB, five times past a line that had stopped meaning anything.
+
+The build reports its size and its five heaviest inlined files and emits whatever it comes to. The test still checks what the artifact *contains*, which is the part that can actually be wrong.
+
+No cache bump: nothing here ships to a browser. With an artifact built, `pwa.test.mjs` is 48 of 48; without one, the five tests that read it skip, as of v358.
+
+Still open, and written down in the handoff since the day the Artifact was retired: "once the app is hosted, this file and the tests that read it should be deleted." The app is hosted. That deletion is a decision, not a fix, so it is waiting for one.
+
 ### 2026-09-11 - The station gets its episodes back, and four other things stop being wrong (v358)
 
 **路地駅 has had no episodes since 2026-09-07.** A commit about Inn audio dropped `<script src="n2-station-episodes.js">` from index.html, and nothing anywhere said so. Every other part of the system went on believing in it: the module still registered itself into `LanternEpisodeStages` when loaded, the service worker still pre-cached the file, the artifact builder still required it, and the map still offered 路地駅 as a destination. Only the page had stopped loading it, so `LanternEpisodeStages` held four places instead of five and a learner who walked to the station arrived at a place with nothing in it. Eleven versions, ten of them verified in a browser, and none of that verification ever opened the station.

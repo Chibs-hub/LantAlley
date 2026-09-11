@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
 
@@ -579,7 +579,12 @@ test("the self-contained artifact includes the illustrated room", needsArtifact,
     assert.ok(artifact.includes(encoded), "artifact does not embed " + asset);
   }
   assert.doesNotMatch(artifact, /assets\/inn\/room-(?:empty|objects)-v[12]\.png/);
-  assert.ok(statSync(new URL("./lantern-alley-artifact.html", import.meta.url)).size < 16 * 1024 * 1024);
+  /* The 16 MB assertion that stood here is gone with the ceiling it checked.
+   * It was the publishing limit of the host that served the artifact when the
+   * artifact was the delivery surface; the game ships from GitHub Pages now,
+   * so the number described a constraint this project no longer has. What is
+   * still worth asserting about this build is what it contains, which is
+   * everything above. */
 });
 
 test("the self-contained artifact includes click-to-finish dialogue", needsArtifact, () => {

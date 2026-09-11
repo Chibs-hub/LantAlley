@@ -407,9 +407,9 @@ That last suite exists because roughly 260 assertions match the *source text* of
 
 **What the product is now.** `index.html` and its sibling files, played from disk or served over http, installable as a PWA. There is no size ceiling.
 
-`build-artifact.mjs` still works and still refuses to emit a file over 15 MB. It is an **optional demo build**, not the delivery path. Nothing needs to be rebuilt or republished to ship a change.
+`build-artifact.mjs` still works. It no longer refuses to emit a file over 15 MB: that ceiling was the publishing limit of the host that served the artifact when the artifact was the delivery surface, and the game ships from GitHub Pages now. The build reports its size and what is heaviest in it, and emits whatever it comes to. It is an **optional demo build**, not the delivery path. Nothing needs to be rebuilt or republished to ship a change.
 
-**Do not let its size ceiling drive decisions.** It briefly did: the build broke at 15.89 MB, and that was treated as a problem to solve rather than as a retired build refusing to hold a game that has outgrown it. The fix that came out of it - cutting oversized backgrounds - was worth doing for the app on its own terms, but the trigger was the wrong one. If it stops fitting again, that is the artifact reaching its limit, which is exactly why it was retired.
+**Its size never drove a decision again, and now it cannot.** It did once: the build broke at 15.89 MB and that was treated as a problem to solve rather than as a retired build refusing to hold a game that had outgrown it. The fix that came out of it - cutting oversized backgrounds - was worth doing for the app on its own terms, but the trigger was the wrong one. The ceiling was removed on 2026-09-11, by which point the build stood at 78 MB: it had been failing on a limit belonging to a host this project stopped using.
 
 **Why it still exists at all:** it is currently the only way to open the game on a phone that is not on this Wi-Fi. Section 2 covers the LAN address, which is better for everyday testing. Once the app is hosted, this file and the tests that read it should be deleted.
 
