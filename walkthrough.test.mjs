@@ -3536,7 +3536,7 @@ test("the list is mentioned once a day, not at every launch", () => {
 
   const nudge = game.$("map-fix-nudge");
   assert.equal(nudge.hidden, false, "the first arrival at the map says something");
-  assert.ok(nudge.textContent.includes("直す言葉"));
+  assert.ok(nudge.textContent.includes("まちがえた言葉"));
 
   /* Once. A launch-time dialog was the other option and this is not it: an
    * interruption before the learner has done anything is the one most likely
@@ -3581,4 +3581,68 @@ test("the due count rides on the button that acts on it", () => {
   clear.clock.advance(900);
   assert.match(clear.$("map-detail-practice").textContent, /Daily practice - 20 questions/);
   assert.equal(clear.$("map-detail-fix").hidden, true, "and nothing is owed on the list either");
+});
+
+test("the check at the end of a place asks a missed word again until it is right", () => {
+  /* The place is not finished while it still owes words.
+   *
+   * Driven through the screen rather than the module: the module knows which
+   * words are owed, and this is about what happens when the learner answers
+   * them - a wrong answer has to come back, and the round has to refuse to
+   * end until none is left. A queue that quietly dropped an item would look
+   * identical from the outside except for the one thing that matters.
+   */
+  const probe = boot();
+  const owed = probe.context.LanternCurriculumCatalog.getPartition("home-inn")
+    .filter((item) => item.meanings && item.meanings.length && item.examples)
+    .slice(0, 2)
+    .map((item) => item.id);
+  assert.equal(owed.length, 2, "the Inn has two words to owe");
+
+  const reviewProgress = {};
+  owed.forEach((id, index) => {
+    reviewProgress[id] = {
+      step: 0, firstSuccess: null, lastAnswered: 1000 + index, delayedSuccesses: 0,
+      lastDelayedSuccess: null, due: 1000 + index, errorTag: "incorrect",
+    };
+  });
+
+  // The save stores these as arrays; the app turns them into lookups on load.
+  const game = boot({
+    version: 3, characterSelected: true, playerCharacter: "man",
+    // `stages` must be present: migrateProgress only takes the v3 branch - and
+    // only then restores characterSelected and reviewProgress - when it is.
+    stages: {},
+    visited: ["entrance", "home-inn"], starred: ["entrance"], stageStarted: ["home-inn"],
+    episodesDone: ["inn-e01", "inn-e02", "inn-e03", "inn-e04"],
+    reviewProgress,
+  });
+  game.$("btn-start").click();
+  game.clock.advance(400);
+
+  const check = game.$("map-detail-check");
+  assert.ok(check, "the place's card offers the check");
+  assert.equal(check.hidden, false, "a place that owes words offers it");
+  assert.match(check.textContent, /2/, "the count is the words owed");
+
+  check.click();
+  game.clock.advance(400);
+  const asked = () => [...game.doc.querySelectorAll(".question-control")]
+    .filter((b) => b.textContent.trim() && !/\u7b54\u3048\u308b/.test(b.textContent));
+  assert.ok(asked().length >= 4, "the round is asking something");
+  assert.equal(game.$("encounter-total").textContent, "2", "it counts words owed, not questions asked");
+  assert.equal(game.$("encounter-progress").textContent, "0", "nothing cleared yet");
+
+  // Miss the first word. It has to come back, so nothing is cleared and the
+  // round is not over.
+  const options = asked();
+  const firstCard = game.doc.querySelector(".question-control");
+  assert.ok(firstCard, "there is something to answer");
+  options[0].click();
+  game.clock.advance(300);
+  game.$("btn-next").click();
+  game.clock.advance(400);
+  assert.ok(asked().length >= 4, "a missed word brings the round back rather than ending it");
+  assert.equal(game.$("encounter-progress").textContent, "0",
+    "a word that was missed clears nothing");
 });

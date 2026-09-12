@@ -152,6 +152,23 @@
       });
   }
 
+  /* The words a place still owes, for the check at the end of it.
+   *
+   * The correction list is every miss a learner is carrying, from everywhere,
+   * and it is a list they visit when they choose to. This is the same data
+   * asked a different question: of the words this place taught, which ones
+   * are still wrong? It is a gate rather than a list - the place is not
+   * finished until it comes back empty - so it is scoped to one place and
+   * read at one moment, and both of those are the caller's to decide.
+   *
+   * Oldest miss first, like the list, so the word carried longest is met
+   * first rather than whichever was missed most recently.
+   */
+  function getStageCheckQueue(progress, belongsToStage){
+    if(typeof belongsToStage !== "function") return [];
+    return getCorrectionList(progress).filter(belongsToStage);
+  }
+
   function isMastered(itemProgress){
     if(!itemProgress || !itemProgress.firstSuccess) return false;
     if(itemProgress.errorTag) return false;
@@ -168,6 +185,7 @@
     recordOutcome: recordOutcome,
     getDueItems: getDueItems,
     getCorrectionList: getCorrectionList,
+    getStageCheckQueue: getStageCheckQueue,
     isMastered: isMastered
   };
 })(typeof self !== "undefined" ? self : this);

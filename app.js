@@ -1774,6 +1774,10 @@
   $("btn-skip-stage").addEventListener("click", skipWholeStage);
   $("btn-restart-stage").addEventListener("click", restartWholeStage);
   $("map-detail-fix").addEventListener("click", function(){ renderCorrectionList(); });
+  $("map-detail-check").addEventListener("click", function(){
+    var key = this.getAttribute("data-check-key");
+    if(key) startStageCheck(key, null);
+  });
   $("btn-next").addEventListener("click", function(){
     if(practiceState){ advancePractice(); return; }
     if(previewState){ advanceEpisodePreview(); return; }
@@ -1885,7 +1889,7 @@
     if(fixBtn){
       var owed = correctionList().length;
       fixBtn.hidden = owed === 0;
-      fixBtn.textContent = "\u76f4\u3059\u8a00\u8449 " + owed;
+      fixBtn.textContent = "\u307e\u3061\u304c\u3048\u305f\u8a00\u8449 " + owed;
       paintFixNudge(owed);
     }
     renderMapDetail();
@@ -1910,7 +1914,7 @@
     state.fixNudgedOn = today;
     saveProgress();
     nudge.hidden = false;
-    nudge.textContent = "\u30b3\u30f3\uff1a\u300c\u76f4\u3059\u8a00\u8449\u304c" + owed
+    nudge.textContent = "\u30b3\u30f3\uff1a\u300c\u307e\u3061\u304c\u3048\u305f\u8a00\u8449\u304c" + owed
       + "\u8a9e\u3042\u308a\u307e\u3059\u3002\u4eca\u65e5\u306e\u3046\u3061\u306b\u3044\u304f\u3064\u304b\u76f4\u3057\u3066\u304a\u304d\u307e\u3057\u3087\u3046\u3002\u300d";
   }
 
@@ -1985,6 +1989,17 @@
     $("map-detail-name").textContent = place.name;
     $("map-detail-story").textContent = place.story;
     $("map-detail-focus").textContent = unlocked ? place.focus : "前の場所を100%理解すると開きます。";
+    /* The final check, offered while this place still owes words. It runs on
+     * its own when the last shift ends; a learner who closed it then, or who
+     * has missed something since, needs a way back that is not replaying a
+     * shift to reach it. */
+    var checkBtn = $("map-detail-check");
+    if(checkBtn){
+      var owedHere = (unlocked && stageComplete(place.key)) ? stageCheckTargets(place.key).length : 0;
+      checkBtn.hidden = owedHere === 0;
+      checkBtn.textContent = "\u4ed5\u4e0a\u3052\u306e\u78ba\u8a8d " + owedHere;
+      checkBtn.setAttribute("data-check-key", place.key);
+    }
     mapDetailAction.style.display = action ? "inline-flex" : "none";
     mapDetailAction.textContent = action ? action.label : "";
 
@@ -2631,7 +2646,7 @@
     return cards;
   }
 
-  /* ---- 直す言葉: the words still owed, from every place ----
+  /* ---- まちがえた言葉: the words still owed, from every place ----
    *
    * Reported as wanting one simple spot for the words that went wrong,
    * gathered from every stage, that the learner can work through until it is
@@ -2707,16 +2722,16 @@
     $("romaji-line").textContent = "";
     $("meaning-line").textContent = "";
     $("meaning-line").classList.remove("show");
-    $("scene-label").textContent = "直す言葉";
+    $("scene-label").textContent = "まちがえた言葉";
     $("narration").textContent = "";
 
     if(!rows.length){
       // The empty state is the goal here, so it says that rather than "none".
-      $("jp-line").textContent = "コン：「直す言葉はありません。よくできています。」";
+      $("jp-line").textContent = "コン：「まちがえた言葉はありません。よくできています。」";
       $("scene").innerHTML = '<div class="episode-open"><div class="episode-open-card fix-card">'
-        + '<p class="episode-open-kicker">直す言葉</p>'
+        + '<p class="episode-open-kicker">まちがえた言葉</p>'
         + '<h2 class="episode-open-title">今は空です</h2>'
-        + '<p class="episode-open-note">間違えた言葉はここに集まります。直せば、このリストから消えます。</p>'
+        + '<p class="episode-open-note">間違えた言葉はここに集まります。正しく答えられたら、リストから消えます。</p>'
         + '<button class="btn btn-primary" id="btn-fix-back">路地へ戻る</button>'
         + '</div></div>';
       $("btn-fix-back").addEventListener("click", function(event){
@@ -2740,7 +2755,7 @@
     }).join("");
 
     $("scene").innerHTML = '<div class="episode-open"><div class="episode-open-card fix-card">'
-      + '<p class="episode-open-kicker">直す言葉</p>'
+      + '<p class="episode-open-kicker">まちがえた言葉</p>'
       + '<h2 class="episode-open-title">' + rows.length + '語</h2>'
       // Kon's panel is hidden on this screen, so her one line about the
       // list rides in the card rather than being lost with it.
@@ -2774,6 +2789,83 @@
         renderCorrectionList();
       });
     });
+  }
+
+  /* ---- 仕上げの確認: the check at the end of a place ----
+   *
+   * A place teaches forty words across three training days and four shifts,
+   * and until now nothing asked, at the end of it, whether the learner had
+   * actually kept the ones they got wrong on the way through. The day review
+   * shows the day's misses and moves on. The challenge re-asks that one day's
+   * misses. The correction list is there whenever a learner chooses to open
+   * it. None of those is the place saying "you are done here".
+   *
+   * This is. Every word missed anywhere in this place - training day, shift,
+   * or a daily practice card that happened to draw one of its words - comes
+   * back, and a word only leaves when it is answered correctly. Get one
+   * wrong and it goes to the back and returns; the round ends when nothing
+   * is left, which is the same thing as every one of them being right.
+   *
+   * Repeating rather than stopping at three attempts, which is what the
+   * episode repair round does, is deliberate and is the difference between
+   * the two. The repair round runs against a clock in the middle of a shift,
+   * so a learner stuck on one item has to be let out. This one is the door
+   * out of the place: the answer is shown every time it is missed, so a
+   * learner who reads it can always clear it, and leaving the screen is
+   * always allowed - the place simply is not finished yet.
+   */
+  function stageCheckTargets(placeKey){
+    if(typeof LanternReviewEngine === "undefined" || typeof LanternCurriculumCatalog === "undefined") return [];
+    return LanternReviewEngine.getStageCheckQueue(state.reviewProgress || {}, function(id){
+      var item = LanternCurriculumCatalog.getItem(id);
+      return !!item && item.partition === placeKey;
+    });
+  }
+
+  function stageCheckCard(id){
+    var item = LanternCurriculumCatalog.getItem(id);
+    if(!item) return null;
+    // Six options and the meaning question, for the reason the correction
+    // round gives: this is the round where answering right is what releases
+    // a word, so a one-in-four guess is too cheap a way to release it.
+    var built = LanternCatalogPractice.buildPracticeCards(item, LanternCurriculumCatalog, undefined, 6);
+    if(!built.length) return null;
+    var prefer = ["meaning", "cloze", "reading-input"];
+    var chosen = null;
+    for(var k = 0; k < prefer.length && !chosen; k++){
+      built.forEach(function(candidate){
+        if(!chosen && candidate.kind === prefer[k]) chosen = candidate;
+      });
+    }
+    return chosen || built[0];
+  }
+
+  function startStageCheck(placeKey, onCleared){
+    if(typeof LanternCatalogPractice === "undefined") return false;
+    var targets = stageCheckTargets(placeKey);
+    var cards = [];
+    targets.forEach(function(id){
+      var card = stageCheckCard(id);
+      if(card) cards.push(card);
+    });
+    if(!cards.length) return false;
+    practiceState = {
+      cards: cards, index: 0, correct: 0, answered: false,
+      stageCheck: placeKey,
+      // What the learner is counting down: the words, not the questions. A
+      // missed word is asked again, so the question count climbs while the
+      // work left goes down, and showing that number would read as a target
+      // moving away from them.
+      words: cards.length,
+      cleared: {},
+      onCleared: onCleared || null
+    };
+    screenTitle.style.display = "none";
+    screenMap.style.display = "none";
+    screenGame.style.display = "block";
+    screenGame.classList.remove("entrance-stage");
+    renderPracticeCard();
+    return true;
   }
 
   function startCorrectionPractice(){
@@ -2833,17 +2925,30 @@
     var item = LanternCurriculumCatalog.getItem(card.target);
 
     $("stage-phase-row").style.display = "flex";
+    /* 学ぶからやり直す belongs to a place's three days, not to a round of
+     * cards; it sat on this screen offering to restart something the learner
+     * is not in. */
+    if($("btn-restart-learn")) $("btn-restart-learn").hidden = true;
     // The testing-only skip buttons only make sense against getActivePrompt's
     // own Learn/Practice/Challenge/Review flow, which this is not.
     $("btn-skip-question").hidden = true;
     $("btn-skip-stage").hidden = true;
-    $("stage-phase-badge").textContent = practiceState.correction
-      ? "\u76f4\u3059\u8a00\u8449" : "Daily practice";
+    $("stage-phase-badge").textContent = practiceState.stageCheck
+      ? "\u4ed5\u4e0a\u3052"
+      : (practiceState.correction ? "\u307e\u3061\u304c\u3048\u305f\u8a00\u8449" : "Daily practice");
     $("encounter-status").style.display = "block";
-    $("encounter-progress").textContent = String(practiceState.index + 1);
-    $("encounter-total").textContent = String(practiceState.cards.length);
-    $("scene-label").textContent = practiceState.correction
-      ? "\u76f4\u3059\u8a00\u8449" : "Moonview Inn - Daily practice";
+    if(practiceState.stageCheck){
+      // The count is words cleared out of words owed. A missed word is asked
+      // again, so counting questions would show a target moving away.
+      $("encounter-progress").textContent = String(Object.keys(practiceState.cleared).length);
+      $("encounter-total").textContent = String(practiceState.words);
+    }else{
+      $("encounter-progress").textContent = String(practiceState.index + 1);
+      $("encounter-total").textContent = String(practiceState.cards.length);
+    }
+    $("scene-label").textContent = practiceState.stageCheck
+      ? "\u4ed5\u4e0a\u3052\u306e\u78ba\u8a8d"
+      : (practiceState.correction ? "\u307e\u3061\u304c\u3048\u305f\u8a00\u8449" : "Moonview Inn - Daily practice");
     $("narration").textContent = card.sourceNote;
     $("romaji-line").textContent = "";
     $("meaning-line").textContent = "";
@@ -2861,6 +2966,9 @@
       meaning: "Choose the meaning.",
       cloze: "Choose the word that fits the blank."
     }[card.kind];
+    if(practiceState.stageCheck){
+      help = "Final check. Every word you missed here comes back until you answer it right.";
+    }
     $("scene").innerHTML = '<div class="inn-workspace">'
       + '<p class="inn-instruction"><span>' + help + '</span></p>'
       + '<div class="question-controls" id="practice-controls"></div>'
@@ -2888,6 +2996,14 @@
         id: card.target, correct: right, now: Date.now()
       });
       if(right) earnPracticeCoins(1);
+      if(practiceState.stageCheck){
+        /* A word leaves this round by being answered, not by being asked.
+         * Right and it is done; wrong and the same word goes to the back and
+         * comes round again - which is what makes reaching the end of the
+         * queue mean every one of them was answered correctly. */
+        if(right) practiceState.cleared[card.target] = true;
+        else practiceState.cards.push(card);
+      }
       // Saving learning progress must not depend on a coin payout.
       saveProgress();
       $("jp-line").textContent = "「" + item.canonical + "」（" + item.reading + "）" + (item.meanings[0] || "");
@@ -3016,6 +3132,20 @@
 
   function advancePractice(){
     if(practiceState.index >= practiceState.cards.length - 1){
+      /* Reaching the end of this queue is the whole result: a missed word was
+       * pushed onto it, so there is nothing left only when every word was
+       * answered correctly. */
+      if(practiceState.stageCheck && !practiceState.finished){
+        renderStageCheckDone();
+        return;
+      }
+      if(practiceState.stageCheck){
+        var done = practiceState.onCleared;
+        practiceState = null;
+        if(done){ done(); return; }
+        showMap();
+        return;
+      }
       /* Back to the list, which is the point of the round: what it shows now
        * is what is left, and the words just answered are gone from it. The
        * daily session's score card is for the daily session - this one is
@@ -3036,6 +3166,35 @@
     }
     practiceState.index += 1;
     renderPracticeCard();
+  }
+
+  function renderStageCheckDone(){
+    practiceState.finished = true;
+    var words = practiceState.words;
+    // The counter read one short of the total on the panel that says they are
+    // all done, because the last word was cleared after the last render.
+    $("encounter-progress").textContent = String(words);
+    $("encounter-total").textContent = String(words);
+    var asked = practiceState.cards.length;
+    var line = asked === words
+      ? "\u30b3\u30f3\uff1a\u300c\u5168\u90e8\u4e00\u56de\u3067\u3067\u304d\u307e\u3057\u305f\u306d\u3002\u3082\u3046\u5927\u4e08\u592b\u3067\u3059\u3002\u300d"
+      : "\u30b3\u30f3\uff1a\u300c\u5168\u90e8\u6b63\u3057\u304f\u7b54\u3048\u3089\u308c\u307e\u3057\u305f\u3002\u3053\u308c\u3067\u3053\u306e\u5834\u6240\u306f\u304a\u3057\u307e\u3044\u3067\u3059\u3002\u300d";
+    $("narration").textContent = "\u4ed5\u4e0a\u3052\u306e\u78ba\u8a8d";
+    $("feedback-row").classList.remove("show");
+    $("feedback-text").textContent = "";
+    if(dialogueFlow) dialogueFlow.start(line, false);
+    $("scene").innerHTML = '<div class="inn-workspace">'
+      + '<p class="inn-instruction"><span>Final check complete. Nothing from this place is still wrong.</span></p>'
+      + '<p class="practice-score">' + words + ' / ' + words + '</p>'
+      + '<ul class="practice-summary">'
+      + '<li>\u307e\u3061\u304c\u3048\u305f\u8a00\u8449 ' + words + ' \u8a9e\u3092\u3001\u3059\u3079\u3066\u6b63\u3057\u304f\u7b54\u3048\u307e\u3057\u305f\u3002</li>'
+      + (asked > words
+        ? '<li>\u554f\u984c\u306f ' + asked + ' \u554f\u3002\u9593\u9055\u3048\u305f\u8a00\u8449\u306f\u3001\u3067\u304d\u308b\u307e\u3067\u623b\u3063\u3066\u304d\u307e\u3057\u305f\u3002</li>'
+        : '<li>\u3059\u3079\u3066\u4e00\u56de\u3067\u6b63\u89e3\u3002</li>')
+      + '<li>\u4e00\u56de\u6b63\u3057\u304f\u7b54\u3048\u3066\u3082\u3001\u65e5\u3092\u304a\u3044\u3066\u307e\u305f\u805e\u304d\u307e\u3059\u3002</li>'
+      + '</ul></div>';
+    $("btn-next").textContent = "\u3064\u3065\u3051\u308b \u2192";
+    $("next-row").style.display = "block";
   }
 
   function renderPracticeDone(){
@@ -3736,6 +3895,25 @@
     }
     previewState = null;
     forgetEpisode();
+    /* The check at the end of the place, before it is called finished.
+     *
+     * A place is forty words over three training days and four shifts, and
+     * the only thing that ever asked whether the ones a learner got wrong had
+     * been learned was a list they could choose not to open. This asks, here,
+     * where the place ends - and it asks every one of them, until every one
+     * is right. The reward and the map wait behind it.
+     *
+     * Nothing happens when there is nothing owed, which is the common case
+     * for a learner who was answering well: startStageCheck returns false and
+     * the place ends as it always did. */
+    var placeKey = state.currentKey;
+    if(finished && stageComplete(placeKey)){
+      var afterCheck = function(){
+        if(finished.id.indexOf("inn-e") === 0 && showInnReward(finished.id)) return;
+        showMap();
+      };
+      if(startStageCheck(placeKey, afterCheck)) return;
+    }
     if(finished && finished.id.indexOf("inn-e") === 0 && showInnReward(finished.id)) return;
     showMap();
   }
@@ -4750,6 +4928,9 @@
     setAudioReplayControl(state.stagePhase === "challenge");
     $("btn-skip-question").hidden = !testingSkipEnabled;
     $("btn-skip-stage").hidden = !testingSkipEnabled;
+    // Shown here and hidden by the card rounds, which are not a place's days
+    // and have nothing for it to restart.
+    if($("btn-restart-learn")) $("btn-restart-learn").hidden = false;
     setInnScene(innSceneFor(prompt));
     var phaseName = state.stagePhase === "review" ? "focused review" : state.stagePhase;
     var phaseLabels = {learn:"Learn / 学ぶ", practice:"Practice / 練習", challenge:"Challenge / 挑戦", review:"Review / 復習"};

@@ -362,6 +362,20 @@
      as well as the lantern count. */
   .map-progress{display:flex;flex-wrap:wrap;align-items:center;gap:8px;color:#e4d2b0;font-size:.78rem;font-weight:700;white-space:nowrap;flex-shrink:0}
   .map-progress-lantern{width:15px;height:20px;border:2px solid #6a3f24;border-radius:7px;background:#efb84d;box-shadow:0 0 12px rgba(255,199,90,.85)}
+  /* The buttons in this row sit on the map's dark header, and .btn-ghost is
+     drawn for a light one: var(--ai-indigo) text inside a 30%-opacity indigo
+     border. まちがえた言葉 was navy on near-black and could not be read at
+     all - the one button on the screen that tells a learner they have work
+     owed. It takes the warm outline the row's other button already had. */
+  .map-progress .btn-ghost{
+    border-color:rgba(247,215,159,.5);
+    color:#ffeccd;
+    background:rgba(9,18,34,.5);
+  }
+  .map-progress .btn-ghost:hover,.map-progress .btn-ghost:focus-visible{
+    border-color:rgba(255,220,166,.85);
+    background:rgba(20,32,54,.72);
+  }
 
   .map-scene{position:relative;width:100%;aspect-ratio:3/2;overflow:hidden;background-image:linear-gradient(0deg,rgba(14,15,31,.16),rgba(14,15,31,.03)),url("assets/map/lantern-alley-map-v1.jpg");background-size:cover;background-position:center;isolation:isolate}
   .map-scene::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;box-shadow:inset 0 0 46px rgba(5,7,18,.56)}
@@ -385,6 +399,11 @@
   .map-detail-story{margin:5px 0 3px;font-family:'Shippori Mincho',serif;font-size:.88rem;line-height:1.5;color:#4b3c32}
   .map-detail-focus{margin:0;color:#786c61;font-size:.72rem;line-height:1.4}
   .map-detail-action{min-width:142px;justify-content:center;padding:11px 17px;font-size:.85rem}
+  /* Second action on the card, and deliberately the quieter one: going in is
+     the thing to do, and the check is the thing still owed. */
+  .map-detail-check{min-width:142px;justify-content:center;padding:10px 15px;font-size:.8rem;
+    border-color:rgba(162,76,49,.5);color:#8a3f28;background:rgba(162,76,49,.08)}
+  .map-detail-check:hover,.map-detail-check:focus-visible{border-color:#a24c31;background:rgba(162,76,49,.16)}
   /* Full width on its own row in both the phone's two-column grid and the
      desktop three-column one, so it reads as a rule under the description
      rather than a third thing competing beside it. */
@@ -422,6 +441,7 @@
     .map-detail-story{font-size:.78rem}
     .map-detail-focus{font-size:.66rem}
     .map-detail-action{grid-column:1/-1;width:100%;min-width:0}
+    .map-detail-check{grid-column:1/-1;width:100%;min-width:0}
   }
 
   @media(max-width:390px){

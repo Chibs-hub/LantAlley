@@ -49,6 +49,7 @@ each one says what was checked and what was not.
 
 | Version | What it did |
 | --- | --- |
+| v361 | 仕上げの確認: at the end of a place, every word missed anywhere in it comes back until it is answered right. 直す言葉 renamed まちがえた言葉, and made readable - it was navy on near-black. |
 | v359 | Six clarity faults found by walking the game as a new learner: a wrong answer now marks both what was picked and what was right, the navigation layer carries an English gloss (the lesson layer does not), the Inn stepper stops contradicting itself, the map's dead space goes to the artwork, and 「あなた」 is readable. |
 | v358 | 路地駅 gets its episodes back - its script tag was dropped on 2026-09-07 and the place had been empty since. Nineteen corrupted readings fixed at the builder. The five artifact tests skip on a clone that has not built one. |
 | v357 | The daily practice's reading question is typed rather than picked, in kana or romaji - the one card that asks the learner to produce Japanese. Readings that are not kana (19 rows the source corrupted) no longer become questions. |

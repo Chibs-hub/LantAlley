@@ -5,6 +5,24 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-12 - A place does not finish while it still owes words (v361)
+
+**The check at the end of a place.** A place teaches forty words across three training days and four shifts, and nothing ever asked, at the end of it, whether the ones the learner got wrong had actually been learned. The day review shows a day's misses and moves on. The challenge re-asks that one day's. The correction list is there whenever a learner chooses to open it, which is not the same as being asked.
+
+Now the last shift is followed by 仕上げの確認: every word missed anywhere in this place - a training day, a shift, or a daily practice card that happened to draw one of its words - comes back, and a word only leaves by being answered correctly. Miss it and it goes to the back of the queue and returns. Reaching the end of the queue is therefore the same statement as every one of them being right, which is what makes it a gate rather than a list. Nothing happens for a learner who owes nothing: the round does not start and the place ends as it always did.
+
+It repeats rather than stopping after three tries, which is what the episode's repair round does, and the difference is deliberate. The repair round runs against a clock in the middle of a shift, so a learner stuck on one item has to be let out. This one is the door out of the place: the answer is shown every time it is missed, so anyone reading it can clear it, and leaving the screen is always allowed - the place is simply not finished yet. The counter counts words cleared against words owed, never questions asked, because a missed word asks again and a learner should not watch the target move away from them.
+
+The place's own card offers it too, whenever that place still owes words. Reachable only from the end of the last shift, it would have been unreachable for anyone who closed it once, and untestable besides.
+
+**直す言葉 is now まちがえた言葉.** "Words to fix" named a chore; these are the words the learner got wrong, which is what the day review beside it already calls them, and the English gloss says so too.
+
+**And it could not be read.** That button sits on the map's dark header, and `.btn-ghost` is drawn for a light one - `var(--ai-indigo)` text inside a 30%-opacity indigo border. It was navy on near-black: the one button on the screen that tells a learner they have work owed, and the only one that could not be seen. It takes the warm outline the button beside it already had.
+
+Two strays went with it: the counter read one short of the total on the panel announcing they were all done, and 学ぶからやり直す sat on the card rounds offering to restart three days the learner was not in.
+
+Cache is v361.
+
 ### 2026-09-11 - One instruction on the map, not two (v360)
 
 The map heading had grown to four stacked lines: the name, a Japanese sentence telling the learner to pick a place, the English line added in v359 telling them the same thing, and the goal note about the lanterns. The Japanese sentence and the English one were the same instruction twice, so the Japanese one is gone and the English one carries the job, with the contrast that job needs rather than the quieter weight of a gloss.

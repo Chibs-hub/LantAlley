@@ -220,3 +220,37 @@ test("the correction list holds every word whose last answer was wrong", () => {
   assert.deepEqual([...engine.getCorrectionList({})], []);
   assert.deepEqual([...engine.getCorrectionList(null)], []);
 });
+
+test("the end-of-place check asks only that place's misses, oldest first", () => {
+  /* The correction list is everything a learner is carrying, from everywhere,
+   * and they visit it when they choose. This is the same data asked a
+   * different question at a different moment: of the words this place taught,
+   * which are still wrong? The place is not finished until the answer is
+   * none, so the scope has to be exact - a shrine word owed does not keep a
+   * learner in the Inn. */
+  const review = load();
+  let progress = {};
+  progress = review.recordOutcome(progress, {id: "inn-a", correct: false, now: T0});
+  progress = review.recordOutcome(progress, {id: "shrine-a", correct: false, now: T0 + 1});
+  progress = review.recordOutcome(progress, {id: "inn-b", correct: false, now: T0 + 2});
+  progress = review.recordOutcome(progress, {id: "inn-ok", correct: true, now: T0 + 3});
+
+  const inInn = (id) => id.indexOf("inn-") === 0;
+  // Joined rather than deep-equalled: the module runs in its own vm realm, so
+  // the array it returns is not an instance of this realm's Array.
+  assert.equal(review.getStageCheckQueue(progress, inInn).join(","), "inn-a,inn-b",
+    "oldest miss first, and only this place's");
+
+  // A word answered right afterwards is not owed, even though it was missed.
+  progress = review.recordOutcome(progress, {id: "inn-a", correct: true, now: T0 + 4});
+  assert.equal(review.getStageCheckQueue(progress, inInn).join(","), "inn-b");
+
+  // Clearing the rest empties it, which is what lets the place finish.
+  progress = review.recordOutcome(progress, {id: "inn-b", correct: true, now: T0 + 5});
+  assert.equal(review.getStageCheckQueue(progress, inInn).length, 0);
+
+  // The shrine still owes its own word: one place's check cannot clear another's.
+  assert.equal(review.getStageCheckQueue(progress, (id) => id.indexOf("shrine-") === 0).join(","), "shrine-a");
+
+  assert.equal(review.getStageCheckQueue(progress, null).length, 0, "no predicate, no queue");
+});
