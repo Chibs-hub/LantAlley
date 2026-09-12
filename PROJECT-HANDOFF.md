@@ -464,7 +464,17 @@ Grouped by **who can actually do it**, because most of what is left is not code 
 
 ### A. Only the owner can do these
 
-1. **Native review of the Japanese.** 200 questions, five story arcs, all of Kon's dialogue, the eight tutorial lines at the house, every garden and shop string - authored in this project, never checked by a native speaker. Everything else is cheap to change; this is the one thing nobody else can do. `?review=1` walks all 215 items in place with the clock off and an おかしい checkbox. `generate-audio.py` hashes its input, so corrections later cost only the lines that changed.
+1. **Three lines need their audio rendered.** v362 reworded three prompts that were printing the word they were testing, and each had a clip keyed to its old text:
+
+   | Line | Where |
+   | --- | --- |
+   | コン：「裏の戸が開かないようにしてください。」何を使いますか。 | `n2-inn-episodes.js`, inn-e04-q02 |
+   | コン：「お客様が買った物を持ち帰れるようにしてください。」何をお渡ししますか。 | `n2-market-episodes.js`, market-e01-q03 |
+   | コン：「畳がぬれています。拭くものを持ってきてください。」何を持ってきますか。 | `n2-teahouse-episodes.js`, teahouse-e01-q05 |
+
+   `python generate-audio.py` renders only what changed and prunes the three orphaned clips. It cannot be run from a Claude Code session: the sandbox's egress policy answers 403 to `speech.platform.bing.com:443`, which is the gate working as intended rather than a fault to route around. Until it is run the three questions are silent, which `hasClip` and `spokenDuration` already handle - the clock paces them as if they had been spoken. The Japanese in them is also new, so it wants the review below.
+
+2. **Native review of the Japanese.** 200 questions, five story arcs, all of Kon's dialogue, the eight tutorial lines at the house, every garden and shop string - authored in this project, never checked by a native speaker. Everything else is cheap to change; this is the one thing nobody else can do. `?review=1` walks all 215 items in place with the clock off and an おかしい checkbox. `generate-audio.py` hashes its input, so corrections later cost only the lines that changed.
 
    **Lines written by Claude and not yet reviewed.** `?review=1` walks the 215 question items; these are dialogue and chrome, so they sit outside it. The owner reviews the Japanese once stage creation is finished, so this list is kept current rather than acted on.
 
