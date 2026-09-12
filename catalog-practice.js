@@ -94,6 +94,9 @@
     "do":"ど"
   };
   var VOWELS = "aiueo";
+  // Used to tell a word from a fragment of a longer one: 違いない inside
+  // 間違いない is a fragment, and the kanji in front of it is the proof.
+  var KANJI = /[\u4e00-\u9faf\u3400-\u4dbf]/;
 
   function toHiragana(text){
     var out = "";
@@ -266,12 +269,32 @@
     // but a kana headword can also match inside an inflection: blanking 「あっ」
     // out of 「何かあった？」 leaves 「何か（　　）た？」, which asks nothing.
     // Requiring a kanji makes the match a word rather than a fragment.
+    /* A cloze has to leave a sentence around the blank.
+     *
+     * Three ways it did not. The catalogue's examples are often the word and
+     * a full stop, so 素晴らしい's 「素晴らしい。」 became 「（　　）。」, which
+     * asks nothing at all - ten cards were that. `split().join()` blanked
+     * every occurrence, so 「過去は過去。」 became 「（　　）は（　　）。」, a
+     * tautology with the answer removed twice. And the kanji requirement was
+     * meant to stop a match inside a longer word, but 違いない sits inside
+     * 間違いない, so 「間違いない！」 became 「間（　　）！」 - the fragment
+     * case the comment above promised to prevent, still happening.
+     *
+     * So: blank the first occurrence only, refuse a match that a kanji runs
+     * straight into, and require two characters of sentence to survive
+     * besides the blank and its punctuation.
+     */
     var sentence = exampleSentence(item);
-    if(sentence && item.hasKanji && item.canonical.length >= 2 && sentence.indexOf(item.canonical) >= 0){
-      var words = neighbours(item, catalog, want - 1, random, function(other){ return other.canonical; });
-      var clozeCard = card("cloze", item, sentence.split(item.canonical).join("（　　）"),
-        item.canonical, words, random, want);
-      if(clozeCard) cards.push(clozeCard);
+    var at = sentence ? sentence.indexOf(item.canonical) : -1;
+    if(sentence && item.hasKanji && item.canonical.length >= 2 && at >= 0
+      && !KANJI.test(sentence.charAt(at - 1))){
+      var blanked = sentence.slice(0, at) + "（　　）" + sentence.slice(at + item.canonical.length);
+      var remaining = blanked.replace(/（　　）/g, "").replace(/[。、！？「」\s]/g, "");
+      if(remaining.length >= 2){
+        var words = neighbours(item, catalog, want - 1, random, function(other){ return other.canonical; });
+        var clozeCard = card("cloze", item, blanked, item.canonical, words, random, want);
+        if(clozeCard) cards.push(clozeCard);
+      }
     }
 
     return cards;

@@ -3006,7 +3006,11 @@
       }
       // Saving learning progress must not depend on a coin payout.
       saveProgress();
-      $("jp-line").textContent = "「" + item.canonical + "」（" + item.reading + "）" + (item.meanings[0] || "");
+      // A kana headword is its own reading, and 「ごちそうさま」（ごちそうさま）
+      // reads as the screen repeating itself.
+      $("jp-line").textContent = "「" + item.canonical + "」"
+        + (item.reading && item.reading !== item.canonical ? "（" + item.reading + "）" : "")
+        + (item.meanings[0] || "");
       showFeedback(right, right ? "正解です。" : "正しい答えは「" + correctLabel + "」です。");
       $("btn-next").textContent = practiceState.index >= practiceState.cards.length - 1 ? "稽古を終える →" : "次へ →";
       $("next-row").style.display = "block";

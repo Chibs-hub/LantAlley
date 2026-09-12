@@ -5,6 +5,36 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-12 - Three questions that answered themselves, and five words that meant something else (v362)
+
+Both found from screenshots of the game being played.
+
+**「裏の戸の鍵を掛けてください。」何を使いますか。** The prompt says 鍵 and then asks which thing is meant, so the answer can be matched out of the question without knowing the word. Two more had the same shape: 「お客様に袋をお渡ししてください。」何を渡しますか and 「雑巾を持ってきてください。」何を持ってきますか.
+
+The clumsy Japanese that made it visible was a symptom of the same fault. Because the word could not appear as an option, the options were paraphrases, and 鍵 was offered as 戸を開かなくする道具 - which is not how anyone says "key". All three prompts now describe the job and the word is simply an option: 「裏の戸が開かないようにしてください。」何を使いますか → 布 / 鍵 / ほうき / 札.
+
+A test pins the shape, and only that shape: it does not object to a word appearing in a reading passage, where it must, nor to a reply that echoes the question - 「満足してくださったでしょうか」 answered with 「満足していただけたと思います」 is how the language works, and the difficulty there is in the distractors. Answer positions re-checked with `research/balance-answers.mjs`: still 25/25/25/25.
+
+**The three rewritten lines have no audio.** Each had a recorded clip keyed to its old text. `hasClip` and `spokenDuration` already exist for exactly this - a line without a clip is paced as if it had been spoken rather than starting instantly - so the questions work, silently, until someone chooses to run the generator. That run sends Japanese to Microsoft Edge TTS, which is approval-gated, so it has not been run.
+
+**「うん」の意味はどれですか。→ fortune.** The screenshot that showed it is the reason this was looked at. It is not a practice bug: the catalogue holds `うん` with the meanings of 運. Four more rows do the same - はい with 佩く's ("wear, put on"), しまい with 姉妹's ("sisters"), どう with 童's ("child, servant"), and ね with 値's ("value, price"), which is right about 値 and unanswerable as a bare kana headword.
+
+They are the same rows whose reading column was repaired in v358, and repairing the reading fixed the symptom that was visible while leaving this one. A learner meeting them was told うん means fortune and はい means wear - false about two of the first words anyone learns.
+
+Dropped rather than repaired: the headword these meanings belong to is not in the row, and writing 運 in would be authoring a dictionary entry from a guess. They leave through the exclusion list, where they stay visible and counted. The other twelve rows with the same broken reading column are fine on this count - じゅうたん really is a carpet, しまった really is "damn it" - and stay. The catalogue is 3,574 items.
+
+**Ten cloze cards asked nothing.** The catalogue's example for a word is often the word and a full stop, so 素晴らしい's 「素晴らしい。」 became 「（　　）。」 - a blank, a full stop, and no sentence. `split().join()` blanked every occurrence, turning 「過去は過去。」 into 「（　　）は（　　）。」, a tautology with the answer removed twice. And 違いない was blanked out of 間違いない, leaving 「間（　　）！」: exactly the fragment case the kanji rule above it was written to prevent, still happening.
+
+The generator blanks the first occurrence only, refuses a match a kanji runs straight into, and requires two characters of sentence to survive. 「過去は過去。」 is now 「（　　）は過去。」, which is a good question - the second half is the clue.
+
+That last rule costs more than the ten it fixes: 233 more clozes are refused because a kanji sits in front of the word. Sampled, they are right to refuse - 小悪魔, 不安定, 有意義, 正位置 are other words, and the verbs are worse, with 外す inside 口外する and 現す inside 実現する. 汗握る is the one good cloze lost. No word loses its coverage: every one of the 3,574 items still has at least one card, because a refused cloze leaves the meaning and reading cards untouched. The pool is 8,854 cards.
+
+The test that should have caught this checked a seventh of the catalogue and asserted only that the prompt was longer than the word. It checks every item now, and checks the three things that were actually wrong.
+
+**And the reveal stopped repeating itself:** a kana headword is its own reading, so 「ごちそうさま」（ごちそうさま）feast now reads 「ごちそうさま」feast.
+
+Cache is v362.
+
 ### 2026-09-12 - A place does not finish while it still owes words (v361)
 
 **The check at the end of a place.** A place teaches forty words across three training days and four shifts, and nothing ever asked, at the end of it, whether the ones the learner got wrong had actually been learned. The day review shows a day's misses and moves on. The challenge re-asks that one day's. The correction list is there whenever a learner chooses to open it, which is not the same as being asked.

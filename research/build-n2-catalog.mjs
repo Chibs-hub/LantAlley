@@ -103,6 +103,39 @@ const PINNED = new Map();
  * evidence for it. A row that cannot be evidenced belongs in the exclusion
  * list instead, where it is visible.
  */
+/* Kana headwords carrying another word's meanings.
+ *
+ * The same source rows whose reading column holds a part-of-speech marker
+ * also, in five cases, hold the meanings of a kanji homophone rather than of
+ * the kana word printed as the headword. The practice layer asks "what does
+ * this mean" against that field, so each one was a card teaching a false
+ * meaning for a word a beginner already knows:
+ *
+ *   うん   given as "fortune, luck"   - that is 運. うん on its own is "yeah".
+ *   はい   given as "wear, put on"    - that is 佩く. はい on its own is "yes".
+ *   しまい given as "sisters"          - that is 姉妹. しまい is "the end".
+ *   どう   given as "child, servant"  - that is 童. どう on its own is "how".
+ *   ね     given as "value, price"    - that is 値, which is read ね and does
+ *          mean value; but the catalogue shows headwords in kana only, so the
+ *          card is a bare ね, which a learner reads as the particle. Right
+ *          about 値 and unanswerable as asked.
+ *
+ * Dropped rather than repaired: the headword these meanings belong to is not
+ * in the row, and writing it in would be authoring a dictionary entry from a
+ * guess. They leave through the exclusion list, where they stay visible.
+ *
+ * The other twelve rows with the same broken reading column are fine on this
+ * count - じゅうたん really is a carpet, しまった really is "damn it" - so they
+ * stay, with the reading derived from the headword.
+ */
+const MEANINGS_BELONG_TO_ANOTHER_WORD = new Map([
+  ["うん", "meanings are 運's; うん alone is an interjection"],
+  ["はい", "meanings are 佩く's; はい alone is an interjection"],
+  ["しまい", "meanings are 姉妹's; しまい is the end of something"],
+  ["どう", "meanings are 童's; どう alone is an adverb"],
+  ["ね", "meanings are 値's, and a kana-only headword reads as the particle"],
+]);
+
 const READING_CORRECTIONS = new Map([
   ["暖かい", "あたたかい"],
   ["賛成", "さんせい"],
@@ -140,6 +173,11 @@ for (const file of ["research/openjlpt/n2.json", "research/openjlpt/n3.json"]) {
      * learners: the practice layer asked what 賛成 is read as and marked
      * さんせい wrong, because the answer it held was "Uӣ[い".
      */
+    if (MEANINGS_BELONG_TO_ANOTHER_WORD.has(canonical)) {
+      excluded.push({ word: canonical, reason: MEANINGS_BELONG_TO_ANOTHER_WORD.get(canonical) });
+      continue;
+    }
+
     let readingRepaired = false;
     if (reading && !KANA_ONLY.test(reading)) {
       reading = READING_CORRECTIONS.get(canonical) || "";

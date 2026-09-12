@@ -207,12 +207,30 @@ test("a cloze never blanks a fragment out of an inflected form", () => {
   let checked = 0;
   // Sample across the whole catalog: the first few hundred entries sort as
   // kana words, which produce no cloze by design.
-  for (const item of catalog.items.filter((_, i) => i % 7 === 0)) {
+  // Every item, not a sample: the rule is exact, so there is no reason to
+  // check a seventh of it and hope. (A sample is how 素晴らしい's 「（　　）。」
+  // sat in the pool - it was simply never the seventh item.)
+  for (const item of catalog.items) {
     const cloze = practice.buildPracticeCards(item, catalog, random).find((c) => c.kind === "cloze");
     if (!cloze) continue;
     checked += 1;
     assert.ok(item.hasKanji, `${item.canonical} produced a cloze without a kanji`);
-    assert.ok(cloze.prompt.length > item.canonical.length, `${item.canonical} left almost nothing`);
+
+    /* What a cloze has to be, checked on every one the catalogue produces.
+     *
+     * Ten of them used to be 「（　　）。」 - the example sentence was the word
+     * and a full stop, so the blank swallowed the sentence and asked nothing.
+     * 「過去は過去。」 blanked both halves into 「（　　）は（　　）。」. And
+     * 違いない was blanked out of 間違いない, leaving 「間（　　）！」, which is
+     * the fragment case the kanji rule was written to prevent and did not.
+     */
+    const blanks = cloze.prompt.match(/（　　）/g) || [];
+    assert.equal(blanks.length, 1, `${item.canonical} blanked the answer more than once`);
+    const remaining = cloze.prompt.replace(/（　　）/g, "").replace(/[。、！？「」\s]/g, "");
+    assert.ok(remaining.length >= 2, `${item.canonical} left nothing to read: ${cloze.prompt}`);
+    const before = cloze.prompt.charAt(cloze.prompt.indexOf("（　　）") - 1);
+    assert.ok(!/[\u4e00-\u9faf]/.test(before),
+      `${item.canonical} was blanked out of a longer word: ${cloze.prompt}`);
   }
   assert.ok(checked > 20, `only ${checked} cloze cards in 400 items`);
 });

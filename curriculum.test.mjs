@@ -219,3 +219,53 @@ test("the game's own Japanese counts with 語, not the つ series", () => {
       "a number is being counted with つ in a built line, which only runs to 九つ");
   }
 });
+
+test("a question that asks which thing is meant does not name it in the prompt", () => {
+  const { LanternEpisodeStages: stages, LanternCurriculumCatalog: catalog } = load();
+  /* Three questions asked a learner to identify an object and printed the
+   * object's own name in the question: 「裏の戸の鍵を掛けてください。」何を使
+   * いますか, 「お客様に袋をお渡ししてください。」何を渡しますか, 「雑巾を持
+   * ってきてください。」何を持ってきますか. The answer could be matched out of
+   * the prompt without knowing the word at all.
+   *
+   * They had a second symptom that was easier to see than the cause: because
+   * the word could not be an option, the options were paraphrases, and 鍵 was
+   * offered as 戸を開かなくする道具 - which is not how anyone says "key". The
+   * clumsy Japanese was the workaround, not the fault.
+   *
+   * This is deliberately narrow. It does not object to a word appearing in a
+   * reading passage, where it must, nor to a reply that echoes the question -
+   * 「満足してくださったでしょうか」 answered with 「満足していただけたと思い
+   * ます」 is how the language works, and the difficulty there sits in the
+   * distractors. It objects only to being asked to point at a thing whose
+   * name is written above the options.
+   */
+  const IDENTIFY = /何を使いますか|何を渡しますか|何をお渡ししますか|何を持ってきますか/;
+  const named = (text, word) => {
+    if (text.includes(word)) return word;
+    for (let end = word.length - 1; end > 1; end -= 1) {
+      const stem = word.slice(0, end);
+      if (text.includes(stem)) return stem;
+    }
+    return null;
+  };
+
+  const offenders = [];
+  let checked = 0;
+  for (const key of Object.keys(stages)) {
+    for (const episode of stages[key].episodes || []) {
+      for (const day of episode.days || []) {
+        for (const q of day.questions || []) {
+          const item = catalog.getItem(q.target);
+          const prompt = (q.prompt && q.prompt.jp) || "";
+          if (!item || !IDENTIFY.test(prompt)) continue;
+          checked += 1;
+          const hit = named(prompt, item.canonical);
+          if (hit) offenders.push(`${q.id} asks which thing is meant and writes ${hit} in the prompt`);
+        }
+      }
+    }
+  }
+  assert.ok(checked >= 3, "the identify-the-thing questions have been reworded away - this test is looking for nothing");
+  assert.equal(offenders.length, 0, offenders.join("; "));
+});
