@@ -269,3 +269,33 @@ test("a question that asks which thing is meant does not name it in the prompt",
   assert.ok(checked >= 3, "the identify-the-thing questions have been reworded away - this test is looking for nothing");
   assert.equal(offenders.length, 0, offenders.join("; "));
 });
+
+test("a question does not open by naming Kon, since the speech bubble already does", () => {
+  const { LanternEpisodeStages: stages } = load();
+  /* Every question is shown in Kon's speech bubble, which already carries a
+   * 「コン (Kon)」 name tab above it (styles.css). Sixty-nine questions also
+   * opened their own text with コン：「...」, so her name was said twice - once
+   * by the tab, once read aloud by the recorded voice at the start of every
+   * single question in a shift, dozens of times in a row.
+   *
+   * Removing it is not a stylistic trim: real spoken instructions do not
+   * preface every sentence with the speaker's own name, and a fixed visual
+   * tag already answers "who is talking" without the line needing to.
+   *
+   * This does not touch a line that quotes someone else through Kon - a
+   * customer, the innkeeper, a shrine visitor - because there the tag is
+   * disambiguating a relayed quote, not naming the person already on screen.
+   */
+  const offenders = [];
+  for (const key of Object.keys(stages)) {
+    for (const episode of stages[key].episodes || []) {
+      for (const day of episode.days || []) {
+        for (const q of day.questions || []) {
+          const jp = (q.prompt && q.prompt.jp) || "";
+          if (jp.startsWith("コン：「")) offenders.push(q.id);
+        }
+      }
+    }
+  }
+  assert.deepEqual(offenders, []);
+});

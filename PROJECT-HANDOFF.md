@@ -49,6 +49,7 @@ each one says what was checked and what was not.
 
 | Version | What it did |
 | --- | --- |
+| v363 | Every question stopped opening by saying コン：「...」 before the request - the speech bubble already names her every time. 69 lines change; a relayed quote (お客様：「...」 and the like) keeps its tag. |
 | v362 | Three questions printed the word they were testing and could be answered by matching it; all three reworded, with a test for the shape. Five catalogue rows carried a homophone's meanings (うん as "fortune", はい as "wear") and are excluded. Three lines lost their audio clips and wait on an approved TTS run. |
 | v361 | 仕上げの確認: at the end of a place, every word missed anywhere in it comes back until it is answered right. 直す言葉 renamed まちがえた言葉, and made readable - it was navy on near-black. |
 | v359 | Six clarity faults found by walking the game as a new learner: a wrong answer now marks both what was picked and what was right, the navigation layer carries an English gloss (the lesson layer does not), the Inn stepper stops contradicting itself, the map's dead space goes to the artwork, and 「あなた」 is readable. |
@@ -464,15 +465,9 @@ Grouped by **who can actually do it**, because most of what is left is not code 
 
 ### A. Only the owner can do these
 
-1. **Three lines need their audio rendered.** v362 reworded three prompts that were printing the word they were testing, and each had a clip keyed to its old text:
+1. **69 lines need their audio rendered.** Every authored question used to open by literally saying コン：「...」 - naming Kon before every single question, on top of the 「コン (Kon)」 tab the speech bubble already shows above it. v363 removes the name from all 69 questions that had it (not from a line quoting someone else through her, which keeps its tag). This supersedes the note in v362 about three lines: those three changed text again here, on top of the fix that day, and are part of this same 69.
 
-   | Line | Where |
-   | --- | --- |
-   | コン：「裏の戸が開かないようにしてください。」何を使いますか。 | `n2-inn-episodes.js`, inn-e04-q02 |
-   | コン：「お客様が買った物を持ち帰れるようにしてください。」何をお渡ししますか。 | `n2-market-episodes.js`, market-e01-q03 |
-   | コン：「畳がぬれています。拭くものを持ってきてください。」何を持ってきますか。 | `n2-teahouse-episodes.js`, teahouse-e01-q05 |
-
-   `python generate-audio.py` renders only what changed and prunes the three orphaned clips. It cannot be run from a Claude Code session: the sandbox's egress policy answers 403 to `speech.platform.bing.com:443`, which is the gate working as intended rather than a fault to route around. Until it is run the three questions are silent, which `hasClip` and `spokenDuration` already handle - the clock paces them as if they had been spoken. The Japanese in them is also new, so it wants the review below.
+   `python generate-audio.py` finds all 69 itself - it hashes each line's text and only (re)renders what does not match an existing clip, then prunes what nothing asks for anymore, so nothing here needs a manual list. It cannot be run from a Claude Code session: the sandbox's egress policy answers 403 to `speech.platform.bing.com:443`, which is the gate working as intended rather than a fault to route around. Until it is run those 69 questions are silent, which `hasClip` and `spokenDuration` already handle - the clock paces a clipless line as if it had been spoken. All 69 lines lost only a name, not their meaning, so they do not need the review below on that account, though the three from v362 still do.
 
 2. **Native review of the Japanese.** 200 questions, five story arcs, all of Kon's dialogue, the eight tutorial lines at the house, every garden and shop string - authored in this project, never checked by a native speaker. Everything else is cheap to change; this is the one thing nobody else can do. `?review=1` walks all 215 items in place with the clock off and an おかしい checkbox. `generate-audio.py` hashes its input, so corrections later cost only the lines that changed.
 

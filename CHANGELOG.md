@@ -5,6 +5,20 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-13 - A question no longer opens by saying her name (v363)
+
+Every authored question opened with コン：「...」 - Kon's name, a colon, and then the question, spoken by the recorded voice at the start of every single one. The speech bubble it appears in already carries a 「コン (Kon)」 name tab above it (`styles.css`), so the line said who was talking twice: once by the tab that is always on screen, once out loud, dozens of times in a row across a shift.
+
+It is gone from all 69 questions that had it: 「コン：「裏の戸が開かないようにしてください。」何を使いますか。」 is now 「裏の戸が開かないようにしてください。何を使いますか。」. Nothing else changes - not the request, not the difficulty, not which option is correct.
+
+A line that quotes someone else through Kon keeps its tag - お客様：「...」, 女将さん：「...」, 駅員さん：「...」 and the rest are unaffected, because there the tag is doing real work: disambiguating a relayed quote from Kon's own words, which the name tab cannot tell apart on its own. The one-off narrative beats said once per episode or once per place - an intro, a briefing, a completion line - also keep コン：, because saying a name once at the start of a scene is how a scene normally opens; the fault was only ever in saying it before every question, over and over, inside one scene.
+
+All 69 clips this orphans are one hash away from existing again - `generate-audio.py` finds and renders exactly what changed on its own - and are recorded in the handoff for the owner's next run, along with the three from v362 that changed text a second time here.
+
+A test now holds every authored question to this: none may open with コン：「, and the shape of a relayed quote is left alone.
+
+Cache is v363.
+
 ### 2026-09-12 - Three questions that answered themselves, and five words that meant something else (v362)
 
 Both found from screenshots of the game being played.

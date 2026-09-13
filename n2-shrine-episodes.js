@@ -72,36 +72,36 @@
           ]),
 
         q1("shrine-e01-q02", "listening-task", "w-kazari", 5,
-          {jp:"コン：「飾りを鳥居に付けてください。」何を付けますか。", audio:true},
-          {type:"quick-response", options:["お参りの方の荷物","掃除の道具","石段の石","きれいに見せるための物"], correctIndex:3},
+          {jp:"飾りを鳥居に付けてください。何を付けますか。", audio:true},
+          {type:"quick-response", options:["お参りの方の荷物","石段の石","掃除の道具","きれいに見せるための物"], correctIndex:3},
           {correct:"付けられました。「飾り」は、きれいに見せるために付ける物のことです。",
            incorrect:"「飾り」は、きれいに見せるために付ける物のことです。"},
           {prompt:"「飾り」はどれのことですか。", options:["きれいに見せる物","掃除の道具"], correctIndex:0, seconds:5},
           [
             "a visitor's belongings are not decorations",
-            "cleaning tools are for the sweeping later",
             "the stones of the steps stay where they are",
+            "cleaning tools are for the sweeping later",
             "the decorations that go up for the festival"
           ]),
 
         q1("shrine-e01-q03", "listening-task", "v-tsukeru-2", 5,
-          {jp:"コン：「石段の明かりを点けてください。」何をしますか。", audio:true},
-          {type:"quick-response", options:["明かりを数えます。","明かりを消します。","明かりがつくようにします。","明かりを片付けます。"], correctIndex:2},
+          {jp:"石段の明かりを点けてください。何をしますか。", audio:true},
+          {type:"quick-response", options:["明かりを消します。","明かりを片付けます。","明かりがつくようにします。","明かりを数えます。"], correctIndex:2},
           {correct:"点けられました。「点ける」は、火や明かりがつくようにすることです。",
            incorrect:"「点ける」は、明かりをつけることです。消すのとは逆です。"},
           {prompt:"「点ける」はどれのことですか。", options:["消す","つくようにする"], correctIndex:1, seconds:5},
           [
-            "counting them is not lighting them",
             "putting them out is the opposite",
+            "clearing them away is for after the festival",
             "switching the lights on, which is what 点ける means",
-            "clearing them away is for after the festival"
+            "counting them is not lighting them"
           ])
       ]},
 
       {day:2, mode:"practice", label:"灯りが並ぶ", questions:[
 
         q1("shrine-e01-q04", "listening-point", "w-akari", 8,
-          {jp:"コン：「石段の明かりが一つ足りません。」何が足りませんか。", audio:true},
+          {jp:"石段の明かりが一つ足りません。何が足りませんか。", audio:true},
           {type:"quick-response", options:["お参りの方","道を照らす灯り","掃除の道具","飾りの紙"], correctIndex:1},
           {correct:"分かりました。「明かり」は、あたりを照らす光のことです。",
            incorrect:"「明かり」は、あたりを照らす光のことです。"},
@@ -114,7 +114,7 @@
           ]),
 
         q1("shrine-e01-q05", "listening-task", "w-suzu", 5,
-          {jp:"コン：「鈴の綱を短くしてください。」何に付いている綱ですか。", audio:true},
+          {jp:"鈴の綱を短くしてください。何に付いている綱ですか。", audio:true},
           {type:"quick-response", options:["振ると鳴るもの","明かりのもの","飾りの紙","掃除の道具"], correctIndex:0},
           {correct:"分かりました。「鈴」は、振ると音の鳴る小さな道具のことです。",
            incorrect:"「鈴」は、振ると鳴るもののことです。"},
@@ -128,13 +128,13 @@
 
         q1("shrine-e01-q06", "quick-response", "v-ogamu", 8,
           {jp:"お参りの方：「作法が分かりません。」まず何をしていただきますか。", audio:true},
-          {type:"quick-response", options:["お帰りいただきます。","お金をいただきます。","並んでお待ちいただきます。","手を合わせて拝んでいただきます。"], correctIndex:3},
+          {type:"quick-response", options:["お金をいただきます。","お帰りいただきます。","並んでお待ちいただきます。","手を合わせて拝んでいただきます。"], correctIndex:3},
           {correct:"教えられました。「拝む」は、手を合わせて頭を下げ、敬うことです。",
            incorrect:"作法をお尋ねです。まず手を合わせることをお伝えします。"},
           {prompt:"「拝む」はどれのことですか。", options:["手を合わせて敬う","お金を数える"], correctIndex:0, seconds:5},
           [
-            "sending them away answers nothing",
             "asking for money is not the custom being asked about",
+            "sending them away answers nothing",
             "queueing is not the act of worship itself",
             "putting the hands together and bowing, which is the form"
           ])
@@ -169,16 +169,16 @@
           ]),
 
         q1("shrine-e01-q09", "listening-task", "w-negai", 5,
-          {jp:"コン：「お参りの方の願いを札に書いていただきます。」何を書いていただきますか。", audio:true},
-          {type:"quick-response", options:["こうなってほしいと思うこと","お住まいの町","お使いになったお金","お帰りの時刻"], correctIndex:0},
+          {jp:"お参りの方の願いを札に書いていただきます。何を書いていただきますか。", audio:true},
+          {type:"quick-response", options:["こうなってほしいと思うこと","お住まいの町","お帰りの時刻","お使いになったお金"], correctIndex:0},
           {correct:"分かりました。「願い」は、こうなってほしいと思う気持ちのことです。",
            incorrect:"「願い」は、こうなってほしいと思うことです。"},
           {prompt:"「願い」はどれのことですか。", options:["もう済んだこと","こうなってほしいこと"], correctIndex:1, seconds:5},
           [
             "what they hope for, written on the tablet",
             "an address is not a wish",
-            "money spent is not a wish either",
-            "the time they leave is not what goes on the tablet"
+            "the time they leave is not what goes on the tablet",
+            "money spent is not a wish either"
           ]),
 
         q1("shrine-e01-q10", "integrated", "w-kansha", 12,
@@ -208,41 +208,41 @@
 
         q2("shrine-e02-q01", "orthography", "w-kuiki", 20,
           {jp:"火を焚く（くいき）に入らないよう、札を立てます。（くいき）を漢字で書くと、どれになりますか。"},
-          {type:"single-choice", options:["苦域","九域","区城","区域"], correctIndex:3},
+          {type:"single-choice", options:["区城","苦域","九域","区域"], correctIndex:3},
           {correct:"「区域」です。区切られた、決まった範囲のことです。",
            incorrect:"区切られた範囲のことなので、「区域」と書きます。"},
           {prompt:"「区域」はどれのことですか。", options:["区切られた範囲","建物の名前"], correctIndex:0, seconds:5},
           [
+            "城 is the 城 of a castle",
             "苦 is the 苦 of hardship",
             "九 is the number nine",
-            "城 is the 城 of a castle",
             "区域 - the marked-off area around the fire"
           ]),
 
         q2("shrine-e02-q02", "word-formation", "w-keseki", 20,
           {jp:"明日の行列に出られない方の欄です。札には何と書きますか。「（　　）席」の（　　）に入るのはどれですか。"},
-          {type:"single-choice", options:["欠","出","不","無"], correctIndex:0},
+          {type:"single-choice", options:["欠","出","無","不"], correctIndex:0},
           {correct:"「欠席」です。「欠」は、そこにいないことを表します。",
            incorrect:"出られないほうです。「出席」と対になる形を選びます。"},
           {prompt:"「欠席」はどれのことですか。", options:["出ること","出ないこと"], correctIndex:1, seconds:5},
           [
             "欠 - 欠席, not attending, the pair to 出席",
             "出 gives 出席, attending, which is the opposite",
-            "不 marks something as lacking, but 不席 is not a word",
-            "無 means there is none of it, and 無席 is not a word either"
+            "無 means there is none of it, and 無席 is not a word either",
+            "不 marks something as lacking, but 不席 is not a word"
           ]),
 
         q2("shrine-e02-q03", "sentence-building", "v-musubu", 30,
           {jp:"【お札の結び方】\nお参りの方に、札をどこへ結んでいただくかを書きます。次の文を正しく並べたとき、★に入るのはどれですか。\nお書きになった札は　＿　＿　★　＿　お結びください。"},
-          {type:"sentence-order", options:["竹の枝に","奥にある","一枚ずつ","境内の"], correctIndex:1},
+          {type:"sentence-order", options:["境内の","奥にある","一枚ずつ","竹の枝に"], correctIndex:1},
           {correct:"「境内の奥にある竹の枝に一枚ずつお結びください」となります。★は「奥にある」です。",
            incorrect:"「境内の」「奥にある」「竹の枝に」「一枚ずつ」の順に並びます。★は二番目です。"},
           {prompt:"「結ぶ」はどれのことですか。", options:["ひもなどでつなぐ","紙を折る"], correctIndex:0, seconds:5},
           [
-            "竹の枝に is where they go, and comes third",
+            "境内の opens the sentence",
             "奥にある sits at the star, attaching to 竹の枝",
             "一枚ずつ comes last, saying one at a time",
-            "境内の opens the sentence"
+            "竹の枝に is where they go, and comes third"
           ])
       ]},
 
@@ -250,41 +250,41 @@
 
         q2("shrine-e02-q04", "orthography", "w-take", 20,
           {jp:"札を結ぶ（たけ）の場所を書き入れます。（たけ）を漢字で書くと、どれになりますか。"},
-          {type:"single-choice", options:["筑","丈","竹","武"], correctIndex:2},
+          {type:"single-choice", options:["武","筑","竹","丈"], correctIndex:2},
           {correct:"「竹」です。境内の奥に生えている、節のある細長い植物です。",
            incorrect:"境内に生えている植物なので、「竹」と書きます。"},
           {prompt:"「竹」はどれのことですか。", options:["石でできたもの","節のある細長い植物"], correctIndex:1, seconds:5},
           [
+            "武 is the 武 of martial things",
             "筑 appears in place names, not here",
-            "丈 is 丈, a measure of length",
             "竹 - the bamboo at the back of the grounds",
-            "武 is the 武 of martial things"
+            "丈 is 丈, a measure of length"
           ]),
 
         q2("shrine-e02-q05", "word-formation", "w-dairi", 20,
           {jp:"宮司さんの代わりに出る方のことです。札には何と書きますか。「代（　　）」の（　　）に入るのはどれですか。"},
-          {type:"single-choice", options:["当","表","役","理"], correctIndex:3},
+          {type:"single-choice", options:["表","役","当","理"], correctIndex:3},
           {correct:"「代理」です。本人の代わりを務める人のことです。",
            incorrect:"本人の代わりを務める人を表す形を選びます。"},
           {prompt:"「代理」はどれのことですか。", options:["本人の代わりの人","いちばん上の人"], correctIndex:0, seconds:5},
           [
-            "当 gives 当番, being on duty by rota",
             "表 gives 代表, the one who represents a group - not a stand-in",
             "役 gives 代役, which is used of an actor's replacement",
+            "当 gives 当番, being on duty by rota",
             "理 - 代理, standing in for someone who cannot attend"
           ]),
 
         q2("shrine-e02-q06", "text-grammar", "w-kimari", 120,
           {jp:"【境内での（　　）】\n火のそばでは走らないでください。これは昔からの（　　）です。\n※ 小さなお子様も、手をつないでお通りください。\n※ 守れない方には、境内をお出ましいただくことがあります。\n（　　）に入る言葉はどれですか。"},
-          {type:"single-choice", options:["決まり","感謝","飾り","願い"], correctIndex:0},
+          {type:"single-choice", options:["決まり","飾り","願い","感謝"], correctIndex:0},
           {correct:"「決まり」です。守るように定められたことです。",
            incorrect:"守るように定められたことを表す言葉を選びます。"},
           {prompt:"「決まり」はどれのことですか。", options:["きれいに見せる物","守るように定めたこと"], correctIndex:1, seconds:5},
           [
             "決まり - the rule that is to be kept",
-            "感謝 is gratitude",
             "飾り is a decoration",
-            "願い is a wish"
+            "願い is a wish",
+            "感謝 is gratitude"
           ])
       ]},
 
@@ -292,28 +292,28 @@
 
         q2("shrine-e02-q07", "sentence-building", "w-teian", 30,
           {jp:"【氏子の皆様へ】\n行列の順をどう決めるか、集まりでお諮りします。次の文を正しく並べたとき、★に入るのはどれですか。\n行列の順につきましては　＿　＿　★　＿　提案がございます。"},
-          {type:"sentence-order", options:["集まりの席で","宮司より","申し上げたい","明日の"], correctIndex:1},
+          {type:"sentence-order", options:["集まりの席で","宮司より","明日の","申し上げたい"], correctIndex:1},
           {correct:"「明日の集まりの席で宮司より申し上げたい提案がございます」となります。★は「宮司より」です。",
            incorrect:"「明日の」「集まりの席で」「宮司より」「申し上げたい」の順に並びます。★は三番目です。"},
           {prompt:"「提案」はどれのことですか。", options:["こうしてはどうかと出す案","決まったこと"], correctIndex:0, seconds:5},
           [
             "集まりの席で says where, and comes second",
             "宮司より sits at the star, saying who it comes from",
-            "申し上げたい comes last, attaching to 提案",
-            "明日の opens the sentence, attaching to 集まり"
+            "明日の opens the sentence, attaching to 集まり",
+            "申し上げたい comes last, attaching to 提案"
           ]),
 
         q2("shrine-e02-q08", "text-grammar", "w-kyoka", 120,
           {jp:"【火を焚くことについて】\n境内で火を焚くには、町の（　　）が要ります。\n※ （　　）のない火は、たとえ小さくても焚けません。\n※ 今年の分は、先月のうちに受けてあります。\n（　　）に入る言葉はどれですか。"},
-          {type:"single-choice", options:["提案","感謝","許可","飾り"], correctIndex:2},
+          {type:"single-choice", options:["提案","飾り","許可","感謝"], correctIndex:2},
           {correct:"「許可」です。してもよいと認めてもらうことです。",
            incorrect:"町から受けるもので、これがないと焚けません。認めてもらうことを表す言葉を選びます。"},
           {prompt:"「許可」はどれのことですか。", options:["してはいけないこと","してもよいと認めること"], correctIndex:1, seconds:5},
           [
             "提案 is a proposal, not a permission",
-            "感謝 is gratitude",
+            "飾り is a decoration",
             "許可 - the town's permission, without which no fire is lit",
-            "飾り is a decoration"
+            "感謝 is gratitude"
           ]),
 
         q2("shrine-e02-q09", "reading", "w-jun", 120,
@@ -330,16 +330,16 @@
           ]),
 
         q2("shrine-e02-q10", "listening-task", "w-uchiawase", 8,
-          {jp:"コン：「明日の朝、氏子の皆様と打合せがあります。」何がありますか。", audio:true},
-          {type:"quick-response", options:["掃除の時間","前もって相談する集まり","火を焚く支度","お参りの行事"], correctIndex:1},
+          {jp:"明日の朝、氏子の皆様と打合せがあります。何がありますか。", audio:true},
+          {type:"quick-response", options:["お参りの行事","前もって相談する集まり","掃除の時間","火を焚く支度"], correctIndex:1},
           {correct:"分かりました。「打合せ」は、前もって相談して決めておくことです。",
            incorrect:"「打合せ」は、前もって相談して決めておく集まりのことです。"},
           {prompt:"「打合せ」はどれのことですか。", options:["前もって相談すること","終わってから片付けること"], correctIndex:0, seconds:8},
           [
-            "cleaning is a different job",
+            "a worship event is not a planning meeting",
             "a meeting to settle things in advance",
-            "preparing the fire is not a discussion",
-            "a worship event is not a planning meeting"
+            "cleaning is a different job",
+            "preparing the fire is not a discussion"
           ])
       ]}
     ]
@@ -356,41 +356,41 @@
       {day:1, mode:"learn", label:"太鼓が始まる", questions:[
 
         q3("shrine-e03-q01", "listening-task", "w-taiko", 5,
-          {jp:"コン：「太鼓の前を空けてください。」何の前を空けますか。", audio:true},
-          {type:"quick-response", options:["息を吹いて鳴らすもの","振って鳴らすもの","ばちで打って鳴らすもの","字を書いた札"], correctIndex:2},
+          {jp:"太鼓の前を空けてください。何の前を空けますか。", audio:true},
+          {type:"quick-response", options:["息を吹いて鳴らすもの","字を書いた札","ばちで打って鳴らすもの","振って鳴らすもの"], correctIndex:2},
           {correct:"空けられました。「太鼓」は、ばちで打って鳴らす道具のことです。",
            incorrect:"「太鼓」は、ばちで打って鳴らすもののことです。"},
           {prompt:"「太鼓」はどれのことですか。", options:["吹いて鳴らすもの","打って鳴らすもの"], correctIndex:1, seconds:5},
           [
             "something you blow is the 笛",
-            "something you shake is the 鈴",
+            "a written tablet makes no sound at all",
             "the drum, struck with sticks",
-            "a written tablet makes no sound at all"
+            "something you shake is the 鈴"
           ]),
 
         q3("shrine-e03-q02", "listening-task", "w-fue", 5,
-          {jp:"コン：「笛の方はもう見えていますか。」何を持った方ですか。", audio:true},
-          {type:"quick-response", options:["振って鳴らすもの","息を吹いて鳴らすもの","火を焚く道具","ばちで打つもの"], correctIndex:1},
+          {jp:"笛の方はもう見えていますか。何を持った方ですか。", audio:true},
+          {type:"quick-response", options:["ばちで打つもの","息を吹いて鳴らすもの","振って鳴らすもの","火を焚く道具"], correctIndex:1},
           {correct:"分かりました。「笛」は、息を吹いて鳴らす細長い道具のことです。",
            incorrect:"「笛」は、息を吹いて鳴らすもののことです。打つのは「太鼓」です。"},
           {prompt:"「笛」はどれのことですか。", options:["吹いて鳴らすもの","打って鳴らすもの"], correctIndex:0, seconds:5},
           [
-            "the bell is shaken",
+            "the drum is struck, not blown",
             "the flute, sounded with the breath",
-            "fire tools are not instruments",
-            "the drum is struck, not blown"
+            "the bell is shaken",
+            "fire tools are not instruments"
           ]),
 
         q3("shrine-e03-q03", "listening-point", "v-hibiku", 8,
-          {jp:"コン：「太鼓の音が境内じゅうに響いています。」どういうことですか。", audio:true},
-          {type:"quick-response", options:["音が広がって伝わっている","音が小さくなっている","音が止まっている","音が聞こえない"], correctIndex:0},
+          {jp:"太鼓の音が境内じゅうに響いています。どういうことですか。", audio:true},
+          {type:"quick-response", options:["音が広がって伝わっている","音が止まっている","音が小さくなっている","音が聞こえない"], correctIndex:0},
           {correct:"分かりました。「響く」は、音が広がって伝わることです。",
            incorrect:"「響く」は、音が広がって伝わることです。"},
           {prompt:"「響く」はどれのことですか。", options:["音が消える","音が広がって伝わる"], correctIndex:1, seconds:5},
           [
             "the sound carrying across the whole grounds",
-            "growing quieter is the opposite",
             "a stopped drum makes no sound to carry",
+            "growing quieter is the opposite",
             "if it could not be heard it would not be 響く"
           ])
       ]},
@@ -399,19 +399,19 @@
 
         q3("shrine-e03-q04", "quick-response", "w-shuugou", 8,
           {jp:"氏子の方：「何時にどこへ行けばいいですか。」行列は五時に鳥居の前からです。何と言いますか。", audio:true},
-          {type:"quick-response", options:["どこでも構いません。","もう終わりました。","お決まりではありません。","五時に鳥居の前へご集合ください。"], correctIndex:3},
+          {type:"quick-response", options:["お決まりではありません。","もう終わりました。","どこでも構いません。","五時に鳥居の前へご集合ください。"], correctIndex:3},
           {correct:"伝えられました。「集合」は、決めた時と場所に集まることです。",
            incorrect:"時と場所が決まっています。そのままお伝えします。"},
           {prompt:"「集合」はどれのことですか。", options:["決めた時と場所に集まる","ばらばらに帰る"], correctIndex:0, seconds:5},
           [
-            "「anywhere is fine」 when a place has been set",
-            "the procession has not happened yet",
             "it is decided, and you know it",
+            "the procession has not happened yet",
+            "「anywhere is fine」 when a place has been set",
             "five o'clock at the gate, which is what was arranged"
           ]),
 
         q3("shrine-e03-q05", "listening-task", "w-ichi-2", 5,
-          {jp:"コン：「決められた位置に立ってください。」何をしますか。", audio:true},
+          {jp:"決められた位置に立ってください。何をしますか。", audio:true},
           {type:"quick-response", options:["好きな場所に立ちます。","座って待ちます。","決まった場所に立ちます。","境内を出ます。"], correctIndex:2},
           {correct:"立てました。「位置」は、そのものがあるべき場所のことです。",
            incorrect:"「決められた位置」ですから、決まっている場所に立ちます。"},
@@ -425,14 +425,14 @@
 
         q3("shrine-e03-q06", "reading", "w-seigen", 120,
           {jp:"【境内にお入りになる方へ】\n一度にお入りいただける人数　二百名\n今、境内にいらっしゃる方　　百九十名\n※ 二百名を超えないよう、入り口で制限をいたします。\n※ お出になった方の数だけ、新たにお入りいただけます。\n※ お子様も一名として数えます。\n大人二名とお子様一名の組がお待ちです。この組をお入れした後、まだ何名お入りいただけますか。"},
-          {type:"evidence-choice", options:["三名","七名","十名","お入りいただけません"], correctIndex:1},
+          {type:"evidence-choice", options:["十名","七名","三名","お入りいただけません"], correctIndex:1},
           {correct:"七名です。百九十名にこの組の三名を足して百九十三名ですから、二百名まであと七名です。",
            incorrect:"お子様も一名と数えます。百九十名にこの組の三名を足してから、二百名との差を出します。"},
           {prompt:"「制限」はどれのことですか。", options:["ここまでと決めること","いくらでも入れること"], correctIndex:0, seconds:5},
           [
-            "three is the size of the waiting group, not what is left after them",
-            "193 inside once the group is in, so seven more may enter",
             "ten is the room before this group is let in, not after",
+            "193 inside once the group is in, so seven more may enter",
+            "three is the size of the waiting group, not what is left after them",
             "there is room, so nobody is turned away"
           ])
       ]},
@@ -454,41 +454,41 @@
 
         q3("shrine-e03-q08", "quick-response", "v-shitagau", 8,
           {jp:"お参りの方が、火の近くに入ろうとしています。係の者が止めています。何と言いますか。", audio:true},
-          {type:"quick-response", options:["お好きにどうぞ。","私には分かりません。","早くお入りください。","係の指示に従ってください。"], correctIndex:3},
+          {type:"quick-response", options:["早くお入りください。","私には分かりません。","お好きにどうぞ。","係の指示に従ってください。"], correctIndex:3},
           {correct:"止められました。「従う」は、決まりや指示のとおりにすることです。",
            incorrect:"係が止めています。指示のとおりにしていただくよう伝えます。"},
           {prompt:"「従う」はどれのことですか。", options:["指示のとおりにする","自分で決める"], correctIndex:0, seconds:5},
           [
-            "「as you like」 next to an open fire is not safe",
-            "「I do not know」 when a marshal is right there",
             "waving them in is the opposite of what is needed",
+            "「I do not know」 when a marshal is right there",
+            "「as you like」 next to an open fire is not safe",
             "asking them to follow the marshal's instruction"
           ]),
 
         q3("shrine-e03-q09", "listening-point", "w-tantou", 8,
-          {jp:"コン：「あなたは鈴の担当です。」何をしますか。", audio:true},
-          {type:"quick-response", options:["札を配ります。","太鼓を打ちます。","鈴の世話を受け持ちます。","火を焚きます。"], correctIndex:2},
+          {jp:"あなたは鈴の担当です。何をしますか。", audio:true},
+          {type:"quick-response", options:["太鼓を打ちます。","火を焚きます。","鈴の世話を受け持ちます。","札を配ります。"], correctIndex:2},
           {correct:"分かりました。「担当」は、その仕事を受け持つことです。",
            incorrect:"「鈴の担当」ですから、鈴の世話を受け持ちます。"},
           {prompt:"「担当」はどれのことですか。", options:["見ているだけ","その仕事を受け持つ"], correctIndex:1, seconds:5},
           [
-            "handing out tablets is a different post",
             "the drum is someone else's charge",
+            "the fire has its own marshal",
             "taking charge of the bell, which is what was assigned",
-            "the fire has its own marshal"
+            "handing out tablets is a different post"
           ]),
 
         q3("shrine-e03-q10", "integrated", "w-sekinin", 12,
           {jp:"鈴の綱が切れました。あなたの担当です。宮司さん：「どうしましたか。」何と言いますか。", audio:true},
-          {type:"quick-response", options:["私の担当です。責任を持って直します。","気づきませんでした。","私は関わっていません。","誰かが切ったようです。"], correctIndex:0},
+          {type:"quick-response", options:["私の担当です。責任を持って直します。","誰かが切ったようです。","気づきませんでした。","私は関わっていません。"], correctIndex:0},
           {correct:"引き受けられました。「責任」は、自分がしたことの結果を引き受けることです。",
            incorrect:"あなたの担当です。人のせいにせず、直すと伝えます。"},
           {prompt:"「責任」はどれのことですか。", options:["人に任せること","結果を引き受けること"], correctIndex:1, seconds:8},
           [
             "owning the post and undertaking to put it right",
+            "blaming an unknown someone dodges the post",
             "「I did not notice」 when it was yours to watch",
-            "denying involvement in your own charge",
-            "blaming an unknown someone dodges the post"
+            "denying involvement in your own charge"
           ])
       ]}
     ]
@@ -504,41 +504,41 @@
       {day:1, mode:"learn", label:"火が落ちる", questions:[
 
         q4("shrine-e04-q01", "listening-task", "v-moyasu", 5,
-          {jp:"コン：「古い札を燃やしてください。」何をしますか。", audio:true},
-          {type:"quick-response", options:["水につけます。","火にくべて焼きます。","結び直します。","しまっておきます。"], correctIndex:1},
+          {jp:"古い札を燃やしてください。何をしますか。", audio:true},
+          {type:"quick-response", options:["しまっておきます。","火にくべて焼きます。","結び直します。","水につけます。"], correctIndex:1},
           {correct:"燃やせました。「燃やす」は、火をつけて焼くことです。",
            incorrect:"「燃やす」は、火をつけて焼くことです。"},
           {prompt:"「燃やす」はどれのことですか。", options:["火をつけて焼く","水につける"], correctIndex:0, seconds:5},
           [
-            "soaking them does the opposite",
+            "storing them away is not burning them",
             "putting them in the fire, which is what 燃やす is",
             "retying them keeps them as they are",
-            "storing them away is not burning them"
+            "soaking them does the opposite"
           ]),
 
         q4("shrine-e04-q02", "listening-point", "w-honoo", 8,
-          {jp:"コン：「炎が高くなってきました。」何が高くなっていますか。", audio:true},
-          {type:"quick-response", options:["立ちのぼる白い煙","積んだ灰","燃えて立ちのぼる火","石段"], correctIndex:2},
+          {jp:"炎が高くなってきました。何が高くなっていますか。", audio:true},
+          {type:"quick-response", options:["石段","積んだ灰","燃えて立ちのぼる火","立ちのぼる白い煙"], correctIndex:2},
           {correct:"分かりました。「炎」は、燃えて立ちのぼる火そのもののことです。",
            incorrect:"「炎」は、燃え立つ火そのもののことです。煙とは違います。"},
           {prompt:"「炎」はどれのことですか。", options:["燃えた後の粉","燃え立つ火"], correctIndex:1, seconds:5},
           [
-            "smoke is 煙, which is not the flame",
+            "the stone steps do not rise",
             "ash is what is left afterwards",
             "the flame itself, rising as it burns",
-            "the stone steps do not rise"
+            "smoke is 煙, which is not the flame"
           ]),
 
         q4("shrine-e04-q03", "listening-task", "w-kemuri", 5,
-          {jp:"コン：「煙のほうへ立たないでください。」何を避けますか。", audio:true},
-          {type:"quick-response", options:["燃えた後に残る粉","鈴の音","燃え立つ火","燃えるときに出る白いもの"], correctIndex:3},
+          {jp:"煙のほうへ立たないでください。何を避けますか。", audio:true},
+          {type:"quick-response", options:["燃え立つ火","燃えた後に残る粉","鈴の音","燃えるときに出る白いもの"], correctIndex:3},
           {correct:"避けられました。「煙」は、物が燃えるときに立ちのぼる白いもののことです。",
            incorrect:"「煙」は、燃えるときに立ちのぼるもののことです。火そのものは「炎」です。"},
           {prompt:"「煙」はどれのことですか。", options:["燃えるときに立つもの","燃え立つ火"], correctIndex:0, seconds:5},
           [
+            "the flame itself is 炎",
             "what is left behind is 灰",
             "the bell has nothing to do with it",
-            "the flame itself is 炎",
             "the smoke that rises as things burn"
           ])
       ]},
@@ -546,42 +546,42 @@
       {day:2, mode:"practice", label:"灰を片付ける", questions:[
 
         q4("shrine-e04-q04", "listening-task", "w-hai", 5,
-          {jp:"コン：「灰は冷めてから集めてください。」何を集めますか。", audio:true},
-          {type:"quick-response", options:["燃えた後に残る粉","燃え立つ火","立ちのぼる煙","古い札"], correctIndex:0},
+          {jp:"灰は冷めてから集めてください。何を集めますか。", audio:true},
+          {type:"quick-response", options:["燃えた後に残る粉","古い札","立ちのぼる煙","燃え立つ火"], correctIndex:0},
           {correct:"分かりました。「灰」は、物が燃えた後に残る粉のことです。",
            incorrect:"「灰」は、燃えた後に残る粉のことです。"},
           {prompt:"「灰」はどれのことですか。", options:["これから燃やすもの","燃えた後に残る粉"], correctIndex:1, seconds:5},
           [
             "the ash left once the fire has burnt down",
-            "the flame is 炎, and it has gone out",
+            "the old tablets were what was burnt",
             "the smoke is 煙",
-            "the old tablets were what was burnt"
+            "the flame is 炎, and it has gone out"
           ]),
 
         q4("shrine-e04-q05", "listening-task", "v-haku", 5,
-          {jp:"コン：「石段を掃いてください。」何をしますか。", audio:true},
-          {type:"quick-response", options:["水で流します。","ほうきでごみを寄せます。","布で拭きます。","石を並べ直します。"], correctIndex:1},
+          {jp:"石段を掃いてください。何をしますか。", audio:true},
+          {type:"quick-response", options:["水で流します。","ほうきでごみを寄せます。","石を並べ直します。","布で拭きます。"], correctIndex:1},
           {correct:"掃けました。「掃く」は、ほうきでごみを寄せて取ることです。",
            incorrect:"「掃く」は、ほうきを使ってごみを寄せることです。布で拭くのとは違います。"},
           {prompt:"「掃く」はどれのことですか。", options:["ほうきで寄せる","布で拭く"], correctIndex:0, seconds:5},
           [
             "washing it down with water is a different job",
             "sweeping with a broom, which is what 掃く means",
-            "wiping with a cloth is 拭く",
-            "rearranging the stones is not cleaning"
+            "rearranging the stones is not cleaning",
+            "wiping with a cloth is 拭く"
           ]),
 
         q4("shrine-e04-q06", "quick-response", "v-chirakaru", 8,
           {jp:"宮司さん：「境内はどうなっていますか。」紙や竹があちこちに落ちています。何と言いますか。", audio:true},
-          {type:"quick-response", options:["もう片付きました。","何も落ちていません。","まだ散らかっています。","掃く物がありません。"], correctIndex:2},
+          {type:"quick-response", options:["掃く物がありません。","何も落ちていません。","まだ散らかっています。","もう片付きました。"], correctIndex:2},
           {correct:"正直に伝えられました。「散らかる」は、物があちこちに乱れて落ちている状態です。",
            incorrect:"紙や竹が落ちています。まだ整っていないと伝えます。"},
           {prompt:"「散らかる」はどんな様子ですか。", options:["きちんと整っている","物が乱れて落ちている"], correctIndex:1, seconds:5},
           [
-            "「it is done」 is not true yet",
+            "there is plenty to sweep",
             "there is paper and bamboo everywhere",
             "still a mess, which is what is actually on the ground",
-            "there is plenty to sweep"
+            "「it is done」 is not true yet"
           ])
       ]},
 
@@ -589,28 +589,28 @@
 
         q4("shrine-e04-q07", "text-grammar", "w-kaisan", 120,
           {jp:"【後始末の終わりについて】\n持ち場の片付けがすべて済んでから、（　　）といたします。\n※ 一つでも残っている持ち場があるうちは、（　　）いたしません。\n※ 早く済んだ方は、残っている持ち場を手伝ってください。\n（　　）に入る言葉はどれですか。"},
-          {type:"single-choice", options:["集合","担当","制限","解散"], correctIndex:3},
+          {type:"single-choice", options:["担当","集合","制限","解散"], correctIndex:3},
           {correct:"「解散」です。集まっていた人が別れて帰ることです。",
            incorrect:"集まっていた人が別れて帰ることを表す言葉を選びます。"},
           {prompt:"「解散」はどれのことですか。", options:["別れて帰ること","集まること"], correctIndex:0, seconds:5},
           [
-            "集合 is gathering, which happened at the start",
             "担当 is being in charge of something",
+            "集合 is gathering, which happened at the start",
             "制限 is a limit on numbers",
             "解散 - breaking up and going home once everything is done"
           ]),
 
         q4("shrine-e04-q08", "text-grammar", "w-yoake", 120,
           {jp:"【明日の朝について】\n灰の片付けは、（　　）を待ってから行います。\n※ 暗いうちは、残り火が見えず危ないためです。\n※ 明るくなってから、係の者二名で行います。\n（　　）に入る言葉はどれですか。"},
-          {type:"single-choice", options:["夜明け","深夜","日暮れ","昼過ぎ"], correctIndex:0},
+          {type:"single-choice", options:["夜明け","昼過ぎ","日暮れ","深夜"], correctIndex:0},
           {correct:"「夜明け」です。夜が明けて明るくなるころのことです。",
            incorrect:"暗いうちは危ないと書いてあります。明るくなるころを選びます。"},
           {prompt:"「夜明け」はいつのことですか。", options:["日が沈むころ","夜が明けるころ"], correctIndex:1, seconds:5},
           [
             "夜明け - daybreak, when the embers become visible",
-            "深夜 is the middle of the night, still dark",
+            "昼過ぎ is the afternoon, long after they need to start",
             "日暮れ is dusk, when it gets dark",
-            "昼過ぎ is the afternoon, long after they need to start"
+            "深夜 is the middle of the night, still dark"
           ]),
 
         q4("shrine-e04-q09", "reading", "w-dentou", 120,
