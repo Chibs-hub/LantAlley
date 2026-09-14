@@ -182,7 +182,7 @@
     /* Episode 3, the guests coming back in: rooms, belongings, tempers. */
     "床": {
       target:"w-yuka",
-      sentence:"現関の床が濡れていますので、拭いておいてください。",
+      sentence:"玄関の床が濡れていますので、拭いておいてください。",
       pattern:"床を拭く"
     },
     "敷く": {
@@ -236,7 +236,7 @@
     /* Episode 4, closing the inn: the last rounds, the keys, the winter. */
     "見送る": {
       target:"w-miokuru",
-      sentence:"現関までお客様を見送るのが最後の仕事です。",
+      sentence:"玄関までお客様を見送るのが最後の仕事です。",
       pattern:"〜を見送る"
     },
     "鍵": {
