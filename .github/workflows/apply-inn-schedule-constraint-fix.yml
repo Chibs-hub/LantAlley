@@ -1,0 +1,80 @@
+name: Apply verified Inn schedule constraint fix
+
+on:
+  push:
+    branches:
+      - codex/inn-learning-redesign
+    paths:
+      - .github/workflows/apply-inn-schedule-constraint-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/inn-learning-redesign
+      - name: Make dinner scheduling constraints unambiguous
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          stage = Path('n2-home-inn-stage.js')
+          text = stage.read_text(encoding='utf-8')
+          replacements = [
+              (
+                'clue:"Both dinner start times can move. Leave enough time to serve one group before the next.",\n      min:17,max:21,startA:18,startB:18,gap:2,targetA:18,targetB:20,fixedB:false,labelA:"Aグループ夕食",labelB:"Bグループ夕食"',
+                'clue:"Both dinner start times can move. Group A goes first; leave enough time to serve it before Group B.",\n      min:17,max:21,startA:18,startB:18,gap:2,targetA:18,targetB:20,fixedB:false,labelA:"Aグループ夕食",labelB:"Bグループ夕食"'
+              ),
+              (
+                'clue:"Both dinner start times can move. Leave enough time to serve one group before the next.",\n      min:17,max:21,startA:18,startB:18,gap:2,targetA:18,targetB:20,fixedB:false,labelA:"Cグループ夕食",labelB:"Dグループ夕食"',
+                'clue:"Both dinner start times can move. Group C goes first; leave enough time to serve it before Group D.",\n      min:17,max:21,startA:18,startB:18,gap:2,targetA:18,targetB:20,fixedB:false,labelA:"Cグループ夕食",labelB:"Dグループ夕食"'
+              ),
+              (
+                'jp:"Cグループは18時以降、Dグループは20時までに夕食を始められます。一組の食事には2時間かかります。夕食の開始時刻を調整してください。", romaji:"C guruupu wa juuhachiji ikou, D guruupu wa nijuji made ni yuushoku o hajimeraremasu. Hitokumi no shokuji ni wa nijikan kakarimasu. Yuushoku no kaishi jikoku o chousei shite kudasai.", narration:"Two groups need dinner seatings, with enough time to serve one group before the next.", meaning:"Coordinate the two dinner start times using the stated booking windows.", successReply:"Cグループは18時、Dグループは20時になりました。これで順番に夕食をお出しできます。"',
+                'jp:"Cグループは18時以降、Dグループは20時までに夕食を始められます。Cグループを先にご案内します。一組の食事には2時間かかります。夕食の開始時刻を調整してください。", romaji:"C guruupu wa juuhachiji ikou, D guruupu wa nijuji made ni yuushoku o hajimeraremasu. C guruupu o saki ni goannai shimasu. Hitokumi no shokuji ni wa nijikan kakarimasu. Yuushoku no kaishi jikoku o chousei shite kudasai.", narration:"Two groups need dinner seatings, with Group C served first and enough time before Group D.", meaning:"Coordinate the two dinner start times using the booking windows, with Group C first.", successReply:"Cグループは18時、Dグループは20時になりました。これで順番に夕食をお出しできます。"'
+              ),
+              (
+                'jp:"Aグループは18時以降、Bグループは20時までに夕食を始められます。一組の食事には2時間かかります。夕食の開始時刻を調整してください。", romaji:"A guruupu wa juuhachiji ikou, B guruupu wa nijuji made ni yuushoku o hajimeraremasu. Hitokumi no shokuji ni wa nijikan kakarimasu. Yuushoku no kaishi jikoku o chousei shite kudasai.", narration:"Both groups requested the same dinner time. Group A can begin at 18:00 or later, Group B by 20:00, and each meal needs two hours.", meaning:"Coordinate the two dinner start times using the booking windows and meal length.", successReply:"Aグループは18時、Bグループは20時になりました。これで順番に夕食をお出しできます。"',
+                'jp:"Aグループは18時以降、Bグループは20時までに夕食を始められます。Aグループを先にご案内します。一組の食事には2時間かかります。夕食の開始時刻を調整してください。", romaji:"A guruupu wa juuhachiji ikou, B guruupu wa nijuji made ni yuushoku o hajimeraremasu. A guruupu o saki ni goannai shimasu. Hitokumi no shokuji ni wa nijikan kakarimasu. Yuushoku no kaishi jikoku o chousei shite kudasai.", narration:"Both groups requested the same dinner time. Group A goes first, can begin at 18:00 or later, Group B must begin by 20:00, and each meal needs two hours.", meaning:"Coordinate the two dinner start times using the booking windows and meal length, with Group A first.", successReply:"Aグループは18時、Bグループは20時になりました。これで順番に夕食をお出しできます。"'
+              ),
+          ]
+          for old, new in replacements:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'Expected exactly one occurrence of {old[:80]!r}, found {count}')
+              text = text.replace(old, new)
+          stage.write_text(text, encoding='utf-8')
+
+          tests = Path('n2-inn-japanese.test.mjs')
+          text = tests.read_text(encoding='utf-8')
+          anchor = 'test("episode prompts do not leak target words where the task is to choose them", () => {'
+          new_test = '''test("dinner scheduling states which group goes first so the scored solution is unique", () => {\n  const context = loadInn();\n  const practice = context.N2HomeInnStage.practice.find((item) => item.focusWord === "調整");\n  const challenge = context.N2HomeInnStage.challenge.find((item) => item.focusWord === "調整");\n\n  assert.match(practice.jp, /Cグループを先にご案内します/);\n  assert.equal(practice.interaction.targetA, 18);\n  assert.equal(practice.interaction.targetB, 20);\n\n  assert.match(challenge.jp, /Aグループを先にご案内します/);\n  assert.equal(challenge.interaction.targetA, 18);\n  assert.equal(challenge.interaction.targetB, 20);\n});\n\n'''
+          if text.count(anchor) != 1:
+              raise SystemExit(f'Expected one test anchor, found {text.count(anchor)}')
+          tests.write_text(text.replace(anchor, new_test + anchor), encoding='utf-8')
+          PY
+      - name: Check JavaScript syntax
+        run: node --check n2-home-inn-stage.js
+      - name: Run Japanese regression tests
+        run: node --test n2-inn-japanese.test.mjs
+      - name: Confirm only intended files changed
+        shell: bash
+        run: |
+          changed="$(git diff --name-only)"
+          expected=$'n2-home-inn-stage.js\nn2-inn-japanese.test.mjs'
+          test "$changed" = "$expected" || { echo "Unexpected diff:"; printf '%s\n' "$changed"; exit 1; }
+          git diff --check
+      - name: Commit verified correction and remove one-off workflow
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add n2-home-inn-stage.js n2-inn-japanese.test.mjs
+          git rm .github/workflows/apply-inn-schedule-constraint-fix.yml
+          git commit -m "Clarify Inn dinner scheduling constraints"
+          git push origin HEAD:codex/inn-learning-redesign
