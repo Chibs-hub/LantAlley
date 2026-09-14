@@ -1781,19 +1781,16 @@ test("the unlock hands over every painted item, and leaves all of it unplaced", 
   assert.equal(report.furniture, paintedDecor.length, "every painted item is owned");
   /* Decor is fully painted now - the last six arrived together - so the
      furniture filter excludes nothing and asserting that it does would be
-     asserting the game is unfinished. The exclusion this test exists to check
-     is still real, and still checked, on the wallpaper and the plants below:
-     one paper and four species are drawings yet. Restore a furniture-specific
-     version of this line only if unpainted furniture ever reappears. */
+     asserting the game is unfinished. */
   assert.equal(paintedDecor.length, decor.catalogue().length,
     "every catalogue item is painted, so the furniture filter has nothing left to exclude");
   assert.equal(report.wallpapers, paintedPaper.length,
     "only wallpaper with a picture is owned");
   assert.equal(report.plants % 2, 0, "each granted species arrives twice");
-  assert.ok(report.plants / 2 < garden.catalogue().length,
-    "unpainted species are left out");
-  assert.ok(report.skippedUnpainted.length > 0,
-    "the report says what it withheld and why");
+  assert.equal(report.plants / 2, garden.catalogue().length,
+    "all garden species have production art and are owned");
+  assert.equal(report.skippedUnpainted.length, 0,
+    "no garden species is withheld as unpainted");
 
   assert.deepEqual(saved.home.placed, {},
     "nothing is placed: the point is to test the placing");

@@ -739,6 +739,41 @@ test("every picture the home can show is on disk and cached", () => {
   }
 });
 
+test("the four new garden species use their matching production stages", () => {
+  const app = read("app.js");
+  const sw = read("sw.js");
+  const garden = {};
+  vm.createContext(garden);
+  vm.runInContext(read("home-garden.js"), garden);
+  const table = (app.match(/var PLANT_ART = \{([\s\S]*?)\n  \};/) || [, ""])[1];
+  const expectedSpecies = ["hydrangea", "lantern-flower-bed", "chrysanthemum", "iris"];
+  const declaredSpecies = [...table.matchAll(/^\s{4}(?:"([^\"]+)"|([a-z-]+)):\s*\{/gm)]
+    .map(([, quoted, bare]) => quoted || bare).sort();
+  const catalogueSpecies = [...garden.LanternHomeGarden.catalogue()].map((type) => type.id).sort();
+  assert.deepEqual(declaredSpecies, catalogueSpecies,
+    "every shop plant must use production art instead of generated stand-ins");
+  assert.doesNotMatch(app, /PLANT_TINT|STAGE_SCALE|placeholderPlant|home-plant-drawn/,
+    "the garden still carries generated placeholder art");
+
+  for (const species of expectedSpecies) {
+    const escaped = species.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const block = table.match(new RegExp(`(?:"${escaped}"|${escaped}):\\s*\\{([^}]*)\\}`));
+    assert.ok(block, `${species} is missing its production garden art mapping`);
+    const mappings = [...block[1].matchAll(/(planted|sprout|growing|mature):\s*"(assets\/home\/garden\/[^\"]+)"/g)];
+    assert.deepEqual(mappings.map(([, stage]) => stage), ["planted", "sprout", "growing", "mature"],
+      `${species} must map exactly its four logical stages`);
+
+    for (const [stage, path] of mappings.map(([, stage, path]) => [stage, path])) {
+      assert.equal(path, `assets/home/garden/${species}-${stage}-gravel-v2.webp`,
+        `${species} ${stage} must use its matching final production file`);
+      assert.equal(existsSync(new URL(`./${path}`, import.meta.url)), true, `${path} is missing`);
+      assert.ok(sw.includes(`"./${path}"`), `sw.js does not pre-cache ${path}`);
+    }
+    assert.doesNotMatch(block[1], /placeholder|temporary|fallback|\.svg/i,
+      `${species} still refers to stand-in art`);
+  }
+});
+
 test("the raw supplied source images are not shipped", () => {
   const sw = read("sw.js");
   // 52MB of unprocessed PNGs live under assets/home/incoming-user while they
@@ -748,27 +783,17 @@ test("the raw supplied source images are not shipped", () => {
     "sw.js pre-caches the raw source images");
 });
 
-/* Every painted stage needs its own measured baseline.
- *
- * The baseline says how far down the picture the plant's foot is, and the
- * renderer uses it to stand the plant on its slot. Sakura and maple carried a
- * flat 96.5 for all five stages - one guess repeated - while the art actually
- * lands between 93.4 and 96.1. A baseline higher than the art lifts the plant
- * off the ground.
- *
- * This cannot check the numbers against the pictures without a WebP decoder,
- * so it checks the shape instead: a species with painted art has a baseline
- * for every stage that art defines, and the values are not all identical,
- * which is the signature of the guess rather than a measurement.
- */
+/* Each production stage needs the baseline of its own visible artwork.
+ * Camellia and the trees use stage-specific crops, while the four newly added
+ * sets share fixed gravel frames with measured shared baselines. */
 test("every painted plant stage has its own measured baseline", () => {
   const src = readFileSync(new URL("./app.js", import.meta.url), "utf8");
-  // Bounded to the object itself. Slicing as far as PLANT_BASE swept up the
-  // placeholder-drawing code that sits between them, and its shape keys - one
-  // of which is "leaf" - parsed as growth stages.
+  // Bound the two tables independently so unrelated object keys cannot be
+  // mistaken for stages or baseline rows.
   const artStart = src.indexOf("var PLANT_ART = {");
   const artBlock = src.slice(artStart, src.indexOf("\n  };", artStart));
-  const baseBlock = src.slice(src.indexOf("var PLANT_BASE = {"), src.indexOf("PLANT_BASE_FALLBACK"));
+  const baseStart = src.indexOf("var PLANT_BASE = {");
+  const baseBlock = src.slice(baseStart, src.indexOf("\n  };", baseStart));
 
   // The quotes are optional in the source - camellia needs none, the hyphenated
   // ids do - so the id pattern has to allow both or camellia goes uncounted.
@@ -790,8 +815,19 @@ test("every painted plant stage has its own measured baseline", () => {
     for (const stage of stages) {
       assert.ok(named.has(stage), id + " has art for " + stage + " but no baseline for it");
     }
-    assert.ok(new Set(values.map(([, v]) => v)).size > 1,
-      id + ": every stage carries the same baseline, which is a guess rather than a measurement");
+    const sharedFrameBaselines = {
+      hydrangea: {planted:97.8, sprout:97.3, growing:97.8, mature:97.8},
+      "lantern-flower-bed": {planted:92.0, sprout:92.0, growing:92.0, mature:92.0},
+      chrysanthemum: {planted:85.3, sprout:85.3, growing:85.3, mature:85.3},
+      iris: {planted:82.6, sprout:82.6, growing:83.0, mature:82.6}
+    };
+    if (sharedFrameBaselines[id]) {
+      assert.deepEqual(Object.fromEntries(values), sharedFrameBaselines[id],
+        `${id} baselines must match the shared gravel frame`);
+    } else {
+      assert.ok(new Set(values.map(([, v]) => v)).size > 1,
+        id + ": every stage carries the same baseline, which is a guess rather than a measurement");
+    }
   }
 });
 

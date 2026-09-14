@@ -17,8 +17,10 @@
 desktop as `img/lantern.png`). Nothing in the game has a slot that size yet.
 It is not a gap - it is a spare, recorded here so nobody commissions another.
 
-Still outstanding: the 16 garden images below, and one title-screen background
-specified next.
+**Updated 2026-09-14 (v364).** The 16 garden images in section 1 are now in the
+repository under the specified names, assigned to their matching garden
+stages, cached offline and covered by tests. The title-screen background is
+also delivered below. No required art remains outstanding.
 
 ## Title-screen background - delivered
 
@@ -43,7 +45,7 @@ SVG in `decorArt` (app.js) or to a drawn plant in `plantArt`. Repeat with:
     var d=c.LanternHomeDecor;
     d.catalogue().forEach(function(i){ if(!d.getItem(i.id).image) console.log(i.id); });"
 
-## 1. Garden - 16 images, highest value
+## 1. Garden - 16 images - delivered
 
 `assets/home/garden/<species>-<stage>-gravel-v2.webp`
 
@@ -64,9 +66,9 @@ plant, same camera height, same evening light. `sceneWidth` is the mature
 plant's width as a percentage of the scene, so the four stages share a frame
 and grow within it rather than each being cropped to its own bounds.
 
-Half the garden shop is placeholder, and the garden is the one reward that
-grows out of study rather than being bought outright, so this is the batch
-worth doing first.
+Each of these stage files is checked by the offline asset test and the garden
+mapping test. Iris matures after three study points so all four pictures are
+reachable as the plant grows.
 
 ## 2. Wallpaper - 1 image
 

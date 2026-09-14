@@ -5474,8 +5474,8 @@
    * them meant every planted camellia was a broken image in the artifact while
    * looking perfectly fine when served as files.
    *
-   * The table is also the switch: a species with an entry is painted, one
-   * without is drawn. Adding a species is one block. */
+   * Every current shop species has an entry. Keep the paths explicit so each
+   * stage is independently audited and included in the offline shell. */
   var PLANT_ART = {
     "cherry-tree": {
       planted: "assets/home/garden/sakura-planted-gravel-v2.webp",
@@ -5502,109 +5502,44 @@
       sprout:  "assets/home/garden/sunflower-sprout-gravel-v2.webp",
       growing: "assets/home/garden/sunflower-growing-gravel-v2.webp",
       mature:  "assets/home/garden/sunflower-mature-gravel-v2.webp"
+    },
+    hydrangea: {
+      planted: "assets/home/garden/hydrangea-planted-gravel-v2.webp",
+      sprout:  "assets/home/garden/hydrangea-sprout-gravel-v2.webp",
+      growing: "assets/home/garden/hydrangea-growing-gravel-v2.webp",
+      mature:  "assets/home/garden/hydrangea-mature-gravel-v2.webp"
+    },
+    "lantern-flower-bed": {
+      planted: "assets/home/garden/lantern-flower-bed-planted-gravel-v2.webp",
+      sprout:  "assets/home/garden/lantern-flower-bed-sprout-gravel-v2.webp",
+      growing: "assets/home/garden/lantern-flower-bed-growing-gravel-v2.webp",
+      mature:  "assets/home/garden/lantern-flower-bed-mature-gravel-v2.webp"
+    },
+    chrysanthemum: {
+      planted: "assets/home/garden/chrysanthemum-planted-gravel-v2.webp",
+      sprout:  "assets/home/garden/chrysanthemum-sprout-gravel-v2.webp",
+      growing: "assets/home/garden/chrysanthemum-growing-gravel-v2.webp",
+      mature:  "assets/home/garden/chrysanthemum-mature-gravel-v2.webp"
+    },
+    iris: {
+      planted: "assets/home/garden/iris-planted-gravel-v2.webp",
+      sprout:  "assets/home/garden/iris-sprout-gravel-v2.webp",
+      growing: "assets/home/garden/iris-growing-gravel-v2.webp",
+      mature:  "assets/home/garden/iris-mature-gravel-v2.webp"
     }
   };
 
-  /* Stand-in art, so the whole garden is playable before it is painted.
-   *
-   * Species without pictures are drawn from data. Rather than hide them and
-   * ship a shop with one thing in it, they are drawn from data: a silhouette
-   * per kind, a colour per species, and four sizes for the four stages. They
-   * are obviously drawings, which is the point - nobody will mistake one for
-   * the finished art, and the garden can be played and balanced now.
-   *
-   * Swapping in a real set is one line: drop the four PNGs into
-   * assets/home/garden/ and add the species to PLANT_ART. Nothing else
-   * changes, and pwa.test.mjs will fail the build if the files are not there.
-   *
-   * Because these are generated, every stage shares a baseline exactly, so no
-   * PLANT_BASE row is needed for a species until it gets real art.
-   */
-  var PLANT_TINT = {
-    "cherry-tree":     {leaf:"#5f8a52", bloom:"#e8a9bd"},
-    "japanese-maple":  {leaf:"#6a8a4e", bloom:"#c4543a"},
-    "hydrangea":       {leaf:"#4f7d4a", bloom:"#7f8fc4"},
-    "camellia":        {leaf:"#3f6b46", bloom:"#c4485c"},
-    "iris":            {leaf:"#4f7d4a", bloom:"#7a6ab5"},
-    "chrysanthemum":   {leaf:"#4f7d4a", bloom:"#e0c25e"},
-    "lantern-flower-bed": {leaf:"#4f7d4a", bloom:"#e08a3c"}
-  };
-
-  // How tall each stage stands, as a fraction of the mature plant.
-  var STAGE_SCALE = {planted:0.28, sprout:0.45, growing:0.72, mature:1};
-
-  function placeholderPlant(typeId, stage){
-    var tint = PLANT_TINT[typeId] || {leaf:"#4f7d4a", bloom:"#c4485c"};
-    var type = (typeof LanternHomeGarden !== "undefined")
-      ? LanternHomeGarden.catalogue().filter(function(t){ return t.id === typeId; })[0] : null;
-    var kind = type ? type.kind : "flower";
-    var k = STAGE_SCALE[stage] || 1;
-    var h = (kind === "tree" ? 96 : kind === "shrub" ? 62 : 52) * k;   // above ground
-    var w = (kind === "tree" ? 62 : kind === "shrub" ? 74 : 40) * k;
-
-    // Drawn on a 120x120 box with the ground line at y=104, so every stage of
-    // every species stands on the same spot.
-    var art = '<ellipse cx="60" cy="104" rx="' + (16 + w * 0.22).toFixed(1)
-      + '" ry="5" fill="#4a3524" opacity="0.55"/>';
-
-    if(stage === "planted"){
-      art += '<path d="M60 104 q-3 -' + h.toFixed(0) + ' 4 -' + (h + 4).toFixed(0)
-        + '" stroke="' + tint.leaf + '" stroke-width="3" fill="none"/>'
-        + '<ellipse cx="' + (62 + w * 0.2).toFixed(1) + '" cy="' + (104 - h).toFixed(1)
-        + '" rx="7" ry="4" fill="' + tint.leaf + '"/>';
-      return art;
-    }
-
-    art += '<line x1="60" y1="104" x2="60" y2="' + (104 - h).toFixed(1)
-      + '" stroke="' + (kind === "tree" ? "#6b4530" : tint.leaf)
-      + '" stroke-width="' + (kind === "tree" ? 6 * k + 2 : 3).toFixed(1) + '"/>';
-
-    if(kind === "tree"){
-      art += '<circle cx="60" cy="' + (104 - h).toFixed(1) + '" r="' + (w * 0.55).toFixed(1)
-        + '" fill="' + tint.leaf + '"/>'
-        + '<circle cx="' + (60 - w * 0.34).toFixed(1) + '" cy="' + (104 - h * 0.82).toFixed(1)
-        + '" r="' + (w * 0.36).toFixed(1) + '" fill="' + tint.leaf + '"/>'
-        + '<circle cx="' + (60 + w * 0.34).toFixed(1) + '" cy="' + (104 - h * 0.82).toFixed(1)
-        + '" r="' + (w * 0.36).toFixed(1) + '" fill="' + tint.leaf + '"/>';
-    }else if(kind === "shrub"){
-      art += '<path d="M' + (60 - w * 0.5).toFixed(1) + ' 104 q0 -' + h.toFixed(0)
-        + ' ' + (w * 0.5).toFixed(1) + ' -' + h.toFixed(0)
-        + ' q' + (w * 0.5).toFixed(1) + ' 0 ' + (w * 0.5).toFixed(1) + ' ' + h.toFixed(0)
-        + ' Z" fill="' + tint.leaf + '"/>';
-    }else{
-      art += '<ellipse cx="' + (60 - w * 0.42).toFixed(1) + '" cy="' + (104 - h * 0.45).toFixed(1)
-        + '" rx="' + (w * 0.4).toFixed(1) + '" ry="' + (h * 0.16).toFixed(1)
-        + '" fill="' + tint.leaf + '"/>'
-        + '<ellipse cx="' + (60 + w * 0.42).toFixed(1) + '" cy="' + (104 - h * 0.6).toFixed(1)
-        + '" rx="' + (w * 0.4).toFixed(1) + '" ry="' + (h * 0.16).toFixed(1)
-        + '" fill="' + tint.leaf + '"/>';
-    }
-
-    // Flowers only once it is worth looking at, so the stages read differently.
-    if(stage === "growing" || stage === "mature"){
-      var blooms = stage === "mature" ? 3 : 1;
-      for(var i = 0; i < blooms; i++){
-        var bx = 60 + (i - (blooms - 1) / 2) * w * 0.44;
-        var by = 104 - h - (kind === "tree" ? -w * 0.2 : 2);
-        art += '<circle cx="' + bx.toFixed(1) + '" cy="' + by.toFixed(1)
-          + '" r="' + (5 + 3 * k).toFixed(1) + '" fill="' + tint.bloom + '"/>';
-      }
-    }
-    return art;
-  }
+  /* Every catalogue plant now has a production image set. Keep stage paths
+   * explicit so missing art fails the offline and garden mapping tests. */
 
   function plantHasArt(typeId){
     return !!PLANT_ART[typeId];
   }
 
-  /* One picture of a plant, however it happens to be drawn today. Every caller
-   * goes through this, so the day the art lands nothing else has to change. */
+  /* All current species have painted stage files; no generated SVG substitute
+   * is used for a garden plant. */
   function plantFigure(typeId, stage, label){
-    if(plantHasArt(typeId)){
-      return '<img src="' + plantArt(typeId, stage) + '" alt="' + (label || "") + '">';
-    }
-    return '<svg viewBox="0 0 120 120" class="home-plant-drawn" role="img" aria-label="'
-      + (label || "") + '">' + placeholderPlant(typeId, stage) + '</svg>';
+    return '<img src="' + plantArt(typeId, stage) + '" alt="' + (label || "") + '">';
   }
 
   function plantVisualStage(plant){
@@ -5621,8 +5556,8 @@
    * them all the same way left the young plant hovering above its bed. These
    * numbers come from each file's alpha bounding box.
    *
-   * Task 7 generates the remaining species; each one needs its own row, or
-   * consistent baselines at generation time so this table can go away. */
+   * Each value is measured from the visible plant-and-gravel component of
+   * that stage, excluding detached export specks. */
   /* Measured from the pictures, not estimated.
    *
    * Sakura and maple carried a flat 96.5 for all five stages, which was a
@@ -5712,23 +5647,27 @@
     "cherry-tree": 1.07,
     "japanese-maple": 1.53,
     camellia: 1.77,
-    sunflower: 1.22
+    sunflower: 1.22,
+    hydrangea: 1.06,
+    "lantern-flower-bed": 1.07,
+    chrysanthemum: 1.00,
+    iris: 1.11
   };
 
   var PLANT_BASE = {
     camellia: {planted:95.3, sprout:92.8, growing:91.2, mature:93.2},
     "cherry-tree": {planted:95.3, sprout:94.3, sapling:92.6, young:94.1, mature:92.2},
     "japanese-maple": {planted:95.3, sprout:93.0, sapling:95.3, young:93.8, mature:94.1},
-    sunflower: {planted:95.3, sprout:92.8, growing:95.3, mature:95.3}
+    sunflower: {planted:95.3, sprout:92.8, growing:95.3, mature:95.3},
+    hydrangea: {planted:97.8, sprout:97.3, growing:97.8, mature:97.8},
+    "lantern-flower-bed": {planted:92.0, sprout:92.0, growing:92.0, mature:92.0},
+    chrysanthemum: {planted:85.3, sprout:85.3, growing:85.3, mature:85.3},
+    iris: {planted:82.6, sprout:82.6, growing:83.0, mature:82.6}
   };
-  var PLANT_BASE_FALLBACK = {planted:90, sprout:90, growing:92, mature:94};
 
   function plantBase(typeId, stage){
-    // A drawn stand-in is built with its ground line at y=104 of a 120 box, so
-    // its anchor is known exactly rather than measured.
-    if(!plantHasArt(typeId)) return 86.7;
-    var rows = PLANT_BASE[typeId] || PLANT_BASE_FALLBACK;
-    return rows[stage] || rows.mature || 92;
+    var rows = PLANT_BASE[typeId];
+    return rows && rows[stage] != null ? rows[stage] : 92;
   }
 
   function migrateHomeIds(home){
@@ -5808,7 +5747,7 @@
 
   function plantArt(typeId, stage){
     var set = PLANT_ART[typeId];
-    return set ? (set[stage || "planted"] || set.planted) : "";
+    return set ? (set[stage || "planted"] || "") : "";
   }
 
   function plantName(typeId){

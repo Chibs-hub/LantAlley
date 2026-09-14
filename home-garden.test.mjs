@@ -216,17 +216,23 @@ test("first-time mastery bonus adds one point and maturity caps growth", () => {
   const mastered = garden.creditLesson(state, "station:episode-1", 1);
   assert.equal(mastered.granted, 2);
   assert.equal(mastered.garden.plants[0].growthPoints, 2);
-  assert.equal(mastered.garden.plants[0].stage, "mature");
-  assert.equal(garden.lessonsRemaining(mastered.garden.plants[0]), 0);
-  const later = garden.creditLesson(mastered.garden, "station:episode-2", 1);
+  assert.equal(mastered.garden.plants[0].stage, "growing");
+  assert.equal(garden.lessonsRemaining(mastered.garden.plants[0]), 1);
+  const mature = garden.creditLesson(mastered.garden, "station:episode-2", 0);
+  assert.equal(mature.granted, 1);
+  assert.equal(mature.garden.plants[0].growthPoints, 3);
+  assert.equal(mature.garden.plants[0].stage, "mature");
+  assert.equal(garden.lessonsRemaining(mature.garden.plants[0]), 0);
+  const later = garden.creditLesson(mature.garden, "station:episode-3", 1);
   assert.equal(later.granted, 0);
-  assert.equal(later.garden.plants[0].growthPoints, 2);
-  assert.ok(later.garden.usedCreditIds.includes("station:episode-2"));
+  assert.equal(later.garden.plants[0].growthPoints, 3);
+  assert.ok(later.garden.usedCreditIds.includes("station:episode-3"));
 });
 
 const stageCases = [
   {typeId:"camellia", want:["planted", "sprout", "growing", "growing", "mature"]},
-  {typeId:"hydrangea", want:["planted", "sprout", "sprout", "sprout", "growing", "growing", "growing", "mature"]}
+  {typeId:"hydrangea", want:["planted", "sprout", "sprout", "sprout", "growing", "growing", "growing", "mature"]},
+  {typeId:"iris", want:["planted", "sprout", "growing", "mature"]}
 ];
 
 test("flower shrub and tree stages are monotonic at every growth point", () => {

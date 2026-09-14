@@ -22,7 +22,7 @@
     {id:"japanese-maple", name:"Japanese maple", kind:"tree", price:450, matureAt:10, sceneWidth:36},
     {id:"hydrangea", name:"Hydrangea", kind:"shrub", price:240, matureAt:7, sceneWidth:14},
     {id:"camellia", name:"Camellia", kind:"flower", price:120, matureAt:4, sceneWidth:18},
-    {id:"iris", name:"Iris", kind:"flower", price:90, matureAt:2, sceneWidth:8},
+    {id:"iris", name:"Iris", kind:"flower", price:90, matureAt:3, sceneWidth:8},
     {id:"chrysanthemum", name:"Chrysanthemum", kind:"flower", price:110, matureAt:3, sceneWidth:10},
     {id:"lantern-flower-bed", name:"Lantern-flower bed", kind:"shrub", price:200, matureAt:5, sceneWidth:15},
     /* Painted in four stages, so `matureAt` is 4 and the engine's stages map

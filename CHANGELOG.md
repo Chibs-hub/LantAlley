@@ -5,6 +5,19 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-14 - All garden species use production art (v364)
+
+Added the 16 production stage images for hydrangea, lantern-flower bed,
+chrysanthemum and iris. Each image has an explicit garden mapping, offline
+pre-cache entry, and asset test. The generated SVG plant stand-ins are removed.
+Iris now matures after three study points so planted, sprout, growing and
+mature all have a reachable stage.
+
+Measured each new set's plant-and-gravel baseline and brightness ceiling. The
+garden shell and icon URLs now use cache v364.
+
+Cache is v364.
+
 ### 2026-09-13 - A question no longer opens by saying her name (v363)
 
 Every authored question opened with コン：「...」 - Kon's name, a colon, and then the question, spoken by the recorded voice at the start of every single one. The speech bubble it appears in already carries a 「コン (Kon)」 name tab above it (`styles.css`), so the line said who was talking twice: once by the tab that is always on screen, once out loud, dozens of times in a row across a shift.

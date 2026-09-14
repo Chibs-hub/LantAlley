@@ -7,7 +7,7 @@
  * Bump CACHE_VERSION whenever any shell file changes, or returning players
  * will keep the old build.
  */
-var CACHE_VERSION = "lantern-alley-v363";
+var CACHE_VERSION = "lantern-alley-v364";
 // Teaching focus, saved block progress, and mobile shelf clearance.
 
 // audio-index.js assigns to `self`, so the worker and the page share one list
@@ -105,6 +105,22 @@ var SHELL = [
   "./assets/home/garden/sunflower-sprout-gravel-v2.webp",
   "./assets/home/garden/sunflower-growing-gravel-v2.webp",
   "./assets/home/garden/sunflower-mature-gravel-v2.webp",
+  "./assets/home/garden/hydrangea-planted-gravel-v2.webp",
+  "./assets/home/garden/hydrangea-sprout-gravel-v2.webp",
+  "./assets/home/garden/hydrangea-growing-gravel-v2.webp",
+  "./assets/home/garden/hydrangea-mature-gravel-v2.webp",
+  "./assets/home/garden/lantern-flower-bed-planted-gravel-v2.webp",
+  "./assets/home/garden/lantern-flower-bed-sprout-gravel-v2.webp",
+  "./assets/home/garden/lantern-flower-bed-growing-gravel-v2.webp",
+  "./assets/home/garden/lantern-flower-bed-mature-gravel-v2.webp",
+  "./assets/home/garden/chrysanthemum-planted-gravel-v2.webp",
+  "./assets/home/garden/chrysanthemum-sprout-gravel-v2.webp",
+  "./assets/home/garden/chrysanthemum-growing-gravel-v2.webp",
+  "./assets/home/garden/chrysanthemum-mature-gravel-v2.webp",
+  "./assets/home/garden/iris-planted-gravel-v2.webp",
+  "./assets/home/garden/iris-sprout-gravel-v2.webp",
+  "./assets/home/garden/iris-growing-gravel-v2.webp",
+  "./assets/home/garden/iris-mature-gravel-v2.webp",
   "./assets/home/garden/sakura-planted-gravel-v2.webp",
   "./assets/home/garden/sakura-sprout-gravel-v2.webp",
   "./assets/home/garden/sakura-sapling-gravel-v2.webp",
@@ -132,11 +148,11 @@ var SHELL = [
   "./manifest.webmanifest",
   "./assets/branding/lantern-mark-v2.png",
   "./assets/social/lantern-alley-share-v2.jpg",
-  "./icons/icon-192.png?v=363",
-  "./icons/icon-512.png?v=363",
-  "./icons/icon-192-maskable.png?v=363",
-  "./icons/icon-512-maskable.png?v=363",
-  "./icons/apple-touch-icon.png?v=363",
+  "./icons/icon-192.png?v=364",
+  "./icons/icon-512.png?v=364",
+  "./icons/icon-192-maskable.png?v=364",
+  "./icons/icon-512-maskable.png?v=364",
+  "./icons/apple-touch-icon.png?v=364",
   "./assets/kon/kon-idle.webp",
   "./assets/kon/kon-wave-left.webp",
   "./assets/kon/kon-wave-right.webp",
