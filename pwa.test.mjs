@@ -739,6 +739,25 @@ test("every picture the home can show is on disk and cached", () => {
   }
 });
 
+test("the bird companion runtime and every animation remain available offline", () => {
+  const html = read("index.html");
+  const sw = read("sw.js");
+  const birdAt = html.indexOf('src="home-bird.js');
+  const appAt = html.indexOf('src="app.js');
+  assert.ok(birdAt >= 0 && birdAt < appAt, "the bird runtime loads before the game");
+  for (const path of [
+    "home-bird.js",
+    "assets/home/pet/uguisu-fly-v1.png",
+    "assets/home/pet/uguisu-perch-v1.png",
+    "assets/home/pet/uguisu-preen-v1.png",
+    "assets/home/pet/uguisu-sing-v1.png",
+    "assets/home/pet/uguisu-sleep-v1.png",
+    "assets/home/pet/uguisu-peck-v1.png",
+  ]) {
+    assert.ok(sw.includes('"./' + path + '"'), `${path} is missing from the offline shell`);
+  }
+});
+
 test("the four new garden species use their matching production stages", () => {
   const app = read("app.js");
   const sw = read("sw.js");

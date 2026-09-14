@@ -2461,7 +2461,7 @@ body:has(.about-panel:not([hidden])) .feedback-open{visibility:hidden;pointer-ev
   .home-goal b{color:#ffd489}
   .home-hint{color:#ffd489; font-weight:700}
   .home-tabs{display:flex; gap:8px; justify-content:center; margin:7px 0 0}
-  .home-main-menu{display:flex;justify-content:center;gap:8px;margin-top:7px}
+  .home-main-menu{display:flex;justify-content:center;gap:8px;margin-top:7px;flex-wrap:wrap}
   .home-menu-button{min-width:92px;padding:7px 16px;border-radius:9px;cursor:pointer;
     border:1px solid rgba(255,224,170,.38);background:rgba(24,14,8,.48);color:#fff0cf;font-weight:700}
   .home-menu-button:hover,.home-menu-button:focus-visible,.home-menu-button.is-on{
@@ -2682,6 +2682,9 @@ body:has(.about-panel:not([hidden])) .feedback-open{visibility:hidden;pointer-ev
     transform:translate(-50%,-86%); pointer-events:none; line-height:0;
     filter:drop-shadow(0 3px 4px rgba(28,16,8,.48)) saturate(.9) sepia(.08);
   }
+  /* Bird sprite feet sit at 90.6% of their square cell. Matching that baseline
+     to a painted roof, fence, sill or floor keeps every idle pose supported. */
+  .home-pet.is-bird{transform:translate(-50%,-90.6%)}
   /* The cat is lit by the hour too.
    *
    * It carried one fixed filter for every time of day, so at midday it was
@@ -2740,7 +2743,9 @@ body:has(.about-panel:not([hidden])) .feedback-open{visibility:hidden;pointer-ev
   }
   .home-pet[data-pet-behavior="curl-sleep"] > span,
   .home-pet[data-pet-behavior="side-sleep"] > span,
-  .home-pet[data-pet-behavior="loaf"] > span{
+  .home-pet[data-pet-behavior="loaf"] > span,
+  .home-pet.is-bird[data-pet-behavior="perch"] > span,
+  .home-pet.is-bird[data-pet-behavior="sleep"] > span{
     animation:pet-breathe 2.8s ease-in-out infinite;
   }
   @keyframes pet-breathe{

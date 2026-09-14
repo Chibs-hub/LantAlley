@@ -7,8 +7,8 @@
  * Bump CACHE_VERSION whenever any shell file changes, or returning players
  * will keep the old build.
  */
-var CACHE_VERSION = "lantern-alley-v364";
-// Teaching focus, saved block progress, and mobile shelf clearance.
+var CACHE_VERSION = "lantern-alley-v365";
+// Home bird companion, persisted pet selection, and refreshed garden art.
 
 // audio-index.js assigns to `self`, so the worker and the page share one list
 // of clip paths. Importing it here means new lines are cached automatically
@@ -45,6 +45,7 @@ var SHELL = [
   "./home-decor.js",
   "./home-garden.js",
   "./home-pet.js",
+  "./home-bird.js",
   // The house and yard. A learner who installed the game offline and
   // walks home to a broken image has lost the reward, not a decoration.
   "./assets/home/exterior/open-house-yard-v1.webp",
@@ -141,6 +142,12 @@ var SHELL = [
   "./assets/home/pet/calico-stretch-v1.png",
   "./assets/home/pet/calico-look-v1.png",
   "./assets/home/pet/calico-play-v1.png",
+  "./assets/home/pet/uguisu-fly-v1.png",
+  "./assets/home/pet/uguisu-perch-v1.png",
+  "./assets/home/pet/uguisu-preen-v1.png",
+  "./assets/home/pet/uguisu-sing-v1.png",
+  "./assets/home/pet/uguisu-sleep-v1.png",
+  "./assets/home/pet/uguisu-peck-v1.png",
   "./daily-practice.js",
   "./review-mode.js",
   "./question-renderer.js",
@@ -148,11 +155,11 @@ var SHELL = [
   "./manifest.webmanifest",
   "./assets/branding/lantern-mark-v2.png",
   "./assets/social/lantern-alley-share-v2.jpg",
-  "./icons/icon-192.png?v=364",
-  "./icons/icon-512.png?v=364",
-  "./icons/icon-192-maskable.png?v=364",
-  "./icons/icon-512-maskable.png?v=364",
-  "./icons/apple-touch-icon.png?v=364",
+  "./icons/icon-192.png?v=365",
+  "./icons/icon-512.png?v=365",
+  "./icons/icon-192-maskable.png?v=365",
+  "./icons/icon-512-maskable.png?v=365",
+  "./icons/apple-touch-icon.png?v=365",
   "./assets/kon/kon-idle.webp",
   "./assets/kon/kon-wave-left.webp",
   "./assets/kon/kon-wave-right.webp",

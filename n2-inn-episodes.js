@@ -171,13 +171,13 @@
           ]),
 
         q("inn-e01-q10", "integrated", "v-kotowaru", 12,
-          {jp:"お客様：「今から十人、泊まれますか。」空いているのは二人部屋が二つだけです。何と言いますか。", audio:true},
-          {type:"quick-response", options:["申し訳ありませんが、十名様分のお部屋はご用意できません。","はい、大丈夫です。","何も言いません。","少々お待ちください。"], correctIndex:0},
+          {jp:"お客様：「今から十人、泊まれますか。」二人部屋が二つしか空いていません。何と言いますか。", audio:true},
+          {type:"quick-response", options:["申し訳ありません。二人部屋が二つしか空いておりませんので、近くの宿をご案内いたします。","はい、大丈夫です。","何も言いません。","少々お待ちください。"], correctIndex:0},
           {correct:"正直に伝えられました。できないことを丁寧に伝えるのが「断る」です。",
            incorrect:"必要な部屋数をご用意できません。事情を丁寧に伝えてお断りしましょう。"},
           {prompt:"できないと丁寧に伝えることはどれですか。", options:["引き受ける","断る"], correctIndex:1, seconds:5},
           [
-            "断る - to refuse politely, which is also part of service",
+            "explaining the limited vacancy and offering practical help",
             "promising rooms that do not exist",
             "saying nothing, which leaves the guest waiting",
             "asking them to wait, which delays an answer that will not change"

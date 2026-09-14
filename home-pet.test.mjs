@@ -220,8 +220,9 @@ test("dense decoration fails safely instead of routing through an object", () =>
 test("the live home supplies placed furniture and plants to pet routing", () => {
   const app = fs.readFileSync(new URL("./app.js", import.meta.url), "utf8");
   assert.match(app, /function homePetBlockers\(scene\)/);
-  assert.match(app, /LanternHomePet\.nextAnchor\(homePetState,\s*homePetBlockers\(homePetState\.scene\)\)/);
-  assert.match(app, /LanternHomePet\.safeAnchor\(homePetState, blockers\)/);
+  assert.match(app, /var blockers = homePetSpecies === "cat" \? homePetBlockers\(homePetState\.scene\) : \[\]/);
+  assert.match(app, /pet\.nextAnchor\(homePetState,\s*blockers\)/);
+  assert.match(app, /pet\.safeAnchor\(homePetState, blockers\)/);
   assert.match(app, /z-index:' \+ homeDepthZ/);
 });
 
@@ -231,7 +232,7 @@ test("resting poses breathe subtly and respect reduced motion", () => {
   assert.match(app, /data-pet-behavior/);
   assert.match(css, /@keyframes pet-breathe/);
   assert.match(css, /prefers-reduced-motion:reduce[^}]*\.home-pet > span/s);
-  assert.match(app, /reduced\s*\?\s*LanternHomePet\.settleAt/);
+  assert.match(app, /reduced\s*\?\s*pet\.settleAt/);
   assert.doesNotMatch(app, /if\(!reduced && homePetIdleMs > dwell\)/);
 });
 

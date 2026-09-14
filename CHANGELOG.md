@@ -5,6 +5,26 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-15 - The home has a bird companion (v365)
+
+Added an animated Japanese bush warbler with six production sprite sheets:
+flight, perch, preen, song, sleep and ground pecking. Every resting anchor is
+measured against a visible roof, fence, rail, sill, beam, stone or tatami
+surface in the yard and room paintings. Its depth scale is calibrated as a
+small songbird beside the existing cat, and flight follows a lifted arc between
+supports. Reduced-motion mode lands it immediately rather than freezing it in
+the air.
+
+The unlocked home now offers a compact Cat/Bird companion control. The choice
+is saved, migrated safely, restored after reload and included in the offline
+shell with all six images. Home controls wrap on narrow screens.
+
+The Inn's ten-guest availability question now states the available rooms and
+grades the service response without treating a refusal itself as an error.
+Installed-app icon URLs now carry the same v365 stamp as the page and worker.
+
+Cache is v365.
+
 ### 2026-09-14 - All garden species use production art (v364)
 
 Added the 16 production stage images for hydrangea, lantern-flower bed,

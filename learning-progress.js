@@ -46,6 +46,7 @@
       starterSeedClaimed: false,
       starterCushionClaimed: false,
       activeWallpaper: "wallpaper-plain",
+      activePet: "cat",
       garden: emptyGarden(),
       // The earned Inn route is independent from home inventory. A fresh save
       // begins with its rewards and cat locked; a legacy save is normalized
@@ -124,6 +125,7 @@
     next.homeTutorialComplete = stored.homeTutorialComplete === true;
     next.activeWallpaper = typeof stored.activeWallpaper === "string" && stored.activeWallpaper
       ? stored.activeWallpaper : "wallpaper-plain";
+    next.activePet = stored.activePet === "bird" ? "bird" : "cat";
 
     var gardenSource = stored.garden || emptyGarden();
     var gardenDefault = emptyGarden();

@@ -169,6 +169,7 @@
     starterSeedClaimed:false,
     starterCushionClaimed:false,
     activeWallpaper:"wallpaper-plain",
+    activePet:"cat",
     garden:emptyGardenState(),
     innJourney:typeof LanternInnJourney !== "undefined" ? LanternInnJourney.fresh()
       : {version:1, claimed:{}, catUnlocked:false}
@@ -368,6 +369,7 @@
         pendingStarterSeedClaimed = v3.starterSeedClaimed === true;
         pendingStarterCushionClaimed = v3.starterCushionClaimed === true;
         pendingActiveWallpaper = v3.activeWallpaper || "wallpaper-plain";
+        pendingActivePet = v3.activePet === "bird" ? "bird" : "cat";
         pendingGarden = v3.garden || emptyGardenState();
         pendingInnJourney = v3.innJourney || null;
         pendingLastPlace = v3.lastPlace || null;
@@ -397,6 +399,7 @@
       pendingStarterSeedClaimed = migrated.starterSeedClaimed === true;
       pendingStarterCushionClaimed = migrated.starterCushionClaimed === true;
       pendingActiveWallpaper = migrated.activeWallpaper || "wallpaper-plain";
+      pendingActivePet = migrated.activePet === "bird" ? "bird" : "cat";
       pendingGarden = migrated.garden || emptyGardenState();
       pendingInnJourney = migrated.innJourney || null;
       savedEpisode = null;
@@ -522,6 +525,7 @@
         ,starterSeedClaimed: state.starterSeedClaimed === true
         ,starterCushionClaimed: state.starterCushionClaimed === true
         ,activeWallpaper: state.activeWallpaper || "wallpaper-plain"
+        ,activePet: state.activePet === "bird" ? "bird" : "cat"
         ,garden: state.garden || emptyGardenState()
         ,innJourney: state.innJourney || (typeof LanternInnJourney !== "undefined"
           ? LanternInnJourney.fresh() : {version:1, claimed:{}, catUnlocked:false})
@@ -551,6 +555,7 @@
       state.starterSeedClaimed = false;
       state.starterCushionClaimed = false;
       state.activeWallpaper = "wallpaper-plain";
+      state.activePet = "cat";
       state.garden = emptyGardenState();
       state.innJourney = typeof LanternInnJourney !== "undefined" ? LanternInnJourney.fresh()
         : {version:1, claimed:{}, catUnlocked:false};
@@ -763,6 +768,7 @@
   var pendingStarterSeedClaimed = false;
   var pendingStarterCushionClaimed = false;
   var pendingActiveWallpaper = "wallpaper-plain";
+  var pendingActivePet = "cat";
   var pendingGarden = emptyGardenState();
   var pendingInnJourney = null;
   var pendingLegacyMasteryHydration = false;
@@ -797,6 +803,7 @@
   state.starterSeedClaimed = pendingStarterSeedClaimed;
   state.starterCushionClaimed = pendingStarterCushionClaimed;
   state.activeWallpaper = pendingActiveWallpaper;
+  state.activePet = pendingActivePet;
   state.garden = pendingGarden;
   if(pendingInnJourney){
     state.innJourney = typeof LanternInnJourney !== "undefined"
@@ -5367,6 +5374,7 @@
   var homeTab = "garden";     // "garden" | "storage" | "shop"
   var homeNotice = "";
   var homePetState = null;
+  var homePetSpecies = null;
   var homePetFrame = 0;
   var homePetLastTime = 0;
   var homePetIdleMs = 0;
@@ -5912,15 +5920,21 @@
     return [];
   }
 
+  function homePetApi(){
+    if(state.activePet === "bird" && typeof LanternHomeBird !== "undefined") return LanternHomeBird;
+    return typeof LanternHomePet !== "undefined" ? LanternHomePet : null;
+  }
+
   function homePetMarkup(scene){
-    if(typeof LanternHomePet === "undefined") return "";
+    var species = state.activePet === "bird" ? "bird" : "cat";
+    var pet = homePetApi();
+    if(!pet) return "";
     if(!state.innJourney || !state.innJourney.catUnlocked) return "";
-    if(!homePetState){
-      // The very first sighting of the cat this visit: let it arrive through
-      // the door, as if walking in to greet the player.
-      homePetState = LanternHomePet.enterScene
-        ? LanternHomePet.enterScene(scene, Date.now())
-        : LanternHomePet.create(scene, Date.now());
+    if(!homePetState || homePetSpecies !== species){
+      homePetSpecies = species;
+      homePetState = pet.enterScene
+        ? pet.enterScene(scene, Date.now())
+        : pet.create(scene, Date.now());
       homePetIdleMs = 0;
     } else if(homePetState.scene !== scene){
       // Switching between the yard and the room mid-visit used to walk the
@@ -5931,18 +5945,19 @@
       // its day. create() already excludes door anchors from its pick, so a
       // fresh ordinary resting spot in the new scene keeps this feeling
       // continuous instead of like a hard reset.
-      homePetState = LanternHomePet.create(scene, Date.now());
+      homePetState = pet.create(scene, Date.now());
       homePetIdleMs = 0;
     }
-    var blockers = homePetBlockers(scene);
-    if(LanternHomePet.pointIsClear && !LanternHomePet.pointIsClear(homePetState, blockers)){
-      var safe = LanternHomePet.safeAnchor(homePetState, blockers);
-      if(safe) homePetState = LanternHomePet.settleAt(homePetState, safe.id);
+    var blockers = species === "cat" ? homePetBlockers(scene) : [];
+    if(pet.pointIsClear && !pet.pointIsClear(homePetState, blockers)){
+      var safe = pet.safeAnchor(homePetState, blockers);
+      if(safe) homePetState = pet.settleAt(homePetState, safe.id);
     }
-    var sprite = LanternHomePet.spriteFor(homePetState);
-    var petWidth = (typeof LanternHomePet !== "undefined" && LanternHomePet.widthAt)
-      ? LanternHomePet.widthAt(homePetState.y, homePetState.scene) : 7.5;
-    return '<div class="home-pet" aria-hidden="true" data-pet-behavior="' + homePetState.behavior
+    var sprite = pet.spriteFor(homePetState);
+    var petWidth = pet.widthAt ? pet.widthAt(homePetState.y, homePetState.scene) : 7.5;
+    return '<div class="home-pet' + (species === "bird" ? ' is-bird' : '')
+      + '" aria-hidden="true" data-pet-species="' + species
+      + '" data-pet-behavior="' + homePetState.behavior
       + '" style="width:' + petWidth + '%;left:' + homePetState.x
       + '%;top:' + homePetState.y + '%;--pet-lamp:'
       + (homePetState.scene === 'yard' ? plantLampProximity(homePetState) : 1)
@@ -5954,8 +5969,9 @@
 
   function updateHomePetNode(){
     var node = document.querySelector(".home-pet");
-    if(!node || !homePetState || typeof LanternHomePet === "undefined") return;
-    var sprite = LanternHomePet.spriteFor(homePetState);
+    var pet = homePetApi();
+    if(!node || !homePetState || !pet) return;
+    var sprite = pet.spriteFor(homePetState);
     var column = sprite.frame % sprite.columns;
     var row = Math.floor(sprite.frame / sprite.columns);
     var x = sprite.columns > 1 ? column * 100 / (sprite.columns - 1) : 0;
@@ -5966,7 +5982,7 @@
      * whatever size it had when it set off and then jumped to the right one at
      * the next interaction. That snap is what read as the size changing on its
      * own: the rule was right and it was being applied at the wrong moments. */
-    if(LanternHomePet.widthAt) node.style.width = LanternHomePet.widthAt(homePetState.y, homePetState.scene) + "%";
+    if(pet.widthAt) node.style.width = pet.widthAt(homePetState.y, homePetState.scene) + "%";
     node.style.left = homePetState.x + "%";
     node.style.top = homePetState.y + "%";
     node.style.zIndex = homeDepthZ(homePetState.y);
@@ -5986,24 +6002,27 @@
   function startHomePetMotion(){
     if(homePetFrame && typeof cancelAnimationFrame === "function") cancelAnimationFrame(homePetFrame);
     if(typeof requestAnimationFrame !== "function" || homeView === "shop") return;
+    var pet = homePetApi();
+    if(!pet || !homePetState) return;
     homePetLastTime = 0;
     function tick(time){
       if(state.currentKey !== "home" || homeView === "shop") return;
       var elapsed = homePetLastTime ? Math.min(80, time - homePetLastTime) : 16;
       homePetLastTime = time;
       var reduced = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
-      homePetState = LanternHomePet.step(homePetState, elapsed, {paused:document.hidden, reducedMotion:reduced});
+      homePetState = pet.step(homePetState, elapsed, {paused:document.hidden, reducedMotion:reduced});
       if(homePetState && !homePetState.targetId){
         homePetIdleMs += elapsed;
-        var dwell = LanternHomePet.dwellMs ? LanternHomePet.dwellMs(homePetState) : 6000;
+        var dwell = pet.dwellMs ? pet.dwellMs(homePetState) : 6000;
         if(homePetIdleMs > dwell){
           homePetState.seed = (homePetState.seed * 1664525 + 1013904223) >>> 0;
-          var destination = LanternHomePet.nextAnchor
-            ? LanternHomePet.nextAnchor(homePetState, homePetBlockers(homePetState.scene))
-            : LanternHomePet.anchors(homePetState.scene).filter(function(anchor){ return anchor.id !== homePetState.anchorId; })[0];
+          var blockers = homePetSpecies === "cat" ? homePetBlockers(homePetState.scene) : [];
+          var destination = pet.nextAnchor
+            ? pet.nextAnchor(homePetState, blockers)
+            : pet.anchors(homePetState.scene).filter(function(anchor){ return anchor.id !== homePetState.anchorId; })[0];
           if(destination) homePetState = reduced
-            ? LanternHomePet.settleAt(homePetState, destination.id)
-            : LanternHomePet.sendTo(homePetState, destination.id);
+            ? pet.settleAt(homePetState, destination.id)
+            : pet.sendTo(homePetState, destination.id);
           homePetIdleMs = 0;
         }
       }
@@ -6737,6 +6756,14 @@
     return report;
   }
 
+  function homePetToggleButton(){
+    if(!state.innJourney || !state.innJourney.catUnlocked) return "";
+    var current = state.activePet === "bird" ? "Bird" : "Cat";
+    var next = state.activePet === "bird" ? "Cat" : "Bird";
+    return '<button type="button" data-home-pet-toggle="1" class="home-menu-button home-pet-toggle"'
+      + ' aria-label="Switch companion to ' + next + '">Pet: ' + current + '</button>';
+  }
+
   function paintHome(){
     rememberHomeSceneCamera();
     if(typeof LanternHomeDecor === "undefined" || !homeScenes()){
@@ -6788,6 +6815,7 @@
           + (homeView === "yard" ? '<details class="home-yard-more"><summary aria-label="庭のその他の操作">•••</summary>'
               + '<div><button type="button" data-clear-yard="1">庭を空にする</button>'
               + '<button type="button" data-restore-yard="1">最初の配置に戻す</button></div></details>' : '')
+          + homePetToggleButton()
           + '</div>'
           + (homeDecorating ? '<div class="home-tabs" role="tablist">' + tabs.map(function(t){
               return '<button type="button" class="home-tab' + (homeTab === t[0] ? " is-on" : "")
@@ -6867,6 +6895,15 @@
     }
     if(event.target.closest("[data-tutorial-done]")){
       endHomeTutorial();
+      return;
+    }
+    if(event.target.closest("[data-home-pet-toggle]")){
+      state.activePet = state.activePet === "bird" ? "cat" : "bird";
+      homePetState = null;
+      homePetSpecies = null;
+      homePetIdleMs = 0;
+      saveProgress();
+      paintHome();
       return;
     }
     if(event.target.closest("[data-home-decorate]")){

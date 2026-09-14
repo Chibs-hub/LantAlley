@@ -1536,6 +1536,26 @@ test("switching between the yard and the room does not always re-seat the cat at
     "switching back to the yard must not always re-seat the cat at its door");
 });
 
+test("the companion selector swaps pets immediately and keeps the choice after reload", () => {
+  const storage = new FakeStorage();
+  const game = boot(plantedCamelliaSave({activePet:"cat"}), "", {storage});
+  enterHome(game);
+  assert.equal(game.doc.querySelector(".home-pet").dataset.petSpecies, "cat");
+
+  const toggle = game.doc.querySelector("[data-home-pet-toggle]");
+  assert.ok(toggle, "an unlocked home offers a companion selector");
+  toggle.click();
+  assert.equal(game.doc.querySelector(".home-pet").dataset.petSpecies, "bird");
+  assert.equal(JSON.parse(storage.getItem("lanternAlley.v3")).activePet, "bird");
+
+  game.doc.querySelector("[data-enter-house]").click();
+  assert.equal(game.doc.querySelector(".home-pet").dataset.petSpecies, "bird");
+
+  const reloaded = boot(null, "", {storage});
+  enterHome(reloaded);
+  assert.equal(reloaded.doc.querySelector(".home-pet").dataset.petSpecies, "bird");
+});
+
 test("yard reset actions live in a compact overflow menu", () => {
   const game = boot(plantedCamelliaSave());
   enterHome(game);

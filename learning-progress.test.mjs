@@ -29,12 +29,20 @@ test("empty progress includes independent home and garden reward defaults", () =
   assert.equal(first.starterSeedClaimed, false);
   assert.equal(first.starterCushionClaimed, false);
   assert.equal(first.activeWallpaper, "wallpaper-plain");
+  assert.equal(first.activePet, "cat");
   assert.deepEqual(JSON.parse(JSON.stringify(first.garden)), {
     plants: [], usedCreditIds: [], starterClaimed: false, nextInstanceId: 1,
   });
 
   first.garden.plants.push({ id: "plant-1" });
   assert.deepEqual([...second.garden.plants], []);
+});
+
+test("the chosen companion survives reload and invalid values fall back to the cat", () => {
+  const progress = load();
+  assert.equal(progress.migrateProgress({version:3, stages:{}, activePet:"bird"}).activePet, "bird");
+  assert.equal(progress.migrateProgress({version:3, stages:{}, activePet:"owl"}).activePet, "cat");
+  assert.equal(progress.migrateProgress({version:3, stages:{}}).activePet, "cat");
 });
 
 test("a fresh save starts with every Inn journey reward locked", () => {
