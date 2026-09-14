@@ -1700,6 +1700,29 @@ test("a plant only grows while it is in the ground", () => {
     "the shift it missed is not paid out retroactively");
 });
 
+test("garden growth notices use natural Japanese for flower stages and trees", () => {
+  const cases = [
+    { typeId: "camellia", stage: "sprout", want: "「椿」の芽が出ました。" },
+    { typeId: "camellia", stage: "growing", want: "「椿」が育ってきました。" },
+    { typeId: "japanese-maple", stage: "mature", want: "「もみじ」が立派に育ちました。" },
+  ];
+
+  for (const sample of cases) {
+    const game = boot(plantedCamelliaSave({
+      visited: ["entrance", "home-inn"], stageStarted: ["home-inn"],
+      garden: { plants: [{ id: "p1", typeId: sample.typeId, slotId: "garden-left-2",
+        growthPoints: 2, stage: sample.stage, pendingAnimation: true }],
+        usedCreditIds: [], starterClaimed: true, nextInstanceId: 2 },
+    }));
+
+    enterHome(game);
+    game.clock.advance(1200);
+    const note = game.doc.querySelectorAll(".home-goal")[0];
+    assert.ok(note, "growth notice is shown for " + sample.typeId + " " + sample.stage);
+    assert.equal(note.textContent, sample.want);
+  }
+});
+
 test("the yard announces a plant that grew while the learner was away", async () => {
   const game = boot(plantedCamelliaSave({
     visited: ["entrance", "home-inn"], stageStarted: ["home-inn"],

@@ -5826,7 +5826,7 @@
     "sunflower":"ひまわり"
   };
 
-  var STAGE_JP = {planted:"植えたばかり", sprout:"芽", growing:"育ち中", mature:"満開"};
+  var STAGE_JP = {planted:"植えたばかり", sprout:"芽", growing:"育ち中", mature:"成長済み"};
 
   function plantsInYard(){
     return (gardenState().plants || []).filter(function(p){ return p.slotId; });
@@ -6878,10 +6878,14 @@
     if(typeof LanternHomeGarden === "undefined") return;
     var grown = plantsInYard().filter(function(p){ return p.pendingAnimation; });
     if(!grown.length) return;
-    var names = grown.map(function(p){
-      return "「" + plantName(p.typeId) + "」" + (STAGE_JP[p.stage] || "");
-    }).join("、");
-    homeSay(names + " になりました。");
+    var messages = grown.map(function(p){
+      var name = plantName(p.typeId);
+      if(p.stage === "sprout") return "「" + name + "」の芽が出ました。";
+      if(p.stage === "growing") return "「" + name + "」が育ってきました。";
+      if(p.stage === "mature") return "「" + name + "」が立派に育ちました。";
+      return "「" + name + "」を植えました。";
+    }).join("");
+    homeSay(messages);
     state.garden = LanternHomeGarden.acknowledgeAnimations(gardenState());
     saveProgress();
   }
