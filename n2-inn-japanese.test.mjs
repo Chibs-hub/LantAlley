@@ -136,6 +136,21 @@ test("corrected teaching sentences remain natural and story-consistent", () => {
   assert.match(complete.prompt.jp, /見回りを（　　）した部屋の数/);
 });
 
+test("dinner scheduling states which group goes first so the scored solution is unique", () => {
+  const context = loadInn();
+  const practice = context.N2HomeInnStage.practice.find((item) => item.focusWord === "調整");
+  const challenge = context.N2HomeInnStage.challenge.find((item) => item.focusWord === "調整");
+
+  assert.match(stageSource, /Cグループを先にご案内します/);
+  assert.match(stageSource, /Aグループを先にご案内します/);
+  assert.equal(practice.interaction.labelA, "Cグループ夕食");
+  assert.equal(practice.interaction.targetA, 18);
+  assert.equal(practice.interaction.targetB, 20);
+  assert.match(challenge.jp, /Aグループを先にご案内します/);
+  assert.equal(challenge.interaction.targetA, 18);
+  assert.equal(challenge.interaction.targetB, 20);
+});
+
 test("episode prompts do not leak target words where the task is to choose them", () => {
   const context = loadInn();
   const keep = question(context, "inn-e03", "inn-e03-q10");

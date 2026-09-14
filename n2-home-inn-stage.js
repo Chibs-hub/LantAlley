@@ -536,7 +536,7 @@
     {
       scene:"dinner-seatings",
       controlHelp:"Use Earlier or Later to set each dinner time, then press 決定 to confirm.",
-      clue:"Both dinner start times can move. Leave enough time to serve one group before the next.",
+      clue:"Both dinner start times can move. Group A goes first; leave enough time to serve it before Group B.",
       min:17,max:21,startA:18,startB:18,gap:2,targetA:18,targetB:20,fixedB:false,labelA:"Aグループ夕食",labelB:"Bグループ夕食"
     },
     {
@@ -557,7 +557,7 @@
     {
       scene:"dinner-seatings",
       controlHelp:"Use Earlier or Later to set each dinner time, then press 決定 to confirm.",
-      clue:"Both dinner start times can move. Leave enough time to serve one group before the next.",
+      clue:"Both dinner start times can move. Group C goes first; leave enough time to serve it before Group D.",
       min:17,max:21,startA:18,startB:18,gap:2,targetA:18,targetB:20,fixedB:false,labelA:"Cグループ夕食",labelB:"Dグループ夕食"
     },
     {
@@ -582,7 +582,7 @@
     {jp:"二つのマットに、同じ向きの座布団を二枚ずつ揃えてください。", romaji:"Futatsu no matto ni, onaji muki no zabuton o nimai zutsu soroete kudasai.", narration:"The cushions have been used again and now face different directions.", meaning:"Please place two cushions facing the same direction on each mat.", successReply:"座布団の向きが揃いました。これで朝食の準備を続けられます。"},
     {jp:"汚れたシーツを洗濯かごに入れて、新しいシーツに取り替えてください。", romaji:"Yogoreta shiitsu o sentakukago ni irete, atarashii shiitsu ni torikaete kudasai.", narration:"A marked sheet remains beside the fresh linen.", meaning:"Put the stained sheet in the laundry basket, then replace it with a new one.", successReply:"新しいシーツになりました。これで今夜のお客様を迎えられます。"},
     {jp:"ごはんを電子レンジで温めてください。", romaji:"Gohan o denshi renji de atatamete kudasai.", narration:"The evening meal has gone cold.", meaning:"Please warm the rice in the microwave.", successReply:"ごはんが温まりました。みんなで食事にしましょう。"},
-    {jp:"Cグループは18時以降、Dグループは20時までに夕食を始められます。一組の食事には2時間かかります。夕食の開始時刻を調整してください。", romaji:"C guruupu wa juuhachiji ikou, D guruupu wa nijuji made ni yuushoku o hajimeraremasu. Hitokumi no shokuji ni wa nijikan kakarimasu. Yuushoku no kaishi jikoku o chousei shite kudasai.", narration:"Two groups need dinner seatings, with enough time to serve one group before the next.", meaning:"Coordinate the two dinner start times using the stated booking windows.", successReply:"Cグループは18時、Dグループは20時になりました。これで順番に夕食をお出しできます。"},
+    {jp:"Cグループは18時以降、Dグループは20時までに夕食を始められます。Cグループを先にご案内します。一組の食事には2時間かかります。夕食の開始時刻を調整してください。", romaji:"C guruupu wa juuhachiji ikou, D guruupu wa nijuji made ni yuushoku o hajimeraremasu. C guruupu o saki ni goannai shimasu. Hitokumi no shokuji ni wa nijikan kakarimasu. Yuushoku no kaishi jikoku o chousei shite kudasai.", narration:"Two groups need dinner seatings, with Group C served first and enough time before Group D.", meaning:"Coordinate the two dinner start times using the booking windows, with Group C first.", successReply:"Cグループは18時、Dグループは20時になりました。これで順番に夕食をお出しできます。"},
     {jp:"三番から六番のお部屋の布団敷きを引き受けていただけませんか。", romaji:"Sanban kara rokuban no oheya no futonjiki o hikiukete itadakemasen ka.", narration:"Four rooms still need their futons laid out before the guests return.", meaning:"Would you take on laying out the futons for rooms three to six?", successReply:"ありがとうございます。お客様が戻るまでに間に合いました。"}
   ];
 
@@ -590,7 +590,7 @@
     {jp:"二つのマットに、同じ大きさの座布団を二枚ずつ揃えてください。", romaji:"Futatsu no matto ni, onaji ookisa no zabuton o nimai zutsu soroete kudasai.", narration:"The cushions are still mixed across the tatami.", meaning:"Please place two cushions of the same size on each mat.", successReply:"座布団の大きさが揃いました。これで部屋が整いました。"},
     {jp:"切れた電球を回収箱に入れて、新しい電球に取り替えてください。", romaji:"Kireta denkyuu o kaishuubako ni irete, atarashii denkyuu ni torikaete kudasai.", narration:"A lamp in the hallway has gone dark.", meaning:"Put the burned-out bulb in the recycling box, then replace it with a new one.", successReply:"新しい電球がつきました。これで廊下が明るくなります。"},
     {jp:"スープをコンロで温めてください。", romaji:"Suupu o konro de atatamete kudasai.", narration:"A guest returns late to a counter of cold dishes.", meaning:"Please warm the soup on the stove.", successReply:"スープが温まりました。お客様に出しましょう。"},
-    {label:"夕食の時間を決める", jp:"Aグループは18時以降、Bグループは20時までに夕食を始められます。一組の食事には2時間かかります。夕食の開始時刻を調整してください。", romaji:"A guruupu wa juuhachiji ikou, B guruupu wa nijuji made ni yuushoku o hajimeraremasu. Hitokumi no shokuji ni wa nijikan kakarimasu. Yuushoku no kaishi jikoku o chousei shite kudasai.", narration:"Both groups requested the same dinner time. Group A can begin at 18:00 or later, Group B by 20:00, and each meal needs two hours.", meaning:"Coordinate the two dinner start times using the booking windows and meal length.", successReply:"Aグループは18時、Bグループは20時になりました。これで順番に夕食をお出しできます。"},
+    {label:"夕食の時間を決める", jp:"Aグループは18時以降、Bグループは20時までに夕食を始められます。Aグループを先にご案内します。一組の食事には2時間かかります。夕食の開始時刻を調整してください。", romaji:"A guruupu wa juuhachiji ikou, B guruupu wa nijuji made ni yuushoku o hajimeraremasu. A guruupu o saki ni goannai shimasu. Hitokumi no shokuji ni wa nijikan kakarimasu. Yuushoku no kaishi jikoku o chousei shite kudasai.", narration:"Both groups requested the same dinner time. Group A goes first, can begin at 18:00 or later, Group B must begin by 20:00, and each meal needs two hours.", meaning:"Coordinate the two dinner start times using the booking windows and meal length, with Group A first.", successReply:"Aグループは18時、Bグループは20時になりました。これで順番に夕食をお出しできます。"},
     {jp:"明日の朝、玄関の掃除を引き受けていただけませんか。", romaji:"Ashita no asa, genkan no souji o hikiukete itadakemasen ka.", narration:"The entrance has to be swept before it opens tomorrow.", meaning:"Would you take on sweeping the entrance tomorrow morning?", successReply:"ありがとうございます。これで朝のお客様を気持ちよくお迎えできます。"}
   ];
 
