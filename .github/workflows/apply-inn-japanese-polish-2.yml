@@ -40,8 +40,17 @@ jobs:
               raise SystemExit(f'Expected one regression-list marker, found {text.count(marker)}')
           tests.write_text(text.replace(marker, replacement), encoding='utf-8')
           PY
-      - name: Run focused Inn tests
-        run: node --test n2-home-inn-stage.test.mjs n2-inn-japanese.test.mjs
+      - name: Check JavaScript syntax
+        run: node --check n2-home-inn-stage.js
+      - name: Run Japanese regression tests
+        run: node --test n2-inn-japanese.test.mjs
+      - name: Confirm only intended files changed
+        shell: bash
+        run: |
+          changed="$(git diff --name-only)"
+          expected=$'n2-home-inn-stage.js\nn2-inn-japanese.test.mjs'
+          test "$changed" = "$expected" || { echo "Unexpected diff:"; printf '%s\n' "$changed"; exit 1; }
+          git diff --check
       - name: Commit verified correction and remove one-off workflow
         shell: bash
         run: |
