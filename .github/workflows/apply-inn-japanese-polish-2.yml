@@ -22,8 +22,9 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          path = Path('n2-home-inn-stage.js')
-          text = path.read_text(encoding='utf-8')
+
+          stage = Path('n2-home-inn-stage.js')
+          text = stage.read_text(encoding='utf-8')
           replacements = [
               ('三番のお客様は、浴衣を二枚まだお返しになっていません。',
                '三番のお客様は、浴衣二枚をまだお返しになっていません。'),
@@ -35,16 +36,30 @@ jobs:
               if count != 1:
                   raise SystemExit(f'Expected exactly one occurrence of {old!r}, found {count}')
               text = text.replace(old, new)
-          path.write_text(text, encoding='utf-8')
+          stage.write_text(text, encoding='utf-8')
+
+          tests = Path('n2-inn-japanese.test.mjs')
+          text = tests.read_text(encoding='utf-8')
+          old = '三番のお客様は、浴衣を二枚まだお返しになっていません。'
+          new = '三番のお客様は、浴衣二枚をまだお返しになっていません。'
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected one old 浴衣 assertion, found {text.count(old)}')
+          text = text.replace(old, new)
+          marker = '    "三番から六番のお部屋のお布団を引き受けて"\n'
+          replacement = '    "三番から六番のお部屋のお布団を引き受けて",\n    "浴衣を二枚まだ",\n    "仕事を責任を持って受ける"\n'
+          if text.count(marker) != 1:
+              raise SystemExit(f'Expected one regression-list marker, found {text.count(marker)}')
+          text = text.replace(marker, replacement)
+          tests.write_text(text, encoding='utf-8')
           PY
-      - name: Run Inn Japanese tests
-        run: node --test n2-home-inn-stage.test.mjs n2-inn-japanese.test.mjs
+      - name: Run full test suite
+        run: node --test
       - name: Commit verified corrections and remove one-off workflow
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add n2-home-inn-stage.js
+          git add n2-home-inn-stage.js n2-inn-japanese.test.mjs
           git rm .github/workflows/apply-inn-japanese-polish-2.yml
           git commit -m "Polish remaining Inn training Japanese"
           git push origin HEAD:codex/inn-learning-redesign
