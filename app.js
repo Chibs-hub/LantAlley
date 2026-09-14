@@ -5659,10 +5659,10 @@
     "cherry-tree": {planted:95.3, sprout:94.3, sapling:92.6, young:94.1, mature:92.2},
     "japanese-maple": {planted:95.3, sprout:93.0, sapling:95.3, young:93.8, mature:94.1},
     sunflower: {planted:95.3, sprout:92.8, growing:95.3, mature:95.3},
-    hydrangea: {planted:97.8, sprout:97.3, growing:97.8, mature:97.8},
-    "lantern-flower-bed": {planted:92.0, sprout:92.0, growing:92.0, mature:92.0},
-    chrysanthemum: {planted:85.3, sprout:85.3, growing:85.3, mature:85.3},
-    iris: {planted:82.6, sprout:82.6, growing:83.0, mature:82.6}
+    hydrangea: {planted:97.8, sprout:97.8, growing:97.8, mature:97.3},
+    "lantern-flower-bed": {planted:97.8, sprout:97.8, growing:97.8, mature:97.8},
+    chrysanthemum: {planted:97.8, sprout:97.8, growing:97.8, mature:97.8},
+    iris: {planted:97.8, sprout:97.8, growing:97.8, mature:97.8}
   };
 
   function plantBase(typeId, stage){

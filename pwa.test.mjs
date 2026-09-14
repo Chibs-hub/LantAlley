@@ -816,10 +816,10 @@ test("every painted plant stage has its own measured baseline", () => {
       assert.ok(named.has(stage), id + " has art for " + stage + " but no baseline for it");
     }
     const sharedFrameBaselines = {
-      hydrangea: {planted:97.8, sprout:97.3, growing:97.8, mature:97.8},
-      "lantern-flower-bed": {planted:92.0, sprout:92.0, growing:92.0, mature:92.0},
-      chrysanthemum: {planted:85.3, sprout:85.3, growing:85.3, mature:85.3},
-      iris: {planted:82.6, sprout:82.6, growing:83.0, mature:82.6}
+      hydrangea: {planted:97.8, sprout:97.8, growing:97.8, mature:97.3},
+      "lantern-flower-bed": {planted:97.8, sprout:97.8, growing:97.8, mature:97.8},
+      chrysanthemum: {planted:97.8, sprout:97.8, growing:97.8, mature:97.8},
+      iris: {planted:97.8, sprout:97.8, growing:97.8, mature:97.8}
     };
     if (sharedFrameBaselines[id]) {
       assert.deepEqual(Object.fromEntries(values), sharedFrameBaselines[id],
