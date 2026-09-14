@@ -39,7 +39,8 @@ test("known broken Japanese does not return", () => {
     "方が三組あります",
     "手は二つしかありません",
     "合わせられました",
-    "三番から六番のお部屋のお布団を引き受けて"
+    "三番から六番のお部屋のお布団を引き受けて",
+    "仕事を責任を持って受ける"
   ]) {
     assert.equal(source.includes(bad), false, `legacy Japanese returned: ${bad}`);
   }
