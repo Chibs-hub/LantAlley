@@ -93,8 +93,8 @@
         q("inn-e01-q04", "listening-task", "v-torikaeru", 5,
           {jp:"お客様：「タオルが濡れています。」", audio:true},
           {type:"single-choice", options:["そのままにします。","タオルを温めます。","タオルを揃えます。","新しいタオルに取り替えます。"], correctIndex:3},
-          {correct:"新しいタオルをお渡ししました。物を別の物にするのは「取り替える」です。",
-           incorrect:"濡れたままでした。同じ種類の新しい物にするのが「取り替える」です。"},
+          {correct:"新しいタオルをお渡ししました。ある物を同じ種類の別の物と交換するのが「取り替える」です。",
+           incorrect:"濡れたままでした。同じ種類の新しい物と交換するのが「取り替える」です。"},
           {prompt:"「取り替える」に近い意味はどれですか。", options:["別の物と交換する","人の代わりをする"], correctIndex:0, seconds:8},
           [
             "leaving it as it is - the guest is still waiting",
@@ -117,10 +117,10 @@
           ]),
 
         q("inn-e01-q06", "reading", "w-souji", 120,
-          {jp:"【二階のお知らせ】\n一番　明日の朝十時にご出発\n二番　明日の朝十時にご出発\n三番　先ほどお帰りになりました\n四番　明後日までご滞在\n五番　先ほどお帰りになりました\n六番　工事中（入れません）\n七番　夕方にご到着の予定\n八番　掃除が終わっています\n※お帰りになった部屋だけ、今から掃除します。\n※工事中の部屋と、掃除が終わっている部屋はしません。\n今から掃除をする部屋はどれですか。", audio:false},
+          {jp:"【二階のお知らせ】\n一番　明日の朝十時にご出発\n二番　明日の朝十時にご出発\n三番　先ほどお帰りになりました\n四番　明後日までご滞在\n五番　先ほどお帰りになりました\n六番　工事中（入れません）\n七番　夕方にご到着の予定\n八番　掃除が終わっています\n※お客様がお帰りになった部屋だけ、今から掃除します。\n※工事中の部屋と、掃除が終わっている部屋はしません。\n今から掃除をする部屋はどれですか。", audio:false},
           {type:"evidence-choice", options:["一番と二番","三番と五番","三番と五番と六番","四番と七番"], correctIndex:1},
-          {correct:"三番と五番の掃除を始められます。お帰りになった部屋だけを選べました。",
-           incorrect:"お帰りになったのは三番と五番だけです。ほかの部屋はまだお客様がいるか、掃除が終わっています。"},
+          {correct:"三番と五番の掃除を始められます。お客様がお帰りになった部屋だけを選べました。",
+           incorrect:"お客様がお帰りになったのは三番と五番だけです。ほかの部屋はまだお客様がいるか、掃除が終わっています。"},
           {prompt:"部屋をきれいにすることはどれですか。", options:["掃除","案内"], correctIndex:0, seconds:5},
           [
             "these guests do not leave until tomorrow morning",
@@ -135,7 +135,7 @@
           {jp:"【今夜のご案内】　三番　二名様\n花火　八時から（中庭からご覧になれます）\n夕食　一時間かかります\nお風呂　一時間かかります\n朝食　明日の七時から（一階の広間）\n売店　九時に閉まります\n※お風呂は、夕食が終わってからです。\n※お客様は、花火が始まるまでに夕食とお風呂を終えたいとおっしゃっています。\n夕食は何時に始めればいいですか。", audio:false},
           {type:"evidence-choice", options:["六時","五時","七時","八時"], correctIndex:0},
           {correct:"六時に始めれば、夕食もお風呂も済ませて花火に間に合います。条件を合わせるのが「調整」です。",
-           incorrect:"夕食に一時間、そのあとお風呂に一時間かかります。八時から二時間戻してください。"},
+           incorrect:"夕食に一時間、そのあとお風呂に一時間かかります。八時の二時間前は何時か考えてください。"},
           {prompt:"いくつかの条件を合わせることはどれですか。", options:["調節","調整"], correctIndex:1, seconds:5},
           [
             "two hours before the fireworks: one for dinner, one for the bath",
@@ -218,10 +218,10 @@
     progress:{label:"朝の帳場", beats:["書類","確認","帳面","規則","昼支度"]},
     intro:{jp:"コン：「お祭りの夜は終わりました。お客様はまだお休みですが、帳場の仕事は残っています。昨夜は耳の仕事でしたね。今朝は目と手の仕事です。」", audio:true},
     briefing:{
-      jp:"コン：「昼までに、この予約帳を正しくしてください。今朝はほとんど声が出ません。漢字の書き方、言葉の形、文の組み立て、そして文章の中の言葉を選びます。読む問題は長いので、時間も長く取ってあります。間違えた仕事は、最後にもう一度だけ確認します。」",
+      jp:"コン：「昼までに、この予約帳を正しくしてください。今朝は音声の問題はほとんどありません。漢字の書き方、言葉の形、文の組み立て、そして文章の中の言葉を選びます。読む問題は長いので、時間も長く取ってあります。間違えた仕事は、最後にもう一度だけ確認します。」",
       audio:true,
       points:[
-        "今朝は書く仕事です。声はほとんど出ません。",
+        "今朝は書く仕事です。音声の問題はほとんどありません。",
         "かなで書いてある言葉を、正しい漢字で選びます。",
         "言葉の前や後ろにつく形を選びます。",
         "文を組み立てて、★の場所に入る言葉を選びます。",
@@ -300,7 +300,7 @@
           ]),
 
         q2("inn-e02-q06", "text-grammar", "w-sakujo", 120,
-          {jp:"【帳場の申し送り】\nゆうべのご予約のうち、お取り消しのご連絡があったものは、帳面から（　　）してください。\n※ 線を引くだけでは、次の人にどちらが生きているのか分かりません。\n※ （　　）したご予約は、下の欄に日付とともに残してください。\n（　　）に入る言葉はどれですか。"},
+          {jp:"【帳場の申し送り】\nゆうべのご予約のうち、お取り消しのご連絡があったものは、帳面から（　　）してください。\n※ 線を引くだけでは、次の人にどの予約が有効なのか分かりません。\n※ （　　）したご予約は、下の欄に日付とともに残してください。\n（　　）に入る言葉はどれですか。"},
           {type:"single-choice", options:["記録","郵送","削除","清書"], correctIndex:2},
           {correct:"「削除」です。取り消しの連絡があった予約を、帳面から消します。",
            incorrect:"取り消しの連絡があったのですから、帳面から消す言葉を選びます。"},
@@ -342,16 +342,16 @@
           ]),
 
         q2("inn-e02-q09", "reading", "w-manin", 120,
-          {jp:"【本日の帳面】\n一番　二名様　ゆうべからご滞在中\n二番　四名様　本日お発ちになりました\n三番　二名様　本日お発ちになりました\n四番　三名様　今夜ご到着の予定\n五番　二名様　今夜ご到着の予定\n六番　四名様　本日お発ちになりました\n※ お発ちになった部屋は、掃除が済み次第、今夜のお客様をお入れできます。\n※ ご滞在中の部屋と、今夜ご到着の予定の部屋は、お入れできません。\n※ 今、四名様のお申し込みが一組あります。\n今夜、この四名様をお入れできる部屋はどれですか。"},
-          {type:"evidence-choice", options:["一番と四番","二番と六番","どこにもありません","六番だけ"], correctIndex:1},
-          {correct:"二番と六番です。どちらも本日お発ちになった四名様のお部屋です。",
-           incorrect:"本日お発ちになった部屋のうち、四名様が入れる大きさのものを選びます。"},
-          {prompt:"「満員」はどんなときに使いますか。", options:["もう入れないとき","まだ空いているとき"], correctIndex:0, seconds:8},
+          {jp:"【夕食会場の予約帳】\n広間の席は全部で二十席です。\n六時　十二名様　予約済み\n七時　二十名様　予約済み\n八時　八名様　予約済み\n※ ご予約のお客様は、全員いらっしゃる予定です。\n※ 席の数と予約人数が同じ時間は、これ以上お客様を入れられません。\n※ 今、二名様から七時の席についてお問い合わせがありました。\n七時の広間は、今どんな状態ですか。"},
+          {type:"evidence-choice", options:["まだ八席空いています。","満員です。","まだ十二席空いています。","予約はありません。"], correctIndex:1},
+          {correct:"七時は二十席すべて予約済みなので、「満員」です。これ以上お客様を入れられません。",
+           incorrect:"七時は二十席に対して二十名様の予約があります。空いている席はありません。"},
+          {prompt:"「満員」はどんな状態ですか。", options:["定員いっぱいで、もう人が入れない状態","まだ席に余裕がある状態"], correctIndex:0, seconds:8},
           [
-            "一番 is still occupied and 四番 is expected tonight",
-            "二番と六番 - both are four-guest rooms whose guests left today",
-            "どこにもありません would mean the inn is 満員, but two rooms are free",
-            "六番だけ misses 二番, which is the same size and also free"
+            "六時なら八席空いていますが、七時ではありません",
+            "満員 - all twenty seats are already reserved",
+            "八時なら十二席空いていますが、七時ではありません",
+            "七時には二十名様の予約があります"
           ]),
 
         q2("inn-e02-q10", "listening-task", "w-seisho", 8,
@@ -470,9 +470,9 @@
         q3("inn-e03-q05", "listening-task", "v-atsukau", 5,
           {jp:"割れやすい物ですから、丁寧に扱ってください。何をしますか。", audio:true},
           {type:"quick-response", options:["気をつけて手で持ちます。","高く積み上げます。","投げて渡します。","急いで運びます。"], correctIndex:0},
-          {correct:"丁寧に扱えました。「扱う」は、物や人をある仕方で取り持つことです。",
+          {correct:"丁寧に扱えました。「扱う」は、物や人にある仕方で接したり、対応したりすることです。",
            incorrect:"「丁寧に扱う」は、気をつけて手で持つということです。"},
-          {prompt:"「扱う」はどれのことですか。", options:["数を数える","ある仕方で取り持つ"], correctIndex:1, seconds:5},
+          {prompt:"「扱う」はどれのことですか。", options:["数を数える","物や人にある仕方で接する"], correctIndex:1, seconds:5},
           [
             "handling it carefully in the hands",
             "stacking it high risks the breakage",
@@ -485,7 +485,7 @@
           {type:"evidence-choice", options:["三番だけ","一番と三番","三組とも","二番と三番"], correctIndex:3},
           {correct:"二番と三番です。傷の大きさにかかわらずお伝えします。",
            incorrect:"小さな傷でもお伝えします。傷のない品だけは何も申し上げません。"},
-          {prompt:"「傷」はどれのことですか。", options:["ついてしまった痛み跡","品物の値段"], correctIndex:0, seconds:5},
+          {prompt:"「傷」はどれのことですか。", options:["物についてしまった跡や損傷","品物の値段"], correctIndex:0, seconds:5},
           [
             "the small mark on room two's cloth counts too",
             "room one's umbrella has no damage at all",
@@ -512,9 +512,9 @@
         q3("inn-e03-q08", "quick-response", "w-jijou", 8,
           {jp:"お客様：「急な用ができて、朝早く発ちたいのです。」朝食は八時からです。何と言いますか。", audio:true},
           {type:"quick-response", options:["八時までお待ちください。","ご事情は承りました。お早めにお出しできます。","朝食はお出しできません。","明日は無理です。"], correctIndex:1},
-          {correct:"合わせられました。「事情」は、そうなっている訳や、その人の置かれた具合のことです。",
+          {correct:"合わせられました。「事情」は、そうなっている理由や、その人が置かれている状況のことです。",
            incorrect:"急な用があるというご事情です。こちらが合わせられると伝えます。"},
-          {prompt:"「事情」はどれのことですか。", options:["そうなっている訳","品物の値段"], correctIndex:0, seconds:5},
+          {prompt:"「事情」はどれのことですか。", options:["そうなっている理由や状況","品物の値段"], correctIndex:0, seconds:5},
           [
             "making them wait ignores what they just explained",
             "acknowledging the reason and moving breakfast earlier",
@@ -560,7 +560,7 @@
     title:"宿を閉じる",
     sourceNote:NOTE4,
     progress:{label:"最後の仕事", beats:["見送り","鍵","帳面","片付け","閉店"]},
-    intro:{jp:"コン：「今日でお祭りは終わりです。お客様が発たれたら、宿は冬まで閉めます。最後の日ですから、来たときより整えて出ましょう。」", audio:true},
+    intro:{jp:"コン：「今日でお祭りは終わりです。お客様が発たれたら、宿は冬の間、閉めます。最後の日ですから、来たときより整えて出ましょう。」", audio:true},
     briefing:{jp:"コン：「これから、お見送りと戸締まりをします。順を守ってください。読む問題は長いので、時間も長く取ってあります。間違えた仕事は、最後にもう一度だけ確認します。」", audio:true, points:INN_RULES},
     days:[
       {day:1, mode:"learn", label:"お見送り", questions:[
@@ -590,7 +590,7 @@
           {type:"quick-response", options:["鍵","布","ほうき","札"], correctIndex:0},
           {correct:"鍵を掛けられました。「鍵」は、戸が開かないようにするための道具です。",
            incorrect:"戸が開かないようにする道具は「鍵」です。"},
-          {prompt:"「鍵」はどれのことですか。", options:["戸を拭くための布","戸を開かなくする道具"], correctIndex:1, seconds:5},
+          {prompt:"「鍵」はどれのことですか。", options:["戸を拭くための布","戸が開かないようにする道具"], correctIndex:1, seconds:5},
           [
             "the key, which is what locks a door",
             "a cloth wipes the door, it does not hold it shut",
@@ -657,7 +657,7 @@
       {day:3, mode:"challenge", label:"鍵を返す", questions:[
 
         q4("inn-e04-q07", "text-grammar", "w-kanryou", 120,
-          {jp:"【鍵をお返しになる前に】\nすべての部屋の見回りが（　　）してから、鍵をお返しください。\n※ 途中でお返しになると、残りの部屋に入れなくなります。\n※ （　　）した部屋の数は、帳面に残してください。\n（　　）に入る言葉はどれですか。"},
+          {jp:"【鍵をお返しする前に】\nすべての部屋の見回りが（　　）してから、鍵をお返しください。\n※ 途中でお返しすると、残りの部屋に入れなくなります。\n※ 見回りが（　　）した部屋の数は、帳面に残してください。\n（　　）に入る言葉はどれですか。"},
           {type:"single-choice", options:["中止","完了","変更","開始"], correctIndex:1},
           {correct:"「完了」です。すっかり終わることです。",
            incorrect:"すべて終わってから返す、という流れです。終わることを表す言葉を選びます。"},
@@ -670,11 +670,11 @@
           ]),
 
         q4("inn-e04-q08", "reading", "v-tomeru", 120,
-          {jp:"【冬の間について】\n宿は今日から冬まで閉めます。\n※ 冬の間は、どなたもお泊めできません。\n※ 急な用でいらした方には、茶屋か神社をご案内してください。\n※ 荷物だけなら、帳場でお預かりできます。\n冬の間に、荷物を持った方がいらしたら、何ができますか。"},
+          {jp:"【冬の間について】\n宿は今日から冬の間、閉めます。\n※ 冬の間は、どなたもお泊めできません。\n※ 急な用でいらした方には、茶屋か神社をご案内してください。\n※ 荷物だけなら、帳場でお預かりできます。\n冬の間に、荷物を持った方がいらしたら、何ができますか。"},
           {type:"evidence-choice", options:["お泊めします","何もできません","荷物をお預かりします","お部屋だけお貸しします"], correctIndex:2},
           {correct:"荷物のお預かりです。お泊めすることはできません。",
            incorrect:"泊めることはできませんが、荷物だけなら預かれると書いてあります。"},
-          {prompt:"「泊める」はどれのことですか。", options:["荷物を運ぶ","人を夜まで置く"], correctIndex:1, seconds:5},
+          {prompt:"「泊める」はどれのことですか。", options:["荷物を運ぶ","人を宿に一晩滞在させる"], correctIndex:1, seconds:5},
           [
             "nobody can be lodged over the winter",
             "there is one thing that can still be done",
@@ -696,15 +696,15 @@
           ]),
 
         q4("inn-e04-q10", "integrated", "w-tsutomeru-2", 12,
-          {jp:"この宿で、あなたは何を務めましたか。三日間の練習と、三つの夜の仕事がありました。何と言いますか。", audio:true},
-          {type:"quick-response", options:["早く終わらせました。","お客様の立場で先に動く役を務めました。","何もしていません。","部屋の数を数えました。"], correctIndex:1},
+          {jp:"この宿で、あなたはどんな役目をしましたか。三日間の練習のあとも、受付でお客様を案内し、帳場の仕事や見送りまで担当しました。何と言いますか。", audio:true},
+          {type:"quick-response", options:["早く終わらせました。","宿の受付係を務めました。","何もしていません。","部屋の数を数えました。"], correctIndex:1},
           {correct:"よく分かっています。「務める」は、役目を引き受けて果たすことです。",
-           incorrect:"どの仕事も、お客様の立場で先に動くことでした。それを務めたと言えます。"},
+           incorrect:"受付で宿の仕事を担当してきました。その役目を「務めた」と言えます。"},
           {prompt:"「務める」はどれのことですか。", options:["役目を引き受けて果たす","そばで見ている"], correctIndex:0, seconds:8},
           [
             "speed was never what the work was about",
-            "the part you filled: moving first, from the guest's side",
-            "「nothing」 after three days and three nights of it",
+            "serving as the inn's front-desk attendant throughout the work",
+            "「nothing」 after all the work at the inn",
             "counting rooms was a task, not the role"
           ])
       ]}
