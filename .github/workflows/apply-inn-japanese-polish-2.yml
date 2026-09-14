@@ -1,0 +1,50 @@
+name: Apply verified Inn Japanese polish 2
+
+on:
+  push:
+    branches:
+      - codex/inn-learning-redesign
+    paths:
+      - .github/workflows/apply-inn-japanese-polish-2.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/inn-learning-redesign
+      - name: Apply exact verified Japanese corrections
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('n2-home-inn-stage.js')
+          text = path.read_text(encoding='utf-8')
+          replacements = [
+              ('三番のお客様は、浴衣を二枚まだお返しになっていません。',
+               '三番のお客様は、浴衣二枚をまだお返しになっていません。'),
+              ('はい、明日の朝食の配膳をお願いします。仕事を責任を持って受けるのが「引き受ける」です。',
+               'はい、明日の朝食の配膳をお願いします。責任を持って仕事を受けるのが「引き受ける」です。'),
+          ]
+          for old, new in replacements:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'Expected exactly one occurrence of {old!r}, found {count}')
+              text = text.replace(old, new)
+          path.write_text(text, encoding='utf-8')
+          PY
+      - name: Run Inn Japanese tests
+        run: node --test n2-home-inn-stage.test.mjs n2-inn-japanese.test.mjs
+      - name: Commit verified corrections and remove one-off workflow
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add n2-home-inn-stage.js
+          git rm .github/workflows/apply-inn-japanese-polish-2.yml
+          git commit -m "Polish remaining Inn training Japanese"
+          git push origin HEAD:codex/inn-learning-redesign
