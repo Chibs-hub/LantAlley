@@ -108,7 +108,7 @@
     },
     "掃除": {
       target:"w-souji",
-      sentence:"お客様が出られたあと、お部屋を掃除してください。",
+      sentence:"お客様がご出発になったあと、お部屋を掃除してください。",
       pattern:"〜を掃除する"
     },
     "確認": {
@@ -131,7 +131,7 @@
     "書類": {
       target:"w-shorui",
       sentence:"帳場の机にたまった書類を片づけてください。",
-      pattern:"書類を出す"
+      pattern:"書類を片づける"
     },
     "報告": {
       target:"w-houkoku",
@@ -175,7 +175,7 @@
     },
     "清書": {
       target:"w-seisho",
-      sentence:"下書きができたら、もう一度きれいに清書してください。",
+      sentence:"下書きができたら、きれいに清書してください。",
       pattern:"〜を清書する"
     },
 
@@ -209,7 +209,7 @@
     },
     "傷": {
       target:"w-kizu",
-      sentence:"お預かりした箱のふたに大きな傷がありました。",
+      sentence:"お預かりした箱のふたに大きな傷がついていました。",
       pattern:"傷がつく"
     },
     "滞在": {
@@ -262,7 +262,7 @@
     },
     "客間": {
       target:"w-kyakuma",
-      sentence:"お客様がお使いになった客間を一部屋ずつ見ます。",
+      sentence:"お客様がお使いになった客間を一部屋ずつ見て回ります。",
       pattern:"客間を見て回る"
     },
     "完了": {
@@ -427,7 +427,7 @@
       romaji:"Kon'ya no yuushoku no haizen o hikiukete itadakemasen ka.",
       meaning:"Would you be willing to undertake serving tonight's dinner?",
       successReply:"ありがとうございます。一日目の仕事はこれで終わりです。今夜は宿で休んでください。",
-      retryReply:"まだ夕食の配膳を引き受けた返事になっていません。もう少し手伝ってください。",
+      retryReply:"まだ夕食の配膳を引き受ける返事になっていません。返事を選び直してください。",
       hint:"引き受ける means to undertake, take over, or accept responsibility for something.",
       // Refusing a favour is a legitimate, correctly-understood Japanese reply.
       // Scoring it wrong taught that 引き受けられません is a comprehension error.
@@ -563,7 +563,7 @@
     {
       scene:"errand",
       controlHelp:"Choose your reply.",
-      clue:"The guests are out at the fireworks, and six rooms still need their futons laid out.",
+      clue:"The guests are out at the fireworks, and four rooms still need their futons laid out.",
       replies:[
         {key:"accept", label:"はい、引き受けます。"},
         {key:"decline", label:"すみません、引き受けられません。"}
@@ -583,7 +583,7 @@
     {jp:"汚れたシーツを洗濯かごに入れて、新しいシーツに取り替えてください。", romaji:"Yogoreta shiitsu o sentakukago ni irete, atarashii shiitsu ni torikaete kudasai.", narration:"A marked sheet remains beside the fresh linen.", meaning:"Put the stained sheet in the laundry basket, then replace it with a new one.", successReply:"新しいシーツになりました。これで今夜のお客様を迎えられます。"},
     {jp:"ごはんを電子レンジで温めてください。", romaji:"Gohan o denshi renji de atatamete kudasai.", narration:"The evening meal has gone cold.", meaning:"Please warm the rice in the microwave.", successReply:"ごはんが温まりました。みんなで食事にしましょう。"},
     {jp:"Cグループは18時以降、Dグループは20時までに夕食を始められます。一組の食事には2時間かかります。夕食の開始時刻を調整してください。", romaji:"C guruupu wa juuhachiji ikou, D guruupu wa nijuji made ni yuushoku o hajimeraremasu. Hitokumi no shokuji ni wa nijikan kakarimasu. Yuushoku no kaishi jikoku o chousei shite kudasai.", narration:"Two groups need dinner seatings, with enough time to serve one group before the next.", meaning:"Coordinate the two dinner start times using the stated booking windows.", successReply:"Cグループは18時、Dグループは20時になりました。これで順番に夕食をお出しできます。"},
-    {jp:"三番から六番のお部屋のお布団を引き受けていただけませんか。", romaji:"Sanban kara rokuban no oheya no ofuton o hikiukete itadakemasen ka.", narration:"Six rooms still need their futons laid out before the guests return.", meaning:"Would you take on the futons for rooms three to six?", successReply:"ありがとうございます。お客様が戻るまでに間に合いました。"}
+    {jp:"三番から六番のお部屋の布団敷きを引き受けていただけませんか。", romaji:"Sanban kara rokuban no oheya no futonjiki o hikiukete itadakemasen ka.", narration:"Four rooms still need their futons laid out before the guests return.", meaning:"Would you take on laying out the futons for rooms three to six?", successReply:"ありがとうございます。お客様が戻るまでに間に合いました。"}
   ];
 
   var practiceVariantsB = [
@@ -611,7 +611,7 @@
     "コン：「食事処を開けます。前の組が使った座布団が、向きばらばらのままです。」",
     "コン：「お食事の間に客室を回ります。三番のシーツに染みがついていました。」",
     "コン：「時刻が決まりました。厨房を見てきてください。早く着いたお客様の分のごはんが冷めています。」",
-    "コン：「二日目は帳場から始めます。今夜はＣグループとＤグループが同じ時刻をご希望です。食事処は一組ずつしかご案内できません。」",
+    "コン：「二日目は帳場から始めます。今夜はＣグループとＤグループが同じ時刻をご希望です。食事処には一組ずつしかご案内できません。」",
     "コン：「今日はよく回りました。最後にもう一つ、明日の朝食の配膳をお願いしたいのですが。」"
   ];
 
@@ -644,7 +644,7 @@
     // Played last: late evening, the final guest of the three days.
     "コン：「夜も遅くなりました。最後のお客様のお茶が冷めてしまったそうです。」",
     // Played second: late morning, before the dining room is committed.
-    "コン：「午前のうちに今夜の夕食の時間を決めます。ＡグループとＢグループが同じ時刻をご希望です。食事処は一組ずつご案内します。」",
+    "コン：「午前のうちに今夜の夕食の時間を決めます。ＡグループとＢグループが同じ時刻をご希望です。食事処には一組ずつご案内します。」",
     // Played third: early afternoon, arranging tomorrow while there is time.
     "コン：「昼過ぎに一息つきました。明日の朝、駅までお客様をお送りする人が必要です。」"
   ];
@@ -705,7 +705,7 @@
         {key:"grill", label:"焼いて"},
         {key:"remove", label:"取り出して"}
       ],
-      successReply:"はい、冷めたごはんを自分で温かくするので「温める」です。"
+      successReply:"はい、冷めたごはんを温かくするので「温める」です。"
     },
     {
       jp:"二つのグループの夕食開始時刻を（　　）ください。",
@@ -732,7 +732,7 @@
         {key:"confirm", label:"確認して"},
         {key:"substitute", label:"代わって"}
       ],
-      successReply:"はい、明日の朝食の配膳をお願いします。責任を持って受けるのが「引き受ける」です。"
+      successReply:"はい、明日の朝食の配膳をお願いします。仕事を責任を持って受けるのが「引き受ける」です。"
     }
   ];
 
@@ -759,7 +759,7 @@
     },
     4:{
       jp:"コン：「明日の朝、駅までお客様を送る仕事があります。お願いできますか。」",
-      successReply:"任せました。責任を持ってやると決めるのが「引き受ける」です。",
+      successReply:"では、お願いします。責任を持って仕事を引き受けるのが「引き受ける」です。",
       options:[
         {key:"accept", label:"はい、引き受けます。"},
         {key:"hikitomeru", label:"はい、引き止めます。", nearMiss:true},
