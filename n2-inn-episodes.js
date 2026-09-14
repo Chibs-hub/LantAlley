@@ -317,15 +317,15 @@
 
         q2("inn-e02-q07", "sentence-building", "w-enki", 30,
           {jp:"【催しの日の変更】\n雨のため、明日の催しを別の日に移すことになりました。次の文を正しく並べたとき、★に入るのはどれですか。\n雨のため、＿　＿　＿　★　ことになりました。"},
-          {type:"sentence-order", options:["明日の","来週に","延期する","催しは"], correctIndex:2},
-          {correct:"「明日の催しは来週に延期することになりました」となります。★は「延期する」です。",
-           incorrect:"「明日の」「催しは」「来週に」「延期する」の順に並びます。★は四番目です。"},
+          {type:"sentence-order", options:["明日の","来週に","延期する","催しを"], correctIndex:2},
+          {correct:"「明日の催しを来週に延期することになりました」となります。★は「延期する」です。",
+           incorrect:"「明日の」「催しを」「来週に」「延期する」の順に並びます。★は四番目です。"},
           {prompt:"「延期する」はどれのことですか。", options:["後の日にする","やめてしまう"], correctIndex:0, seconds:8},
           [
             "明日の comes first, attaching to 催し",
             "来週に says when, and belongs third, just before the verb",
             "延期する sits fourth, at the star, before ことになりました",
-            "催しは is the topic, so it comes second"
+            "催しを completes 明日の催しを, so it comes second"
           ]),
 
         q2("inn-e02-q08", "text-grammar", "w-shitei", 120,

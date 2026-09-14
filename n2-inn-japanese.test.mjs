@@ -40,7 +40,8 @@ test("known broken Japanese does not return", () => {
     "手は二つしかありません",
     "合わせられました",
     "三番から六番のお部屋のお布団を引き受けて",
-    "仕事を責任を持って受ける"
+    "仕事を責任を持って受ける",
+    "明日の催しは来週に延期することになりました"
   ]) {
     assert.equal(source.includes(bad), false, `legacy Japanese returned: ${bad}`);
   }
@@ -68,6 +69,14 @@ test("the refusal item states capacity clearly and uses a natural service reply"
     q.answer.options[q.answer.correctIndex],
     "申し訳ありませんが、十名様分のお部屋はご用意できません。"
   );
+});
+
+test("延期 sentence order uses the event as the object of 延期する", () => {
+  const context = loadInn();
+  const q = question(context, "inn-e02", "inn-e02-q07");
+  assert.equal(q.answer.options[3], "催しを");
+  assert.match(q.feedback.correct, /明日の催しを来週に延期することになりました/);
+  assert.doesNotMatch(q.feedback.correct, /催しは来週に延期する/);
 });
 
 test("the ledger wording distinguishes finished work from an ongoing shipment", () => {
