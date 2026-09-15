@@ -170,6 +170,7 @@
     starterCushionClaimed:false,
     activeWallpaper:"wallpaper-plain",
     activePet:"cat",
+    ownedPets:[],
     garden:emptyGardenState(),
     innJourney:typeof LanternInnJourney !== "undefined" ? LanternInnJourney.fresh()
       : {version:1, claimed:{}, catUnlocked:false}
@@ -370,6 +371,7 @@
         pendingStarterCushionClaimed = v3.starterCushionClaimed === true;
         pendingActiveWallpaper = v3.activeWallpaper || "wallpaper-plain";
         pendingActivePet = v3.activePet === "bird" ? "bird" : "cat";
+        pendingOwnedPets = inferOwnedPets(v3);
         pendingGarden = v3.garden || emptyGardenState();
         pendingInnJourney = v3.innJourney || null;
         pendingLastPlace = v3.lastPlace || null;
@@ -400,6 +402,7 @@
       pendingStarterCushionClaimed = migrated.starterCushionClaimed === true;
       pendingActiveWallpaper = migrated.activeWallpaper || "wallpaper-plain";
       pendingActivePet = migrated.activePet === "bird" ? "bird" : "cat";
+      pendingOwnedPets = inferOwnedPets(migrated);
       pendingGarden = migrated.garden || emptyGardenState();
       pendingInnJourney = migrated.innJourney || null;
       savedEpisode = null;
@@ -525,7 +528,8 @@
         ,starterSeedClaimed: state.starterSeedClaimed === true
         ,starterCushionClaimed: state.starterCushionClaimed === true
         ,activeWallpaper: state.activeWallpaper || "wallpaper-plain"
-        ,activePet: state.activePet === "bird" ? "bird" : "cat"
+        ,activePet: state.activePet || "cat"
+        ,ownedPets: state.ownedPets || []
         ,garden: state.garden || emptyGardenState()
         ,innJourney: state.innJourney || (typeof LanternInnJourney !== "undefined"
           ? LanternInnJourney.fresh() : {version:1, claimed:{}, catUnlocked:false})
@@ -556,6 +560,7 @@
       state.starterCushionClaimed = false;
       state.activeWallpaper = "wallpaper-plain";
       state.activePet = "cat";
+      state.ownedPets = [];
       state.garden = emptyGardenState();
       state.innJourney = typeof LanternInnJourney !== "undefined" ? LanternInnJourney.fresh()
         : {version:1, claimed:{}, catUnlocked:false};
@@ -769,6 +774,7 @@
   var pendingStarterCushionClaimed = false;
   var pendingActiveWallpaper = "wallpaper-plain";
   var pendingActivePet = "cat";
+  var pendingOwnedPets = [];
   var pendingGarden = emptyGardenState();
   var pendingInnJourney = null;
   var pendingLegacyMasteryHydration = false;
@@ -804,6 +810,7 @@
   state.starterCushionClaimed = pendingStarterCushionClaimed;
   state.activeWallpaper = pendingActiveWallpaper;
   state.activePet = pendingActivePet;
+  state.ownedPets = pendingOwnedPets;
   state.garden = pendingGarden;
   if(pendingInnJourney){
     state.innJourney = typeof LanternInnJourney !== "undefined"
@@ -5348,6 +5355,23 @@
     renderHud();
   }
 
+  var PET_CATALOGUE = [
+    {id:"cat",  nameJp:"三毛猫",   price:1000, sprite:"assets/home/pet/calico-sit-v1.png"},
+    {id:"bird", nameJp:"うぐいす", price:1000, sprite:"assets/home/pet/uguisu-perch-v1.png"}
+  ];
+
+  function inferOwnedPets(save){
+    if(Array.isArray(save && save.ownedPets)) return save.ownedPets.slice();
+    var pets = [];
+    if(save && save.innJourney && save.innJourney.catUnlocked) pets.push("cat");
+    if(save && save.activePet === "bird" && pets.indexOf("bird") < 0) pets.push("bird");
+    return pets;
+  }
+
+  function ownsPet(id){
+    return state.ownedPets && state.ownedPets.indexOf(id) >= 0;
+  }
+
   /* ---- The yard, the room, and the shop that fills them ----
    *
    * Money counted upward for the whole game and bought nothing. This is the
@@ -6618,6 +6642,8 @@
           'data-buy-wallpaper="' + paper.id + '"' + (owned ? " disabled" : ""),
           owned ? " is-owned" : (money >= paper.price ? "" : " is-locked"));
       });
+    }else if(homeShopCategory === "pets"){
+      return homeShopPetsDock();
     }else{
       LanternHomeDecor.catalogue().forEach(function(item){
         if(!shopHasArtFor(item.id)) return;
@@ -6630,8 +6656,25 @@
     return html || '<p class="home-empty">商品はまだありません。</p>';
   }
 
+  function homeShopPetsDock(){
+    var money = state.money || 0;
+    var html = "";
+    PET_CATALOGUE.forEach(function(pet){
+      var owned = ownsPet(pet.id);
+      var active = state.activePet === pet.id && owned;
+      var art = '<div class="home-pet-shop-sprite" style="background-image:url(\'' + pet.sprite + '\');"></div>';
+      var sub = owned ? (active ? "今いるコ ✓" : "持っている") : "¥" + pet.price;
+      var attr = owned
+        ? 'data-activate-pet="' + pet.id + '"' + (active ? " disabled" : "")
+        : 'data-buy-pet="' + pet.id + '"';
+      var extra = owned ? (active ? " is-owned is-active-pet" : " is-owned") : (money >= pet.price ? "" : " is-locked");
+      html += dockCard(art, pet.nameJp, sub, attr, extra);
+    });
+    return html;
+  }
+
   function renderHomeShop(){
-    var categories = [["plants","草花"],["decor","家具"],["wallpaper","壁紙"]];
+    var categories = [["plants","草花"],["decor","家具"],["wallpaper","壁紙"],["pets","ペット"]];
     return '<div class="home-shop-stage">'
       + '<img class="home-shop-bg" src="assets/map/lantern-alley-map-v1.jpg" alt="灯り市の店">'
       + '<div class="home-shop-chrome"><button type="button" data-home-shop-back="1">&larr; わが家</button>'
@@ -6756,13 +6799,7 @@
     return report;
   }
 
-  function homePetToggleButton(){
-    if(!state.innJourney || !state.innJourney.catUnlocked) return "";
-    var current = state.activePet === "bird" ? "Bird" : "Cat";
-    var next = state.activePet === "bird" ? "Cat" : "Bird";
-    return '<button type="button" data-home-pet-toggle="1" class="home-menu-button home-pet-toggle"'
-      + ' aria-label="Switch companion to ' + next + '">Pet: ' + current + '</button>';
-  }
+  function homePetToggleButton(){ return ""; }
 
   function paintHome(){
     rememberHomeSceneCamera();
@@ -6895,15 +6932,6 @@
     }
     if(event.target.closest("[data-tutorial-done]")){
       endHomeTutorial();
-      return;
-    }
-    if(event.target.closest("[data-home-pet-toggle]")){
-      state.activePet = state.activePet === "bird" ? "cat" : "bird";
-      homePetState = null;
-      homePetSpecies = null;
-      homePetIdleMs = 0;
-      saveProgress();
-      paintHome();
       return;
     }
     if(event.target.closest("[data-home-decorate]")){
@@ -7079,6 +7107,35 @@
       return;
     }
 
+    var buyPet = event.target.closest("[data-buy-pet]");
+    if(buyPet){
+      var petId = buyPet.getAttribute("data-buy-pet");
+      var petEntry = PET_CATALOGUE.filter(function(p){ return p.id === petId; })[0];
+      if(!petEntry) return;
+      if((state.money || 0) < petEntry.price){ homeSay("お金が足りません。もう少し稼ぎましょう。"); return; }
+      if(!state.ownedPets) state.ownedPets = [];
+      state.ownedPets.push(petId);
+      state.money = (state.money || 0) - petEntry.price;
+      state.activePet = petId;
+      homePetState = null; homePetSpecies = null; homePetIdleMs = 0;
+      playCoinSound();
+      saveProgress();
+      paintHome();
+      homeSay(petEntry.nameJp + "を買いました！");
+      return;
+    }
+
+    var activatePet = event.target.closest("[data-activate-pet]");
+    if(activatePet){
+      var activateId = activatePet.getAttribute("data-activate-pet");
+      if(!ownsPet(activateId)) return;
+      state.activePet = activateId;
+      homePetState = null; homePetSpecies = null; homePetIdleMs = 0;
+      saveProgress();
+      paintHome();
+      return;
+    }
+
     var target = event.target.closest(".home-target");
     if(target && homeSelected){
       var slotId = target.getAttribute("data-slot");
@@ -7237,6 +7294,10 @@
     }else if(reward.kind === "plant" && typeof LanternHomeGarden !== "undefined"){
       var gardenResult = LanternHomeGarden.grantPlant(gardenState(), reward.plant);
       if(gardenResult.ok) state.garden = gardenResult.garden;
+    }else if(reward.kind === "cat"){
+      if(!state.ownedPets) state.ownedPets = [];
+      if(state.ownedPets.indexOf("cat") < 0) state.ownedPets.push("cat");
+      state.activePet = "cat";
     }
     if(reward.coins) state.money = (state.money || 0) + reward.coins;
     saveProgress();

@@ -2561,6 +2561,9 @@ body:has(.about-panel:not([hidden])) .feedback-open{visibility:hidden;pointer-ev
   .home-shop-categories{display:flex;justify-content:center;gap:8px;margin-bottom:14px}
   .home-shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px}
   .home-shop-grid .home-card{min-height:112px;background:rgba(29,17,10,.86)}
+  .home-pet-shop-sprite{width:100%;height:52px;background-size:400% auto;background-position:0 center;background-repeat:no-repeat;image-rendering:pixelated}
+  .home-card.is-active-pet{opacity:1;border-color:#ffd489;box-shadow:0 0 0 2px rgba(255,212,137,.45);cursor:default}
+  .home-card.is-active-pet .home-card-sub{color:#ffd489}
   @media(max-width:620px){
     .home-shop-stage{min-height:620px}
     .home-shop-panel{width:calc(100% - 20px);margin-top:68px;padding:12px}
