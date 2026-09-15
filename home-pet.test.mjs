@@ -264,6 +264,11 @@ test("resting poses breathe subtly and respect reduced motion", () => {
   assert.doesNotMatch(app, /if\(!reduced && homePetIdleMs > dwell\)/);
 });
 
+test("the Home help close action stays readable on its dark panel", () => {
+  const css = fs.readFileSync(new URL("./styles.css", import.meta.url), "utf8");
+  assert.match(css, /\.home-tutorial \.btn-ghost\{[^}]*color:#fff0cf/);
+});
+
 test("one-shot poses finish and hold instead of looping", () => {
   const pet = load();
   let state = {...pet.create("yard", 5), behavior:"sit", frame:0, clock:0};
