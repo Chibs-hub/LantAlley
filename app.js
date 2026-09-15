@@ -7291,8 +7291,15 @@
       var dismissedIid = state.activePets[dismissIdx];
       state.activePets.splice(dismissIdx, 1);
       delete homePetStates[dismissedIid];
+      delete homePetIdleMs[dismissedIid];
       saveProgress();
       paintHome();
+      // paintHome replaces $("scene").innerHTML so the node should already
+      // be gone, but remove it explicitly in case a pending RAF tick re-draws
+      // it into the new DOM between the innerHTML swap and the next browser
+      // paint (observed in the interior scene after v371).
+      var _staleNode = document.querySelector('[data-pet-iid="' + dismissedIid + '"]');
+      if(_staleNode && _staleNode.parentNode) _staleNode.parentNode.removeChild(_staleNode);
       return;
     }
 
