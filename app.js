@@ -170,7 +170,7 @@
     starterCushionClaimed:false,
     activeWallpaper:"wallpaper-plain",
     activePet:"cat",
-    activePets:["cat"],
+    activePets:["cat-0"],
     ownedPets:[],
     garden:emptyGardenState(),
     innJourney:typeof LanternInnJourney !== "undefined" ? LanternInnJourney.fresh()
@@ -529,8 +529,8 @@
         ,starterSeedClaimed: state.starterSeedClaimed === true
         ,starterCushionClaimed: state.starterCushionClaimed === true
         ,activeWallpaper: state.activeWallpaper || "wallpaper-plain"
-        ,activePet: (state.activePets || ["cat"])[0] || "cat"
-        ,activePets: state.activePets || ["cat"]
+        ,activePet: iidSpecies((state.activePets || ["cat-0"])[0] || "cat-0")
+        ,activePets: state.activePets || ["cat-0"]
         ,ownedPets: state.ownedPets || []
         ,garden: state.garden || emptyGardenState()
         ,innJourney: state.innJourney || (typeof LanternInnJourney !== "undefined"
@@ -562,7 +562,7 @@
       state.starterCushionClaimed = false;
       state.activeWallpaper = "wallpaper-plain";
       state.activePet = "cat";
-      state.activePets = ["cat"];
+      state.activePets = ["cat-0"];
       state.ownedPets = [];
       state.garden = emptyGardenState();
       state.innJourney = typeof LanternInnJourney !== "undefined" ? LanternInnJourney.fresh()
@@ -5371,18 +5371,41 @@
     return pets;
   }
 
+  // activePets stores iid strings like "cat-0", "bird-1693000000000".
+  // Species is the part before the last hyphen.
+  function iidSpecies(iid){
+    return iid.replace(/-[^-]+$/, "");
+  }
+
+  function newIid(species){
+    return species + "-" + Date.now();
+  }
+
   function inferActivePets(save){
-    if(Array.isArray(save && save.activePets)) return save.activePets.slice();
+    var pets = save && save.activePets;
+    if(Array.isArray(pets)){
+      // New format: all entries contain a hyphen (species-N).
+      if(pets.length === 0 || pets.every(function(p){ return typeof p === "string" && p.indexOf("-") >= 0; })){
+        return pets.slice();
+      }
+      // Old format: plain species strings like ["cat", "bird"].
+      return pets.map(function(species, i){ return species + "-" + i; });
+    }
     var single = save && (save.activePet === "bird" ? "bird" : "cat");
-    return [single || "cat"];
+    return [(single || "cat") + "-0"];
   }
 
   function ownsPet(id){
     return state.ownedPets && state.ownedPets.indexOf(id) >= 0;
   }
 
-  function isPetActive(id){
-    return state.activePets && state.activePets.indexOf(id) >= 0;
+  function isPetActive(species){
+    return state.activePets && state.activePets.some(function(iid){ return iidSpecies(iid) === species; });
+  }
+
+  function activePetCount(species){
+    if(!state.activePets) return 0;
+    return state.activePets.filter(function(iid){ return iidSpecies(iid) === species; }).length;
   }
 
   /* ---- The yard, the room, and the shop that fills them ----
@@ -5963,16 +5986,17 @@
 
   function homePetMarkup(scene){
     if(!state.innJourney || !state.innJourney.catUnlocked) return "";
-    var activePets = state.activePets || ["cat"];
-    return activePets.map(function(species){
+    var activePets = state.activePets || ["cat-0"];
+    return activePets.map(function(iid){
+      var species = iidSpecies(iid);
       var pet = homePetApi(species);
       if(!pet) return "";
-      var prev = homePetStates[species];
+      var prev = homePetStates[iid];
       if(!prev){
-        homePetStates[species] = pet.enterScene
+        homePetStates[iid] = pet.enterScene
           ? pet.enterScene(scene, Date.now())
           : pet.create(scene, Date.now());
-        homePetIdleMs[species] = 0;
+        homePetIdleMs[iid] = 0;
       } else if(prev.scene !== scene){
         // Switching between the yard and the room mid-visit used to walk the
         // cat to that scene's door every time via the same enterScene() call -
@@ -5982,19 +6006,20 @@
         // its day. create() already excludes door anchors from its pick, so a
         // fresh ordinary resting spot in the new scene keeps this feeling
         // continuous instead of like a hard reset.
-        homePetStates[species] = pet.create(scene, Date.now());
-        homePetIdleMs[species] = 0;
+        homePetStates[iid] = pet.create(scene, Date.now());
+        homePetIdleMs[iid] = 0;
       }
-      var ps = homePetStates[species];
+      var ps = homePetStates[iid];
       var blockers = species === "cat" ? homePetBlockers(scene) : [];
       if(pet.pointIsClear && !pet.pointIsClear(ps, blockers)){
         var safe = pet.safeAnchor(ps, blockers);
-        if(safe) homePetStates[species] = ps = pet.settleAt(ps, safe.id);
+        if(safe) homePetStates[iid] = ps = pet.settleAt(ps, safe.id);
       }
       var sprite = pet.spriteFor(ps);
       var petWidth = pet.widthAt ? pet.widthAt(ps.y, ps.scene) : 7.5;
       return '<div class="home-pet' + (species === "bird" ? ' is-bird' : '')
         + '" aria-hidden="true" data-pet-species="' + species
+        + '" data-pet-iid="' + iid
         + '" data-pet-behavior="' + ps.behavior
         + '" style="width:' + petWidth + '%;left:' + ps.x
         + '%;top:' + ps.y + '%;--pet-lamp:'
@@ -6007,9 +6032,10 @@
   }
 
   function updateHomePetNode(){
-    Object.keys(homePetStates).forEach(function(species){
-      var ps = homePetStates[species];
-      var node = document.querySelector('[data-pet-species="' + species + '"]');
+    Object.keys(homePetStates).forEach(function(iid){
+      var ps = homePetStates[iid];
+      var species = iidSpecies(iid);
+      var node = document.querySelector('[data-pet-iid="' + iid + '"]');
       var pet = homePetApi(species);
       if(!node || !ps || !pet) return;
       var sprite = pet.spriteFor(ps);
@@ -6045,24 +6071,25 @@
       var elapsed = homePetLastTime ? Math.min(80, time - homePetLastTime) : 16;
       homePetLastTime = time;
       var reduced = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
-      Object.keys(homePetStates).forEach(function(species){
+      Object.keys(homePetStates).forEach(function(iid){
+        var species = iidSpecies(iid);
         var pet = homePetApi(species);
-        if(!pet || !homePetStates[species]) return;
-        homePetStates[species] = pet.step(homePetStates[species], elapsed, {paused:document.hidden, reducedMotion:reduced});
-        var ps = homePetStates[species];
+        if(!pet || !homePetStates[iid]) return;
+        homePetStates[iid] = pet.step(homePetStates[iid], elapsed, {paused:document.hidden, reducedMotion:reduced});
+        var ps = homePetStates[iid];
         if(ps && !ps.targetId){
-          homePetIdleMs[species] = (homePetIdleMs[species] || 0) + elapsed;
+          homePetIdleMs[iid] = (homePetIdleMs[iid] || 0) + elapsed;
           var dwell = pet.dwellMs ? pet.dwellMs(ps) : 6000;
-          if(homePetIdleMs[species] > dwell){
+          if(homePetIdleMs[iid] > dwell){
             ps.seed = (ps.seed * 1664525 + 1013904223) >>> 0;
             var blockers = species === "cat" ? homePetBlockers(ps.scene) : [];
             var destination = pet.nextAnchor
               ? pet.nextAnchor(ps, blockers)
               : pet.anchors(ps.scene).filter(function(anchor){ return anchor.id !== ps.anchorId; })[0];
-            if(destination) homePetStates[species] = reduced
+            if(destination) homePetStates[iid] = reduced
               ? pet.settleAt(ps, destination.id)
               : pet.sendTo(ps, destination.id);
-            homePetIdleMs[species] = 0;
+            homePetIdleMs[iid] = 0;
           }
         }
       });
@@ -6677,14 +6704,24 @@
     var html = "";
     PET_CATALOGUE.forEach(function(pet){
       var owned = ownsPet(pet.id);
-      var active = owned && isPetActive(pet.id);
+      var count = activePetCount(pet.id);
       var art = '<div class="home-pet-shop-sprite" style="background-image:url(\'' + pet.sprite + '\');"></div>';
-      var sub = owned ? (active ? "今いるコ ✓" : "招く") : "¥" + pet.price;
-      var attr = owned
-        ? (active ? 'data-deactivate-pet="' + pet.id + '"' : 'data-activate-pet="' + pet.id + '"')
-        : 'data-buy-pet="' + pet.id + '"';
-      var extra = owned ? (active ? " is-owned is-active-pet" : " is-owned") : (money >= pet.price ? "" : " is-locked");
-      html += dockCard(art, pet.nameJp, sub, attr, extra);
+      if(!owned){
+        html += dockCard(art, pet.nameJp, "¥" + pet.price, 'data-buy-pet="' + pet.id + '"',
+          money >= pet.price ? "" : " is-locked");
+      } else {
+        var sub = count > 0 ? count + "匹いる ✓" : "今はいない";
+        var addBtn = '<button type="button" class="pet-count-btn" data-recruit-pet="' + pet.id + '">+招く</button>';
+        var removeBtn = count > 0
+          ? '<button type="button" class="pet-count-btn" data-dismiss-pet="' + pet.id + '">-送り出す</button>'
+          : '';
+        html += '<div class="home-card is-owned' + (count > 0 ? " is-active-pet" : "") + '">'
+          + '<span class="home-card-art" aria-hidden="true">' + art + '</span>'
+          + '<span class="home-card-name">' + pet.nameJp + '</span>'
+          + '<span class="home-card-sub">' + sub + '</span>'
+          + '<span class="home-card-actions">' + addBtn + removeBtn + '</span>'
+          + '</div>';
+      }
     });
     return html;
   }
@@ -7133,8 +7170,9 @@
       state.ownedPets.push(petId);
       state.money = (state.money || 0) - petEntry.price;
       if(!state.activePets) state.activePets = [];
-      if(state.activePets.indexOf(petId) < 0) state.activePets.push(petId);
-      delete homePetStates[petId]; homePetIdleMs[petId] = 0;
+      var boughtIid = newIid(petId);
+      state.activePets.push(boughtIid);
+      delete homePetStates[boughtIid]; homePetIdleMs[boughtIid] = 0;
       playCoinSound();
       saveProgress();
       paintHome();
@@ -7142,24 +7180,31 @@
       return;
     }
 
-    var activatePet = event.target.closest("[data-activate-pet]");
-    if(activatePet){
-      var activateId = activatePet.getAttribute("data-activate-pet");
-      if(!ownsPet(activateId)) return;
+    var recruitPet = event.target.closest("[data-recruit-pet]");
+    if(recruitPet){
+      var recruitSpecies = recruitPet.getAttribute("data-recruit-pet");
+      if(!ownsPet(recruitSpecies)) return;
       if(!state.activePets) state.activePets = [];
-      if(state.activePets.indexOf(activateId) < 0) state.activePets.push(activateId);
-      delete homePetStates[activateId]; homePetIdleMs[activateId] = 0;
+      var recruitIid = newIid(recruitSpecies);
+      state.activePets.push(recruitIid);
+      delete homePetStates[recruitIid]; homePetIdleMs[recruitIid] = 0;
       saveProgress();
       paintHome();
       return;
     }
 
-    var deactivatePet = event.target.closest("[data-deactivate-pet]");
-    if(deactivatePet){
-      var deactivateId = deactivatePet.getAttribute("data-deactivate-pet");
+    var dismissPet = event.target.closest("[data-dismiss-pet]");
+    if(dismissPet){
+      var dismissSpecies = dismissPet.getAttribute("data-dismiss-pet");
       if(!state.activePets) return;
-      state.activePets = state.activePets.filter(function(id){ return id !== deactivateId; });
-      delete homePetStates[deactivateId];
+      var dismissIdx = -1;
+      for(var di = state.activePets.length - 1; di >= 0; di--){
+        if(iidSpecies(state.activePets[di]) === dismissSpecies){ dismissIdx = di; break; }
+      }
+      if(dismissIdx < 0) return;
+      var dismissedIid = state.activePets[dismissIdx];
+      state.activePets.splice(dismissIdx, 1);
+      delete homePetStates[dismissedIid];
       saveProgress();
       paintHome();
       return;
@@ -7327,7 +7372,7 @@
       if(!state.ownedPets) state.ownedPets = [];
       if(state.ownedPets.indexOf("cat") < 0) state.ownedPets.push("cat");
       if(!state.activePets) state.activePets = [];
-      if(state.activePets.indexOf("cat") < 0) state.activePets.push("cat");
+      if(!isPetActive("cat")) state.activePets.push(newIid("cat"));
     }
     if(reward.coins) state.money = (state.money || 0) + reward.coins;
     saveProgress();

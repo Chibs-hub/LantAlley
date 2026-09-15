@@ -1555,13 +1555,13 @@ test("the companion selector adds and removes pets; both coexist after reload", 
   petTab.click();
   game.clock.advance(50);
 
-  const birdCard = game.doc.querySelector('[data-activate-pet="bird"]');
-  assert.ok(birdCard, "owned pets appear with an activate button");
+  const birdCard = game.doc.querySelector('[data-recruit-pet="bird"]');
+  assert.ok(birdCard, "owned pets appear with a recruit button");
   birdCard.click();
   game.clock.advance(50);
 
-  // Bird is now also active in the shop (deactivate button present).
-  assert.ok(game.doc.querySelector('[data-deactivate-pet="bird"]'), "active pet has a deactivate button");
+  // Bird is now active — dismiss button present, count shows 1.
+  assert.ok(game.doc.querySelector('[data-dismiss-pet="bird"]'), "active pet has a dismiss button");
 
   game.doc.querySelectorAll("[data-home-shop-back]")[0].click();
   game.clock.advance(50);
@@ -1570,8 +1570,11 @@ test("the companion selector adds and removes pets; both coexist after reload", 
   assert.ok(petSpecies().includes("cat"), "cat is still in the home");
   assert.ok(petSpecies().includes("bird"), "bird is now also in the home");
   const saved = JSON.parse(storage.getItem("lanternAlley.v3"));
-  assert.ok(saved.activePets.includes("cat") && saved.activePets.includes("bird"),
-    "both pets saved in activePets");
+  assert.ok(
+    saved.activePets.some((iid) => iid.startsWith("cat-")) &&
+    saved.activePets.some((iid) => iid.startsWith("bird-")),
+    "both pets saved in activePets as iid strings");
+
 
   // Both survive a scene change.
   game.doc.querySelector("[data-enter-house]").click();
