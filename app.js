@@ -170,6 +170,7 @@
     starterCushionClaimed:false,
     activeWallpaper:"wallpaper-plain",
     activePet:"cat",
+    activePets:["cat"],
     ownedPets:[],
     garden:emptyGardenState(),
     innJourney:typeof LanternInnJourney !== "undefined" ? LanternInnJourney.fresh()
@@ -370,7 +371,7 @@
         pendingStarterSeedClaimed = v3.starterSeedClaimed === true;
         pendingStarterCushionClaimed = v3.starterCushionClaimed === true;
         pendingActiveWallpaper = v3.activeWallpaper || "wallpaper-plain";
-        pendingActivePet = v3.activePet === "bird" ? "bird" : "cat";
+        pendingActivePets = inferActivePets(v3);
         pendingOwnedPets = inferOwnedPets(v3);
         pendingGarden = v3.garden || emptyGardenState();
         pendingInnJourney = v3.innJourney || null;
@@ -401,7 +402,7 @@
       pendingStarterSeedClaimed = migrated.starterSeedClaimed === true;
       pendingStarterCushionClaimed = migrated.starterCushionClaimed === true;
       pendingActiveWallpaper = migrated.activeWallpaper || "wallpaper-plain";
-      pendingActivePet = migrated.activePet === "bird" ? "bird" : "cat";
+      pendingActivePets = inferActivePets(migrated);
       pendingOwnedPets = inferOwnedPets(migrated);
       pendingGarden = migrated.garden || emptyGardenState();
       pendingInnJourney = migrated.innJourney || null;
@@ -528,7 +529,8 @@
         ,starterSeedClaimed: state.starterSeedClaimed === true
         ,starterCushionClaimed: state.starterCushionClaimed === true
         ,activeWallpaper: state.activeWallpaper || "wallpaper-plain"
-        ,activePet: state.activePet || "cat"
+        ,activePet: (state.activePets || ["cat"])[0] || "cat"
+        ,activePets: state.activePets || ["cat"]
         ,ownedPets: state.ownedPets || []
         ,garden: state.garden || emptyGardenState()
         ,innJourney: state.innJourney || (typeof LanternInnJourney !== "undefined"
@@ -560,6 +562,7 @@
       state.starterCushionClaimed = false;
       state.activeWallpaper = "wallpaper-plain";
       state.activePet = "cat";
+      state.activePets = ["cat"];
       state.ownedPets = [];
       state.garden = emptyGardenState();
       state.innJourney = typeof LanternInnJourney !== "undefined" ? LanternInnJourney.fresh()
@@ -773,7 +776,7 @@
   var pendingStarterSeedClaimed = false;
   var pendingStarterCushionClaimed = false;
   var pendingActiveWallpaper = "wallpaper-plain";
-  var pendingActivePet = "cat";
+  var pendingActivePets = ["cat"];
   var pendingOwnedPets = [];
   var pendingGarden = emptyGardenState();
   var pendingInnJourney = null;
@@ -809,7 +812,7 @@
   state.starterSeedClaimed = pendingStarterSeedClaimed;
   state.starterCushionClaimed = pendingStarterCushionClaimed;
   state.activeWallpaper = pendingActiveWallpaper;
-  state.activePet = pendingActivePet;
+  state.activePets = pendingActivePets;
   state.ownedPets = pendingOwnedPets;
   state.garden = pendingGarden;
   if(pendingInnJourney){
@@ -5368,8 +5371,18 @@
     return pets;
   }
 
+  function inferActivePets(save){
+    if(Array.isArray(save && save.activePets)) return save.activePets.slice();
+    var single = save && (save.activePet === "bird" ? "bird" : "cat");
+    return [single || "cat"];
+  }
+
   function ownsPet(id){
     return state.ownedPets && state.ownedPets.indexOf(id) >= 0;
+  }
+
+  function isPetActive(id){
+    return state.activePets && state.activePets.indexOf(id) >= 0;
   }
 
   /* ---- The yard, the room, and the shop that fills them ----
@@ -5397,11 +5410,10 @@
   var homeSelected = null;    // {kind:"decor"|"plant", id:...} waiting to be placed
   var homeTab = "garden";     // "garden" | "storage" | "shop"
   var homeNotice = "";
-  var homePetState = null;
-  var homePetSpecies = null;
+  var homePetStates = {};   // keyed by species id
   var homePetFrame = 0;
   var homePetLastTime = 0;
-  var homePetIdleMs = 0;
+  var homePetIdleMs = {};   // keyed by species id
 
   /* The light in the yard and the room follows the learner's own clock, and
    * that is the whole of it: there is no picker, on purpose.
@@ -5944,112 +5956,116 @@
     return [];
   }
 
-  function homePetApi(){
-    if(state.activePet === "bird" && typeof LanternHomeBird !== "undefined") return LanternHomeBird;
+  function homePetApi(species){
+    if(species === "bird" && typeof LanternHomeBird !== "undefined") return LanternHomeBird;
     return typeof LanternHomePet !== "undefined" ? LanternHomePet : null;
   }
 
   function homePetMarkup(scene){
-    var species = state.activePet === "bird" ? "bird" : "cat";
-    var pet = homePetApi();
-    if(!pet) return "";
     if(!state.innJourney || !state.innJourney.catUnlocked) return "";
-    if(!homePetState || homePetSpecies !== species){
-      homePetSpecies = species;
-      homePetState = pet.enterScene
-        ? pet.enterScene(scene, Date.now())
-        : pet.create(scene, Date.now());
-      homePetIdleMs = 0;
-    } else if(homePetState.scene !== scene){
-      // Switching between the yard and the room mid-visit used to walk the
-      // cat to that scene's door every time via the same enterScene() call -
-      // always the exact same dead-centre spot, which a learner tapping
-      // between the two views a few times reads as the cat being teleported
-      // to the middle of the screen on every entry, not as it going about
-      // its day. create() already excludes door anchors from its pick, so a
-      // fresh ordinary resting spot in the new scene keeps this feeling
-      // continuous instead of like a hard reset.
-      homePetState = pet.create(scene, Date.now());
-      homePetIdleMs = 0;
-    }
-    var blockers = species === "cat" ? homePetBlockers(scene) : [];
-    if(pet.pointIsClear && !pet.pointIsClear(homePetState, blockers)){
-      var safe = pet.safeAnchor(homePetState, blockers);
-      if(safe) homePetState = pet.settleAt(homePetState, safe.id);
-    }
-    var sprite = pet.spriteFor(homePetState);
-    var petWidth = pet.widthAt ? pet.widthAt(homePetState.y, homePetState.scene) : 7.5;
-    return '<div class="home-pet' + (species === "bird" ? ' is-bird' : '')
-      + '" aria-hidden="true" data-pet-species="' + species
-      + '" data-pet-behavior="' + homePetState.behavior
-      + '" style="width:' + petWidth + '%;left:' + homePetState.x
-      + '%;top:' + homePetState.y + '%;--pet-lamp:'
-      + (homePetState.scene === 'yard' ? plantLampProximity(homePetState) : 1)
-      + ';z-index:' + homeDepthZ(homePetState.y)
-      + ';--pet-facing:' + homePetState.facing + '">'
-      + '<span style="background-image:url(\'' + sprite.path + '\');background-size:'
-      + (sprite.columns * 100) + '% ' + (sprite.rows * 100) + '%"></span></div>';
+    var activePets = state.activePets || ["cat"];
+    return activePets.map(function(species){
+      var pet = homePetApi(species);
+      if(!pet) return "";
+      var prev = homePetStates[species];
+      if(!prev){
+        homePetStates[species] = pet.enterScene
+          ? pet.enterScene(scene, Date.now())
+          : pet.create(scene, Date.now());
+        homePetIdleMs[species] = 0;
+      } else if(prev.scene !== scene){
+        // Switching between the yard and the room mid-visit used to walk the
+        // cat to that scene's door every time via the same enterScene() call -
+        // always the exact same dead-centre spot, which a learner tapping
+        // between the two views a few times reads as the cat being teleported
+        // to the middle of the screen on every entry, not as it going about
+        // its day. create() already excludes door anchors from its pick, so a
+        // fresh ordinary resting spot in the new scene keeps this feeling
+        // continuous instead of like a hard reset.
+        homePetStates[species] = pet.create(scene, Date.now());
+        homePetIdleMs[species] = 0;
+      }
+      var ps = homePetStates[species];
+      var blockers = species === "cat" ? homePetBlockers(scene) : [];
+      if(pet.pointIsClear && !pet.pointIsClear(ps, blockers)){
+        var safe = pet.safeAnchor(ps, blockers);
+        if(safe) homePetStates[species] = ps = pet.settleAt(ps, safe.id);
+      }
+      var sprite = pet.spriteFor(ps);
+      var petWidth = pet.widthAt ? pet.widthAt(ps.y, ps.scene) : 7.5;
+      return '<div class="home-pet' + (species === "bird" ? ' is-bird' : '')
+        + '" aria-hidden="true" data-pet-species="' + species
+        + '" data-pet-behavior="' + ps.behavior
+        + '" style="width:' + petWidth + '%;left:' + ps.x
+        + '%;top:' + ps.y + '%;--pet-lamp:'
+        + (ps.scene === 'yard' ? plantLampProximity(ps) : 1)
+        + ';z-index:' + homeDepthZ(ps.y)
+        + ';--pet-facing:' + ps.facing + '">'
+        + '<span style="background-image:url(\'' + sprite.path + '\');background-size:'
+        + (sprite.columns * 100) + '% ' + (sprite.rows * 100) + '%"></span></div>';
+    }).join("");
   }
 
   function updateHomePetNode(){
-    var node = document.querySelector(".home-pet");
-    var pet = homePetApi();
-    if(!node || !homePetState || !pet) return;
-    var sprite = pet.spriteFor(homePetState);
-    var column = sprite.frame % sprite.columns;
-    var row = Math.floor(sprite.frame / sprite.columns);
-    var x = sprite.columns > 1 ? column * 100 / (sprite.columns - 1) : 0;
-    var y = sprite.rows > 1 ? row * 100 / (sprite.rows - 1) : 0;
-    /* Width every frame, beside position.
-     *
-     * It was only written when the whole scene was repainted, so the cat kept
-     * whatever size it had when it set off and then jumped to the right one at
-     * the next interaction. That snap is what read as the size changing on its
-     * own: the rule was right and it was being applied at the wrong moments. */
-    if(pet.widthAt) node.style.width = pet.widthAt(homePetState.y, homePetState.scene) + "%";
-    node.style.left = homePetState.x + "%";
-    node.style.top = homePetState.y + "%";
-    node.style.zIndex = homeDepthZ(homePetState.y);
-    node.style.setProperty("--pet-facing", homePetState.facing);
-    /* The cat moves, so its distance from the doorway lamp changes with it. */
-    node.style.setProperty("--pet-lamp",
-      homePetState.scene === "yard" ? plantLampProximity(homePetState) : 1);
-    node.setAttribute("data-pet-behavior", homePetState.behavior);
-    var art = node.firstElementChild;
-    if(art){
-      art.style.backgroundImage = "url('" + sprite.path + "')";
-      art.style.backgroundSize = (sprite.columns * 100) + "% " + (sprite.rows * 100) + "%";
-      art.style.backgroundPosition = x + "% " + y + "%";
-    }
+    Object.keys(homePetStates).forEach(function(species){
+      var ps = homePetStates[species];
+      var node = document.querySelector('[data-pet-species="' + species + '"]');
+      var pet = homePetApi(species);
+      if(!node || !ps || !pet) return;
+      var sprite = pet.spriteFor(ps);
+      var column = sprite.frame % sprite.columns;
+      var row = Math.floor(sprite.frame / sprite.columns);
+      var x = sprite.columns > 1 ? column * 100 / (sprite.columns - 1) : 0;
+      var y = sprite.rows > 1 ? row * 100 / (sprite.rows - 1) : 0;
+      /* Width every frame, beside position. */
+      if(pet.widthAt) node.style.width = pet.widthAt(ps.y, ps.scene) + "%";
+      node.style.left = ps.x + "%";
+      node.style.top = ps.y + "%";
+      node.style.zIndex = homeDepthZ(ps.y);
+      node.style.setProperty("--pet-facing", ps.facing);
+      node.style.setProperty("--pet-lamp",
+        ps.scene === "yard" ? plantLampProximity(ps) : 1);
+      node.setAttribute("data-pet-behavior", ps.behavior);
+      var art = node.firstElementChild;
+      if(art){
+        art.style.backgroundImage = "url('" + sprite.path + "')";
+        art.style.backgroundSize = (sprite.columns * 100) + "% " + (sprite.rows * 100) + "%";
+        art.style.backgroundPosition = x + "% " + y + "%";
+      }
+    });
   }
 
   function startHomePetMotion(){
     if(homePetFrame && typeof cancelAnimationFrame === "function") cancelAnimationFrame(homePetFrame);
     if(typeof requestAnimationFrame !== "function" || homeView === "shop") return;
-    var pet = homePetApi();
-    if(!pet || !homePetState) return;
+    if(!Object.keys(homePetStates).length) return;
     homePetLastTime = 0;
     function tick(time){
       if(state.currentKey !== "home" || homeView === "shop") return;
       var elapsed = homePetLastTime ? Math.min(80, time - homePetLastTime) : 16;
       homePetLastTime = time;
       var reduced = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
-      homePetState = pet.step(homePetState, elapsed, {paused:document.hidden, reducedMotion:reduced});
-      if(homePetState && !homePetState.targetId){
-        homePetIdleMs += elapsed;
-        var dwell = pet.dwellMs ? pet.dwellMs(homePetState) : 6000;
-        if(homePetIdleMs > dwell){
-          homePetState.seed = (homePetState.seed * 1664525 + 1013904223) >>> 0;
-          var blockers = homePetSpecies === "cat" ? homePetBlockers(homePetState.scene) : [];
-          var destination = pet.nextAnchor
-            ? pet.nextAnchor(homePetState, blockers)
-            : pet.anchors(homePetState.scene).filter(function(anchor){ return anchor.id !== homePetState.anchorId; })[0];
-          if(destination) homePetState = reduced
-            ? pet.settleAt(homePetState, destination.id)
-            : pet.sendTo(homePetState, destination.id);
-          homePetIdleMs = 0;
+      Object.keys(homePetStates).forEach(function(species){
+        var pet = homePetApi(species);
+        if(!pet || !homePetStates[species]) return;
+        homePetStates[species] = pet.step(homePetStates[species], elapsed, {paused:document.hidden, reducedMotion:reduced});
+        var ps = homePetStates[species];
+        if(ps && !ps.targetId){
+          homePetIdleMs[species] = (homePetIdleMs[species] || 0) + elapsed;
+          var dwell = pet.dwellMs ? pet.dwellMs(ps) : 6000;
+          if(homePetIdleMs[species] > dwell){
+            ps.seed = (ps.seed * 1664525 + 1013904223) >>> 0;
+            var blockers = species === "cat" ? homePetBlockers(ps.scene) : [];
+            var destination = pet.nextAnchor
+              ? pet.nextAnchor(ps, blockers)
+              : pet.anchors(ps.scene).filter(function(anchor){ return anchor.id !== ps.anchorId; })[0];
+            if(destination) homePetStates[species] = reduced
+              ? pet.settleAt(ps, destination.id)
+              : pet.sendTo(ps, destination.id);
+            homePetIdleMs[species] = 0;
+          }
         }
-      }
+      });
       updateHomePetNode();
       homePetFrame = requestAnimationFrame(tick);
     }
@@ -6661,11 +6677,11 @@
     var html = "";
     PET_CATALOGUE.forEach(function(pet){
       var owned = ownsPet(pet.id);
-      var active = state.activePet === pet.id && owned;
+      var active = owned && isPetActive(pet.id);
       var art = '<div class="home-pet-shop-sprite" style="background-image:url(\'' + pet.sprite + '\');"></div>';
-      var sub = owned ? (active ? "今いるコ ✓" : "持っている") : "¥" + pet.price;
+      var sub = owned ? (active ? "今いるコ ✓" : "招く") : "¥" + pet.price;
       var attr = owned
-        ? 'data-activate-pet="' + pet.id + '"' + (active ? " disabled" : "")
+        ? (active ? 'data-deactivate-pet="' + pet.id + '"' : 'data-activate-pet="' + pet.id + '"')
         : 'data-buy-pet="' + pet.id + '"';
       var extra = owned ? (active ? " is-owned is-active-pet" : " is-owned") : (money >= pet.price ? "" : " is-locked");
       html += dockCard(art, pet.nameJp, sub, attr, extra);
@@ -7116,8 +7132,9 @@
       if(!state.ownedPets) state.ownedPets = [];
       state.ownedPets.push(petId);
       state.money = (state.money || 0) - petEntry.price;
-      state.activePet = petId;
-      homePetState = null; homePetSpecies = null; homePetIdleMs = 0;
+      if(!state.activePets) state.activePets = [];
+      if(state.activePets.indexOf(petId) < 0) state.activePets.push(petId);
+      delete homePetStates[petId]; homePetIdleMs[petId] = 0;
       playCoinSound();
       saveProgress();
       paintHome();
@@ -7129,8 +7146,20 @@
     if(activatePet){
       var activateId = activatePet.getAttribute("data-activate-pet");
       if(!ownsPet(activateId)) return;
-      state.activePet = activateId;
-      homePetState = null; homePetSpecies = null; homePetIdleMs = 0;
+      if(!state.activePets) state.activePets = [];
+      if(state.activePets.indexOf(activateId) < 0) state.activePets.push(activateId);
+      delete homePetStates[activateId]; homePetIdleMs[activateId] = 0;
+      saveProgress();
+      paintHome();
+      return;
+    }
+
+    var deactivatePet = event.target.closest("[data-deactivate-pet]");
+    if(deactivatePet){
+      var deactivateId = deactivatePet.getAttribute("data-deactivate-pet");
+      if(!state.activePets) return;
+      state.activePets = state.activePets.filter(function(id){ return id !== deactivateId; });
+      delete homePetStates[deactivateId];
       saveProgress();
       paintHome();
       return;
@@ -7297,7 +7326,8 @@
     }else if(reward.kind === "cat"){
       if(!state.ownedPets) state.ownedPets = [];
       if(state.ownedPets.indexOf("cat") < 0) state.ownedPets.push("cat");
-      state.activePet = "cat";
+      if(!state.activePets) state.activePets = [];
+      if(state.activePets.indexOf("cat") < 0) state.activePets.push("cat");
     }
     if(reward.coins) state.money = (state.money || 0) + reward.coins;
     saveProgress();

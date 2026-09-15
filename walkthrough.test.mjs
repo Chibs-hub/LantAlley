@@ -1536,15 +1536,17 @@ test("switching between the yard and the room does not always re-seat the cat at
     "switching back to the yard must not always re-seat the cat at its door");
 });
 
-test("the companion selector swaps pets immediately and keeps the choice after reload", () => {
+test("the companion selector adds and removes pets; both coexist after reload", () => {
   const storage = new FakeStorage();
+  // Boot with only cat active; bird is owned but not yet active.
   const game = boot(plantedCamelliaSave({
-    activePet: "cat", ownedPets: ["cat", "bird"],
+    activePets: ["cat"], ownedPets: ["cat", "bird"],
   }), "", {storage});
   enterHome(game);
-  assert.equal(game.doc.querySelector(".home-pet").dataset.petSpecies, "cat");
+  const petSpecies = () => game.doc.querySelectorAll(".home-pet").map((n) => n.dataset.petSpecies);
+  assert.deepEqual(petSpecies(), ["cat"], "only cat is shown initially");
 
-  // Open shop and navigate to the ペット tab.
+  // Open shop → ペット tab → activate bird.
   game.doc.querySelectorAll("[data-home-shop]")[0].click();
   game.clock.advance(50);
   const petTab = game.doc.querySelectorAll("[data-shop-category]")
@@ -1558,18 +1560,29 @@ test("the companion selector swaps pets immediately and keeps the choice after r
   birdCard.click();
   game.clock.advance(50);
 
+  // Bird is now also active in the shop (deactivate button present).
+  assert.ok(game.doc.querySelector('[data-deactivate-pet="bird"]'), "active pet has a deactivate button");
+
   game.doc.querySelectorAll("[data-home-shop-back]")[0].click();
   game.clock.advance(50);
 
-  assert.equal(game.doc.querySelector(".home-pet").dataset.petSpecies, "bird");
-  assert.equal(JSON.parse(storage.getItem("lanternAlley.v3")).activePet, "bird");
+  // Both cat and bird live in the home at the same time.
+  assert.ok(petSpecies().includes("cat"), "cat is still in the home");
+  assert.ok(petSpecies().includes("bird"), "bird is now also in the home");
+  const saved = JSON.parse(storage.getItem("lanternAlley.v3"));
+  assert.ok(saved.activePets.includes("cat") && saved.activePets.includes("bird"),
+    "both pets saved in activePets");
 
+  // Both survive a scene change.
   game.doc.querySelector("[data-enter-house]").click();
-  assert.equal(game.doc.querySelector(".home-pet").dataset.petSpecies, "bird");
+  assert.ok(petSpecies().includes("bird"), "bird follows into the interior");
 
+  // Both survive a reload.
   const reloaded = boot(null, "", {storage});
   enterHome(reloaded);
-  assert.equal(reloaded.doc.querySelector(".home-pet").dataset.petSpecies, "bird");
+  const reloadedSpecies = reloaded.doc.querySelectorAll(".home-pet").map((n) => n.dataset.petSpecies);
+  assert.ok(reloadedSpecies.includes("cat") && reloadedSpecies.includes("bird"),
+    "both pets restored after reload");
 });
 
 test("yard reset actions live in a compact overflow menu", () => {

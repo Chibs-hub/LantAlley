@@ -220,9 +220,9 @@ test("dense decoration fails safely instead of routing through an object", () =>
 test("the live home supplies placed furniture and plants to pet routing", () => {
   const app = fs.readFileSync(new URL("./app.js", import.meta.url), "utf8");
   assert.match(app, /function homePetBlockers\(scene\)/);
-  assert.match(app, /var blockers = homePetSpecies === "cat" \? homePetBlockers\(homePetState\.scene\) : \[\]/);
-  assert.match(app, /pet\.nextAnchor\(homePetState,\s*blockers\)/);
-  assert.match(app, /pet\.safeAnchor\(homePetState, blockers\)/);
+  assert.match(app, /species === "cat" \? homePetBlockers\(/);
+  assert.match(app, /pet\.nextAnchor\(\s*ps,\s*blockers\)/);
+  assert.match(app, /pet\.safeAnchor\(\s*ps,\s*blockers\)/);
   assert.match(app, /z-index:' \+ homeDepthZ/);
 });
 
