@@ -118,10 +118,10 @@ test("talking mouth uses a gentle happy shape", () => {
   vm.runInContext(readFileSync(logicUrl, "utf8"), context);
   assert.equal(typeof context.LanternAlleyLogic.getHappyMouthStyle, "function");
   const style = context.LanternAlleyLogic.getHappyMouthStyle();
-  assert.equal(style.borderRadius, "50% 50% 64% 64% / 34% 34% 76% 76%");
-  assert.match(style.background, /#c97872/);
+  assert.equal(style.borderRadius, "48% 52% 56% 44% / 42% 42% 58% 58%");
+  assert.equal(style.background, "#633529");
   assert.equal(style.left, "50%");
-  assert.equal(style.top, "53%");
+  assert.equal(style.top, "48%");
 });
 
 test("entrance uses fixed pose assets instead of a mouth overlay", () => {

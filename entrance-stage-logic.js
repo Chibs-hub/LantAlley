@@ -45,9 +45,9 @@
   function getHappyMouthStyle(){
     return {
       left:"50%",
-      top:"53%",
-      borderRadius:"50% 50% 64% 64% / 34% 34% 76% 76%",
-      background:"radial-gradient(ellipse at 50% 84%, #c97872 0 24%, transparent 28%), radial-gradient(ellipse at 50% 38%, #7a4338 0%, #4d2825 56%, #2a1517 100%)"
+      top:"48%",
+      borderRadius:"48% 52% 56% 44% / 42% 42% 58% 58%",
+      background:"#633529"
     };
   }
 

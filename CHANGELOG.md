@@ -5,6 +5,41 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+### 2026-09-15 - Matte learner sprite sheets (v368)
+
+Restyled the first two learner character sheets in the same muted gouache
+direction as Kon while keeping the four-pose order, transparent masks, and
+1200x600 sprite geometry unchanged. The cache stamp is v368. No audio files
+changed.
+
+### 2026-09-15 - Illustrated Kon pose set (v367)
+
+Replaced Kon's glossy plush pose pack with one constrained gouache-and-ink
+character system: a common color palette, deliberate silhouette, matte eyes,
+and matching neckerchief and lantern charm across every entrance pose. Every
+production file now uses the same transparent 512px canvas and shared foot
+baseline, so pose changes do not shift Kon up or down.
+
+The speaking mouth now uses a small flat ink shape placed on the new
+mouthless base rather than a shaded rendered mouth. No audio files changed.
+
+Cache is v367.
+
+### 2026-09-15 - Home pet shop and matched yard controls (v366)
+
+The Home menu now opens a dedicated pet shelf where the calico cat and bush
+warbler can be purchased with earned yen. Ownership and the active companion
+are saved separately, a purchase cannot charge twice, and an owned pet can be
+selected again without another payment. The final Moonview Inn reward still
+grants the cat for free.
+
+Existing v365 saves keep every companion they could already use. The yard's
+More control now has the same footprint as the surrounding Home controls, and
+both rooms continue to use the same storage-card component. The pet catalogue
+and its previews are included in the offline shell. No audio files changed.
+
+Cache is v366.
+
 ### 2026-09-15 - The home has a bird companion (v365)
 
 Added an animated Japanese bush warbler with six production sprite sheets:

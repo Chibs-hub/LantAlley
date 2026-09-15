@@ -883,6 +883,16 @@ test("the reward stage's controls meet the touch minimum on a coarse pointer", (
   assert.doesNotMatch(outside, /\.home-menu-button\{[^}]*min-height:44px/);
 });
 
+test("wrapped Home menu controls keep one shared footprint", () => {
+  const css = read("styles.css");
+  const app = read("app.js");
+  const rule = /\.home-menu-button\{([^}]*)\}/.exec(css)?.[1] || "";
+  assert.match(rule, /min-width:92px/);
+  assert.match(rule, /min-height:39px/);
+  assert.match(app, /<summary class="home-menu-button"/,
+    "the yard overflow uses the same sizing rule as every Home button");
+});
+
 /* Everything that stands in a scene is graded by the hour, and by which scene.
  *
  * This became load-bearing when the four painted backgrounds landed. While one

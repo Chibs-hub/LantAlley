@@ -8,6 +8,7 @@ function load() {
   context.self = context;
   vm.createContext(context);
   vm.runInContext(readFileSync(new URL("./inn-journey.js", import.meta.url), "utf8"), context);
+  vm.runInContext(readFileSync(new URL("./home-pets.js", import.meta.url), "utf8"), context);
   vm.runInContext(readFileSync(new URL("./learning-progress.js", import.meta.url), "utf8"), context);
   return context.LanternProgress;
 }
@@ -30,6 +31,7 @@ test("empty progress includes independent home and garden reward defaults", () =
   assert.equal(first.starterCushionClaimed, false);
   assert.equal(first.activeWallpaper, "wallpaper-plain");
   assert.equal(first.activePet, "cat");
+  assert.deepEqual(Array.from(first.ownedPets), []);
   assert.deepEqual(JSON.parse(JSON.stringify(first.garden)), {
     plants: [], usedCreditIds: [], starterClaimed: false, nextInstanceId: 1,
   });
@@ -38,11 +40,30 @@ test("empty progress includes independent home and garden reward defaults", () =
   assert.deepEqual([...second.garden.plants], []);
 });
 
-test("the chosen companion survives reload and invalid values fall back to the cat", () => {
+test("pet ownership and the chosen companion survive reload", () => {
   const progress = load();
-  assert.equal(progress.migrateProgress({version:3, stages:{}, activePet:"bird"}).activePet, "bird");
-  assert.equal(progress.migrateProgress({version:3, stages:{}, activePet:"owl"}).activePet, "cat");
-  assert.equal(progress.migrateProgress({version:3, stages:{}}).activePet, "cat");
+  const current = progress.migrateProgress({version:3, stages:{}, ownedPets:["bird"], activePet:"bird",
+    innJourney:{claimed:{}, catUnlocked:false}});
+  assert.deepEqual(Array.from(current.ownedPets), ["bird"]);
+  assert.equal(current.activePet, "bird");
+
+  const invalid = progress.migrateProgress({version:3, stages:{}, ownedPets:["owl", "cat"], activePet:"owl",
+    innJourney:{claimed:{}, catUnlocked:false}});
+  assert.deepEqual(Array.from(invalid.ownedPets), ["cat"]);
+  assert.equal(invalid.activePet, "cat");
+});
+
+test("v365 pet choices migrate without taking either companion away", () => {
+  const progress = load();
+  const bird = progress.migrateProgress({version:3, stages:{}, activePet:"bird",
+    innJourney:{claimed:{"inn-e04":true}, catUnlocked:true}});
+  assert.deepEqual(Array.from(bird.ownedPets), ["cat", "bird"]);
+  assert.equal(bird.activePet, "bird");
+
+  const cat = progress.migrateProgress({version:3, stages:{}, activePet:"cat",
+    innJourney:{claimed:{"inn-e04":true}, catUnlocked:true}});
+  assert.deepEqual(Array.from(cat.ownedPets), ["cat", "bird"]);
+  assert.equal(cat.activePet, "cat");
 });
 
 test("a fresh save starts with every Inn journey reward locked", () => {
