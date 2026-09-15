@@ -530,7 +530,7 @@
         ,starterCushionClaimed: state.starterCushionClaimed === true
         ,activeWallpaper: state.activeWallpaper || "wallpaper-plain"
         ,activePet: iidSpecies((state.activePets || ["cat-0"])[0] || "cat-0")
-        ,activePets: state.activePets || ["cat-0"]
+        ,activePets: state.activePets || []
         ,ownedPets: state.ownedPets || []
         ,garden: state.garden || emptyGardenState()
         ,innJourney: state.innJourney || (typeof LanternInnJourney !== "undefined"
@@ -6021,7 +6021,7 @@
 
   function homePetMarkup(scene){
     if(!state.innJourney || !state.innJourney.catUnlocked) return "";
-    var activePets = state.activePets || ["cat-0"];
+    var activePets = state.activePets || [];
     return activePets.map(function(iid){
       var species = iidSpecies(iid);
       var pet = homePetApi(species);
@@ -6922,6 +6922,13 @@
 
   function paintHome(){
     rememberHomeSceneCamera();
+    // Keep homePetStates in sync: drop any iid that is no longer in activePets
+    // so a stale entry cannot hold a rendered position across a dismiss.
+    var _activeIids = {};
+    (state.activePets || []).forEach(function(iid){ _activeIids[iid] = true; });
+    Object.keys(homePetStates).forEach(function(iid){
+      if(!_activeIids[iid]){ delete homePetStates[iid]; delete homePetIdleMs[iid]; }
+    });
     if(typeof LanternHomeDecor === "undefined" || !homeScenes()){
       $("scene").innerHTML = '<div class="home-room"></div>';
       return;
