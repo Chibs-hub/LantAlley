@@ -7,7 +7,7 @@
  * Bump CACHE_VERSION whenever any shell file changes, or returning players
  * will keep the old build.
  */
-var CACHE_VERSION = "lantern-alley-v379";
+var CACHE_VERSION = "lantern-alley-v380";
 // Fix: dismiss cat inside the house removes them from the interior scene.
 
 // audio-index.js assigns to `self`, so the worker and the page share one list
@@ -156,11 +156,11 @@ var SHELL = [
   "./manifest.webmanifest",
   "./assets/branding/lantern-mark-v2.png",
   "./assets/social/lantern-alley-share-v2.jpg",
-  "./icons/icon-192.png?v=379",
-  "./icons/icon-512.png?v=379",
-  "./icons/icon-192-maskable.png?v=379",
-  "./icons/icon-512-maskable.png?v=379",
-  "./icons/apple-touch-icon.png?v=379",
+  "./icons/icon-192.png?v=380",
+  "./icons/icon-512.png?v=380",
+  "./icons/icon-192-maskable.png?v=380",
+  "./icons/icon-512-maskable.png?v=380",
+  "./icons/apple-touch-icon.png?v=380",
   "./assets/kon/kon-idle.webp",
   "./assets/kon/kon-wave-left.webp",
   "./assets/kon/kon-wave-right.webp",
