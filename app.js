@@ -1233,6 +1233,16 @@
           return reg.update().then(function(){
             var incoming = reg.installing || reg.waiting;
             if(!incoming){
+              // The new SW may have already activated via skipWaiting during
+              // this page load (controllerchange fired, dialog may have been
+              // dismissed). The page is still running the old scripts and
+              // needs a reload even though nothing is pending.
+              if(bootController && navigator.serviceWorker.controller !== bootController){
+                dismissed = false;
+                say("A newer version loaded in the background. Press Update now.");
+                offer();
+                return;
+              }
               say("You are on the newest build.");
               return;
             }

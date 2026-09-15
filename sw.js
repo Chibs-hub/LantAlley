@@ -7,7 +7,7 @@
  * Bump CACHE_VERSION whenever any shell file changes, or returning players
  * will keep the old build.
  */
-var CACHE_VERSION = "lantern-alley-v368";
+var CACHE_VERSION = "lantern-alley-v369";
 // Home bird companion, persisted pet selection, and refreshed garden art.
 
 // audio-index.js assigns to `self`, so the worker and the page share one list
