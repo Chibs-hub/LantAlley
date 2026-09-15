@@ -190,7 +190,7 @@ test("the page links the manifest, iOS tags, and registers the worker", () => {
   assert.match(html, /name="viewport"[^>]*width=device-width/);
   assert.match(html, /rel="apple-touch-icon"/);
   assert.match(html, /apple-mobile-web-app-capable/);
-  assert.match(html, /navigator\.serviceWorker\.register\("sw\.js"\)/);
+  assert.match(html, /navigator\.serviceWorker\.register\("sw\.js"(?:,\s*\{[^}]*\})?\)/);
 
   // file:// has no service worker; registration must be guarded, not thrown.
   assert.match(html, /location\.protocol\.indexOf\("http"\) === 0/);
@@ -203,7 +203,7 @@ test("every launch asks the registration to check for a new build", () => {
   // who opens the app several times in an hour could go all day without it
   // ever looking. update() forces a real check on this launch instead of
   // waiting for the browser to decide it is due for one.
-  assert.match(html, /register\("sw\.js"\)\.then\(function\(reg\)\{/);
+  assert.match(html, /register\("sw\.js"(?:,\s*\{[^}]*\})?\)\.then\(function\(reg\)\{/);
   assert.match(html, /reg\.update\(\)\.catch\(/);
 });
 

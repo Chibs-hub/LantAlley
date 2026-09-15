@@ -6976,7 +6976,7 @@
           + (homeDecorating ? ' is-on' : '') + '" aria-pressed="' + homeDecorating + '">飾る</button>'
           + homePetManageButton()
           + '<button type="button" data-home-shop="1" class="home-menu-button">店</button>'
-          + (homeView === "yard" ? '<details class="home-yard-more"><summary aria-label="庭のその他の操作">•••</summary>'
+          + (homeView === "yard" ? '<details class="home-yard-more"><summary class="home-menu-button" aria-label="庭のその他の操作">•••</summary>'
               + '<div><button type="button" data-clear-yard="1">庭を空にする</button>'
               + '<button type="button" data-restore-yard="1">最初の配置に戻す</button></div></details>' : '')
           + '</div>'
