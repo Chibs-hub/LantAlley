@@ -1249,6 +1249,24 @@
       });
     }
 
+    var forceReload = $("btn-force-reload");
+    if(forceReload){
+      forceReload.addEventListener("click", function(){
+        forceReload.disabled = true;
+        forceReload.textContent = "Clearing…";
+        var clearAll = typeof caches !== "undefined"
+          ? caches.keys().then(function(keys){
+              return Promise.all(keys.map(function(k){ return caches.delete(k); }));
+            })
+          : Promise.resolve();
+        clearAll.then(function(){
+          window.location.reload(true);
+        }).catch(function(){
+          window.location.reload(true);
+        });
+      });
+    }
+
     now.addEventListener("click", function(){ window.location.reload(); });
     later.addEventListener("click", function(){
       dismissed = true;
