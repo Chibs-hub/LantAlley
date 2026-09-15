@@ -6018,9 +6018,19 @@
       var prev = homePetStates[iid];
       var seed = iidSeed(iid);
       if(!prev){
-        homePetStates[iid] = pet.enterScene
-          ? pet.enterScene(scene, seed)
-          : pet.create(scene, seed);
+        var newPs = pet.enterScene ? pet.enterScene(scene, seed) : pet.create(scene, seed);
+        // Spread same-species pets across distinct anchors so they don't overlap.
+        var takenIds = Object.keys(homePetStates)
+          .filter(function(k){ return iidSpecies(k) === species; })
+          .map(function(k){ return homePetStates[k] && homePetStates[k].anchorId; })
+          .filter(Boolean);
+        if(takenIds.indexOf(newPs.anchorId) >= 0 && pet.anchors && pet.settleAt){
+          var free = pet.anchors(scene).filter(function(a){
+            return takenIds.indexOf(a.id) < 0 && a.kind !== "door";
+          })[0];
+          if(free) newPs = pet.settleAt(newPs, free.id);
+        }
+        homePetStates[iid] = newPs;
         homePetIdleMs[iid] = 0;
       } else if(prev.scene !== scene){
         // Switching between the yard and the room mid-visit used to walk the
