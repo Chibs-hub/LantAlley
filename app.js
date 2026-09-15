@@ -6118,6 +6118,13 @@
           if(homePetIdleMs[iid] > dwell){
             ps.seed = (ps.seed * 1664525 + 1013904223) >>> 0;
             var blockers = species === "cat" ? homePetBlockers(ps.scene) : [];
+            // Treat resting siblings as soft blockers so pets avoid each other's spots.
+            Object.keys(homePetStates).forEach(function(k){
+              if(k === iid) return;
+              if(iidSpecies(k) !== species) return;
+              var sib = homePetStates[k];
+              if(sib && !sib.targetId) blockers = blockers.concat([{x:sib.x, y:sib.y, rx:6, ry:4}]);
+            });
             var destination = pet.nextAnchor
               ? pet.nextAnchor(ps, blockers)
               : pet.anchors(ps.scene).filter(function(anchor){ return anchor.id !== ps.anchorId; })[0];
