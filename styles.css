@@ -580,7 +580,7 @@
   .live-mouth{
     display:none;
     position:absolute;
-    left:50%; top:53%;
+    left:57%; top:48%;
     width:14%; height:6%;
     transform:translate(-50%, -50%) scale(0.9, 0.72);
     border-radius:50% 50% 64% 64% / 34% 34% 76% 76%;

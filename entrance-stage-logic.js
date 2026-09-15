@@ -44,7 +44,7 @@
 
   function getHappyMouthStyle(){
     return {
-      left:"50%",
+      left:"57%",
       top:"48%",
       borderRadius:"48% 52% 56% 44% / 42% 42% 58% 58%",
       background:"#633529"

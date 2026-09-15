@@ -120,7 +120,7 @@ test("talking mouth uses a gentle happy shape", () => {
   const style = context.LanternAlleyLogic.getHappyMouthStyle();
   assert.equal(style.borderRadius, "48% 52% 56% 44% / 42% 42% 58% 58%");
   assert.equal(style.background, "#633529");
-  assert.equal(style.left, "50%");
+  assert.equal(style.left, "57%");
   assert.equal(style.top, "48%");
 });
 

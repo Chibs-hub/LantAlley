@@ -5,6 +5,13 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **This is the "why" archive.** When something looks wrong, search here before changing it - most of the odd-looking decisions in this project are load-bearing and the entry says what broke last time. What the project currently is, and what is left to do, are in PROJECT-HANDOFF.md.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
+
+### 2026-09-15 - Align Kon talking mouth (v374)
+
+Moved the animated mouth anchor to the face center in the refreshed transparent
+Kon artwork. The CSS fallback and runtime style now use the same 57% horizontal
+anchor, and the cache stamp is v374. No audio files changed.
+
 ### 2026-09-15 - Matte learner sprite sheets (v368)
 
 Restyled the first two learner character sheets in the same muted gouache
