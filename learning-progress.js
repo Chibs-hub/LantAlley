@@ -126,6 +126,7 @@
     next.activeWallpaper = typeof stored.activeWallpaper === "string" && stored.activeWallpaper
       ? stored.activeWallpaper : "wallpaper-plain";
     next.activePet = stored.activePet === "bird" ? "bird" : "cat";
+    next.ownedPets = Array.isArray(stored.ownedPets) ? stored.ownedPets.slice() : null;
 
     var gardenSource = stored.garden || emptyGarden();
     var gardenDefault = emptyGarden();

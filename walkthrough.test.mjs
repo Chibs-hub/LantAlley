@@ -1538,13 +1538,29 @@ test("switching between the yard and the room does not always re-seat the cat at
 
 test("the companion selector swaps pets immediately and keeps the choice after reload", () => {
   const storage = new FakeStorage();
-  const game = boot(plantedCamelliaSave({activePet:"cat"}), "", {storage});
+  const game = boot(plantedCamelliaSave({
+    activePet: "cat", ownedPets: ["cat", "bird"],
+  }), "", {storage});
   enterHome(game);
   assert.equal(game.doc.querySelector(".home-pet").dataset.petSpecies, "cat");
 
-  const toggle = game.doc.querySelector("[data-home-pet-toggle]");
-  assert.ok(toggle, "an unlocked home offers a companion selector");
-  toggle.click();
+  // Open shop and navigate to the ペット tab.
+  game.doc.querySelectorAll("[data-home-shop]")[0].click();
+  game.clock.advance(50);
+  const petTab = game.doc.querySelectorAll("[data-shop-category]")
+    .find((b) => b.getAttribute("data-shop-category") === "pets");
+  assert.ok(petTab, "the shop has a ペット category");
+  petTab.click();
+  game.clock.advance(50);
+
+  const birdCard = game.doc.querySelector('[data-activate-pet="bird"]');
+  assert.ok(birdCard, "owned pets appear with an activate button");
+  birdCard.click();
+  game.clock.advance(50);
+
+  game.doc.querySelectorAll("[data-home-shop-back]")[0].click();
+  game.clock.advance(50);
+
   assert.equal(game.doc.querySelector(".home-pet").dataset.petSpecies, "bird");
   assert.equal(JSON.parse(storage.getItem("lanternAlley.v3")).activePet, "bird");
 
