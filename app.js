@@ -5395,8 +5395,14 @@
     return iid.replace(/-[^-]+$/, "");
   }
 
+  var _nextPetSeq = Date.now();
   function newIid(species){
-    return species + "-" + Date.now();
+    return species + "-" + (_nextPetSeq++);
+  }
+
+  function iidSeed(iid){
+    var m = iid.match(/-(\d+)$/);
+    return m ? (parseInt(m[1], 10) & 0xFFFFFFFF) : Date.now();
   }
 
   function inferActivePets(save){
@@ -6010,10 +6016,11 @@
       var pet = homePetApi(species);
       if(!pet) return "";
       var prev = homePetStates[iid];
+      var seed = iidSeed(iid);
       if(!prev){
         homePetStates[iid] = pet.enterScene
-          ? pet.enterScene(scene, Date.now())
-          : pet.create(scene, Date.now());
+          ? pet.enterScene(scene, seed)
+          : pet.create(scene, seed);
         homePetIdleMs[iid] = 0;
       } else if(prev.scene !== scene){
         // Switching between the yard and the room mid-visit used to walk the
@@ -6024,7 +6031,7 @@
         // its day. create() already excludes door anchors from its pick, so a
         // fresh ordinary resting spot in the new scene keeps this feeling
         // continuous instead of like a hard reset.
-        homePetStates[iid] = pet.create(scene, Date.now());
+        homePetStates[iid] = pet.create(scene, seed);
         homePetIdleMs[iid] = 0;
       }
       var ps = homePetStates[iid];
