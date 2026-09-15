@@ -67,7 +67,7 @@ test("the refusal item states capacity clearly and uses a natural service reply"
   assert.match(q.prompt.jp, /二人部屋が二つ/);
   assert.equal(
     q.answer.options[q.answer.correctIndex],
-    "申し訳ありませんが、十名様分のお部屋はご用意できません。"
+    "申し訳ありません。二人部屋が二つしか空いておりませんので、近くの宿をご案内いたします。"
   );
 });
 

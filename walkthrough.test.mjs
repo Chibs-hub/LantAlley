@@ -860,7 +860,7 @@ test("the audio-only schedule question offers a clear replay control", async () 
 test("the audio-only replay control repeats the hidden Japanese request", async () => {
   const game = boot(resumedScheduleChallengeSave(), "?skip=1");
   await openResumedInnScheduleChallenge(game);
-  const question = "Aグループは18時以降、Bグループは20時までに夕食を始められます。一組の食事には2時間かかります。夕食の開始時刻を調整してください。";
+  const question = "Aグループは18時以降、Bグループは20時までに夕食を始められます。Aグループを先にご案内します。一組の食事には2時間かかります。夕食の開始時刻を調整してください。";
   const before = game.heard.length;
 
   game.$("btn-listen-again").click();
