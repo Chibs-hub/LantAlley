@@ -32,7 +32,11 @@
       /* The back tatami strip is not a decor target, so it remains traversable
        * even when all five floor positions are occupied. */
       {id:"interior-lane-left", x:40, y:72, kind:"tatami", behaviors:["look","sit"]},
-      {id:"interior-lane-right", x:60, y:72, kind:"tatami", behaviors:["look","groom"]}
+      {id:"interior-lane-right", x:60, y:72, kind:"tatami", behaviors:["look","groom"]},
+      /* The front strip sits right at the near edge of the tatami, giving the
+       * cat a clearly close-to-viewer position so the depth scale reads
+       * convincingly when multiple cats are in the room at once. */
+      {id:"interior-lane-front", x:50, y:85, kind:"tatami", behaviors:["sit","look","stretch"]}
     ]
   };
 
