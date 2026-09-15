@@ -98,6 +98,9 @@ test("every Entrance Kon pose uses a transparent production cutout", () => {
     assert.equal(existsSync(new URL("./assets/fox/" + name, import.meta.url)), true, name + " must exist");
     assert.ok(html.includes("assets/fox/" + name), name + " must be used by the app");
   }
+  assert.equal(existsSync(new URL("./assets/fox/fox-talking-mouth-overlay-v1.webp", import.meta.url)), true,
+    "the talking mouth overlay must exist");
+  assert.match(html, /fox-talking-mouth-overlay-v1\.webp/);
 });
 
 test("transparent fox shadow follows the character instead of its canvas", () => {
@@ -118,10 +121,9 @@ test("talking mouth uses a gentle happy shape", () => {
   vm.runInContext(readFileSync(logicUrl, "utf8"), context);
   assert.equal(typeof context.LanternAlleyLogic.getHappyMouthStyle, "function");
   const style = context.LanternAlleyLogic.getHappyMouthStyle();
-  assert.equal(style.borderRadius, "48% 52% 56% 44% / 42% 42% 58% 58%");
-  assert.equal(style.background, "#633529");
-  assert.equal(style.left, "57%");
-  assert.equal(style.top, "48%");
+  assert.equal(style.left, "58%");
+  assert.equal(style.top, "47%");
+  assert.equal(style.width, "13%");
 });
 
 test("entrance uses fixed pose assets instead of a mouth overlay", () => {

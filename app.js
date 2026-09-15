@@ -5059,7 +5059,7 @@
     avatarSlot.classList.add("avatar-animated");
     avatarSlot.classList.toggle("entrance-fox", !!transparentFox);
     avatarSlot.innerHTML = '<div class="kon-photo-wrap"><img class="kon-photo" id="kon-photo-img" src="'
-      + ENTRANCE_FOX_POSES.idle + '" alt="Kon the fox spirit"><div class="live-mouth" aria-hidden="true"></div></div>';
+      + ENTRANCE_FOX_POSES.idle + '" alt="Kon the fox spirit"><img class="live-mouth" src="assets/fox/fox-talking-mouth-overlay-v1.webp" alt="" aria-hidden="true"></div>';
     activeFoxEl = avatarSlot;
     activeFoxImgEl = $("kon-photo-img");
     if(!transparentFox) return;
@@ -5070,8 +5070,7 @@
     var liveMouthEl = avatarSlot.querySelector(".live-mouth");
     liveMouthEl.style.left = happyMouthStyle.left;
     liveMouthEl.style.top = happyMouthStyle.top;
-    liveMouthEl.style.borderRadius = happyMouthStyle.borderRadius;
-    liveMouthEl.style.background = happyMouthStyle.background;
+    liveMouthEl.style.width = happyMouthStyle.width;
   }
 
   function enterLocation(key){

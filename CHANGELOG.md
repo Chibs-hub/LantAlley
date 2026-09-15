@@ -8,9 +8,9 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 ### 2026-09-15 - Align Kon talking mouth (v374)
 
-Moved the animated mouth anchor to the face center in the refreshed transparent
-Kon artwork. The CSS fallback and runtime style now use the same 57% horizontal
-anchor, and the cache stamp is v374. No audio files changed.
+Replaced the generic CSS mouth with a small transparent mouth cutout sampled
+from Kon's finished open-mouth pose, then aligned its 58% / 47% anchor to the
+neutral muzzle. The cache stamp is v374. No audio files changed.
 
 ### 2026-09-15 - Matte learner sprite sheets (v368)
 

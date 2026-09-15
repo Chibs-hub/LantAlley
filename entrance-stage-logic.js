@@ -44,10 +44,9 @@
 
   function getHappyMouthStyle(){
     return {
-      left:"57%",
-      top:"48%",
-      borderRadius:"48% 52% 56% 44% / 42% 42% 58% 58%",
-      background:"#633529"
+      left:"58%",
+      top:"47%",
+      width:"13%"
     };
   }
 
