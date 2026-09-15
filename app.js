@@ -5463,6 +5463,7 @@
   var homeReturnView = "yard";
   var homeSceneScroll = {yard:null, interior:null};
   var homeDecorating = false;
+  var homePetManaging = false;
   var homeShopCategory = "plants";
   var homeSelected = null;    // {kind:"decor"|"plant", id:...} waiting to be placed
   var homeTab = "garden";     // "garden" | "storage" | "shop"
@@ -6763,16 +6764,7 @@
           money >= pet.price ? "" : " is-locked");
       } else {
         var sub = count > 0 ? count + "匹いる ✓" : "今はいない";
-        var addBtn = '<button type="button" class="pet-count-btn" data-recruit-pet="' + pet.id + '">+招く</button>';
-        var removeBtn = count > 0
-          ? '<button type="button" class="pet-count-btn" data-dismiss-pet="' + pet.id + '">-送り出す</button>'
-          : '';
-        html += '<div class="home-card is-owned' + (count > 0 ? " is-active-pet" : "") + '">'
-          + '<span class="home-card-art" aria-hidden="true">' + art + '</span>'
-          + '<span class="home-card-name">' + pet.nameJp + '</span>'
-          + '<span class="home-card-sub">' + sub + '</span>'
-          + '<span class="home-card-actions">' + addBtn + removeBtn + '</span>'
-          + '</div>';
+        html += dockCard(art, pet.nameJp, sub, "", " is-owned" + (count > 0 ? " is-active-pet" : ""));
       }
     });
     return html;
@@ -6904,7 +6896,29 @@
     return report;
   }
 
-  function homePetToggleButton(){ return ""; }
+  function homePetManageButton(){
+    var owned = state.ownedPets && state.ownedPets.length > 0;
+    if(!owned || !state.innJourney || !state.innJourney.catUnlocked) return "";
+    return '<button type="button" data-home-pet-manage="1" class="home-menu-button'
+      + (homePetManaging ? ' is-on' : '') + '" aria-pressed="' + homePetManaging + '">ペット</button>';
+  }
+
+  function homePetManagePanel(){
+    var html = '<div class="home-pet-manage-panel">';
+    PET_CATALOGUE.forEach(function(pet){
+      if(!ownsPet(pet.id)) return;
+      var count = activePetCount(pet.id);
+      html += '<span class="home-pet-manage-row">'
+        + '<span class="home-pet-manage-name">' + pet.nameJp + '</span>'
+        + '<button type="button" class="pet-count-btn" data-dismiss-pet="' + pet.id + '"'
+        + (count === 0 ? ' disabled' : '') + '">－預ける</button>'
+        + '<span class="home-pet-manage-count">' + count + '匹</span>'
+        + '<button type="button" class="pet-count-btn" data-recruit-pet="' + pet.id + '">＋飼う</button>'
+        + '</span>';
+    });
+    html += '</div>';
+    return html;
+  }
 
   function paintHome(){
     rememberHomeSceneCamera();
@@ -6953,16 +6967,17 @@
           + '<div class="home-main-menu" role="group" aria-label="わが家のメニュー">'
           + '<button type="button" data-home-decorate="1" class="home-menu-button'
           + (homeDecorating ? ' is-on' : '') + '" aria-pressed="' + homeDecorating + '">飾る</button>'
+          + homePetManageButton()
           + '<button type="button" data-home-shop="1" class="home-menu-button">店</button>'
           + (homeView === "yard" ? '<details class="home-yard-more"><summary aria-label="庭のその他の操作">•••</summary>'
               + '<div><button type="button" data-clear-yard="1">庭を空にする</button>'
               + '<button type="button" data-restore-yard="1">最初の配置に戻す</button></div></details>' : '')
-          + homePetToggleButton()
           + '</div>'
           + (homeDecorating ? '<div class="home-tabs" role="tablist">' + tabs.map(function(t){
               return '<button type="button" class="home-tab' + (homeTab === t[0] ? " is-on" : "")
                 + '" data-tab="' + t[0] + '" aria-pressed="' + (homeTab === t[0]) + '">' + t[1] + '</button>';
             }).join("") + '</div>' : '')
+          + (homePetManaging ? homePetManagePanel() : '')
         : homeFirstRewardPanel()) + '</div>'
       + (homeReady && homeDecorating ? '<div class="home-shelf" id="home-shelf">' + homeDock() + '</div>' : '')
       + (homeReady && !tutorialRunning()
@@ -7041,9 +7056,17 @@
     }
     if(event.target.closest("[data-home-decorate]")){
       homeDecorating = !homeDecorating;
+      homePetManaging = false;
       homeSelected = null;
       homeTab = homeView === "yard" ? "garden" : "storage";
       advanceHomeTutorial();
+      paintHome();
+      return;
+    }
+    if(event.target.closest("[data-home-pet-manage]")){
+      homePetManaging = !homePetManaging;
+      homeDecorating = false;
+      homeSelected = null;
       paintHome();
       return;
     }
@@ -7051,6 +7074,7 @@
       homeReturnView = homeView === "interior" ? "interior" : "yard";
       homeView = "shop";
       homeDecorating = false;
+      homePetManaging = false;
       homeSelected = null;
       advanceHomeTutorial();
       paintHome();
@@ -7059,6 +7083,7 @@
     if(event.target.closest("[data-home-shop-back]")){
       homeView = homeReturnView;
       homeDecorating = false;
+      homePetManaging = false;
       homeSelected = null;
       paintHome();
       return;
@@ -7102,6 +7127,7 @@
     if(event.target.closest("[data-enter-house]")){
       homeView = "interior";
       homeDecorating = false;
+      homePetManaging = false;
       homeSelected = null;
       homeTab = "storage";
       advanceHomeTutorial();
@@ -7111,6 +7137,7 @@
     if(event.target.closest("[data-leave-house]")){
       homeView = "yard";
       homeDecorating = false;
+      homePetManaging = false;
       homeSelected = null;
       homeTab = "garden";
       paintHome();
