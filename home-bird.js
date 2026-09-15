@@ -42,9 +42,27 @@
   };
 
   function copy(value){ return JSON.parse(JSON.stringify(value)); }
-  function anchors(scene){ return (SCENES[scene] || []).map(copy); }
-  function find(scene, id){
-    return (SCENES[scene] || []).filter(function(anchor){ return anchor.id === id; })[0] || null;
+  function sceneRows(scene, options){
+    var rows = (SCENES[scene] || []).slice();
+    var extras = options && Array.isArray(options.extraAnchors) ? options.extraAnchors : [];
+    extras.forEach(function(anchor){
+      if(!anchor || !anchor.id || rows.some(function(row){ return row.id === anchor.id; })) return;
+      rows.push(anchor);
+    });
+    return rows;
+  }
+  function anchors(scene, options){ return sceneRows(scene, options).map(copy); }
+  function pointIsClear(point, blockers){
+    return !(blockers || []).some(function(blocker){
+      var rx = Math.max(.1, Number(blocker.rx) || 0);
+      var ry = Math.max(.1, Number(blocker.ry) || 0);
+      var dx = (Number(point.x) - Number(blocker.x)) / rx;
+      var dy = (Number(point.y) - Number(blocker.y)) / ry;
+      return dx * dx + dy * dy <= 1;
+    });
+  }
+  function find(scene, id, options){
+    return sceneRows(scene, options).filter(function(anchor){ return anchor.id === id; })[0] || null;
   }
 
   function widthAt(y, scene){
@@ -54,9 +72,9 @@
     return +(scale.farWidth + (scale.nearWidth - scale.farWidth) * depth).toFixed(2);
   }
 
-  function create(scene, seed){
-    var choices = SCENES[scene];
-    if(!choices) return null;
+  function create(scene, seed, options){
+    var choices = sceneRows(scene, options);
+    if(!SCENES[scene] || !choices.length) return null;
     var normalized = Math.abs(Number(seed) || 1) >>> 0;
     var anchor = choices[normalized % choices.length];
     return {scene:scene, anchorId:anchor.id, targetId:null, x:anchor.x, y:anchor.y,
@@ -64,17 +82,21 @@
       frame:0, clock:0, seed:normalized};
   }
 
-  function nextAnchor(state){
-    var rows = SCENES[state && state.scene] || [];
+  function nextAnchor(state, blockers, options){
+    var rows = sceneRows(state && state.scene, options);
     if(rows.length < 2) return null;
     var index = rows.findIndex(function(anchor){ return anchor.id === state.anchorId; });
     if(index < 0) index = 0;
-    return copy(rows[(index + 1) % rows.length]);
+    for(var offset = 1; offset < rows.length; offset += 1){
+      var candidate = rows[(index + offset) % rows.length];
+      if(pointIsClear(candidate, blockers)) return copy(candidate);
+    }
+    return null;
   }
 
-  function sendTo(state, anchorId){
+  function sendTo(state, anchorId, options){
     var next = copy(state);
-    var target = find(next.scene, anchorId);
+    var target = find(next.scene, anchorId, options);
     if(!target) return next;
     next.anchorId = null;
     next.targetId = target.id;
@@ -89,9 +111,9 @@
     return next;
   }
 
-  function settleAt(state, anchorId){
+  function settleAt(state, anchorId, options){
     var next = copy(state);
-    var target = find(next.scene, anchorId);
+    var target = find(next.scene, anchorId, options);
     if(!target) return next;
     next.anchorId = target.id;
     next.targetId = null;
@@ -112,7 +134,7 @@
     var settings = options || {};
     if(settings.paused) return copy(state);
     if(settings.reducedMotion){
-      if(state.targetId) return settleAt(state, state.targetId);
+      if(state.targetId) return settleAt(state, state.targetId, settings);
       var still = copy(state);
       still.behavior = "perch";
       still.frame = 0;
@@ -132,12 +154,12 @@
       return next;
     }
 
-    var target = find(next.scene, next.targetId);
-    if(!target) return settleAt(next, next.anchorId);
+    var target = find(next.scene, next.targetId, settings);
+    if(!target) return settleAt(next, next.anchorId, settings);
     var distance = next.flightDistance || Math.max(0.1,
       Math.hypot(target.x - next.flightFromX, target.y - next.flightFromY));
     var progress = Math.min(1, (next.flightProgress || 0) + elapsed * 0.018 / distance);
-    if(progress >= 1) return settleAt(next, target.id);
+    if(progress >= 1) return settleAt(next, target.id, settings);
 
     var fromX = Number(next.flightFromX);
     var fromY = Number(next.flightFromY);
@@ -150,7 +172,7 @@
     return next;
   }
 
-  function enterScene(scene, seed){ return create(scene, seed); }
+  function enterScene(scene, seed, options){ return create(scene, seed, options); }
 
   function dwellMs(state){
     var behavior = state && state.behavior || "perch";

@@ -5771,6 +5771,33 @@
     return rows && rows[stage] != null ? rows[stage] : 92;
   }
 
+  /* Give pets the same plant geometry the yard paints. The pet modules own
+   * their fixed architectural anchors; this small bridge supplies the places
+   * that exist only when a learner has actually planted something. */
+  function homePetExtraAnchors(scene, species){
+    if(scene !== "yard" || typeof LanternHomePetSpots === "undefined") return [];
+    var slots = {};
+    yardSlots().forEach(function(slot){ slots[slot.id] = slot; });
+    var types = {};
+    if(typeof LanternHomeGarden !== "undefined"){
+      LanternHomeGarden.catalogue().forEach(function(type){ types[type.id] = type; });
+    }
+    var rendered = plantsInYard().map(function(plant){
+      var slot = slots[plant.slotId];
+      var type = types[plant.typeId];
+      if(!slot || !type) return null;
+      var stage = plantVisualStage(plant);
+      var variation = plantVariation(plant.id);
+      return {
+        id:plant.id, slotId:plant.slotId, typeId:plant.typeId, kind:type.kind,
+        stage:stage, x:slot.x, y:slot.y,
+        width:(type.sceneWidth || 12) * (slot.scale || 1) * variation.size,
+        base:plantBase(plant.typeId, stage), tilt:variation.tilt, mirror:variation.mirror
+      };
+    }).filter(Boolean);
+    return LanternHomePetSpots.fromPlants(rendered, species);
+  }
+
   function migrateHomeIds(home){
     /* The table lives inside the function on purpose.
      *
@@ -6018,6 +6045,31 @@
     return typeof LanternHomePet !== "undefined" ? LanternHomePet : null;
   }
 
+  function homePetAnchorOptions(scene, species){
+    return {extraAnchors:homePetExtraAnchors(scene, species)};
+  }
+
+  function homePetAnchor(pet, scene, id, options){
+    if(!pet || !id || !pet.anchors) return null;
+    return pet.anchors(scene, options).filter(function(anchor){ return anchor.id === id; })[0] || null;
+  }
+
+  function homePetAnchorZ(pet, scene, state, options){
+    var id = state && (state.targetId || state.anchorId);
+    var anchor = homePetAnchor(pet, scene, id, options);
+    return anchor && anchor.z != null ? anchor.z : null;
+  }
+
+  function homePetSiblingBlocker(pet, species, sibling){
+    if(!sibling) return null;
+    var target = sibling.targetId && pet && pet.anchors
+      ? homePetAnchor(pet, sibling.scene, sibling.targetId,
+          homePetAnchorOptions(sibling.scene, species)) : null;
+    var point = target || sibling;
+    if(!isFinite(Number(point.x)) || !isFinite(Number(point.y))) return null;
+    return {x:Number(point.x), y:Number(point.y), rx:6, ry:4};
+  }
+
   function homePetMarkup(scene){
     if(!state.innJourney || !state.innJourney.catUnlocked) return "";
     var activePets = state.activePets || [];
@@ -6027,18 +6079,19 @@
       if(!pet) return "";
       var prev = homePetStates[iid];
       var seed = iidSeed(iid);
+      var petOptions = homePetAnchorOptions(scene, species);
       if(!prev){
-        var newPs = pet.enterScene ? pet.enterScene(scene, seed) : pet.create(scene, seed);
+        var newPs = pet.enterScene ? pet.enterScene(scene, seed, petOptions) : pet.create(scene, seed, petOptions);
         // Spread same-species pets across distinct anchors so they don't overlap.
         var takenIds = Object.keys(homePetStates)
           .filter(function(k){ return iidSpecies(k) === species; })
           .map(function(k){ return homePetStates[k] && homePetStates[k].anchorId; })
           .filter(Boolean);
         if(takenIds.indexOf(newPs.anchorId) >= 0 && pet.anchors && pet.settleAt){
-          var free = pet.anchors(scene).filter(function(a){
+          var free = pet.anchors(scene, petOptions).filter(function(a){
             return takenIds.indexOf(a.id) < 0 && a.kind !== "door";
           })[0];
-          if(free) newPs = pet.settleAt(newPs, free.id);
+          if(free) newPs = pet.settleAt(newPs, free.id, petOptions);
         }
         homePetStates[iid] = newPs;
         homePetIdleMs[iid] = 0;
@@ -6051,14 +6104,37 @@
         // its day. create() already excludes door anchors from its pick, so a
         // fresh ordinary resting spot in the new scene keeps this feeling
         // continuous instead of like a hard reset.
-        homePetStates[iid] = pet.create(scene, seed);
+        homePetStates[iid] = pet.create(scene, seed, petOptions);
         homePetIdleMs[iid] = 0;
       }
       var ps = homePetStates[iid];
       var blockers = species === "cat" ? homePetBlockers(scene) : [];
+      var currentAnchor = homePetAnchor(pet, scene, ps && (ps.targetId || ps.anchorId), petOptions);
+      if(ps && ps.anchorId && currentAnchor &&
+          (Math.abs(Number(ps.x) - Number(currentAnchor.x)) > .1 ||
+           Math.abs(Number(ps.y) - Number(currentAnchor.y)) > .1)){
+        /* Moving a planted item moves its spot too. Re-seat an idle pet at the
+         * new contact point so it never remains behind at the old slot. */
+        ps = pet.settleAt(ps, currentAnchor.id, petOptions);
+        homePetStates[iid] = ps;
+      }
+      if(ps && (ps.targetId || ps.anchorId) && !currentAnchor){
+        /* A plant can be moved or stored while a pet is resting on it. Keep
+         * the pet in the scene and choose the nearest remaining safe spot. */
+        var recovery = pet.safeAnchor ? pet.safeAnchor(ps, blockers, petOptions) : null;
+        if(recovery) ps = pet.settleAt(ps, recovery.id, petOptions);
+        else ps = pet.create(scene, seed, petOptions);
+        homePetStates[iid] = ps;
+        homePetIdleMs[iid] = 0;
+        currentAnchor = homePetAnchor(pet, scene, ps && (ps.targetId || ps.anchorId), petOptions);
+      }
+      if(ps) ps._anchorZ = currentAnchor && currentAnchor.z != null ? currentAnchor.z : null;
       if(pet.pointIsClear && !pet.pointIsClear(ps, blockers)){
-        var safe = pet.safeAnchor(ps, blockers);
-        if(safe) homePetStates[iid] = ps = pet.settleAt(ps, safe.id);
+        var safe = pet.safeAnchor(ps, blockers, petOptions);
+        if(safe){
+          homePetStates[iid] = ps = pet.settleAt(ps, safe.id, petOptions);
+          ps._anchorZ = safe.z == null ? null : safe.z;
+        }
       }
       var sprite = pet.spriteFor(ps);
       var petWidth = pet.widthAt ? pet.widthAt(ps.y, ps.scene) : 7.5;
@@ -6069,7 +6145,7 @@
         + '" style="width:' + petWidth + '%;left:' + ps.x
         + '%;top:' + ps.y + '%;--pet-lamp:'
         + (ps.scene === 'yard' ? plantLampProximity(ps) : 1)
-        + ';z-index:' + homeDepthZ(ps.y)
+        + ';z-index:' + (ps._anchorZ == null ? homeDepthZ(ps.y) : ps._anchorZ)
         + ';--pet-facing:' + ps.facing + '">'
         + '<span style="background-image:url(\'' + sprite.path + '\');background-size:'
         + (sprite.columns * 100) + '% ' + (sprite.rows * 100) + '%"></span></div>';
@@ -6092,7 +6168,7 @@
       if(pet.widthAt) node.style.width = pet.widthAt(ps.y, ps.scene) + "%";
       node.style.left = ps.x + "%";
       node.style.top = ps.y + "%";
-      node.style.zIndex = homeDepthZ(ps.y);
+      node.style.zIndex = ps._anchorZ == null ? homeDepthZ(ps.y) : ps._anchorZ;
       node.style.setProperty("--pet-facing", ps.facing);
       node.style.setProperty("--pet-lamp",
         ps.scene === "yard" ? plantLampProximity(ps) : 1);
@@ -6120,8 +6196,14 @@
         var species = iidSpecies(iid);
         var pet = homePetApi(species);
         if(!pet || !homePetStates[iid]) return;
-        homePetStates[iid] = pet.step(homePetStates[iid], elapsed, {paused:document.hidden, reducedMotion:reduced});
+        var scene = homePetStates[iid].scene;
+        var petOptions = homePetAnchorOptions(scene, species);
+        homePetStates[iid] = pet.step(homePetStates[iid], elapsed, {
+          paused:document.hidden, reducedMotion:reduced,
+          extraAnchors:petOptions.extraAnchors
+        });
         var ps = homePetStates[iid];
+        if(ps) ps._anchorZ = homePetAnchorZ(pet, ps.scene, ps, petOptions);
         if(ps && !ps.targetId){
           homePetIdleMs[iid] = (homePetIdleMs[iid] || 0) + elapsed;
           var dwell = pet.dwellMs ? pet.dwellMs(ps) : 6000;
@@ -6133,14 +6215,16 @@
               if(k === iid) return;
               if(iidSpecies(k) !== species) return;
               var sib = homePetStates[k];
-              if(sib && !sib.targetId) blockers = blockers.concat([{x:sib.x, y:sib.y, rx:6, ry:4}]);
+              var siblingBlocker = homePetSiblingBlocker(pet, species, sib);
+              if(siblingBlocker) blockers.push(siblingBlocker);
             });
             var destination = pet.nextAnchor
-              ? pet.nextAnchor(ps, blockers)
-              : pet.anchors(ps.scene).filter(function(anchor){ return anchor.id !== ps.anchorId; })[0];
+              ? pet.nextAnchor(ps, blockers, petOptions)
+              : pet.anchors(ps.scene, petOptions).filter(function(anchor){ return anchor.id !== ps.anchorId; })[0];
             if(destination) homePetStates[iid] = reduced
-              ? pet.settleAt(ps, destination.id)
-              : pet.sendTo(ps, destination.id);
+              ? pet.settleAt(ps, destination.id, petOptions)
+              : pet.sendTo(ps, destination.id, petOptions);
+            if(destination) homePetStates[iid]._anchorZ = destination.z == null ? null : destination.z;
             homePetIdleMs[iid] = 0;
           }
         }

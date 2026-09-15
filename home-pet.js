@@ -63,7 +63,16 @@
   };
 
   function copy(value){ return JSON.parse(JSON.stringify(value)); }
-  function sceneAnchors(scene){ return (SCENES[scene] || []).map(copy); }
+  function sceneRows(scene, options){
+    var rows = (SCENES[scene] || []).slice();
+    var extras = options && Array.isArray(options.extraAnchors) ? options.extraAnchors : [];
+    extras.forEach(function(anchor){
+      if(!anchor || !anchor.id || rows.some(function(row){ return row.id === anchor.id; })) return;
+      rows.push(anchor);
+    });
+    return rows;
+  }
+  function sceneAnchors(scene, options){ return sceneRows(scene, options).map(copy); }
 
   /* Follow the authored scene clockwise instead of teleporting between random
    * points. Each stop has a real cat reason: shade, rock, path, veranda, door. */
@@ -98,8 +107,8 @@
     });
   }
 
-  function nextAnchor(state, blockers){
-    var anchors = SCENES[state && state.scene] || [];
+  function nextAnchor(state, blockers, options){
+    var anchors = sceneRows(state && state.scene, options);
     if(anchors.length < 2) return null;
     var index = anchors.findIndex(function(anchor){ return anchor.id === state.anchorId; });
     for(var offset = 1; offset < anchors.length; offset++){
@@ -109,8 +118,8 @@
     return null;
   }
 
-  function safeAnchor(state, blockers){
-    var anchors = (SCENES[state && state.scene] || []).filter(function(anchor){
+  function safeAnchor(state, blockers, options){
+    var anchors = sceneRows(state && state.scene, options).filter(function(anchor){
       return pointIsClear(anchor, blockers);
     });
     if(!anchors.length) return null;
@@ -192,20 +201,22 @@
     depth = Math.max(0, Math.min(1, depth));
     return +(s.farWidth + (s.nearWidth - s.farWidth) * depth).toFixed(2);
   }
-  function find(scene, id){ return (SCENES[scene] || []).filter(function(row){ return row.id === id; })[0] || null; }
+  function find(scene, id, options){
+    return sceneRows(scene, options).filter(function(row){ return row.id === id; })[0] || null;
+  }
 
-  function create(scene, seed){
+  function create(scene, seed, options){
     if(!SCENES[scene]) return null;
-    var choices = SCENES[scene].filter(function(anchor){ return anchor.kind !== "door"; });
+    var choices = sceneRows(scene, options).filter(function(anchor){ return anchor.kind !== "door"; });
     var normalized = Math.abs(Number(seed) || 1) >>> 0;
     var anchor = choices[normalized % choices.length];
     return {scene:scene, anchorId:anchor.id, targetId:null, x:anchor.x, y:anchor.y,
       facing:1, behavior:anchor.behaviors[0], frame:0, clock:0, seed:normalized};
   }
 
-  function sendTo(state, anchorId){
+  function sendTo(state, anchorId, options){
     var next = copy(state);
-    var target = find(next.scene, anchorId);
+    var target = find(next.scene, anchorId, options);
     if(!target) return next;
     next.targetId = target.id;
     next.anchorId = null;
@@ -215,9 +226,9 @@
     return next;
   }
 
-  function settleAt(state, anchorId){
+  function settleAt(state, anchorId, options){
     var next = copy(state);
-    var target = find(next.scene, anchorId);
+    var target = find(next.scene, anchorId, options);
     if(!target) return next;
     next.anchorId = target.id;
     next.targetId = null;
@@ -249,7 +260,7 @@
         : rawFrame % Math.max(1, sprite.frames);
       return next;
     }
-    var target = find(next.scene, next.targetId);
+    var target = find(next.scene, next.targetId, settings);
     if(!target){ next.targetId = null; return next; }
     var dx = target.x - next.x;
     var dy = target.y - next.y;
@@ -299,12 +310,12 @@
     return next;
   }
 
-  function crossDoor(state){
+  function crossDoor(state, options){
     if(!state || state.targetId) return copy(state);
-    var anchor = find(state.scene, state.anchorId);
+    var anchor = find(state.scene, state.anchorId, options);
     if(!anchor || anchor.kind !== "door") return copy(state);
     var scene = state.scene === "yard" ? "interior" : "yard";
-    var door = SCENES[scene].filter(function(row){ return row.kind === "door"; })[0];
+    var door = sceneRows(scene, options).filter(function(row){ return row.kind === "door"; })[0];
     var next = copy(state);
     next.scene = scene;
     next.anchorId = door.id;
@@ -326,14 +337,14 @@
     return 5000 + seed % 3001;
   }
 
-  function enterScene(scene, seed){
+  function enterScene(scene, seed, options){
     if(!SCENES[scene]) return null;
     var previous = scene === "yard" ? "interior" : "yard";
     var door = SCENES[previous].filter(function(row){ return row.kind === "door"; })[0];
     var state = {scene:previous, anchorId:door.id, targetId:null, x:door.x, y:door.y,
       facing:scene === "yard" ? 1 : -1, behavior:"look", frame:0, clock:0,
       seed:Math.abs(Number(seed) || 1) >>> 0};
-    return crossDoor(state);
+    return crossDoor(state, options);
   }
 
   function spriteFor(state){

@@ -45,6 +45,27 @@ test("the same seed creates the same supported initial bird", () => {
   assert.ok(anchor && anchor.support);
 });
 
+test("bird motion accepts contextual plant anchors and lands on them", () => {
+  const bird = load();
+  const extra = [{id:"plant-tree-1-canopy-bird", x:25, y:34, z:84,
+    support:"tree", behaviors:["perch"]}];
+  const start = bird.create("yard", 2, {extraAnchors:extra});
+  const flying = bird.sendTo(start, extra[0].id, {extraAnchors:extra});
+  const landed = bird.step(flying, 20000, {extraAnchors:extra});
+  assert.equal(landed.anchorId, extra[0].id);
+  assert.equal(landed.x, extra[0].x);
+  assert.equal(landed.y, extra[0].y);
+});
+
+test("bird routing skips an occupied perch", () => {
+  const bird = load();
+  const extra = [{id:"plant-tree-1-canopy-bird", x:25, y:34, z:84,
+    support:"tree", behaviors:["perch"]}];
+  const start = bird.settleAt(bird.create("yard", 2, {extraAnchors:extra}), "yard-roof-left", {extraAnchors:extra});
+  const next = bird.nextAnchor(start, [{x:74, y:26, rx:8, ry:5}], {extraAnchors:extra});
+  assert.notEqual(next.id, "yard-eave-right");
+});
+
 test("bird scale remains realistic beside the existing cat in both scenes", () => {
   const bird = load();
   const context = vm.createContext({});

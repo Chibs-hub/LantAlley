@@ -29,6 +29,20 @@ test("the same seed creates the same safe initial pet", () => {
   assert.equal(pet.create("shop", 42), null);
 });
 
+test("cat motion accepts a contextual plant base anchor", () => {
+  const pet = load();
+  const extra = [{id:"plant-tree-1-base-cat", x:43, y:61, z:81,
+    support:"ground", behaviors:["loaf"]}];
+  const start = pet.create("yard", 2, {extraAnchors:extra});
+  const destination = pet.nextAnchor(start, [], {extraAnchors:extra});
+  assert.ok(destination);
+  const walking = pet.sendTo(start, extra[0].id, {extraAnchors:extra});
+  const landed = pet.step(walking, 20000, {extraAnchors:extra});
+  assert.equal(landed.anchorId, extra[0].id);
+  assert.equal(landed.x, extra[0].x);
+  assert.equal(landed.y, extra[0].y);
+});
+
 test("cat scale follows scene depth without overpowering the architecture", () => {
   const pet = load();
   /* The cat is measured in each scene, because the two are not the same size.
@@ -221,9 +235,23 @@ test("the live home supplies placed furniture and plants to pet routing", () => 
   const app = fs.readFileSync(new URL("./app.js", import.meta.url), "utf8");
   assert.match(app, /function homePetBlockers\(scene\)/);
   assert.match(app, /species === "cat" \? homePetBlockers\(/);
-  assert.match(app, /pet\.nextAnchor\(\s*ps,\s*blockers\)/);
-  assert.match(app, /pet\.safeAnchor\(\s*ps,\s*blockers\)/);
+  assert.match(app, /pet\.nextAnchor\(\s*ps,\s*blockers(?:,\s*petOptions)?\)/);
+  assert.match(app, /pet\.safeAnchor\(\s*ps,\s*blockers(?:,\s*petOptions)?\)/);
   assert.match(app, /z-index:' \+ homeDepthZ/);
+});
+
+test("the live home binds rendered plants to contextual pet anchors", () => {
+  const app = fs.readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  assert.match(app, /function homePetExtraAnchors\(scene, species\)/);
+  assert.match(app, /LanternHomePetSpots\.fromPlants/);
+  assert.match(app, /extraAnchors/);
+  assert.match(app, /pet\.step\(homePetStates\[iid\],[\s\S]*extraAnchors/);
+});
+
+test("in-flight pet destinations are treated as occupied", () => {
+  const app = fs.readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  assert.match(app, /function homePetSiblingBlocker\(pet, species, sibling\)/);
+  assert.match(app, /homePetSiblingBlocker\(pet, species, sib\)/);
 });
 
 test("resting poses breathe subtly and respect reduced motion", () => {
