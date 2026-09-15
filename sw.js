@@ -7,7 +7,7 @@
  * Bump CACHE_VERSION whenever any shell file changes, or returning players
  * will keep the old build.
  */
-var CACHE_VERSION = "lantern-alley-v366";
+var CACHE_VERSION = "lantern-alley-v367";
 // Home bird companion, persisted pet selection, and refreshed garden art.
 
 // audio-index.js assigns to `self`, so the worker and the page share one list
@@ -155,11 +155,11 @@ var SHELL = [
   "./manifest.webmanifest",
   "./assets/branding/lantern-mark-v2.png",
   "./assets/social/lantern-alley-share-v2.jpg",
-  "./icons/icon-192.png?v=366",
-  "./icons/icon-512.png?v=366",
-  "./icons/icon-192-maskable.png?v=366",
-  "./icons/icon-512-maskable.png?v=366",
-  "./icons/apple-touch-icon.png?v=366",
+  "./icons/icon-192.png?v=367",
+  "./icons/icon-512.png?v=367",
+  "./icons/icon-192-maskable.png?v=367",
+  "./icons/icon-512-maskable.png?v=367",
+  "./icons/apple-touch-icon.png?v=367",
   "./assets/kon/kon-idle.webp",
   "./assets/kon/kon-wave-left.webp",
   "./assets/kon/kon-wave-right.webp",
