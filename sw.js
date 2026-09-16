@@ -7,7 +7,7 @@
  * Bump CACHE_VERSION whenever any shell file changes, or returning players
  * will keep the old build.
  */
-var CACHE_VERSION = "lantern-alley-v387";
+var CACHE_VERSION = "lantern-alley-v388";
 // Fix: dismiss cat inside the house removes them from the interior scene.
 
 // audio-index.js assigns to `self`, so the worker and the page share one list
@@ -94,6 +94,7 @@ var SHELL = [
   "./assets/home/decor/display-shelf-staggered-v1.webp",
   // The six that were line drawings until their photographs arrived.
   "./assets/home/decor/brazier-v1.webp",
+  "./assets/home/decor/irori-hearth-v1.png",
   "./assets/home/decor/fan-v1.webp",
   "./assets/home/decor/mask-v1.webp",
   "./assets/home/decor/teapot-v1.webp",
@@ -156,11 +157,11 @@ var SHELL = [
   "./manifest.webmanifest",
   "./assets/branding/lantern-mark-v2.png",
   "./assets/social/lantern-alley-share-v2.jpg",
-  "./icons/icon-192.png?v=380",
-  "./icons/icon-512.png?v=380",
-  "./icons/icon-192-maskable.png?v=380",
-  "./icons/icon-512-maskable.png?v=380",
-  "./icons/apple-touch-icon.png?v=380",
+  "./icons/icon-192.png?v=388",
+  "./icons/icon-512.png?v=388",
+  "./icons/icon-192-maskable.png?v=388",
+  "./icons/icon-512-maskable.png?v=388",
+  "./icons/apple-touch-icon.png?v=388",
   "./assets/kon/kon-idle.webp",
   "./assets/kon/kon-wave-left.webp",
   "./assets/kon/kon-wave-right.webp",

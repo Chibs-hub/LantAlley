@@ -1,6 +1,6 @@
 # Lantern Alley Project Handoff
 
-Last updated: 2026-09-16 (v387)
+Last updated: 2026-09-16 (v388)
 
 A browser game that teaches JLPT N2 Japanese. Vanilla JS, CSS and HTML, no build step, no framework, offline-capable.
 
@@ -86,6 +86,15 @@ window-sill location. New positions are constrained to visible room surfaces
 with depth scales, anchors, and support checks; shelf positions remain
 conditional on the second shelf. The touch target remains 44px. Decor and
 home geometry tests pass. sw.js is v387.
+
+**Latest v388 status (2026-09-16):** the room now has 18 base placement
+locations: eight floor, four wall, four post, one eave, and one window-sill.
+Folding screens have dedicated outer floor positions and cannot be placed in
+ordinary floor slots that would cover the shelf. Added a purchasable 囲炉裏 using
+assets/home/decor/irori-hearth-v1.png, with a dedicated centre-back hearth
+position, grounded scale, and a conflict with the front floor position.
+Target filtering and model-level placement checks cover invalid combinations.
+The targeted decor, PWA, and home tests pass. sw.js is v388.
 
 **Latest v385 status (2026-09-16):** rechecked every indoor reward image and
 confirmed the current decor files already have real transparent alpha. Removed

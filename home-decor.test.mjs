@@ -18,7 +18,7 @@ const room = context.LanternHomeRoom;
 const slots = room.slots();
 
 test("the room offers more realistic floor, wall, and post locations", () => {
-  assert.equal(slots.filter(s => s.kind === "floor").length, 6);
+  assert.equal(slots.filter(s => s.kind === "floor").length, 8);
   assert.equal(slots.filter(s => s.kind === "wall").length, 4);
   assert.equal(slots.filter(s => s.kind === "post").length, 4);
   for(const slot of slots.filter(s => ["floor", "wall", "post"].includes(s.kind))){
@@ -26,6 +26,22 @@ test("the room offers more realistic floor, wall, and post locations", () => {
     assert.ok(slot.y > 20 && slot.y < 96, slot.id + " stays on a visible surface");
     assert.ok(slot.scale > 0 && slot.scale <= 1, slot.id + " has depth scale");
   }
+});
+
+test("large or built-in floor pieces use dedicated, non-blocking locations", () => {
+  const screenLeft = slots.find(s => s.id === "screen-left");
+  const hearth = slots.find(s => s.id === "hearth-center");
+  assert.equal(screenLeft.purpose, "screen");
+  assert.equal(hearth.purpose, "hearth");
+  assert.ok(decor.slotAllowsItem("folding-screen", screenLeft));
+  assert.equal(decor.slotAllowsItem("low-table", screenLeft), false);
+  assert.ok(decor.slotAllowsItem("irori", hearth));
+  assert.equal(decor.slotAllowsItem("kotatsu", hearth), false);
+  assert.equal(decor.slotAllowsItem("irori", slots.find(s => s.id === "floor-front")), false);
+  assert.equal(decor.place({owned:["folding-screen"], placed:{}},
+    "folding-screen", "floor-front", slots).reason, "restricted");
+  assert.equal(decor.slotAllowsItem("low-table", slots.find(s => s.id === "floor-front"),
+    {"hearth-center":"irori"}), false);
 });
 
 test("shelf objects have real plank support and clearance, including the mirrored shelf", () => {
@@ -194,6 +210,7 @@ test("available reward artwork is connected to matching shop items", () => {
     "pine-bonsai":"pine-bonsai-v1.webp",
     // The last six to arrive; before these, every one was a drawing.
     "brazier":"brazier-v1.webp",
+    "irori":"irori-hearth-v1.png",
     "fan":"fan-v1.webp",
     "mask":"mask-v1.webp",
     "teapot":"teapot-v1.webp",
@@ -423,7 +440,7 @@ test("every object declares the surface it actually belongs on", () => {
   const belongs = {
     // rests on the tatami
     "floor-cushion-navy": "floor", "rug-plain": "floor",
-    "low-table": "floor", "brazier": "floor", "kotatsu": "floor",
+    "low-table": "floor", "brazier": "floor", "irori": "floor", "kotatsu": "floor",
     "folding-screen": "floor", "floor-lantern": "floor", "chrysanthemum-pot": "floor",
     // hangs flat against a wall
     "scroll": "wall", "fan": "wall",

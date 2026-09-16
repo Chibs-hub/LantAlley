@@ -6400,6 +6400,7 @@
         interior.slots.forEach(function(slot){
           if(slot.kind !== picked.kind) return;
           if(!slotAvailable(slot, home.placed)) return;
+          if(decor.slotAllowsItem && !decor.slotAllowsItem(picked.id, slot, home.placed)) return;
           if(!slot.surface){
             html += targetButton(slot, !!home.placed[slot.id]);
             return;

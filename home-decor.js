@@ -61,10 +61,17 @@
        + '<path d="M-30 10 L-24 -14 L24 -14 L30 10 Z" fill="#6b5340" stroke="#3f3021" stroke-width="3"/>'
        + '<ellipse cx="0" cy="-14" rx="24" ry="8" fill="#2b1c11"/>'
        + '<path d="M-8 -18 q6 -12 8 -4 q4 -10 8 2" stroke="#ffb454" stroke-width="3" fill="none"/>'},
+    {id:"irori", name:"囲炉裏", kind:"floor", price:500, category:"床",
+     image:"assets/home/decor/irori-hearth-v1.png",
+     allowedSlots:["hearth-center"],
+     svg:'<rect x="-42" y="-18" width="84" height="36" rx="5" fill="#4b2e1b" stroke="#2b1a11" stroke-width="4"/>'
+       + '<rect x="-28" y="-7" width="56" height="22" rx="3" fill="#25201b"/>'
+       + '<path d="M-12 9 Q0 -18 12 9" fill="none" stroke="#f49a3d" stroke-width="5"/>'},
     {id:"kotatsu", name:"こたつ", kind:"floor", price:260, category:"床",
      image:"assets/home/decor/kotatsu-blue-v1.webp",
      svg:'<rect x="-44" y="-16" width="88" height="32" rx="8" fill="#334b72"/><rect x="-38" y="-24" width="76" height="12" rx="4" fill="#7d5230"/>'},
     {id:"folding-screen", name:"屏風", kind:"floor", price:360, category:"床",
+     allowedSlots:["screen-left", "screen-right"],
      image:"assets/home/decor/folding-screen-cranes-v1.webp",
      svg:'<path d="M-52 -36 L-18 -42 L-18 38 L-52 32 Z M-16 -42 L16 -38 L16 38 L-16 38 Z M18 -38 L52 -34 L52 32 L18 38 Z" fill="#d7ad55" stroke="#5d3d22" stroke-width="3"/>'},
     {id:"floor-lantern", name:"置き行灯", kind:"floor", price:180, category:"床",
@@ -259,6 +266,7 @@
     kotatsu:               {width:24, anchorY:100},
     "folding-screen":     {width:43, anchorY:100},
     "floor-lantern":      {width:8, anchorY:100},
+    irori:                {width:23, anchorY:100},
     "chrysanthemum-pot":   {width:9.5, anchorY:100},
     scroll:                {width:7, anchorY:50},
     "wall-lamp":          {width:5.5, anchorY:50},
@@ -492,6 +500,9 @@
     var slot = (slots || []).filter(function(s){ return s.id === slotId; })[0];
     if(!slot) return {ok:false, reason:"noslot", home:home};
     if(slot.kind !== item.kind) return {ok:false, reason:"wrongkind", home:home};
+    if(!slotAllowsItem(id, slot, home && home.placed)){
+      return {ok:false, reason:"restricted", home:home};
+    }
 
     var placed = copyPlaced(home);
     Object.keys(placed).forEach(function(key){
@@ -501,6 +512,17 @@
     placed[slotId] = id;
     return {ok:true, reason:null, displaced:displaced,
             home:{owned:((home && home.owned) || []).slice(), placed:placed}};
+  }
+
+  function slotAllowsItem(id, slot, placed){
+    var item = typeof id === "string" ? getItem(id) : id;
+    if(!item || !slot) return false;
+    if(item.allowedSlots && item.allowedSlots.indexOf(slot.id) < 0) return false;
+    if(slot.purpose && (!item.allowedSlots || item.allowedSlots.indexOf(slot.id) < 0)) return false;
+    if((slot.conflicts || []).some(function(other){
+      return placed && placed[other] && placed[other] !== item.id;
+    })) return false;
+    return true;
   }
 
   /* Taking a thing away takes down whatever was standing on it.
@@ -573,6 +595,7 @@
     buy: buy,
     grant: grant,
     place: place,
+    slotAllowsItem: slotAllowsItem,
     remove: remove,
     inStorage: inStorage,
     nearestUnaffordable: nearestUnaffordable

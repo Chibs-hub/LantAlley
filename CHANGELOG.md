@@ -6,6 +6,16 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-16 - Add compatible folding-screen and 囲炉裏 placement (v388)
+
+Added dedicated side-floor positions for the folding screen so it cannot cover
+the shelf or its contents. Added a purchasable 囲炉裏 with a transparent
+generated hearth asset, a dedicated centre-back hearth position, realistic
+scale, and a conflict with the front floor position so it cannot overlap a
+table or Kotatsu. Placement filtering and model-level restrictions prevent
+invalid combinations, and tests cover the new support geometry. The cache
+version is v388.
+
 ### 2026-09-16 - Expand realistic home placement locations (v387)
 
 Clarified that the requested increase was the number of places, not the touch

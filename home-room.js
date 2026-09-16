@@ -222,11 +222,15 @@
        actually stands. The x stays: it is the depth that was wrong. */
     {id:"floor-back-left", x:36, y:78, scale:0.74, kind:"floor", label:"床の奥左"},
     {id:"floor-back-right", x:64, y:78, scale:0.74, kind:"floor", label:"床の奥右"},
-    {id:"floor-front", x:50, y:88, scale:1.00, kind:"floor", label:"床の手前"},
+    {id:"floor-front", x:50, y:88, scale:1.00, kind:"floor",
+      conflicts:["hearth-center"], label:"床の手前"},
     /* The centre-back tatami is clear of the built-in shelf and the door.
        It is a separate depth plane, so a small table or cushion can sit there
        without sharing the front row's landing line. */
-    {id:"floor-back-center", x:50, y:70, scale:0.62, kind:"floor", label:"床の奥中央"},
+    {id:"hearth-center", x:50, y:70, scale:0.62, kind:"floor", purpose:"hearth",
+      conflicts:["floor-front"], label:"囲炉裏"},
+    {id:"screen-left", x:10, y:78, scale:0.44, kind:"floor", purpose:"screen", label:"屏風の左"},
+    {id:"screen-right", x:90, y:78, scale:0.44, kind:"floor", purpose:"screen", label:"屏風の右"},
     {id:"wall-left",    x:5,  y:32, scale:0.92, skew:12.8,  kind:"wall",  label:"壁の左"},
     {id:"wall-right",   x:95, y:32, scale:0.92, skew:-12.8, kind:"wall",  label:"壁の右"},
     /* Clear inner plaster panels add two more places for wall art while the
@@ -372,7 +376,8 @@
               // `z` decides whether a shelf draws behind what stands on it,
               // and `requires` decides whether a plank exists at all.
               z:(slot.z == null ? null : slot.z),
-              requires:slot.requires || null};
+              requires:slot.requires || null,
+              purpose:slot.purpose || null, conflicts:slot.conflicts || []};
     });
   }
 
