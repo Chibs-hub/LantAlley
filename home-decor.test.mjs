@@ -367,7 +367,7 @@ test("prices span a range, so there is always something just out of reach", () =
   assert.ok(Math.max(...prices) >= 300);
 });
 
-test("buying takes the money once and refuses when short", () => {
+test("buying takes the price for each copy and refuses only when short", () => {
   const poor = decor.buy(empty(), 10, "low-table");
   assert.equal(poor.ok, false);
   assert.equal(poor.reason, "poor");
@@ -377,9 +377,14 @@ test("buying takes the money once and refuses when short", () => {
   assert.equal(bought.money, 50);
   assert.ok(decor.owns(bought.home, "low-table"));
 
-  const again = decor.buy(bought.home, 250, "low-table");
-  assert.equal(again.ok, false, "buying the same item twice should be refused");
-  assert.equal(again.reason, "owned");
+  const again = decor.buy(bought.home, bought.money, "low-table");
+  assert.equal(again.ok, false, "the second copy is too expensive for the remaining wallet");
+  assert.equal(again.reason, "poor");
+
+  const second = decor.buy(bought.home, 300, "low-table");
+  assert.equal(second.ok, true, "the home store should sell a second copy");
+  assert.equal(second.money, 100);
+  assert.equal(decor.ownedCount(second.home, "low-table"), 2);
 });
 
 test("an item you do not own cannot be placed", () => {
@@ -675,4 +680,17 @@ test("the byobu stands on the tatami as an inward room divider", () => {
   }
   assert.equal(slots.find(s => s.id === "screen-left").x, 20);
   assert.equal(slots.find(s => s.id === "screen-right").x, 80);
+});
+
+test("storage keeps extra copies available after one copy is placed", () => {
+  let home = {owned: ["low-table", "low-table"], placed: {}};
+  home = decor.place(home, "low-table", "floor-left", slots).home;
+  assert.equal(home.placed["floor-left"], "low-table");
+  assert.deepEqual(decor.inStorage(home), ["low-table"]);
+
+  const second = decor.place(home, "low-table", "floor-right", slots);
+  assert.equal(second.ok, true, "the second copy should have its own place");
+  home = second.home;
+  assert.equal(home.placed["floor-right"], "low-table");
+  assert.equal(decor.inStorage(home).length, 0);
 });

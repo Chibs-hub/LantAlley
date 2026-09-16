@@ -6,6 +6,14 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-17 - Allow duplicate home-store purchases (v399)
+
+Furniture can now be purchased more than once. Each purchase deducts the item
+price and adds one copy to owned storage. Placing one copy leaves additional
+copies available, while a single owned copy still moves when placed again.
+The shop shows the owned quantity and remains purchasable. Existing saves keep
+their array format, including duplicate IDs.
+
 ### 2026-09-17 - Align 屏風 with the side-door perspective (v398)
 
 The v397 CSS rotation made each entire screen lean, so reversing its direction

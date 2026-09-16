@@ -5842,9 +5842,7 @@
     Object.keys(source.placed || {}).forEach(function(slotId){
       placed[slotId] = rename(source.placed[slotId]);
     });
-    var owned = (source.owned || []).map(rename).filter(function(id, i, all){
-      return all.indexOf(id) === i;   // a save holding both names collapses to one
-    });
+    var owned = (source.owned || []).map(rename);
     return {owned:owned, placed:placed};
   }
 
@@ -6558,9 +6556,10 @@
 
     LanternHomeDecor.catalogue().forEach(function(item){
       var owned = LanternHomeDecor.owns(homeState(), item.id);
+      var quantity = LanternHomeDecor.ownedCount(homeState(), item.id);
       html += dockCard(decorCardArt(item.id), item.name,
-        owned ? "持っている" : "¥" + item.price,
-        'data-buy="' + item.id + '"' + (owned ? " disabled" : ""),
+        owned ? "持っている " + quantity + "個 · ¥" + item.price : "¥" + item.price,
+        'data-buy="' + item.id + '"',
         owned ? " is-owned" : (money >= item.price ? "" : " is-locked"));
     });
     return html;
@@ -6879,8 +6878,10 @@
       LanternHomeDecor.catalogue().forEach(function(item){
         if(!shopHasArtFor(item.id)) return;
         var owned = LanternHomeDecor.owns(homeState(), item.id);
-        html += dockCard(decorCardArt(item.id), item.name, owned ? "持っている" : "¥" + item.price,
-          'data-buy="' + item.id + '"' + (owned ? " disabled" : ""),
+        var quantity = LanternHomeDecor.ownedCount(homeState(), item.id);
+        html += dockCard(decorCardArt(item.id), item.name,
+          owned ? "持っている " + quantity + "個 · ¥" + item.price : "¥" + item.price,
+          'data-buy="' + item.id + '"',
           owned ? " is-owned" : (money >= item.price ? "" : " is-locked"));
       });
     }

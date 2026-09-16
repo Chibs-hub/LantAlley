@@ -451,7 +451,13 @@
   }
 
   function owns(home, id){
-    return ((home && home.owned) || []).indexOf(id) >= 0;
+    return ownedCount(home, id) > 0;
+  }
+
+  function ownedCount(home, id){
+    return ((home && home.owned) || []).reduce(function(total, ownedId){
+      return total + (ownedId === id ? 1 : 0);
+    }, 0);
   }
 
   function canAfford(money, id){
@@ -464,7 +470,6 @@
     var item = getItem(id);
     var wallet = Number(money) || 0;
     if(!item) return {ok:false, reason:"unknown", home:home, money:wallet};
-    if(owns(home, id)) return {ok:false, reason:"owned", home:home, money:wallet};
     if(wallet < item.price) return {ok:false, reason:"poor", home:home, money:wallet};
     var next = {owned:((home && home.owned) || []).concat([id]), placed:copyPlaced(home)};
     return {ok:true, reason:null, home:next, money:wallet - item.price, spent:item.price};
@@ -507,9 +512,17 @@
     }
 
     var placed = copyPlaced(home);
-    Object.keys(placed).forEach(function(key){
-      if(placed[key] === id) delete placed[key];   // it can only be in one place
-    });
+    var placedCopies = Object.keys(placed).reduce(function(total, key){
+      return total + (placed[key] === id ? 1 : 0);
+    }, 0);
+    /* With one owned copy, placing again means moving it. With two or more,
+       a storage selection places an additional copy and leaves the first one
+       where it was. */
+    if(placedCopies >= ownedCount(home, id)){
+      Object.keys(placed).forEach(function(key){
+        if(placed[key] === id) delete placed[key];
+      });
+    }
     var displaced = placed[slotId] || null;
     placed[slotId] = id;
     return {ok:true, reason:null, displaced:displaced,
@@ -557,12 +570,19 @@
 
   function inStorage(home){
     var placed = (home && home.placed) || {};
-    var out = [];
-    Object.keys(placed).forEach(function(slot){ out.push(placed[slot]); });
+    var placedCounts = {};
+    Object.keys(placed).forEach(function(slot){
+      var id = placed[slot];
+      placedCounts[id] = (placedCounts[id] || 0) + 1;
+    });
     // A wallpaper is owned but never placed, so without this it would sit in
     // the storage shelf forever offering a spot that does not exist.
+    var remaining = {};
     return ((home && home.owned) || []).filter(function(id){
-      return out.indexOf(id) < 0 && !isWallpaper(id);
+      if(isWallpaper(id)) return false;
+      remaining[id] = (remaining[id] || 0) + 1;
+      if(remaining[id] <= (placedCounts[id] || 0)) return false;
+      return true;
     });
   }
 
@@ -580,6 +600,7 @@
 
   root.LanternHomeDecor = Object.freeze({
     catalogue: catalogue,
+    ownedCount: ownedCount,
     wallpapers: wallpapers,
     getWallpaper: getWallpaper,
     wallpaperSvg: wallpaperSvg,
