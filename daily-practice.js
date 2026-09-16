@@ -21,6 +21,10 @@
   var DAILY_CAP = 40;         // stops a long grind out-earning a good session
   var STREAK_MILESTONE = 7;
   var MILESTONE_BONUS = 50;
+  /* Held freezes are capped so that a long-running learner cannot bank enough
+   * to make the streak meaningless - three covers an ordinary bad week without
+   * letting a month away come back intact. */
+  var FREEZE_CAP = 3;
 
   // Local midnight, not UTC: a learner's day is the one they are living in.
   function dayKey(now){
@@ -81,7 +85,8 @@
     var last = previous.lastActiveDate || null;
 
     if(last === key){
-      return {streak:streak, freezes:freezes, lastActiveDate:key, counted:false, frozen:false, milestone:0};
+      return {streak:streak, freezes:freezes, lastActiveDate:key, counted:false,
+        frozen:false, milestone:0, earnedFreeze:false};
     }
 
     var gap = daysBetween(last, key);
@@ -105,7 +110,22 @@
     }
 
     var milestone = (streak > 0 && streak % STREAK_MILESTONE === 0) ? MILESTONE_BONUS : 0;
-    return {streak:streak, freezes:freezes, lastActiveDate:key, counted:true, frozen:frozen, milestone:milestone};
+
+    /* The milestone is also where a freeze is earned.
+     *
+     * Freezes were spent here and shown in the HUD, but nothing anywhere ever
+     * granted one, so the branch above could never fire: `gap <= 1` returns
+     * earlier, which means reaching it requires `freezes >= 1`, which a save
+     * initialised to zero and never incremented could not satisfy. The whole
+     * protection was unreachable and every missed day broke the streak. A week
+     * earns the coins and the cushion together. */
+    var earnedFreeze = false;
+    if(milestone && freezes < FREEZE_CAP){
+      freezes += 1;
+      earnedFreeze = true;
+    }
+    return {streak:streak, freezes:freezes, lastActiveDate:key, counted:true,
+      frozen:frozen, milestone:milestone, earnedFreeze:earnedFreeze};
   }
 
   root.LanternDailyPractice = Object.freeze({
@@ -113,6 +133,7 @@
     DAILY_CAP: DAILY_CAP,
     GATE_ACCURACY: GATE_ACCURACY,
     STREAK_MILESTONE: STREAK_MILESTONE,
+    FREEZE_CAP: FREEZE_CAP,
     dayKey: dayKey,
     daysBetween: daysBetween,
     sessionEarnings: sessionEarnings,

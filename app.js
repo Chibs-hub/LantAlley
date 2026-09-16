@@ -3151,6 +3151,20 @@
     return result.granted;
   }
 
+  /* Whether today's coins are spent.
+   *
+   * Derived from the wallet rather than tracked through the session, because
+   * the cap can be reached on any of three paths - a per-card coin, the
+   * accuracy bonus, or a milestone - and a flag set on one of them is a flag
+   * the other two forget to set.
+   */
+  function practiceCapReached(){
+    if(typeof LanternDailyPractice === "undefined") return false;
+    var wallet = state.dailyPractice;
+    if(!wallet || wallet.date !== LanternDailyPractice.dayKey(Date.now())) return false;
+    return (Number(wallet.coins) || 0) >= LanternDailyPractice.DAILY_CAP;
+  }
+
   // Finishing a session is what counts a day towards the streak - not opening
   // the app, and not answering one card.
   function completeDailySession(correct, total){
@@ -3268,7 +3282,15 @@
       lines.push('<li>連続 ' + summary.streak.streak + ' 日目'
         + (summary.streak.frozen ? '（お休みの分は、とっておいた札で埋めました）' : '') + '</li>');
       if(summary.paidMilestone) lines.push('<li>七日つづきました。ごほうび ¥' + summary.paidMilestone + '</li>');
-      if(!summary.paidBonus && (e.gate + e.perfect) > 0){
+      // A protection the learner does not know they hold is no protection.
+      if(summary.streak.earnedFreeze){
+        lines.push('<li>「お休みの札」を一枚もらいました。一日休んでも、連続は切れません。</li>');
+      }
+      /* Shown whenever the day's coins are spent, not only when the bonus was
+       * refused outright. A learner who earned part of the bonus, or who filled
+       * the cap one card at a time, was told nothing and simply watched the
+       * coins stop. */
+      if(practiceCapReached()){
         lines.push('<li>今日のぶんは、もういっぱいです。また明日。</li>');
       }
     }

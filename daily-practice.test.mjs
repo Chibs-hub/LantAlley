@@ -140,3 +140,49 @@ test("every seventh day pays a milestone", () => {
   assert.equal(bonuses.length, 2, "two milestones in fourteen unbroken days");
   assert.deepEqual(bonuses.map((b) => b.streak), [7, 14]);
 });
+
+test("a milestone also grants the freeze that protects the streak", () => {
+  const p = load();
+
+  // Nothing granted freezes before, so the spend branch was unreachable and a
+  // missed day always broke the streak however long the learner had played.
+  let state = null;
+  for (let day = 1; day <= 6; day += 1) state = p.advanceStreak(state, at(2026, 9, day));
+  assert.equal(state.freezes, 0, "no freeze before the first full week");
+
+  state = p.advanceStreak(state, at(2026, 9, 7));
+  assert.equal(state.streak, 7);
+  assert.equal(state.earnedFreeze, true, "the learner has to be told it arrived");
+  assert.equal(state.freezes, 1);
+});
+
+test("earned freezes are capped, and the cap still lets a streak break", () => {
+  const p = load();
+
+  // Ten weeks of milestones must not bank ten freezes.
+  let state = null;
+  for (let day = 1; day <= 70; day += 1) state = p.advanceStreak(state, at(2026, 9, day));
+  assert.equal(state.streak, 70);
+  assert.equal(state.freezes, p.FREEZE_CAP, "held freezes stop at the cap");
+
+  // A long absence still breaks it, which is what keeps the number honest.
+  // Dated well past the loop above, which runs 70 days from September into
+  // November rather than staying inside the month.
+  const longGap = p.advanceStreak(state, at(2026, 12, 25));
+  assert.equal(longGap.streak, 1);
+  assert.equal(longGap.frozen, false);
+});
+
+test("an earned freeze actually survives into the next call and is spent", () => {
+  const p = load();
+
+  let state = null;
+  for (let day = 1; day <= 7; day += 1) state = p.advanceStreak(state, at(2026, 9, day));
+  assert.equal(state.freezes, 1);
+
+  // Skip the 8th, return on the 9th: the freeze earned above covers the gap.
+  const covered = p.advanceStreak(state, at(2026, 9, 9));
+  assert.equal(covered.streak, 8, "the streak carries across the missed day");
+  assert.equal(covered.frozen, true);
+  assert.equal(covered.freezes, 0, "and the freeze is spent");
+});
