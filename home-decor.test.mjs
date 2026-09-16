@@ -618,3 +618,40 @@ test("a pale wallpaper is laid on the panel, not multiplied into it", () => {
   assert.ok(sakura.image, "桜 has artwork");
   assert.match(decor.wallpaperSvg("wallpaper-sakura"), /is-raster/);
 });
+
+test("the left byobu and the window sill cannot occupy each other", () => {
+  const byId = id => slots.find(s => s.id === id);
+  const screenLeft = byId("screen-left");
+  const sill = byId("window-sill");
+
+  /* These two overlap in the picture. The screen draws 18.92% wide centred on
+   * x=10, so it spans about 0.5 to 19.5, and the sill sits at x=12 inside it.
+   * Both sides have to declare the conflict, because the guard only reads the
+   * slot being placed into. */
+  const drawn = decor.widthForSlot("folding-screen", screenLeft);
+  assert.ok(screenLeft.x - drawn / 2 < sill.x && sill.x < screenLeft.x + drawn / 2,
+    "the sill is inside the screen's footprint");
+
+  assert.ok(decor.slotAllowsItem("folding-screen", screenLeft, {}));
+  assert.ok(decor.slotAllowsItem("sill-plant", sill, {}));
+  assert.equal(
+    decor.slotAllowsItem("folding-screen", screenLeft, {"window-sill": "sill-plant"}), false);
+  assert.equal(
+    decor.slotAllowsItem("sill-plant", sill, {"screen-left": "folding-screen"}), false);
+
+  // The right screen has no neighbour at that depth and must stay free.
+  assert.ok(decor.slotAllowsItem("folding-screen", byId("screen-right"),
+    {"window-sill": "sill-plant"}));
+});
+
+test("a byobu is not sheared onto a wall plane", () => {
+  /* The wall pair is sheared because a hung scroll has to lie on a receding
+   * plane. A byobu stands on the floor and its art carries its own
+   * perspective, so a shear would tip it sideways rather than seat it. */
+  for(const id of ["screen-left", "screen-right"]){
+    assert.ok(!slots.find(s => s.id === id).skew, id + " stays square");
+  }
+  for(const id of ["wall-left", "wall-right"]){
+    assert.ok(slots.find(s => s.id === id).skew, id + " keeps its wall angle");
+  }
+});

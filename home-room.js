@@ -229,7 +229,29 @@
        without sharing the front row's landing line. */
     {id:"hearth-center", x:50, y:80, scale:0.72, kind:"floor", purpose:"hearth",
       conflicts:["floor-front"], label:"囲炉裏"},
-    {id:"screen-left", x:10, y:78, scale:0.44, kind:"floor", purpose:"screen", label:"屏風の左"},
+    /* These two carry 0.44 where every other slot at y=78 carries 0.74, and
+     * that is not depth: it is the screen being shrunk to fit.
+     *
+     * The width it is shrinking is a real measurement - a 170cm byobu against
+     * this room's own tatami is 43% of the scene, which home-decor.test.mjs
+     * asserts and explains. At the depth these slots actually sit at, that is
+     * 43 * 0.74 = 31.8% of the scene, and centred on x=10 it spans -5.9 to
+     * 25.9: nearly six percent of it is off the left edge of the picture. So
+     * 0.44 is not an error so much as the only value that fits a screen this
+     * wide at an x this close to the wall. It draws at 18.9%, which is about
+     * 44% of the object's true size - a 170cm screen reading as a 90cm one.
+     *
+     * Straightening it means moving the slot inward (x >= 16 before it stops
+     * overflowing), not touching either number here, and that is a judgment
+     * about where a byobu belongs in this room rather than arithmetic.
+     *
+     * No `skew`, unlike the wall pair. Those are sheared because a flat hung
+     * scroll has to lie on a receding plane. A byobu stands on the floor and
+     * its art already carries its own perspective - the SVG folds both wings
+     * away from the viewer, outer edges shorter than inner. Shearing that
+     * symmetric shape would tip it over sideways. */
+    {id:"screen-left", x:10, y:78, scale:0.44, kind:"floor", purpose:"screen",
+      conflicts:["window-sill"], label:"屏風の左"},
     {id:"screen-right", x:90, y:78, scale:0.44, kind:"floor", purpose:"screen", label:"屏風の右"},
     {id:"wall-left",    x:5,  y:32, scale:0.92, skew:12.8,  kind:"wall",  label:"壁の左"},
     {id:"wall-right",   x:95, y:32, scale:0.92, skew:-12.8, kind:"wall",  label:"壁の右"},
@@ -243,7 +265,12 @@
     {id:"post-left-low",  x:25, y:51, scale:0.70, kind:"post", label:"柱の左下"},
     {id:"post-right-low", x:75, y:51, scale:0.70, kind:"post", label:"柱の右下"},
     {id:"eave", x:15, y:30, scale:0.80, kind:"eave", label:"軒下"},
-    {id:"window-sill",  x:12, y:78, scale:0.80, kind:"sill",  label:"窓辺"},
+    /* The sill stands inside the left screen's footprint - x=12 against a
+     * screen centred on x=10 that spans roughly 0.5 to 19.5 - so the two
+     * cannot both be filled without one growing through the other. Declared on
+     * both sides, because the guard only reads the slot being placed into. */
+    {id:"window-sill",  x:12, y:78, scale:0.80, kind:"sill",
+      conflicts:["screen-left"], label:"窓辺"},
     /* Where the second shelf goes if the learner buys one. `z` sorts it with
        the fixtures rather than by its own foot: whatever stands on its planks
        has a higher y than the shelf's base, so without this the shelf would
