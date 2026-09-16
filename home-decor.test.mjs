@@ -136,16 +136,15 @@ test("the irori artwork is a real transparent PNG, not a baked checkerboard", ()
   assert.equal(file[25], 6);
 });
 
-test("an irori is grounded on tatami and its kettle is supported from the ceiling beam", () => {
+test("the irori uses one perspective-matched hearth and jizaikagi cutout", () => {
   const hearth = room.slots().find(slot => slot.id === "hearth-center");
   assert.equal(hearth.y, 80, "the hearth foot belongs on the visible tatami");
   assert.equal(hearth.scale, 0.72, "the hearth keeps the room's middle-depth scale");
-  const support = room.iroriSupport();
-  assert.equal(support.x, 50);
-  assert.equal(support.top, 18, "the support begins below the room's centre lantern");
-  assert.equal(support.bottom, 60);
-  assert.equal(support.width, 0.9);
-  assert.equal(support.label, "自在鉤");
+  const irori = decor.getItem("irori");
+  assert.equal(irori.image, "assets/home/decor/irori-jizaikagi-v1.png");
+  const file = fs.readFileSync(new URL(`./${irori.image}`, import.meta.url));
+  assert.deepEqual([...file.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
+  assert.equal(file[25], 6, "the integrated cutout must retain a real alpha channel");
 });
 
 const empty = () => ({owned: [], placed: {}});
@@ -233,7 +232,7 @@ test("available reward artwork is connected to matching shop items", () => {
     "pine-bonsai":"pine-bonsai-v1.webp",
     // The last six to arrive; before these, every one was a drawing.
     "brazier":"brazier-v1.webp",
-    "irori":"irori-hearth-v1.png",
+    "irori":"irori-jizaikagi-v1.png",
     "fan":"fan-v1.webp",
     "mask":"mask-v1.webp",
     "teapot":"teapot-v1.webp",

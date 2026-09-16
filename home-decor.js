@@ -62,7 +62,7 @@
        + '<ellipse cx="0" cy="-14" rx="24" ry="8" fill="#2b1c11"/>'
        + '<path d="M-8 -18 q6 -12 8 -4 q4 -10 8 2" stroke="#ffb454" stroke-width="3" fill="none"/>'},
     {id:"irori", name:"囲炉裏", kind:"floor", price:500, category:"床",
-     image:"assets/home/decor/irori-hearth-v1.png",
+     image:"assets/home/decor/irori-jizaikagi-v1.png",
      allowedSlots:["hearth-center"],
      svg:'<rect x="-42" y="-18" width="84" height="36" rx="5" fill="#4b2e1b" stroke="#2b1a11" stroke-width="4"/>'
        + '<rect x="-28" y="-7" width="56" height="22" rx="3" fill="#25201b"/>'
@@ -266,7 +266,9 @@
     kotatsu:               {width:24, anchorY:100},
     "folding-screen":     {width:43, anchorY:100},
     "floor-lantern":      {width:8, anchorY:100},
-    irori:                {width:23, anchorY:100},
+    // A built-in hearth is roughly one tatami wide. Its tall cutout includes
+    // the angled jizaikagi above it, while its base remains 1.0m on the floor.
+    irori:                {width:28.1, anchorY:100},
     "chrysanthemum-pot":   {width:9.5, anchorY:100},
     scroll:                {width:7, anchorY:50},
     "wall-lamp":          {width:5.5, anchorY:50},

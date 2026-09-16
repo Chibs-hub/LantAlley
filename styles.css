@@ -2694,13 +2694,6 @@ body:has(.about-panel:not([hidden])) .feedback-open{visibility:hidden;pointer-ev
     pointer-events:none; user-select:none; opacity:.97;
     filter:drop-shadow(0 3px 5px rgba(25,13,6,.5)) saturate(.86) sepia(.10) brightness(.94) contrast(.97);
   }
-  /* Fixed room hardware for the hearth. It follows the room's light grade
-     below, but does not receive pointer events or become part of the decor
-     inventory. */
-  .home-irori-support{
-    position:absolute; transform:translateX(-50%); pointer-events:none;
-    overflow:visible; filter:drop-shadow(0 1px 1px rgba(25,13,6,.42));
-  }
   /* Width is set inline from the cat's own depth, so the flat 13% here is only
      the fallback for a render before the pet module has spoken. It used to be
      the actual size everywhere, which made the cat a giant against the back

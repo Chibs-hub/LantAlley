@@ -9,6 +9,7 @@
  */
 var CACHE_VERSION = "lantern-alley-v391";
 // Retention: streak freezes are actually granted, and the daily coin cap says so.
+// Fix: dismiss cat inside the house removes them from the interior scene.
 
 // audio-index.js assigns to `self`, so the worker and the page share one list
 // of clip paths. Importing it here means new lines are cached automatically
@@ -94,7 +95,7 @@ var SHELL = [
   "./assets/home/decor/display-shelf-staggered-v1.webp",
   // The six that were line drawings until their photographs arrived.
   "./assets/home/decor/brazier-v1.webp",
-  "./assets/home/decor/irori-hearth-v1.png",
+  "./assets/home/decor/irori-jizaikagi-v1.png",
   "./assets/home/decor/fan-v1.webp",
   "./assets/home/decor/mask-v1.webp",
   "./assets/home/decor/teapot-v1.webp",

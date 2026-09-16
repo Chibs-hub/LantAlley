@@ -385,15 +385,6 @@
     return cloneSlots(SLOTS);
   }
 
-  /* A kettle above an irori is not held by the short hook painted with it.
-   * A 自在鉤 runs from a ceiling beam to that hook and lets the cook change the
-   * kettle height. The room already has a centre lantern through 18%, so this
-   * narrow support starts directly below it and meets the hearth art at 60%.
-   * That keeps it supported without drawing a rod through the lantern. */
-  function iroriSupport(){
-    return {x:50, top:18, bottom:60, width:0.9, label:"自在鉤"};
-  }
-
   var BACKGROUNDS = {
     yard: {
       morning:"assets/home/exterior/open-house-yard-morning-v1.webp",
@@ -432,7 +423,6 @@
       interior: {
         background: backgroundFor("interior", "evening"),
         slots: cloneSlots(SLOTS),
-        iroriSupport: iroriSupport(),
         fixtures: INTERIOR_FIXTURES.map(function(f){
           return {id:f.id, image:f.image, x:f.x, y:f.y, width:f.width, z:f.z, label:f.label};
         }),
@@ -513,7 +503,6 @@
   root.LanternHomeRoom = Object.freeze({
     scenes: scenes,
     slots: slots,
-    iroriSupport: iroriSupport,
     backgroundFor: backgroundFor,
     baseRoomSvg: baseRoomSvg
   });

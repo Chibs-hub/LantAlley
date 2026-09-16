@@ -6,6 +6,15 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-16 - Replace the drawn 囲炉裏 support with a perspective-matched asset (v391)
+
+The v390 SVG support was a straight overlay and could appear detached from the
+room beam. The 囲炉裏 now uses one RGBA image: a diagonal bamboo jizaikagi that
+starts at the rear beam, an iron link chain, and the hearth below. This removes
+the separate support layer, prevents the old visual mismatch, and retains the
+existing floor contact shadow and lighting treatment. The cache version is
+v391.
+
 ### 2026-09-16 - Ground the 囲炉裏 and add its 自在鉤 support (v390)
 
 The corrected v389 hearth still appeared to float because it sat on the rear
