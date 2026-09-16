@@ -2641,6 +2641,9 @@ body:has(.about-panel:not([hidden])) .feedback-open{visibility:hidden;pointer-ev
   .home-scene.light-evening::before{background:transparent}
   .home-scene.light-night .home-scene-bg{filter:none}
   .home-scene.light-night::before{background:transparent}
+  .home-scene.light-morning::after,.home-scene.light-day::after{background:transparent}
+  .home-scene.light-evening::after{background:linear-gradient(180deg,rgba(27,19,12,0) 0%,rgba(27,19,12,.34) 100%)}
+  .home-scene.light-night::after{background:linear-gradient(180deg,rgba(27,19,12,0) 0%,rgba(27,19,12,.62) 100%)}
   @media (prefers-reduced-motion:reduce){.home-scene::before{transition:none}}
 
   /* Mobile home camera: keep the painting and every percentage-based object

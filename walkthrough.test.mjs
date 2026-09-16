@@ -1665,6 +1665,12 @@ test("mobile learning chrome keeps readable progress and touch targets", () => {
     "the romaji toggle needs a finger-sized hit area");
 });
 
+test("daylight home scenes do not receive the night fade", () => {
+  const css = read("styles.css");
+  assert.match(css, /\.home-scene\.light-morning::after,\.home-scene\.light-day::after\{background:transparent\}/,
+    "the daylight yard and room must keep their painted brightness through the bottom edge");
+});
+
 test("yard reset actions live in a compact overflow menu", () => {
   const game = boot(plantedCamelliaSave());
   enterHome(game);

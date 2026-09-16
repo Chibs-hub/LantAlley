@@ -6,6 +6,15 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-16 - Home daylight and object lighting (v382)
+
+Removed the universal dark fade from the bottom of morning and day home
+scenes, which was making the daylight yard and path look unnaturally vignetted.
+Dusk and night retain reduced fades for scene-to-dock continuity. Checked house
+objects against their scene-specific brightness, saturation, contrast, opacity,
+contact shadows, and room surface anchors; no additional blending defect was
+found. The cache version is v382.
+
 ### 2026-09-16 - v380 audit fixes (v381)
 
 Applied and verified the nine findings in output/audit-v380/report.md. Purchased

@@ -1,6 +1,6 @@
 # Lantern Alley Project Handoff
 
-Last updated: 2026-09-16 (v381)
+Last updated: 2026-09-16 (v382)
 
 A browser game that teaches JLPT N2 Japanese. Vanilla JS, CSS and HTML, no build step, no framework, offline-capable.
 
@@ -57,6 +57,12 @@ The targeted home, pet, Inn, and walkthrough checks pass. The only remaining
 suite failures are the previously documented missing voice clips and their
 audio-only assertions; later Inn stages remain intentionally unfinished.
 The source report is [output/audit-v380/report.md](output/audit-v380/report.md).
+
+**Latest v382 status (2026-09-16):** removed the universal dark bottom fade
+from morning and day home scenes while retaining lighter dusk and night fades.
+House objects were checked against the room's scene-specific filters,
+contact shadows, opacity, and surface placement; no additional blending defect
+was found. `sw.js` is v382.
 
 **What changed across v339-v350**, newest first. Full reasons in
 [CHANGELOG.md](CHANGELOG.md).
