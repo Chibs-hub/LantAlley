@@ -532,6 +532,7 @@
   function slotAllowsItem(id, slot, placed){
     var item = typeof id === "string" ? getItem(id) : id;
     if(!item || !slot) return false;
+    if(slot.accepts && slot.accepts.indexOf(item.id) < 0) return false;
     if(item.allowedSlots && item.allowedSlots.indexOf(slot.id) < 0) return false;
     if(slot.purpose && (!item.allowedSlots || item.allowedSlots.indexOf(slot.id) < 0)) return false;
     if((slot.conflicts || []).some(function(other){
@@ -586,6 +587,16 @@
     });
   }
 
+  function storageStacks(home){
+    var stacks = [];
+    inStorage(home).forEach(function(id){
+      var stack = stacks.filter(function(entry){ return entry.id === id; })[0];
+      if(stack) stack.count += 1;
+      else stacks.push({id:id, count:1});
+    });
+    return stacks;
+  }
+
   /* "Only 30 coins away from the 座卓." Shown after a session, because the
    * distance between what a learner has and the next thing they want is the
    * part that brings them back. */
@@ -621,6 +632,7 @@
     slotAllowsItem: slotAllowsItem,
     remove: remove,
     inStorage: inStorage,
+    storageStacks: storageStacks,
     nearestUnaffordable: nearestUnaffordable
   });
 })(typeof self !== "undefined" ? self : this);

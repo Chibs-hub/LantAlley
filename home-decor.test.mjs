@@ -18,7 +18,7 @@ const room = context.LanternHomeRoom;
 const slots = room.slots();
 
 test("the room offers more realistic floor, wall, and post locations", () => {
-  assert.equal(slots.filter(s => s.kind === "floor").length, 8);
+  assert.equal(slots.filter(s => s.kind === "floor").length, 13);
   assert.equal(slots.filter(s => s.kind === "wall").length, 4);
   assert.equal(slots.filter(s => s.kind === "post").length, 4);
   for(const slot of slots.filter(s => ["floor", "wall", "post"].includes(s.kind))){
@@ -206,8 +206,9 @@ test("same-kind room targets remain separately reachable on a narrow scene", () 
     for(let b = a + 1; b < slots.length; b += 1){
       if(slots[a].kind !== slots[b].kind) continue;
       // Purpose-built slots are shown only for their matching item: 囲炉裏
-      // alone sees the hearth, and 屏風 alone sees the screen positions.
-      if(slots[a].purpose || slots[b].purpose) continue;
+      // alone sees the hearth, 屏風 sees its pair, and a cushion or center
+      // table sees only its own arrangement targets.
+      if(slots[a].purpose || slots[b].purpose || slots[a].accepts || slots[b].accepts) continue;
       /* Positions on the same piece of furniture are never separate targets.
          Eight places on a shelf are reached by pressing the shelf once - see
          `surface` in home-room.js - so the rule that matters is that the
@@ -692,5 +693,47 @@ test("storage keeps extra copies available after one copy is placed", () => {
   assert.equal(second.ok, true, "the second copy should have its own place");
   home = second.home;
   assert.equal(home.placed["floor-right"], "low-table");
+  assert.equal(decor.inStorage(home).length, 0);
+});
+
+test("storage stacks identical copies into one counted entry", () => {
+  const home = {
+    owned: ["floor-cushion-navy", "floor-cushion-navy", "floor-cushion-navy", "low-table"],
+    placed: {"seat-front-left": "floor-cushion-navy"}
+  };
+  assert.deepEqual(JSON.parse(JSON.stringify(decor.storageStacks(home))), [
+    {id: "floor-cushion-navy", count: 2},
+    {id: "low-table", count: 1}
+  ]);
+});
+
+test("four cushions can surround a center kotatsu without sharing a target", () => {
+  const center = slots.find(slot => slot.id === "table-center");
+  const seatIds = ["seat-back-left", "seat-back-right", "seat-front-left", "seat-front-right"];
+  const seats = seatIds.map(id => slots.find(slot => slot.id === id));
+  assert.ok(center, "the room needs a center-table target");
+  assert.ok(seats.every(Boolean), "all four surrounding seat targets must exist");
+  assert.ok(decor.slotAllowsItem("kotatsu", center));
+  assert.equal(decor.slotAllowsItem("irori", center), false);
+  seats.forEach(slot => {
+    assert.ok(decor.slotAllowsItem("floor-cushion-navy", slot), slot.id + " accepts a cushion");
+    assert.equal(decor.slotAllowsItem("kotatsu", slot), false, slot.id + " is cushion-only");
+  });
+  assert.ok(seats[0].x < center.x && seats[1].x > center.x);
+  assert.ok(seats[2].x < center.x && seats[3].x > center.x);
+  assert.ok(seats[0].y < center.y && seats[1].y < center.y);
+  assert.ok(seats[2].y > center.y && seats[3].y > center.y);
+
+  let home = {
+    owned: ["kotatsu", "floor-cushion-navy", "floor-cushion-navy",
+      "floor-cushion-navy", "floor-cushion-navy"],
+    placed: {}
+  };
+  home = decor.place(home, "kotatsu", center.id, slots).home;
+  seatIds.forEach(id => { home = decor.place(home, "floor-cushion-navy", id, slots).home; });
+  assert.equal(home.placed[center.id], "kotatsu");
+  assert.deepEqual(seatIds.map(id => home.placed[id]), [
+    "floor-cushion-navy", "floor-cushion-navy", "floor-cushion-navy", "floor-cushion-navy"
+  ]);
   assert.equal(decor.inStorage(home).length, 0);
 });

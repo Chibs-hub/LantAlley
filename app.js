@@ -6525,18 +6525,19 @@
     }
 
     if(homeTab === "storage"){
-      var stored = LanternHomeDecor.inStorage(homeState());
+      var stored = LanternHomeDecor.storageStacks(homeState());
       if(!homeState().owned.length){
         return '<p class="home-empty">まだ何も持っていません。「店」で買ってみましょう。</p>';
       }
       if(!stored.length){
         return '<p class="home-empty">持っているものは全部かざってあります。</p>';
       }
-      stored.forEach(function(id){
-        var item = LanternHomeDecor.getItem(id);
-        html += dockCard(decorCardArt(id), item.name, item.category,
-          'data-pick="' + id + '"',
-          (homeSelected && homeSelected.kind === "decor" && homeSelected.id === id) ? " is-picked" : "");
+      stored.forEach(function(stack){
+        var item = LanternHomeDecor.getItem(stack.id);
+        html += dockCard(decorCardArt(stack.id), item.name,
+          item.category + (stack.count > 1 ? " · ×" + stack.count : ""),
+          'data-pick="' + stack.id + '"',
+          (homeSelected && homeSelected.kind === "decor" && homeSelected.id === stack.id) ? " is-picked" : "");
       });
       return html;
     }

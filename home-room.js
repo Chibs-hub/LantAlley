@@ -211,8 +211,10 @@
   }
 
   var SLOTS = [
-    {id:"floor-left",   x:22, y:80, scale:0.89, kind:"floor", label:"床の左"},
-    {id:"floor-right",  x:78, y:80, scale:0.89, kind:"floor", label:"床の右"},
+    {id:"floor-left",   x:22, y:80, scale:0.89, kind:"floor",
+      conflicts:["seat-front-left"], label:"床の左"},
+    {id:"floor-right",  x:78, y:80, scale:0.89, kind:"floor",
+      conflicts:["seat-front-right"], label:"床の右"},
     /* These two used to sit at y:73, which is the foot of the back wall - and
        is now the foot of a shelf. A floor object placed there stood on the
        same ground line as the furniture and inside its footprint, so a bonsai
@@ -220,15 +222,30 @@
        set down in the room. Five percent nearer the viewer puts it in front
        of the shelf, where a plant on the floor beside a piece of furniture
        actually stands. The x stays: it is the depth that was wrong. */
-    {id:"floor-back-left", x:36, y:78, scale:0.74, kind:"floor", label:"床の奥左"},
-    {id:"floor-back-right", x:64, y:78, scale:0.74, kind:"floor", label:"床の奥右"},
-    {id:"floor-front", x:50, y:88, scale:1.00, kind:"floor",
-      conflicts:["hearth-center"], label:"床の手前"},
+    {id:"floor-back-left", x:36, y:78, scale:0.74, kind:"floor",
+      conflicts:["seat-back-left"], label:"床の奥左"},
+    {id:"floor-back-right", x:64, y:78, scale:0.74, kind:"floor",
+      conflicts:["seat-back-right"], label:"床の奥右"},
+    {id:"floor-front", x:50, y:92, scale:1.00, kind:"floor",
+      conflicts:["hearth-center","table-center"], label:"床の手前"},
     /* The centre-back tatami is clear of the built-in shelf and the door.
        It is a separate depth plane, so a small table or cushion can sit there
        without sharing the front row's landing line. */
     {id:"hearth-center", x:50, y:80, scale:0.72, kind:"floor", purpose:"hearth",
-      conflicts:["floor-front"], label:"囲炉裏"},
+      conflicts:["floor-front","table-center"], label:"囲炉裏"},
+    /* A shared central table needs its own footprint. Four smaller anchors
+       form a seated ring around it: the back pair is narrower and smaller in
+       perspective, while the front pair spreads toward the viewer. */
+    {id:"table-center", x:50, y:82, scale:0.78, kind:"floor",
+      accepts:["low-table","kotatsu"], conflicts:["floor-front","hearth-center"], label:"中央の卓"},
+    {id:"seat-back-left", x:39, y:77, scale:0.68, kind:"floor",
+      accepts:["floor-cushion-navy"], conflicts:["floor-back-left"], label:"卓の奥左"},
+    {id:"seat-back-right", x:61, y:77, scale:0.68, kind:"floor",
+      accepts:["floor-cushion-navy"], conflicts:["floor-back-right"], label:"卓の奥右"},
+    {id:"seat-front-left", x:35, y:89, scale:0.90, kind:"floor",
+      accepts:["floor-cushion-navy"], conflicts:["floor-left"], label:"卓の手前左"},
+    {id:"seat-front-right", x:65, y:89, scale:0.90, kind:"floor",
+      accepts:["floor-cushion-navy"], conflicts:["floor-right"], label:"卓の手前右"},
     /* A screen is a freestanding divider, not wall decoration. Its feet sit
        one tatami row nearer the viewer. Mirrored floor-plane shear follows
        the side-door thresholds while leaving both upright posts vertical. */
@@ -387,7 +404,8 @@
               // and `requires` decides whether a plank exists at all.
               z:(slot.z == null ? null : slot.z),
               requires:slot.requires || null,
-              purpose:slot.purpose || null, conflicts:slot.conflicts || []};
+              purpose:slot.purpose || null, accepts:slot.accepts || null,
+              conflicts:slot.conflicts || []};
     });
   }
 

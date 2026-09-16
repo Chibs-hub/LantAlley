@@ -6,6 +6,14 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-17 - Stack storage and add center seating (v400)
+
+Repeated furniture now appears as one storage card with a quantity count instead
+of one button per copy. Added a dedicated center-table position for the kotatsu
+or low table and four perspective-scaled, cushion-only positions around it. The
+rear pair is smaller and closer together than the front pair, and collision
+rules keep nearby general floor objects from overlapping the seating group.
+
 ### 2026-09-17 - Allow duplicate home-store purchases (v399)
 
 Furniture can now be purchased more than once. Each purchase deducts the item

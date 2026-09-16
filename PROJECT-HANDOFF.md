@@ -1,6 +1,6 @@
 # Lantern Alley Project Handoff
 
-Last updated: 2026-09-17 (v399)
+Last updated: 2026-09-17 (v400)
 
 A browser game that teaches JLPT N2 Japanese. Vanilla JS, CSS and HTML, no build step, no framework, offline-capable.
 
@@ -99,6 +99,13 @@ duplicate IDs represent separate copies. Buying charges once per copy; storage
 counts copies left after placement; placing a second owned copy no longer moves
 the first one. The shop displays the owned quantity and keeps the buy action
 enabled. sw.js is v399.
+
+**Latest v400 status (2026-09-17):** identical furniture copies are grouped
+into one storage card with an `×N` count. The room adds one center-table target
+for a kotatsu or low table plus four cushion-only targets around it. Rear seats
+are narrower and smaller than front seats to follow the tatami perspective;
+nearby general floor targets conflict with those seats to prevent overlap.
+sw.js is v400.
 
 **Latest v397 status (2026-09-16):** owner-directed 屏風 placement supersedes
 the v395 edge-only arrangement. The screens now stand inside the tatami at
