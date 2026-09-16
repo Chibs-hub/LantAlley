@@ -6420,15 +6420,10 @@
             + ';transform:translate(-50%,-'
             + decorSceneAnchor(item) + '%) scaleY(' + decorSceneScaleY(item) + ')'
             + decorSceneFlip(item)
-            /* A thing hung on a receding wall lies on that wall. The angle is
-             * the slot's, because it is a property of the wall rather than of
-             * the object: the same scroll is square on the back wall and
-             * slanted on a side one. */
-            + (slot.skew ? ' skewY(' + slot.skew + 'deg)' : '')
-            /* Floor dividers turn around their feet. Unlike wall `skew`, this
-             * is a real in-room angle: paired screen slots open toward the
-             * centre rather than running into either side wall. */
-            + (slot.turn ? ' rotate(' + slot.turn + 'deg)' : ''));
+            /* Side-wall art and floor screens follow their supporting plane.
+             * skewY slopes horizontal edges while keeping upright posts
+             * vertical; rotating a screen would make the whole piece lean. */
+            + (slot.skew ? ' skewY(' + slot.skew + 'deg)' : ''));
       });
       if(picked){
         /* One target per surface, not per position.

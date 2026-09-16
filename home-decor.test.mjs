@@ -37,8 +37,10 @@ test("large or built-in floor pieces use dedicated, non-blocking locations", () 
   assert.equal(screenRight.x, 80, "the right screen stands inside the tatami, not in the wall");
   assert.equal(screenLeft.y, 84, "the left screen feet are on the nearer tatami row");
   assert.equal(screenRight.y, 84, "the right screen feet are on the nearer tatami row");
-  assert.equal(screenLeft.turn, 7, "the left screen opens toward the room");
-  assert.equal(screenRight.turn, -7, "the right screen opens toward the room");
+  assert.equal(screenLeft.skew, -9, "the left screen follows the left side-door floor line");
+  assert.equal(screenRight.skew, 9, "the right screen follows the right side-door floor line");
+  assert.equal(screenLeft.turn, 0, "the left screen keeps its posts upright");
+  assert.equal(screenRight.turn, 0, "the right screen keeps its posts upright");
   assert.equal(hearth.purpose, "hearth");
   assert.ok(decor.slotAllowsItem("folding-screen", screenLeft));
   assert.equal(decor.slotAllowsItem("low-table", screenLeft), false);
@@ -651,13 +653,13 @@ test("the left byobu and the window sill cannot occupy each other", () => {
     {"window-sill": "sill-plant"}));
 });
 
-test("a byobu is not sheared onto a wall plane", () => {
-  /* The wall pair is sheared because a hung scroll has to lie on a receding
-   * plane. A byobu stands on the floor and its art carries its own
-   * perspective, so a shear would tip it sideways rather than seat it. */
-  for(const id of ["screen-left", "screen-right"]){
-    assert.ok(!slots.find(s => s.id === id).skew, id + " stays square");
-  }
+test("a byobu follows the side-door floor line without rotating its posts", () => {
+  const screenLeft = slots.find(s => s.id === "screen-left");
+  const screenRight = slots.find(s => s.id === "screen-right");
+  assert.equal(screenLeft.skew, -9, "left screen top and foot follow the left floor line");
+  assert.equal(screenRight.skew, 9, "right screen top and foot follow the right floor line");
+  assert.equal(screenLeft.turn, 0, "left screen posts remain upright");
+  assert.equal(screenRight.turn, 0, "right screen posts remain upright");
   for(const id of ["wall-left", "wall-right"]){
     assert.ok(slots.find(s => s.id === id).skew, id + " keeps its wall angle");
   }

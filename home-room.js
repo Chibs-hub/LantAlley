@@ -229,12 +229,12 @@
        without sharing the front row's landing line. */
     {id:"hearth-center", x:50, y:80, scale:0.72, kind:"floor", purpose:"hearth",
       conflicts:["floor-front"], label:"囲炉裏"},
-    /* A 屏風 is a freestanding divider, not wall decoration. Its feet sit one
-       tatami row nearer the viewer, and the mirrored turn opens it into the
-       room instead of letting the outside edge disappear through a fusuma. */
-    {id:"screen-left", x:20, y:84, scale:0.58, turn:7, kind:"floor", purpose:"screen",
+    /* A screen is a freestanding divider, not wall decoration. Its feet sit
+       one tatami row nearer the viewer. Mirrored floor-plane shear follows
+       the side-door thresholds while leaving both upright posts vertical. */
+    {id:"screen-left", x:20, y:84, scale:0.58, skew:-9, kind:"floor", purpose:"screen",
       conflicts:["floor-left","floor-back-left","window-sill"], label:"屏風の左"},
-    {id:"screen-right", x:80, y:84, scale:0.58, turn:-7, kind:"floor", purpose:"screen",
+    {id:"screen-right", x:80, y:84, scale:0.58, skew:9, kind:"floor", purpose:"screen",
       conflicts:["floor-right","floor-back-right"], label:"屏風の右"},
     {id:"wall-left",    x:5,  y:32, scale:0.92, skew:12.8,  kind:"wall",  label:"壁の左"},
     {id:"wall-right",   x:95, y:32, scale:0.92, skew:-12.8, kind:"wall",  label:"壁の右"},
@@ -376,7 +376,7 @@
   function cloneSlots(source){
     return source.map(function(slot){
       return {id:slot.id, x:slot.x, y:slot.y, scale:slot.scale || 1,
-              skew:slot.skew || 0, turn:slot.turn || 0, kind:slot.kind, label:slot.label,
+              skew:slot.skew || 0, turn:0, kind:slot.kind, label:slot.label,
               // Which piece of furniture this position is on, so the renderer
               // can offer one target for the whole shelf instead of eight.
               surface:slot.surface || null,

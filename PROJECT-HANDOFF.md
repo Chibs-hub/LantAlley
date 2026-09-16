@@ -1,6 +1,6 @@
 # Lantern Alley Project Handoff
 
-Last updated: 2026-09-16 (v397)
+Last updated: 2026-09-17 (v398)
 
 A browser game that teaches JLPT N2 Japanese. Vanilla JS, CSS and HTML, no build step, no framework, offline-capable.
 
@@ -86,6 +86,12 @@ window-sill location. New positions are constrained to visible room surfaces
 with depth scales, anchors, and support checks; shelf positions remain
 conditional on the second shelf. The touch target remains 44px. Decor and
 home geometry tests pass. sw.js is v387.
+
+**Latest v398 status (2026-09-17):** the v397 屏風 rotation approach was
+incorrect because it tilted the upright posts. The two screen slots now use
+mirrored nine-degree `skewY` transforms around their feet, matching the nearby
+side-door floor lines while keeping the posts vertical. Regression coverage
+checks both shear directions and rejects screen rotation. sw.js is v398.
 
 **Latest v397 status (2026-09-16):** owner-directed 屏風 placement supersedes
 the v395 edge-only arrangement. The screens now stand inside the tatami at

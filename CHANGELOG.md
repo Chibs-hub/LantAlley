@@ -6,6 +6,15 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-17 - Align 屏風 with the side-door perspective (v398)
+
+The v397 CSS rotation made each entire screen lean, so reversing its direction
+could not produce a physically upright room divider. Replaced rotation with a
+mirrored nine-degree floor-plane shear. The screen feet and horizontal edges
+now follow the nearby side-door threshold while the posts remain vertical.
+Added a regression test for both direction and the absence of rotation. The
+cache version is v398.
+
 ### 2026-09-16 - Turn 屏風 inward as freestanding dividers (v397)
 
 The v395 edge placement kept the screens against the side walls, but the
