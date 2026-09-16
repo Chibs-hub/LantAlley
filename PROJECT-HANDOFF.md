@@ -1,6 +1,6 @@
 # Lantern Alley Project Handoff
 
-Last updated: 2026-09-16 (v388)
+Last updated: 2026-09-16 (v389)
 
 A browser game that teaches JLPT N2 Japanese. Vanilla JS, CSS and HTML, no build step, no framework, offline-capable.
 
@@ -87,7 +87,7 @@ with depth scales, anchors, and support checks; shelf positions remain
 conditional on the second shelf. The touch target remains 44px. Decor and
 home geometry tests pass. sw.js is v387.
 
-**Latest v388 status (2026-09-16):** the room now has 18 base placement
+**Latest v389 status (2026-09-16):** the room now has 18 base placement
 locations: eight floor, four wall, four post, one eave, and one window-sill.
 Folding screens have dedicated outer floor positions and cannot be placed in
 ordinary floor slots that would cover the shelf. Added a purchasable 囲炉裏 using

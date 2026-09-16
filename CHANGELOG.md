@@ -6,6 +6,15 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-16 - Remove baked checkerboard from 囲炉裏 artwork (v389)
+
+The v388 囲炉裏 file was visually wrong despite passing the earlier alpha
+check: the committed file was an opaque RGB PNG whose checkerboard was baked
+into the pixels. Replaced it with a tightly cropped RGBA cutout, checked the
+actual committed bytes, and added a regression test that requires PNG colour
+type 6. The room composite now has no white checkerboard rectangle behind the
+hearth. The cache version is v389.
+
 ### 2026-09-16 - Add compatible folding-screen and 囲炉裏 placement (v388)
 
 Added dedicated side-floor positions for the folding screen so it cannot cover

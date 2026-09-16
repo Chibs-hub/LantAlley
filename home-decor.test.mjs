@@ -128,6 +128,14 @@ test("home scenes use the production raster asset paths", () => {
   }
 });
 
+test("the irori artwork is a real transparent PNG, not a baked checkerboard", () => {
+  const file = fs.readFileSync(new URL("./assets/home/decor/irori-hearth-v1.png", import.meta.url));
+  assert.deepEqual([...file.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
+  // PNG IHDR: bit depth at byte 24, colour type at byte 25. Type 6 is RGBA.
+  assert.equal(file[24], 8);
+  assert.equal(file[25], 6);
+});
+
 const empty = () => ({owned: [], placed: {}});
 
 test("a story reward enters decor storage once without charging coins", () => {
