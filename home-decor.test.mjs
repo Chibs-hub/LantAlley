@@ -17,6 +17,17 @@ const decor = context.LanternHomeDecor;
 const room = context.LanternHomeRoom;
 const slots = room.slots();
 
+test("the room offers more realistic floor, wall, and post locations", () => {
+  assert.equal(slots.filter(s => s.kind === "floor").length, 6);
+  assert.equal(slots.filter(s => s.kind === "wall").length, 4);
+  assert.equal(slots.filter(s => s.kind === "post").length, 4);
+  for(const slot of slots.filter(s => ["floor", "wall", "post"].includes(s.kind))){
+    assert.ok(slot.x > 4 && slot.x < 96, slot.id + " stays inside the room");
+    assert.ok(slot.y > 20 && slot.y < 96, slot.id + " stays on a visible surface");
+    assert.ok(slot.scale > 0 && slot.scale <= 1, slot.id + " has depth scale");
+  }
+});
+
 test("shelf objects have real plank support and clearance, including the mirrored shelf", () => {
   // Measured from the 572x407 artwork, not the slot generator. The middle
   // boards alternate sides. Empty air inside the outer frame is not support.

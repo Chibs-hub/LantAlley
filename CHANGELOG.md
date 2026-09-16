@@ -6,6 +6,25 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-16 - Expand realistic home placement locations (v387)
+
+Clarified that the requested increase was the number of places, not the touch
+target size. Added one clear centre-back tatami location, two inner wall-panel
+locations, and two lower post locations. The room now has 16 base placement
+locations instead of 11; shelf locations remain available when the second
+shelf is placed. Each new location uses a measured depth scale and stays on a
+visible floor, wall, or post surface. Restored placement hit targets to 44px.
+The cache version is v387.
+
+### 2026-09-16 - Enlarge home placement targets (v386)
+
+Re-audited every indoor object against its real-life dimension estimate, room
+depth scale, artwork bounds, surface clearance, and scene lighting. No new
+object-size mismatch was found after the Kotatsu correction; the current
+mapping remains consistent. Increased free home placement targets from 44px to
+52px for easier touch placement, without moving the actual landing points.
+The cache version is v386.
+
 ### 2026-09-16 - Restore object lighting and alpha compositing (v385)
 
 Rechecked every indoor reward image: all current decor files have real

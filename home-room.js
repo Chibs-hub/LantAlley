@@ -98,7 +98,7 @@
    * they cannot be stacked. A phone scene is about 320x180, a comfortable
    * target is 44px, and the visible tatami runs only from y=70 to the bottom -
    * thirty percent of the height, or 54px. Two rows inside that can never be
-   * 44px apart vertically, so every same-kind pair earns its separation on the
+   * 52px apart vertically, so every same-kind pair earns its separation on the
    * horizontal instead: fourteen percent of the width is 44.8px, and no two
    * floor positions are closer than that.
    *
@@ -124,7 +124,7 @@
    * pannable and its own floor is `clamp(300px,50dvh,480px)` of height at
    * 16/9, so even a 320x568 phone renders the room 533x300 and pans it. That
    * is measured, not derived - a 320px viewport was loaded and the scene came
-   * back 533 wide. At that floor 10% is 53px, clear of the 44px target, while
+   * back 533 wide. At that floor 10% is 53px, clear of the 52px target, while
    * the 8% first tried here was 43px: one pixel short, and the separation
    * test was right to refuse it.
    *
@@ -223,10 +223,21 @@
     {id:"floor-back-left", x:36, y:78, scale:0.74, kind:"floor", label:"床の奥左"},
     {id:"floor-back-right", x:64, y:78, scale:0.74, kind:"floor", label:"床の奥右"},
     {id:"floor-front", x:50, y:88, scale:1.00, kind:"floor", label:"床の手前"},
+    /* The centre-back tatami is clear of the built-in shelf and the door.
+       It is a separate depth plane, so a small table or cushion can sit there
+       without sharing the front row's landing line. */
+    {id:"floor-back-center", x:50, y:70, scale:0.62, kind:"floor", label:"床の奥中央"},
     {id:"wall-left",    x:5,  y:32, scale:0.92, skew:12.8,  kind:"wall",  label:"壁の左"},
     {id:"wall-right",   x:95, y:32, scale:0.92, skew:-12.8, kind:"wall",  label:"壁の右"},
+    /* Clear inner plaster panels add two more places for wall art while the
+       outer pair remains on the receding side walls. They face the learner,
+       so they do not inherit the side-wall skew. */
+    {id:"wall-inner-left", x:34, y:32, scale:0.88, kind:"wall", label:"壁の内側左"},
+    {id:"wall-inner-right", x:66, y:32, scale:0.88, kind:"wall", label:"壁の内側右"},
     {id:"post-left",    x:25, y:32, scale:0.88, kind:"post",  label:"柱の左"},
     {id:"post-right",   x:75, y:32, scale:0.88, kind:"post",  label:"柱の右"},
+    {id:"post-left-low",  x:25, y:51, scale:0.70, kind:"post", label:"柱の左下"},
+    {id:"post-right-low", x:75, y:51, scale:0.70, kind:"post", label:"柱の右下"},
     {id:"eave", x:15, y:30, scale:0.80, kind:"eave", label:"軒下"},
     {id:"window-sill",  x:12, y:78, scale:0.80, kind:"sill",  label:"窓辺"},
     /* Where the second shelf goes if the learner buys one. `z` sorts it with

@@ -1692,6 +1692,14 @@ test("yard plant grading stays close to the painted daylight background", () => 
     "the old daylight lift makes plants look pasted onto the yard");
 });
 
+test("home placement targets remain finger-sized", () => {
+  const css = read("styles.css");
+  assert.match(css, /\.home-target\{[\s\S]*width:44px; height:44px/,
+    "free placement targets need a finger-sized hit area");
+  assert.match(css, /\.home-target\.is-surface\{[\s\S]*min-width:44px; min-height:44px/,
+    "surface placement targets need the same minimum");
+});
+
 test("yard reset actions live in a compact overflow menu", () => {
   const game = boot(plantedCamelliaSave());
   enterHome(game);
