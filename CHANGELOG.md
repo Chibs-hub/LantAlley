@@ -6,6 +6,33 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-16 - Rebalance Kotatsu scale (v384)
+
+Audited every indoor presentation width against its supplied artwork, slot
+scale, and the existing room calibration. The other widths remain consistent;
+the kotatsu was the visual outlier at 29%, dominating the nearly same-width
+low-table render at 23%. Reduced it to 24%, keeping its floor anchor and depth
+behavior unchanged. Added a regression test. The cache version is v384.
+
+### 2026-09-16 - Home object blending and yard inspection (v383)
+
+Added a narrow compositing treatment for the older indoor reward renders whose
+export edges can retain a dark or light matte: only the affected house objects
+receive screen or multiply, while newer cut-outs and vector fallbacks remain
+unchanged. The object wrapper keeps its existing room transform and contact
+shadow, so placement behavior is not changed.
+
+Reduced the excessive morning/day plant brightness that made transparent yard
+objects look pasted onto the background. Inspected all current yard stages.
+Sakura and maple use the complete painted
+stage sets, with transparent backgrounds, measured ground anchors, depth-scaled
+widths, stable per-plant variation, and scene-aware lighting. No missing outdoor
+asset or broken Sakura mapping was found. The cache version is v383.
+
+Targeted house, yard, Sakura, and lighting tests pass. The remaining full-suite
+exceptions are the documented missing voice clips and unfinished post-Inn
+stages.
+
 ### 2026-09-16 - Home daylight and object lighting (v382)
 
 Removed the universal dark fade from the bottom of morning and day home

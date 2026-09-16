@@ -1671,6 +1671,25 @@ test("daylight home scenes do not receive the night fade", () => {
     "the daylight yard and room must keep their painted brightness through the bottom edge");
 });
 
+test("matte-backed house objects use a blending mode that removes the matte", () => {
+  const app = read("app.js");
+  const css = read("styles.css");
+  assert.match(app, /function decorBlendMode\(id\)/);
+  assert.match(app, /decorBlendMode\(here\)/);
+  assert.match(css, /\.home-item\.blend-dark\{mix-blend-mode:screen\}/);
+  assert.match(css, /\.home-item\.blend-light\{mix-blend-mode:multiply\}/);
+});
+
+test("yard plant grading stays close to the painted daylight background", () => {
+  const css = read("styles.css");
+  assert.match(css, /\.light-morning \.home-plant img,[\s\S]*brightness\(min\(1\.10,/,
+    "morning plants must not be lifted far above the yard painting");
+  assert.match(css, /\.light-day \.home-plant img,[\s\S]*brightness\(min\(1\.16,/,
+    "day plants must not be lifted far above the yard painting");
+  assert.doesNotMatch(css, /\.light-day \.home-plant img,[\s\S]*brightness\(min\(1\.55,/,
+    "the old daylight lift makes plants look pasted onto the yard");
+});
+
 test("yard reset actions live in a compact overflow menu", () => {
   const game = boot(plantedCamelliaSave());
   enterHome(game);

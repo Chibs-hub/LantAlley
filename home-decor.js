@@ -256,7 +256,7 @@
     "plant-small":        {width:7, anchorY:100},
     "low-table":          {width:23, anchorY:100},
     brazier:               {width:11.5, anchorY:100},
-    kotatsu:               {width:29, anchorY:100},
+    kotatsu:               {width:24, anchorY:100},
     "folding-screen":     {width:43, anchorY:100},
     "floor-lantern":      {width:8, anchorY:100},
     "chrysanthemum-pot":   {width:9.5, anchorY:100},

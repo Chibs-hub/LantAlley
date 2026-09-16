@@ -1,6 +1,6 @@
 # Lantern Alley Project Handoff
 
-Last updated: 2026-09-16 (v382)
+Last updated: 2026-09-16 (v384)
 
 A browser game that teaches JLPT N2 Japanese. Vanilla JS, CSS and HTML, no build step, no framework, offline-capable.
 
@@ -57,6 +57,22 @@ The targeted home, pet, Inn, and walkthrough checks pass. The only remaining
 suite failures are the previously documented missing voice clips and their
 audio-only assertions; later Inn stages remain intentionally unfinished.
 The source report is [output/audit-v380/report.md](output/audit-v380/report.md).
+
+**Latest v383 status (2026-09-16):** indoor object rendering now applies
+matte-aware compositing only to the older affected reward images, preserving
+their existing transforms, shadows, and room anchors. Outdoor rendering was
+also corrected for excessive morning/day plant brightness, which made
+transparent yard objects look pasted onto the painting. It was inspected at
+the asset and source level: Sakura is mapped to all five painted
+stages, yard plants have transparent art, measured baselines, depth-scaled
+widths, stable variation, and per-scene lighting. No outdoor asset is missing.
+The targeted house, yard, Sakura, and lighting checks pass. sw.js is v383.
+
+**Latest v384 status (2026-09-16):** all indoor object presentation widths were
+audited. Kotatsu was the only clear visual outlier: its 29% width made it
+dominate the similarly wide low-table render, so it is now 24%. Its floor
+anchor and depth scaling are unchanged. The targeted decor and home tests pass.
+sw.js is v384.
 
 **Latest v382 status (2026-09-16):** removed the universal dark bottom fade
 from morning and day home scenes while retaining lighter dusk and night fades.

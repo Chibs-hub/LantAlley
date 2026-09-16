@@ -240,6 +240,13 @@ test("placed decor carries physical size and contact-point calibration", () => {
   }
 });
 
+test("kotatsu stays close to the low table scale", () => {
+  assert.equal(decor.presentationFor("kotatsu").width, 24);
+  assert.ok(decor.presentationFor("kotatsu").width <=
+    decor.presentationFor("low-table").width + 1,
+    "the kotatsu should not dominate the low table by six scene points");
+});
+
 /* Every catalogue item now carries a photograph, so nothing is sized through
  * a partly-filled viewBox any more and the compensation this test used to
  * check no longer exists to be checked.

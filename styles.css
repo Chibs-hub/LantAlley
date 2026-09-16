@@ -2801,6 +2801,11 @@ body:has(.about-panel:not([hidden])) .feedback-open{visibility:hidden;pointer-ev
     position:relative;z-index:1;opacity:.97;
     filter:drop-shadow(0 2px 3px rgba(25,13,6,.48)) saturate(.84) sepia(.10) brightness(.92) contrast(.96);
   }
+  /* Matte cleanup for the older indoor object renders. Keep this on the
+     object wrapper so its contact shadow and transformed placement stay as a
+     single composited piece. */
+  .home-item.blend-dark{mix-blend-mode:screen}
+  .home-item.blend-light{mix-blend-mode:multiply}
   /* Each object is lit like the room it stands in.
    *
    * The scene gets two things the objects were not getting. First the
@@ -2837,13 +2842,13 @@ body:has(.about-panel:not([hidden])) .feedback-open{visibility:hidden;pointer-ev
    * a few lines below are measured the same way against the tatami. */
   .light-morning .home-plant img,.light-morning .home-plant svg{
     filter:drop-shadow(0 2px 3px rgba(25,13,6,.36)) saturate(.95)
-      brightness(min(1.42, var(--plant-lift-max,1.6))) contrast(.95) hue-rotate(-5deg)}
+      brightness(min(1.10, var(--plant-lift-max,1.6))) contrast(.95) hue-rotate(-5deg)}
   /* The lift the ground asks for, capped at what the picture can take.
      See PLANT_LIFT_CEILING in app.js: the sakura's blossoms clip at 1.07 and
      the camellia's leaves not until 1.77, so one number cannot serve both. */
   .light-day .home-plant img,.light-day .home-plant svg{
     filter:drop-shadow(0 2px 3px rgba(25,13,6,.32)) saturate(.92)
-      brightness(min(1.55, var(--plant-lift-max,1.6))) contrast(.93)}
+      brightness(min(1.16, var(--plant-lift-max,1.6))) contrast(.93)}
   /* After the sun goes, the house lamp is the only light in the yard, so a
      plant's distance from the doorway starts to matter. `--plant-lamp` is 1 at
      the door and 0 at the far corners - see plantLampProximity in app.js.
