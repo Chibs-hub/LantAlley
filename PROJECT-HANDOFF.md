@@ -1,6 +1,6 @@
 # Lantern Alley Project Handoff
 
-Last updated: 2026-09-16 (v384)
+Last updated: 2026-09-16 (v385)
 
 A browser game that teaches JLPT N2 Japanese. Vanilla JS, CSS and HTML, no build step, no framework, offline-capable.
 
@@ -73,6 +73,13 @@ audited. Kotatsu was the only clear visual outlier: its 29% width made it
 dominate the similarly wide low-table render, so it is now 24%. Its floor
 anchor and depth scaling are unchanged. The targeted decor and home tests pass.
 sw.js is v384.
+
+**Latest v385 status (2026-09-16):** rechecked every indoor reward image and
+confirmed the current decor files already have real transparent alpha. Removed
+the v383 whole-object screen/multiply blend, which was washing out object
+lighting and making some art look translucent. Existing scene-aware filters,
+contact shadows, measured anchors, depth scaling, and the v384 Kotatsu width
+remain active. sw.js is v385.
 
 **Latest v382 status (2026-09-16):** removed the universal dark bottom fade
 from morning and day home scenes while retaining lighter dusk and night fades.

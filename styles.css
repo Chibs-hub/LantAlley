@@ -2801,11 +2801,6 @@ body:has(.about-panel:not([hidden])) .feedback-open{visibility:hidden;pointer-ev
     position:relative;z-index:1;opacity:.97;
     filter:drop-shadow(0 2px 3px rgba(25,13,6,.48)) saturate(.84) sepia(.10) brightness(.92) contrast(.96);
   }
-  /* Matte cleanup for the older indoor object renders. Keep this on the
-     object wrapper so its contact shadow and transformed placement stay as a
-     single composited piece. */
-  .home-item.blend-dark{mix-blend-mode:screen}
-  .home-item.blend-light{mix-blend-mode:multiply}
   /* Each object is lit like the room it stands in.
    *
    * The scene gets two things the objects were not getting. First the

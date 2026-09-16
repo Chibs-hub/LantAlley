@@ -6,6 +6,15 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-16 - Restore object lighting and alpha compositing (v385)
+
+Rechecked every indoor reward image: all current decor files have real
+transparent alpha at their corners, so the v383 matte blend was incorrect.
+Removed the whole-object screen/multiply treatment that made some objects look
+washed out or translucent. Existing room lighting filters, shadows, anchors,
+slot depth scaling, and the v384 Kotatsu width remain active. The cache version
+is v385.
+
 ### 2026-09-16 - Rebalance Kotatsu scale (v384)
 
 Audited every indoor presentation width against its supplied artwork, slot

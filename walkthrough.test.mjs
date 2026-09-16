@@ -1671,13 +1671,15 @@ test("daylight home scenes do not receive the night fade", () => {
     "the daylight yard and room must keep their painted brightness through the bottom edge");
 });
 
-test("matte-backed house objects use a blending mode that removes the matte", () => {
+test("house object art keeps its alpha and scene lighting", () => {
   const app = read("app.js");
   const css = read("styles.css");
-  assert.match(app, /function decorBlendMode\(id\)/);
-  assert.match(app, /decorBlendMode\(here\)/);
-  assert.match(css, /\.home-item\.blend-dark\{mix-blend-mode:screen\}/);
-  assert.match(css, /\.home-item\.blend-light\{mix-blend-mode:multiply\}/);
+  assert.doesNotMatch(app, /function decorBlendMode\(id\)/,
+    "transparent reward art must not be composited as a matte");
+  assert.doesNotMatch(css, /\.home-item[^}]*mix-blend-mode/,
+    "whole-object blend modes wash out the object's scene lighting");
+  assert.match(css, /\.light-day \.home-fixture,.light-day \.home-item img/,
+    "house objects still need scene-aware grading");
 });
 
 test("yard plant grading stays close to the painted daylight background", () => {

@@ -6373,8 +6373,7 @@
         if(!slotAvailable(slot, home.placed)) return;
         var item = decor.getItem(here) || {name:""};
         var placedSlot = {x:slot.x, y:decorSceneTop(item, slot)};
-        var blendMode = decorBlendMode(here);
-        html += positioned("home-item" + (blendMode ? " " + blendMode : ""), placedSlot, decorArt(here, item.name),
+        html += positioned("home-item", placedSlot, decorArt(here, item.name),
           ' data-slot-item="' + slot.id + '" role="button" tabindex="0"'
             + ' data-item-kind="' + (item.kind || "") + '"'
             + ' aria-label="' + item.name + ' をかたづける"',
@@ -6426,20 +6425,6 @@
     if(item && item.image) return '<img src="' + item.image + '" alt="' + name + '">';
     return '<svg viewBox="-60 -52 120 104" role="img" aria-label="' + name + '">'
       + decor.svgFor(id) + '</svg>';
-  }
-
-  /* A few older reward renders retain a very faint export matte around their
-   * transparent edge. Let the room show through that edge without changing
-   * the newer cut-outs or the vector fallbacks. The classes live on the
-   * positioned object so the same treatment follows it when it is moved. */
-  function decorBlendMode(id){
-    var darkMatte = ["books", "brazier", "floor-cushion-navy", "fan", "kotatsu",
-      "low-table", "pine-bonsai", "sakura-bonsai", "sill-plant", "teapot",
-      "wind-chime"];
-    var lightMatte = ["plant-small", "daruma", "cat-figure", "wall-lamp"];
-    if(darkMatte.indexOf(id) >= 0) return "blend-dark";
-    if(lightMatte.indexOf(id) >= 0) return "blend-light";
-    return "";
   }
 
   /* ---- the dock: what you own and what you can buy ---- */
