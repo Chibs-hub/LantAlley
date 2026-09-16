@@ -312,3 +312,31 @@ test("grooming uses a calm 2.4 second cycle", () => {
   assert.equal(pet.step(start, 599, {}).frame, 0);
   assert.equal(pet.step(start, 600, {}).frame, 1);
 });
+
+test("a pet appears at a resting spot, not parked on the doorway", () => {
+  const pet = load();
+  /* The renderer used to build a brand-new pet with enterScene(), which sets
+   * it down on the destination's door and sits it there whatever the seed is.
+   * Pet positions are never saved, so every page load rebuilt every pet that
+   * way and the whole household was found stacked on one doorway tile. */
+  for(const scene of ["interior", "yard"]){
+    const doors = pet.anchors(scene).filter(a => a.kind === "door").map(a => a.id);
+    assert.ok(doors.length, scene + " has a door to avoid");
+    const landed = new Set();
+    for(const seed of [0, 1, 2, 3, 7, 12345, 4294967295]){
+      const made = pet.create(scene, seed);
+      assert.ok(!doors.includes(made.anchorId),
+        `${scene} seed ${seed} settled on a door`);
+      landed.add(made.anchorId);
+    }
+    assert.ok(landed.size > 1, scene + " sends every seed to the same anchor");
+  }
+});
+
+test("seed 0 is a seed, not a missing value", () => {
+  const pet = load();
+  // The starter cat's iid is "cat-0". Treating 0 as absent sent it and
+  // "cat-1" to the same anchor.
+  assert.notEqual(pet.create("interior", 0).anchorId,
+                  pet.create("interior", 1).anchorId);
+});

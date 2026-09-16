@@ -208,7 +208,12 @@
   function create(scene, seed, options){
     if(!SCENES[scene]) return null;
     var choices = sceneRows(scene, options).filter(function(anchor){ return anchor.kind !== "door"; });
-    var normalized = Math.abs(Number(seed) || 1) >>> 0;
+    /* `|| 1` here was rejecting 0, which is a perfectly good seed and the one
+     * the starter cat has: its iid is "cat-0". That sent both "cat-0" and
+     * "cat-1" to the same anchor. Only a seed that is not a number needs a
+     * substitute. */
+    var given = Number(seed);
+    var normalized = Math.abs(isFinite(given) ? given : 1) >>> 0;
     var anchor = choices[normalized % choices.length];
     return {scene:scene, anchorId:anchor.id, targetId:null, x:anchor.x, y:anchor.y,
       facing:1, behavior:anchor.behaviors[0], frame:0, clock:0, seed:normalized};

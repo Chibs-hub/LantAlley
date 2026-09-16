@@ -6113,16 +6113,33 @@
       var seed = iidSeed(iid);
       var petOptions = homePetAnchorOptions(scene, species);
       if(!prev){
-        var newPs = pet.enterScene ? pet.enterScene(scene, seed, petOptions) : pet.create(scene, seed, petOptions);
+        /* create(), not enterScene(), for the same reason the scene switch
+         * below stopped using it - and this branch is the one a learner
+         * actually meets.
+         *
+         * enterScene() puts the pet on the destination's door and sits it
+         * there, and it does that whatever the seed is: every cat, every
+         * time, on the same tile in the middle of the doorway. Because
+         * homePetStates lives only in memory and is never saved, `!prev` is
+         * true on every single page load, so that door tile was where every
+         * pet was found on opening the game, and a second cat only moved off
+         * it by colliding with the first. create() picks from the resting
+         * anchors by seed instead, so the cats are somewhere different, and
+         * differ from each other, before any of them has taken a step.
+         */
+        var newPs = pet.create(scene, seed, petOptions);
         // Spread same-species pets across distinct anchors so they don't overlap.
         var takenIds = Object.keys(homePetStates)
           .filter(function(k){ return iidSpecies(k) === species; })
           .map(function(k){ return homePetStates[k] && homePetStates[k].anchorId; })
           .filter(Boolean);
         if(takenIds.indexOf(newPs.anchorId) >= 0 && pet.anchors && pet.settleAt){
-          var free = pet.anchors(scene, petOptions).filter(function(a){
+          var open = pet.anchors(scene, petOptions).filter(function(a){
             return takenIds.indexOf(a.id) < 0 && a.kind !== "door";
-          })[0];
+          });
+          // By seed rather than [0], or every collision resolves to the same
+          // spare anchor and a third cat lands where the second one did.
+          var free = open.length ? open[(newPs.seed || 1) % open.length] : null;
           if(free) newPs = pet.settleAt(newPs, free.id, petOptions);
         }
         homePetStates[iid] = newPs;
