@@ -236,15 +236,15 @@
     /* A shared central table needs its own footprint. Four smaller anchors
        form a seated ring around it: the back pair is narrower and smaller in
        perspective, while the front pair spreads toward the viewer. */
-    {id:"table-center", x:50, y:82, scale:0.78, kind:"floor",
+    {id:"table-center", x:50, y:80, scale:0.70, kind:"floor",
       accepts:["low-table","kotatsu"], conflicts:["floor-front","hearth-center"], label:"中央の卓"},
-    {id:"seat-back-left", x:39, y:77, scale:0.68, kind:"floor",
+    {id:"seat-back-left", x:38.5, y:75, scale:0.60, kind:"floor",
       accepts:["floor-cushion-navy"], conflicts:["floor-back-left"], label:"卓の奥左"},
-    {id:"seat-back-right", x:61, y:77, scale:0.68, kind:"floor",
+    {id:"seat-back-right", x:61.5, y:75, scale:0.60, kind:"floor",
       accepts:["floor-cushion-navy"], conflicts:["floor-back-right"], label:"卓の奥右"},
-    {id:"seat-front-left", x:35, y:89, scale:0.90, kind:"floor",
+    {id:"seat-front-left", x:34, y:88, scale:0.84, kind:"floor",
       accepts:["floor-cushion-navy"], conflicts:["floor-left"], label:"卓の手前左"},
-    {id:"seat-front-right", x:65, y:89, scale:0.90, kind:"floor",
+    {id:"seat-front-right", x:66, y:88, scale:0.84, kind:"floor",
       accepts:["floor-cushion-navy"], conflicts:["floor-right"], label:"卓の手前右"},
     /* A screen is a freestanding divider, not wall decoration. Its feet sit
        one tatami row nearer the viewer. Mirrored floor-plane shear follows

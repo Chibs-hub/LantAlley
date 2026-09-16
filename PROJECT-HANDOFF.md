@@ -1,6 +1,6 @@
 # Lantern Alley Project Handoff
 
-Last updated: 2026-09-17 (v400)
+Last updated: 2026-09-17 (v401)
 
 A browser game that teaches JLPT N2 Japanese. Vanilla JS, CSS and HTML, no build step, no framework, offline-capable.
 
@@ -106,6 +106,13 @@ for a kotatsu or low table plus four cushion-only targets around it. Rear seats
 are narrower and smaller than front seats to follow the tatami perspective;
 nearby general floor targets conflict with those seats to prevent overlap.
 sw.js is v400.
+
+**Latest v401 status (2026-09-17):** a center kotatsu or low table now turns
+the four dedicated zabuton positions into the only offered cushion targets,
+instead of mixing them with generic floor dots. The table is smaller and set
+slightly higher; the rear cushions are compact and the front pair remains
+larger, giving the complete four-seat group balanced tatami perspective.
+sw.js is v401.
 
 **Latest v397 status (2026-09-16):** owner-directed 屏風 placement supersedes
 the v395 edge-only arrangement. The screens now stand inside the tatami at

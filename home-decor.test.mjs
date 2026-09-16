@@ -707,7 +707,7 @@ test("storage stacks identical copies into one counted entry", () => {
   ]);
 });
 
-test("four cushions can surround a center kotatsu without sharing a target", () => {
+test("a center kotatsu offers only its four balanced cushion seats", () => {
   const center = slots.find(slot => slot.id === "table-center");
   const seatIds = ["seat-back-left", "seat-back-right", "seat-front-left", "seat-front-right"];
   const seats = seatIds.map(id => slots.find(slot => slot.id === id));
@@ -715,14 +715,23 @@ test("four cushions can surround a center kotatsu without sharing a target", () 
   assert.ok(seats.every(Boolean), "all four surrounding seat targets must exist");
   assert.ok(decor.slotAllowsItem("kotatsu", center));
   assert.equal(decor.slotAllowsItem("irori", center), false);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify({x:center.x, y:center.y, scale:center.scale})),
+    {x:50, y:80, scale:0.70}
+  );
   seats.forEach(slot => {
-    assert.ok(decor.slotAllowsItem("floor-cushion-navy", slot), slot.id + " accepts a cushion");
+    assert.ok(decor.slotAllowsItem("floor-cushion-navy", slot,
+      {"table-center":"kotatsu"}), slot.id + " accepts a cushion beside the kotatsu");
     assert.equal(decor.slotAllowsItem("kotatsu", slot), false, slot.id + " is cushion-only");
   });
-  assert.ok(seats[0].x < center.x && seats[1].x > center.x);
-  assert.ok(seats[2].x < center.x && seats[3].x > center.x);
-  assert.ok(seats[0].y < center.y && seats[1].y < center.y);
-  assert.ok(seats[2].y > center.y && seats[3].y > center.y);
+  assert.deepEqual(JSON.parse(JSON.stringify(seats.map(slot => ({x:slot.x, y:slot.y, scale:slot.scale})))), [
+    {x:38.5, y:75, scale:0.60}, {x:61.5, y:75, scale:0.60},
+    {x:34, y:88, scale:0.84}, {x:66, y:88, scale:0.84}
+  ]);
+  ["floor-left", "floor-right", "floor-back-left", "floor-back-right", "floor-front"].forEach(id => {
+    assert.equal(decor.slotAllowsItem("floor-cushion-navy", slots.find(slot => slot.id === id),
+      {"table-center":"kotatsu"}), false, id + " is not offered while a center table needs seating");
+  });
 
   let home = {
     owned: ["kotatsu", "floor-cushion-navy", "floor-cushion-navy",

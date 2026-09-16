@@ -6,6 +6,14 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-17 - Balance the kotatsu seating group (v401)
+
+The first center seating attempt offered every generic floor target after the
+kotatsu or low table was placed, so a learner could not reliably create the
+intended four-seat arrangement. A center table now restricts zabuton placement
+to its four companion targets. Reduced the table footprint and remeasured the
+rear and front cushion sizes and spacing for a balanced perspective group.
+
 ### 2026-09-17 - Stack storage and add center seating (v400)
 
 Repeated furniture now appears as one storage card with a quantity count instead

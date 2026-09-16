@@ -532,6 +532,11 @@
   function slotAllowsItem(id, slot, placed){
     var item = typeof id === "string" ? getItem(id) : id;
     if(!item || !slot) return false;
+    /* A kotatsu or low table turns the room's middle into one clear seating
+       arrangement. When the learner selects a zabuton, offer only its four
+       companion seats instead of mixing them with unrelated floor targets. */
+    if(item.id === "floor-cushion-navy" && placed && placed["table-center"]
+      && (!slot.accepts || slot.accepts.indexOf(item.id) < 0)) return false;
     if(slot.accepts && slot.accepts.indexOf(item.id) < 0) return false;
     if(item.allowedSlots && item.allowedSlots.indexOf(slot.id) < 0) return false;
     if(slot.purpose && (!item.allowedSlots || item.allowedSlots.indexOf(slot.id) < 0)) return false;
