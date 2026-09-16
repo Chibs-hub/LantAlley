@@ -6424,7 +6424,11 @@
              * the slot's, because it is a property of the wall rather than of
              * the object: the same scroll is square on the back wall and
              * slanted on a side one. */
-            + (slot.skew ? ' skewY(' + slot.skew + 'deg)' : ''));
+            + (slot.skew ? ' skewY(' + slot.skew + 'deg)' : '')
+            /* Floor dividers turn around their feet. Unlike wall `skew`, this
+             * is a real in-room angle: paired screen slots open toward the
+             * centre rather than running into either side wall. */
+            + (slot.turn ? ' rotate(' + slot.turn + 'deg)' : ''));
       });
       if(picked){
         /* One target per surface, not per position.

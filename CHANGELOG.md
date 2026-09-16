@@ -6,6 +6,22 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-16 - Turn 屏風 inward as freestanding dividers (v397)
+
+The v395 edge placement kept the screens against the side walls, but the
+owner requested freestanding inward angles. Both 屏風 positions now sit inside
+the tatami at x=20 and x=80, with mirrored seven-degree turns around their
+feet. The old edge-only expectation was updated; conflict rules retain the
+window-sill and adjacent-floor protections. The cache version is v397.
+
+### 2026-09-16 - Seat 屏風 on the tatami as a room divider (v392)
+
+The two folding-screen positions used to be at the extreme room edges, which
+let the screen artwork read as pushed into the wall. They now stand inside the
+tatami on the nearer row. Mirrored seven-degree turns make each screen open
+toward the room, and the positions conflict with only the nearby floor space
+they physically divide. The cache version is v392.
+
 ### 2026-09-16 - Replace the drawn 囲炉裏 support with a perspective-matched asset (v391)
 
 The v390 SVG support was a straight overlay and could appear detached from the

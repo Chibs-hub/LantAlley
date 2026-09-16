@@ -2798,6 +2798,8 @@ body:has(.about-panel:not([hidden])) .feedback-open{visibility:hidden;pointer-ev
   }
   .home-item img, .home-item svg{filter:drop-shadow(0 2px 4px rgba(28,16,8,.45))}
   .home-item{width:18%}
+  .home-item[data-slot-item="screen-left"],
+  .home-item[data-slot-item="screen-right"]{transform-origin:50% 100%}
   /* svg as well as img: a drawn stand-in that is not sized here falls back to
      the browser's default replaced-element size and renders several times the
      height of the whole yard. */

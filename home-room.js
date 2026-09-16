@@ -229,35 +229,13 @@
        without sharing the front row's landing line. */
     {id:"hearth-center", x:50, y:80, scale:0.72, kind:"floor", purpose:"hearth",
       conflicts:["floor-front"], label:"囲炉裏"},
-    /* y is the foot, and at x=10 the floor is nowhere near 78.
-     *
-     * These sat at y=78 with the back row, but 78 is the floor line in the
-     * middle of the room, not out at the edges: the side walls come forward
-     * toward the viewer, so the tatami meets them lower down the picture.
-     * Reading the painting at x=5 and x=95 puts that junction at 84-87, which
-     * left a screen standing on 78 hanging in the air above the engawa
-     * threshold with floor visible underneath it. 85 sets it down on the mats.
-     *
-     * The x stays at the edges on purpose. Moving them inward also seats them,
-     * but it walks a byobu into the middle of the room and across floor-left
-     * and floor-right, and a folding screen belongs against a wall.
-     *
-     * `scale` here is not depth - it is 0.44 where this depth wants about
-     * 0.96, because the screen's width is a real measurement that
-     * home-decor.test.mjs asserts and explains: a 170cm byobu against this
-     * room's tatami is 43% of the scene. At true depth that spans well past
-     * the edge of the picture, so the slot shrinks it instead, and it draws at
-     * about 44% of its stated size. That is a separate argument about how big
-     * a byobu should look here, and it is not what made it float.
-     *
-     * No `skew`, unlike the wall pair. Those are sheared because a flat hung
-     * scroll has to lie on a receding plane. A byobu stands on the floor and
-     * its art already carries its own perspective - the SVG folds both wings
-     * away from the viewer, outer edges shorter than inner. Shearing that
-     * symmetric shape would tip it over sideways. */
-    {id:"screen-left", x:10, y:85, scale:0.44, kind:"floor", purpose:"screen",
-      conflicts:["window-sill"], label:"屏風の左"},
-    {id:"screen-right", x:90, y:85, scale:0.44, kind:"floor", purpose:"screen", label:"屏風の右"},
+    /* A 屏風 is a freestanding divider, not wall decoration. Its feet sit one
+       tatami row nearer the viewer, and the mirrored turn opens it into the
+       room instead of letting the outside edge disappear through a fusuma. */
+    {id:"screen-left", x:20, y:84, scale:0.58, turn:7, kind:"floor", purpose:"screen",
+      conflicts:["floor-left","floor-back-left","window-sill"], label:"屏風の左"},
+    {id:"screen-right", x:80, y:84, scale:0.58, turn:-7, kind:"floor", purpose:"screen",
+      conflicts:["floor-right","floor-back-right"], label:"屏風の右"},
     {id:"wall-left",    x:5,  y:32, scale:0.92, skew:12.8,  kind:"wall",  label:"壁の左"},
     {id:"wall-right",   x:95, y:32, scale:0.92, skew:-12.8, kind:"wall",  label:"壁の右"},
     /* Clear inner plaster panels add two more places for wall art while the
@@ -398,7 +376,7 @@
   function cloneSlots(source){
     return source.map(function(slot){
       return {id:slot.id, x:slot.x, y:slot.y, scale:slot.scale || 1,
-              skew:slot.skew || 0, kind:slot.kind, label:slot.label,
+              skew:slot.skew || 0, turn:slot.turn || 0, kind:slot.kind, label:slot.label,
               // Which piece of furniture this position is on, so the renderer
               // can offer one target for the whole shelf instead of eight.
               surface:slot.surface || null,

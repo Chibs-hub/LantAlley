@@ -30,8 +30,15 @@ test("the room offers more realistic floor, wall, and post locations", () => {
 
 test("large or built-in floor pieces use dedicated, non-blocking locations", () => {
   const screenLeft = slots.find(s => s.id === "screen-left");
+  const screenRight = slots.find(s => s.id === "screen-right");
   const hearth = slots.find(s => s.id === "hearth-center");
   assert.equal(screenLeft.purpose, "screen");
+  assert.equal(screenLeft.x, 20, "the left screen stands inside the tatami, not in the wall");
+  assert.equal(screenRight.x, 80, "the right screen stands inside the tatami, not in the wall");
+  assert.equal(screenLeft.y, 84, "the left screen feet are on the nearer tatami row");
+  assert.equal(screenRight.y, 84, "the right screen feet are on the nearer tatami row");
+  assert.equal(screenLeft.turn, 7, "the left screen opens toward the room");
+  assert.equal(screenRight.turn, -7, "the right screen opens toward the room");
   assert.equal(hearth.purpose, "hearth");
   assert.ok(decor.slotAllowsItem("folding-screen", screenLeft));
   assert.equal(decor.slotAllowsItem("low-table", screenLeft), false);
@@ -656,19 +663,14 @@ test("a byobu is not sheared onto a wall plane", () => {
   }
 });
 
-test("the byobu stands on the floor, not above it", () => {
-  /* y is the foot. Out at the edges the side walls come forward, so the
-   * tatami meets them lower down the picture than it does in the middle of
-   * the room: reading the painting at x=5 and x=95 puts that junction at
-   * 84-87. These sat at 78 with the back row and hung in the air. */
+test("the byobu stands on the tatami as an inward room divider", () => {
+  /* The user chose an inward divider rather than one pressed against the
+   * side walls. Its foot remains on the nearer tatami row. */
   for(const id of ["screen-left", "screen-right"]){
     const slot = slots.find(s => s.id === id);
     assert.ok(slot.y >= 83 && slot.y <= 87,
       `${id} foot is on the floor at its own x, not on the middle-room line`);
   }
-
-  // And they stay at the edges: a byobu belongs against a wall, not adrift
-  // across floor-left and floor-right in the middle of the room.
-  assert.ok(slots.find(s => s.id === "screen-left").x <= 12);
-  assert.ok(slots.find(s => s.id === "screen-right").x >= 88);
+  assert.equal(slots.find(s => s.id === "screen-left").x, 20);
+  assert.equal(slots.find(s => s.id === "screen-right").x, 80);
 });
