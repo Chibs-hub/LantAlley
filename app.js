@@ -3598,7 +3598,7 @@
   // Marks the answered question as answered: every choice goes inert, and the
   // one that was picked stays visible so the explanation has something to
   // point at.
-  function settlePreviewChoices(picked){
+  function settlePreviewChoices(picked, correct){
     var host = $("preview-controls");
     if(!host) return;
     var buttons = host.querySelectorAll("button");
@@ -3606,6 +3606,7 @@
       button.disabled = true;
       button.classList.add("is-settled");
       if(index === picked) button.classList.add("is-picked");
+      if(index === correct) button.classList.add("is-correct");
     });
   }
 
@@ -3826,7 +3827,7 @@
       // The choices stay on screen while the explanation is read, so they have
       // to stop looking like choices. Left live, a learner who answered wrong
       // taps the one they now believe is right and nothing at all happens.
-      settlePreviewChoices(value);
+      settlePreviewChoices(value, question.answer.correctIndex);
       if(!correct && previewState.missed.indexOf(question.id) < 0){
         previewState.missed.push(question.id);
         rememberEpisode();
@@ -4506,6 +4507,12 @@
     return rotated.slice(at).concat(rotated.slice(0, at));
   }
 
+  function teachingChoiceSeed(word){
+    var seed = 17;
+    for(var i = 0; i < word.length; i++) seed = (seed * 31 + word.charCodeAt(i)) % 2147483647;
+    return seed;
+  }
+
   /* One word, taught, before anything scores it.
    *
    * The boards name the five words and the margin card in Day 1 repeats word,
@@ -4685,7 +4692,7 @@
     var options = [card.sense].concat(senses.slice(0, 3));
     // Deterministic placement from the word itself, so the answer is not
     // always first and the same word always sits in the same place.
-    var at = card.word.length % options.length;
+    var at = teachingChoiceSeed(card.word) % options.length;
     options.splice(at, 0, options.splice(0, 1)[0]);
 
     $("scene").innerHTML = '<div class="episode-open"><div class="episode-open-card teach-card">'
@@ -6071,8 +6078,11 @@
   }
 
   function homePetMarkup(scene){
-    if(!state.innJourney || !state.innJourney.catUnlocked) return "";
-    var activePets = state.activePets || [];
+    var ownedPets = state.ownedPets || [];
+    var activePets = (state.activePets || []).filter(function(iid){
+      return ownedPets.indexOf(iidSpecies(iid)) >= 0;
+    });
+    if(!activePets.length) return "";
     return activePets.map(function(iid){
       var species = iidSpecies(iid);
       var pet = homePetApi(species);
@@ -6554,6 +6564,9 @@
         wanted.push({name:PLANT_JP[type.id] || type.name, price:type.price});
       });
     }
+    PET_CATALOGUE.forEach(function(pet){
+      if(!ownsPet(pet.id)) wanted.push({name:pet.nameJp, price:pet.price});
+    });
 
     var short = wanted.filter(function(w){ return w.price > money; })
                       .sort(function(a, b){ return a.price - b.price; })[0];
@@ -6866,6 +6879,7 @@
             + (homeShopCategory === category[0] ? ' is-on' : '') + '" aria-pressed="'
             + (homeShopCategory === category[0]) + '">' + category[1] + '</button>';
         }).join("") + '</div>'
+      + '<p class="home-shop-notice" aria-live="polite"></p>'
       + '<div class="home-shop-grid" id="home-shelf">' + homeShopDock() + '</div></section></div>';
   }
 
@@ -6981,7 +6995,7 @@
 
   function homePetManageButton(){
     var owned = state.ownedPets && state.ownedPets.length > 0;
-    if(!owned || !state.innJourney || !state.innJourney.catUnlocked) return "";
+    if(!owned) return "";
     return '<button type="button" data-home-pet-manage="1" class="home-menu-button'
       + (homePetManaging ? ' is-on' : '') + '" aria-pressed="' + homePetManaging + '">ペット</button>';
   }
@@ -7106,7 +7120,7 @@
 
   function homeSay(text){
     homeNotice = text;
-    var note = $("scene").querySelector(".home-goal");
+    var note = $("scene").querySelector(".home-goal, .home-shop-notice");
     if(note) note.innerHTML = text;
     homeNotice = "";
   }
@@ -7182,6 +7196,8 @@
     if(shopCategory){
       homeShopCategory = shopCategory.getAttribute("data-shop-category") || "plants";
       paintHome();
+      var nextShopCategory = $("scene").querySelector('[data-shop-category="' + homeShopCategory + '"]');
+      if(nextShopCategory) nextShopCategory.focus();
       return;
     }
     if(event.target.closest("[data-clear-yard]") && garden){

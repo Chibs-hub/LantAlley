@@ -1157,7 +1157,8 @@
    * reads meanings[0] - reviews, other places, the general gloss - should have
    * its sense reordered for a fix that is specific to one story. */
   var CARD_SENSES = {
-    "調整":"adjustment, coordination"
+    "調整":"adjustment, coordination",
+    "案内":"guidance; showing someone to a place"
   };
 
   function getCardSense(focusWord){

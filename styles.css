@@ -1250,7 +1250,7 @@
     .inn-journey-stops{gap:2px}
     .inn-journey-stop{grid-template-columns:9px minmax(0,1fr);column-gap:2px;padding:3px}
     .inn-journey-lamp{width:7px;height:7px}
-    .inn-journey-label{font-size:.5rem}
+    .inn-journey-label{font-size:.68rem}
     .inn-journey-reward{display:none}
     .inn-reward{padding:18px 13px 15px;border-radius:12px}
     .inn-reward-image{width:min(128px,48%);max-height:108px}
@@ -2223,6 +2223,11 @@ body:has(.about-panel:not([hidden])) .feedback-open{visibility:hidden;pointer-ev
   border-color:var(--wood-edge);
   box-shadow:0 0 0 2px var(--wood-edge) inset;
 }
+.question-control.is-settled.is-correct{
+  opacity:1;
+  border-color:var(--moss);
+  box-shadow:0 0 0 2px var(--moss) inset;
+}
 
   /* Being paid. The chip starts visible and is removed on a timer, so a
      learner with reduced motion still sees it - it just does not travel. */
@@ -2568,6 +2573,7 @@ body:has(.about-panel:not([hidden])) .feedback-open{visibility:hidden;pointer-ev
   .home-shop-kicker{margin:0;text-align:center;color:#d7b77c;font-size:.7rem;letter-spacing:.12em}
   .home-shop-panel h2{margin:2px 0 12px;text-align:center;font-family:'Shippori Mincho',serif;color:#fff0cf}
   .home-shop-categories{display:flex;justify-content:center;gap:8px;margin-bottom:14px}
+  .home-shop-notice{min-height:1.25em;margin:0 0 10px;text-align:center;color:#ffe1a2;font-weight:700}
   .home-shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px}
   .home-shop-grid .home-card{min-height:112px;background:rgba(29,17,10,.86)}
   .home-pet-shop-sprite{width:100%;height:52px;background-size:400% auto;background-position:0 center;background-repeat:no-repeat;image-rendering:pixelated}
@@ -3145,6 +3151,24 @@ body:has(.about-panel:not([hidden])) .feedback-open{visibility:hidden;pointer-ev
   .home-tab{
     min-height:44px;
   }
+  .breadcrumb,
+  #romaji-switch,
+  .hint-btn{
+    min-height:44px;
+  }
+  #romaji-switch{
+    width:44px;
+    min-width:44px;
+    height:44px;
+    background:transparent;
+  }
+  #romaji-switch::before{
+    width:34px;
+    height:19px;
+    background:rgba(27,42,74,0.22);
+  }
+  #romaji-switch.on::before{background:var(--moss)}
+  #romaji-switch::after{top:14px;left:7px}
   .home-yard-more summary{
     width:44px;
     height:44px;

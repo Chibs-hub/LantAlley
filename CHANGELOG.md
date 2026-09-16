@@ -6,6 +6,20 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-16 - v380 audit fixes (v381)
+
+Applied and verified the nine findings in output/audit-v380/report.md. Purchased
+pets render and can be managed before the Inn cat reward; the shop shows an
+aria-live insufficient-funds notice; pet prices participate in the home goal;
+the Inn uses the correct guest-guidance sense for 案内; wrong episode answers
+keep both the picked and correct choices visible; teaching checks no longer
+place answers from word length; mobile progress labels and touch controls are
+larger; and shop category changes restore focus. The cache version is v381.
+
+Targeted home, pet, Inn, and walkthrough tests pass. Browser verification at
+320px and 390px found no page overflow or render errors. The remaining full
+suite failures are the known missing audio clips and audio assertions.
+
 ### 2026-09-15 - Align Kon talking mouth (v374)
 
 Replaced the generic CSS mouth with a small transparent mouth cutout sampled

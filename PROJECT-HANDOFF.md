@@ -1,6 +1,6 @@
 # Lantern Alley Project Handoff
 
-Last updated: 2026-09-11 (v350)
+Last updated: 2026-09-16 (v381)
 
 A browser game that teaches JLPT N2 Japanese. Vanilla JS, CSS and HTML, no build step, no framework, offline-capable.
 
@@ -43,6 +43,20 @@ the disk for exactly that reason.
 `node --test` runs 566 and all of them pass. Every version from v339 to v350
 was verified in a browser as well as by the suite; the changelog entry for
 each one says what was checked and what was not.
+
+**Latest v381 status (2026-09-16):** v380's UI and learning audit was applied
+one finding at a time. Purchased pets now appear before the Inn cat reward;
+shop purchase failures are visible; the Inn card uses the guest-guidance sense
+for 案内; missed episode answers mark both the picked and correct choices;
+teaching option order is no longer based on word length; mobile progress and
+touch controls are readable; shop tabs restore focus; and affordability goals
+include pets. Sakura yard placement remains covered by the existing browser
+checks. `sw.js` is v381 so the shipped shell refreshes.
+
+The targeted home, pet, Inn, and walkthrough checks pass. The only remaining
+suite failures are the previously documented missing voice clips and their
+audio-only assertions; later Inn stages remain intentionally unfinished.
+The source report is [output/audit-v380/report.md](output/audit-v380/report.md).
 
 **What changed across v339-v350**, newest first. Full reasons in
 [CHANGELOG.md](CHANGELOG.md).

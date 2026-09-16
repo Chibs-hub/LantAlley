@@ -122,6 +122,15 @@ test("the 調整 word card uses the Inn's sense, not the catalog's general one",
   }
 });
 
+test("the 案内 word card teaches guest guidance, not general information", () => {
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(readFileSync(stageUrl, "utf8"), context);
+  const stage = context.N2HomeInnStage;
+
+  assert.equal(stage.getCardSense("案内"), "guidance; showing someone to a place");
+});
+
 test("episode openings form one aligned bottom dock instead of floating boxes", () => {
   assert.match(html, /\.inn-stage \.game-layout:has\(\.episode-open\)/);
   assert.match(html, /\.inn-stage \.answer-workspace:has\(\.episode-open\)/);

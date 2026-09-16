@@ -1555,16 +1555,22 @@ test("the companion selector adds and removes pets; both coexist after reload", 
   petTab.click();
   game.clock.advance(50);
 
+  assert.equal(game.doc.querySelectorAll('[data-recruit-pet="bird"]').length, 0,
+    "the shop identifies an owned pet without duplicating the home manager");
+  game.doc.querySelectorAll("[data-home-shop-back]")[0].click();
+  game.clock.advance(50);
+  game.doc.querySelectorAll("[data-home-pet-manage]")[0].click();
+  game.clock.advance(50);
   const birdCard = game.doc.querySelector('[data-recruit-pet="bird"]');
-  assert.ok(birdCard, "owned pets appear with a recruit button");
+  assert.ok(birdCard, "owned pets are managed from the home pet panel");
   birdCard.click();
   game.clock.advance(50);
 
-  // Bird is now active — dismiss button present, count shows 1.
-  assert.ok(game.doc.querySelector('[data-dismiss-pet="bird"]'), "active pet has a dismiss button");
-
-  game.doc.querySelectorAll("[data-home-shop-back]")[0].click();
-  game.clock.advance(50);
+  // Bird is now active — the saved instance is the source of truth after the
+  // manager repaint.
+  const afterRecruit = JSON.parse(storage.getItem("lanternAlley.v3"));
+  assert.ok(afterRecruit.activePets.some((iid) => iid.startsWith("bird-")),
+    "recruiting a pet saves an active bird instance");
 
   // Both cat and bird live in the home at the same time.
   assert.ok(petSpecies().includes("cat"), "cat is still in the home");
@@ -1586,6 +1592,77 @@ test("the companion selector adds and removes pets; both coexist after reload", 
   const reloadedSpecies = reloaded.doc.querySelectorAll(".home-pet").map((n) => n.dataset.petSpecies);
   assert.ok(reloadedSpecies.includes("cat") && reloadedSpecies.includes("bird"),
     "both pets restored after reload");
+});
+
+test("a purchased pet is visible before the Inn cat reward", () => {
+  const game = boot(plantedCamelliaSave({
+    money: 5000,
+    ownedPets: [],
+    activePets: [],
+    innJourney: { version: 1, claimed: {}, catUnlocked: false },
+  }));
+  enterHome(game);
+
+  game.doc.querySelectorAll("[data-home-shop]")[0].click();
+  game.clock.advance(50);
+  game.doc.querySelectorAll("[data-shop-category]")
+    .find((b) => b.getAttribute("data-shop-category") === "pets").click();
+  game.clock.advance(50);
+
+  const bird = game.doc.querySelector('[data-buy-pet="bird"]');
+  assert.ok(bird, "the unowned bird is available in the pet shop");
+  bird.click();
+  game.clock.advance(50);
+  game.doc.querySelectorAll("[data-home-shop-back]")[0].click();
+  game.clock.advance(50);
+
+  assert.equal(game.doc.querySelectorAll('.home-pet[data-pet-species="bird"]').length, 1,
+    "a purchased bird appears in the yard without the Inn cat reward");
+  assert.equal(game.doc.querySelectorAll("[data-home-pet-manage]").length, 1,
+    "an owned pet can be managed before the Inn cat reward");
+});
+
+test("the shop explains an unaffordable pet purchase", () => {
+  const game = boot(plantedCamelliaSave({
+    money: 0,
+    ownedPets: [],
+    activePets: [],
+    innJourney: { version: 1, claimed: {}, catUnlocked: false },
+  }));
+  enterHome(game);
+  game.doc.querySelectorAll("[data-home-shop]")[0].click();
+  game.clock.advance(50);
+  game.doc.querySelectorAll("[data-shop-category]")
+    .find((b) => b.getAttribute("data-shop-category") === "pets").click();
+  game.clock.advance(50);
+
+  game.doc.querySelector('[data-buy-pet="bird"]').click();
+  const notice = game.doc.querySelector(".home-shop-notice");
+  assert.ok(notice, "the shop has a live purchase notice");
+  assert.match(notice.textContent, /お金が足りません/);
+});
+
+test("changing shop categories keeps focus on the selected tab", () => {
+  const game = boot(plantedCamelliaSave({money: 5000}));
+  enterHome(game);
+  game.doc.querySelectorAll("[data-home-shop]")[0].click();
+  game.clock.advance(50);
+  const tab = game.doc.querySelectorAll("[data-shop-category]")
+    .find((b) => b.getAttribute("data-shop-category") === "pets");
+  tab.click();
+  const repaintedTab = game.doc.querySelectorAll("[data-shop-category]")
+    .find((b) => b.getAttribute("data-shop-category") === "pets");
+  assert.equal(repaintedTab.focused, true, "the selected shop tab keeps keyboard focus after repaint");
+});
+
+test("mobile learning chrome keeps readable progress and touch targets", () => {
+  const css = read("styles.css");
+  assert.match(css, /\.inn-journey-label\{font-size:\.68rem\}/,
+    "phone progress labels must remain readable");
+  assert.match(css, /\.breadcrumb,[\s\S]*#romaji-switch,[\s\S]*\.hint-btn\{\s*min-height:44px/,
+    "phone navigation and hint controls need finger-sized targets");
+  assert.match(css, /#romaji-switch\{[\s\S]*width:44px[\s\S]*height:44px/,
+    "the romaji toggle needs a finger-sized hit area");
 });
 
 test("yard reset actions live in a compact overflow menu", () => {
@@ -2484,6 +2561,20 @@ test("every episode answer names the exact learning word after the attempt", asy
   }
 });
 
+test("an incorrect episode answer keeps the correct choice visibly marked", async () => {
+  const game = boot(null, "?skip=1");
+  await openFirstEpisodeQuestion(game);
+  const question = game.context.N2InnEpisodes.episodes[0].days[0].questions[0];
+  const choices = game.$("preview-controls").querySelectorAll("button");
+  const wrong = choices.findIndex((_, index) => index !== question.answer.correctIndex);
+  choices[wrong].click();
+  game.clock.advance(100);
+
+  assert.ok(choices[wrong].className.includes("is-picked"), "the selected answer stays identifiable");
+  assert.ok(choices[question.answer.correctIndex].className.includes("is-correct"),
+    "the correct answer is identifiable after a miss");
+});
+
 test("an episode timeout still teaches the exact word", () => {
   // Fake audio deliberately rejects, so its promise-driven speech fallback
   // cannot be advanced reliably by the synchronous fake clock. Pin the actual
@@ -3194,6 +3285,14 @@ test("the teaching check costs nothing, however it is answered", async () => {
     "and it does not count toward the mastery gate");
   assert.ok(game.doc.querySelector(".teach-answer"),
     "a miss is answered rather than repeated");
+});
+
+test("teaching choices are not positioned from the word length", () => {
+  const app = read("app.js");
+  assert.doesNotMatch(app, /var at = card\.word\.length % options\.length/,
+    "choice order must not reveal a word-length-based answer position");
+  assert.match(app, /function teachingChoiceSeed\(word\)/,
+    "choice order needs a stable seed that is independent of word length");
 });
 
 test("a right answer is marked and moves on by itself", async () => {
