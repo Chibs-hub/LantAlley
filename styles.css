@@ -2644,6 +2644,17 @@ body:has(.about-panel:not([hidden])) .feedback-open{visibility:hidden;pointer-ev
   .home-scene.light-morning::after,.home-scene.light-day::after{background:transparent}
   .home-scene.light-evening::after{background:linear-gradient(180deg,rgba(27,19,12,0) 0%,rgba(27,19,12,.34) 100%)}
   .home-scene.light-night::after{background:linear-gradient(180deg,rgba(27,19,12,0) 0%,rgba(27,19,12,.62) 100%)}
+  /* The yard at night is dark because the sun has set. The room is not: it has
+     a lamp burning in it, which is why its painting measures warm rather than
+     moonlit. Both were being darkened by the same rules, so a lit room read as
+     an unlit one. These two lift only the interior, and must stay below the
+     `filter:none` pair above, which they match on specificity and beat on
+     order. 53.7 x 1.6 puts the room on 85.9, level with the furniture and the
+     cat; the floor gradient comes down with it, or it would crush the tatami
+     the furniture is standing on back into the dark. */
+  .home-interior-scene.light-night .home-scene-bg{filter:brightness(1.6) saturate(1.04)}
+  .home-interior-scene.light-night::after{
+    background:linear-gradient(180deg,rgba(27,19,12,0) 0%,rgba(27,19,12,.38) 100%)}
   @media (prefers-reduced-motion:reduce){.home-scene::before{transition:none}}
 
   /* Mobile home camera: keep the painting and every percentage-based object
@@ -2890,8 +2901,22 @@ body:has(.about-panel:not([hidden])) .feedback-open{visibility:hidden;pointer-ev
     filter:drop-shadow(0 2px 3px rgba(25,13,6,.34)) saturate(.86) sepia(.06) brightness(.98) contrast(.97)}
   .light-evening .home-fixture,.light-evening .home-item img,.light-evening .home-item svg{
     filter:drop-shadow(0 2px 3px rgba(25,13,6,.42)) saturate(1.02) sepia(.03) brightness(1.02) contrast(.99)}
+  /* Indoors after dark the light is the lamp, not the sun, and a lamp does not
+     burn lower at eleven than at seven. These were tuned as if the room went
+     dark the way the yard does, and the measured result was a room at a third
+     of its daytime brightness with the furniture dimmed to match it.
+     Measuring the art: the decor photographs average 101.5 luminance, the cat
+     sprites 120.5, and the night room 53.7 against the evening room's 112.5.
+     At the old .56 the furniture landed on 56.8 - correctly seated, but seated
+     in a room that was too dark - while the cat at .72 landed on 86.7 and was
+     the one thing lit for a room with a lamp in it. So the cat was right and
+     everything around it was wrong: .85 puts the furniture on 86.3, the
+     background lift below puts the room on 85.9, and the cat stays where it
+     was. The shadow warms from blue-black to the same brown the other three
+     periods use, because the night room measures warm (R-B +53), and the cold
+     hue-rotate that fought it is gone. */
   .light-night .home-fixture,.light-night .home-item img,.light-night .home-item svg{
-    filter:drop-shadow(0 2px 4px rgba(8,10,18,.62)) saturate(.72) sepia(.04) brightness(.56) hue-rotate(8deg)}
+    filter:drop-shadow(0 2px 4px rgba(25,13,6,.52)) saturate(.88) sepia(.05) brightness(.85) contrast(.97)}
   /* A plant is seated on the ground the same way furniture is.
    *
    * Furniture had a contact shadow from the start and plants never did, so a

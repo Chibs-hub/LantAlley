@@ -7,8 +7,8 @@
  * Bump CACHE_VERSION whenever any shell file changes, or returning players
  * will keep the old build.
  */
-var CACHE_VERSION = "lantern-alley-v393";
-// Fix: the byobu and the window sill can no longer be placed through each other.
+var CACHE_VERSION = "lantern-alley-v394";
+// Light: the room keeps its lamp after dark instead of going dark like the yard.
 
 // audio-index.js assigns to `self`, so the worker and the page share one list
 // of clip paths. Importing it here means new lines are cached automatically
@@ -157,11 +157,11 @@ var SHELL = [
   "./manifest.webmanifest",
   "./assets/branding/lantern-mark-v2.png",
   "./assets/social/lantern-alley-share-v2.jpg",
-  "./icons/icon-192.png?v=393",
-  "./icons/icon-512.png?v=393",
-  "./icons/icon-192-maskable.png?v=393",
-  "./icons/icon-512-maskable.png?v=393",
-  "./icons/apple-touch-icon.png?v=393",
+  "./icons/icon-192.png?v=394",
+  "./icons/icon-512.png?v=394",
+  "./icons/icon-192-maskable.png?v=394",
+  "./icons/icon-512-maskable.png?v=394",
+  "./icons/apple-touch-icon.png?v=394",
   "./assets/kon/kon-idle.webp",
   "./assets/kon/kon-wave-left.webp",
   "./assets/kon/kon-wave-right.webp",
