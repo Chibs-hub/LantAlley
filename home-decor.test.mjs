@@ -136,6 +136,18 @@ test("the irori artwork is a real transparent PNG, not a baked checkerboard", ()
   assert.equal(file[25], 6);
 });
 
+test("an irori is grounded on tatami and its kettle is supported from the ceiling beam", () => {
+  const hearth = room.slots().find(slot => slot.id === "hearth-center");
+  assert.equal(hearth.y, 80, "the hearth foot belongs on the visible tatami");
+  assert.equal(hearth.scale, 0.72, "the hearth keeps the room's middle-depth scale");
+  const support = room.iroriSupport();
+  assert.equal(support.x, 50);
+  assert.equal(support.top, 18, "the support begins below the room's centre lantern");
+  assert.equal(support.bottom, 60);
+  assert.equal(support.width, 0.9);
+  assert.equal(support.label, "自在鉤");
+});
+
 const empty = () => ({owned: [], placed: {}});
 
 test("a story reward enters decor storage once without charging coins", () => {
@@ -185,6 +197,9 @@ test("same-kind room targets remain separately reachable on a narrow scene", () 
   for(let a = 0; a < slots.length; a += 1){
     for(let b = a + 1; b < slots.length; b += 1){
       if(slots[a].kind !== slots[b].kind) continue;
+      // Purpose-built slots are shown only for their matching item: 囲炉裏
+      // alone sees the hearth, and 屏風 alone sees the screen positions.
+      if(slots[a].purpose || slots[b].purpose) continue;
       /* Positions on the same piece of furniture are never separate targets.
          Eight places on a shelf are reached by pressing the shelf once - see
          `surface` in home-room.js - so the rule that matters is that the

@@ -6366,6 +6366,25 @@
         + ' aria-label="' + interior.exitHotspot.label + '"><span>' + interior.exitHotspot.label + '</span></button>';
     }
 
+    /* An irori's kettle hangs from a 自在鉤 attached to the ceiling beam.
+     * Draw it only with its hearth and before the item, so it reads as room
+     * hardware behind the kettle rather than a selectable decoration. */
+    if(home.placed["hearth-center"] === "irori" && interior.iroriSupport){
+      var support = interior.iroriSupport;
+      html += '<svg class="home-irori-support" aria-hidden="true" viewBox="0 0 100 100"'
+        + ' preserveAspectRatio="none" style="left:' + support.x + '%;top:' + support.top
+        + '%;width:' + support.width + '%;height:' + (support.bottom - support.top) + '%;z-index:70">'
+        + '<path d="M50 0 V87" fill="none" stroke="#20150f" stroke-width="4"'
+        + ' vector-effect="non-scaling-stroke" stroke-linecap="round"/>'
+        + '<path d="M50 2 V86" fill="none" stroke="#b18a53" stroke-width="1.2"'
+        + ' vector-effect="non-scaling-stroke" stroke-dasharray="5 4" stroke-linecap="round"/>'
+        + '<path d="M31 25 H69" fill="none" stroke="#5b3a20" stroke-width="5"'
+        + ' vector-effect="non-scaling-stroke" stroke-linecap="round"/>'
+        + '<path d="M50 87 V96 Q50 100 57 100" fill="none" stroke="#20150f" stroke-width="4"'
+        + ' vector-effect="non-scaling-stroke" stroke-linecap="round"/>'
+        + '</svg>';
+    }
+
     if(decor){
       interior.slots.forEach(function(slot){
         var here = home.placed[slot.id];

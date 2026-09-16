@@ -6,6 +6,15 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-16 - Ground the 囲炉裏 and add its 自在鉤 support (v390)
+
+The corrected v389 hearth still appeared to float because it sat on the rear
+threshold while its kettle hook ended in open air. Moved it onto the tatami
+plane and added a narrow 自在鉤 support from the centre beam below the existing
+lantern to the kettle hook. The support is non-interactive room hardware, so
+it cannot cover targets or enter the decor inventory. The cache version is
+v390.
+
 ### 2026-09-16 - Remove baked checkerboard from 囲炉裏 artwork (v389)
 
 The v388 囲炉裏 file was visually wrong despite passing the earlier alpha
