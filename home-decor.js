@@ -510,7 +510,7 @@
     var slot = (slots || []).filter(function(s){ return s.id === slotId; })[0];
     if(!slot) return {ok:false, reason:"noslot", home:home};
     if(slot.kind !== item.kind) return {ok:false, reason:"wrongkind", home:home};
-    if(!slotAllowsItem(id, slot, home)){
+    if(!slotAllowsItem(id, slot, home, slots)){
       return {ok:false, reason:"restricted", home:home};
     }
 
@@ -541,7 +541,7 @@
    * end up occupied and the two objects render stacked. Given only a `placed`
    * map there is no way to tell, and the honest answer there is no - a caller
    * that cannot say what is owned cannot be granted the move. */
-  function slotAllowsItem(id, slot, context){
+  function slotAllowsItem(id, slot, context, slotList){
     var item = typeof id === "string" ? getItem(id) : id;
     if(!item || !slot) return false;
     var home = context && Array.isArray(context.owned) ? context : null;
@@ -557,11 +557,19 @@
     if((slot.conflicts || []).some(function(other){
       var occupant = placed && placed[other];
       if(!occupant) return false;
+      /* A conflict names a patch of floor two slots share, but what actually
+         clashes is what gets DRAWN. floor-right and seat-front-right are such
+         a pair, and a 置き行灯 standing in the first misses the cushion in the
+         second by 2.6 points of the scene - yet the seat was refused anyway,
+         so a four-seat table quietly became a three-seat one because a lamp
+         was on the other side of the room. When the slot list is to hand the
+         two footprints settle it; without it the declaration stands. */
+      if(slotList && !footprintsClash(item.id, slot, occupant, other, slotList)) return false;
       if(occupant !== item.id) return true;
-      /* Same item, mutually exclusive slot. Only a placement that lifts that
-         copy is allowed, and place() lifts every copy exactly when they are
-         all already down - with one still in storage it adds another object
-         instead of moving the one that is out. */
+      /* Same item, overlapping, mutually exclusive slot. Only a placement that
+         lifts that copy is allowed, and place() lifts every copy exactly when
+         they are all already down - with one still in storage it adds another
+         object instead of moving the one that is out. */
       if(!home) return true;
       var placedCopies = Object.keys(placed).reduce(function(total, key){
         return total + (placed[key] === item.id ? 1 : 0);
@@ -569,6 +577,24 @@
       return placedCopies < ownedCount(home, item.id);
     })) return false;
     return true;
+  }
+
+  /* Do the two objects, as drawn, actually touch? Widths come from the same
+     widthForSlot the renderer uses, so this asks the picture rather than the
+     declaration. Anything it cannot measure counts as a clash, which keeps an
+     unknown slot or item behaving the way it did before. */
+  function footprintsClash(itemId, slot, otherItemId, otherSlotId, slotList){
+    var otherSlot = null;
+    for(var i = 0; i < slotList.length; i += 1){
+      if(slotList[i] && slotList[i].id === otherSlotId){ otherSlot = slotList[i]; break; }
+    }
+    if(!otherSlot) return true;
+    var mine = widthForSlot(itemId, slot);
+    var theirs = widthForSlot(otherItemId, otherSlot);
+    if(!(mine > 0) || !(theirs > 0)) return true;
+    var myLeft = slot.x - mine / 2, myRight = slot.x + mine / 2;
+    var itsLeft = otherSlot.x - theirs / 2, itsRight = otherSlot.x + theirs / 2;
+    return Math.min(myRight, itsRight) - Math.max(myLeft, itsLeft) > 0;
   }
 
   /* Taking a thing away takes down whatever was standing on it.

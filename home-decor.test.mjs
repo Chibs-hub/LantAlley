@@ -850,6 +850,52 @@ test("the rear seats tuck behind the centre piece rather than beside it", () => 
     "the rear cushions must be drawn smaller than the front ones");
 });
 
+test("a conflicting slot only blocks a seat when the two really touch", () => {
+  /* A conflict names a patch of floor two slots share, but what clashes is
+   * what gets drawn. floor-right and seat-front-right are declared as such a
+   * pair, yet a 置き行灯 standing in the first ends 2.6 points of the scene
+   * short of a zabuton in the second - they do not touch at any point. The
+   * seat was refused all the same, so a learner with a lamp on one side of the
+   * room was offered three seats around a four-seat table and had no way to
+   * find out why. */
+  const seatIds = ["seat-back-left", "seat-back-right", "seat-front-left", "seat-front-right"];
+  const offeredSeats = (home) => slots
+    .filter((s) => s.kind === "floor"
+      && decor.slotAllowsItem("floor-cushion-navy", s, home, slots))
+    .map((s) => s.id)
+    .filter((id) => seatIds.includes(id));
+
+  const base = {
+    owned: ["kotatsu", "floor-cushion-navy", "floor-cushion-navy",
+      "floor-cushion-navy", "floor-cushion-navy", "floor-cushion-navy"],
+    placed: {"table-center": "kotatsu"}
+  };
+
+  // Clear of the cushion, so all four seats stay available.
+  const lamp = JSON.parse(JSON.stringify(base));
+  lamp.owned.push("floor-lantern");
+  lamp.placed["floor-right"] = "floor-lantern";
+  const seatRight = slots.find((s) => s.id === "seat-front-right");
+  const floorRight = slots.find((s) => s.id === "floor-right");
+  const cushionHalf = decor.widthForSlot("floor-cushion-navy", seatRight) / 2;
+  const lampHalf = decor.widthForSlot("floor-lantern", floorRight) / 2;
+  assert.ok(seatRight.x + cushionHalf < floorRight.x - lampHalf,
+    "the lantern must genuinely clear the cushion for this test to mean anything");
+  assert.deepEqual(JSON.parse(JSON.stringify(offeredSeats(lamp).sort())),
+    seatIds.slice().sort(),
+    "a lantern that never touches the cushion must not cost the table a seat");
+
+  // A rug at the same slot is wide enough to reach the cushion, so it still does.
+  const rug = JSON.parse(JSON.stringify(base));
+  rug.owned.push("rug-plain");
+  rug.placed["floor-right"] = "rug-plain";
+  const rugHalf = decor.widthForSlot("rug-plain", floorRight) / 2;
+  assert.ok(floorRight.x - rugHalf < seatRight.x + cushionHalf,
+    "the rug must genuinely overlap the cushion for this test to mean anything");
+  assert.ok(!offeredSeats(rug).includes("seat-front-right"),
+    "an object that does reach the cushion still blocks the seat");
+});
+
 test("a spare copy cannot fill two mutually exclusive slots at once", () => {
   /* `floor-front` and `table-center` exclude each other, but the conflict
    * guard used to wave the case through whenever the occupant was the SAME
