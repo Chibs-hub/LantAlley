@@ -238,35 +238,45 @@
        perspective, while the front pair spreads toward the viewer. */
     {id:"table-center", x:50, y:80, scale:0.70, kind:"floor",
       accepts:["low-table","kotatsu"], conflicts:["floor-front","hearth-center"], label:"中央の卓"},
-    /* The rear pair has to sit BEHIND the table, not level with it.
-       That is what makes it a seat rather than a cushion shoved against
-       the table's side, and it is the thing three passes in a row got
-       wrong - twice by tuning y, which was never the actual defect.
+    /* The rear pair has to sit BEHIND the table, and what conveys "behind"
+       is OCCLUSION, not coordinates. Items carry z by slot.y (slotDepthZ),
+       so a seat at y=77 is drawn under the table at y=80: pull the pair in
+       toward the centreline and the table covers their inner half, which is
+       exactly what a cushion on the far side of a kotatsu looks like.
 
-       v401 moved the pair up to y=75 at scale 0.60 to "balance" the group,
-       which lifted the cushion's top edge onto the painted wall. The fix
-       for that overcorrected the other way, to y=78, which dropped the
-       cushion's contact line to 79.7 against the table's own 80 - the same
-       depth, so the two read as touching. y was then put back to 77/0.68 -
-       the pre-v401 arrangement - and the owner still reported it unfixed,
-       with a screenshot to prove it.
+       Four passes missed that, three of them tuning y and one tuning x:
 
-       Measuring that screenshot's own numbers against the table found the
-       real fault: at x=39, a cushion at scale 0.68 has a right edge at
-       43.76% of the scene. The kotatsu's own left edge sits at 41.6%. The
-       cushion's edge was 2.16 points INSIDE the table's footprint - it was
-       rendered overlapping the table, which reads as shoved against its
-       side regardless of what y says about depth. Depth was never the
-       defect; x was. Moving the pair outward to x=33/67 clears the table's
-       left/right edges (checked against both kotatsu and the wider irori
-       hearth) with room to spare, while leaving y=77/0.68 - the depth that
-       was never actually wrong - untouched.
+         v401  y=75 s=0.60  lifted the cushion's top edge onto the wall.
+         v406  y=78 s=0.66  put its contact line on 79.7 against the table's
+                            80, so the two read as touching.
+         v407  y=77 s=0.68  restored the pre-v401 numbers; still reported
+                            unfixed, because they had never been right.
+         v408  x=33 s=0.68  chased a measured 2.16-point overlap with the
+                            table as if overlap were the fault. It is not -
+                            it is the mechanism. Clearing it moved the rear
+                            pair OUTSIDE the front pair (17 from the centre
+                            against the front's 16), which inverts
+                            perspective: a seat further away must sit nearer
+                            the centreline, not further from it. The four
+                            cushions stopped being a ring and became two
+                            vertical columns with the table marooned between
+                            them, which is the state the owner photographed.
+
+       x=41/59 at 0.60 puts the pair inside the table's own span (41.6-58.4
+       for the kotatsu, 41.95-58.05 for the 座卓, 39.9-60.1 for the 囲炉裏),
+       so every centre piece occludes their inner half. Narrower than the
+       front pair's 34/66 and smaller than its 0.84, so the perspective
+       reads. Rendered through the app's own placement path and compared
+       against the alternatives before choosing - not inferred.
+
+       y=77 at 0.60 also puts the cushion's top edge at 70.1, below the mat
+       line rather than a hair above it as 0.68 did.
 
        The conflicts with floor-back-left and floor-back-right say the rest:
        these are alternative uses of one patch of floor. */
-    {id:"seat-back-left", x:33, y:77, scale:0.68, kind:"floor",
+    {id:"seat-back-left", x:41, y:77, scale:0.60, kind:"floor",
       accepts:["floor-cushion-navy"], conflicts:["floor-back-left"], label:"卓の奥左"},
-    {id:"seat-back-right", x:67, y:77, scale:0.68, kind:"floor",
+    {id:"seat-back-right", x:59, y:77, scale:0.60, kind:"floor",
       accepts:["floor-cushion-navy"], conflicts:["floor-back-right"], label:"卓の奥右"},
     {id:"seat-front-left", x:34, y:88, scale:0.84, kind:"floor",
       accepts:["floor-cushion-navy"], conflicts:["floor-left"], label:"卓の手前左"},
