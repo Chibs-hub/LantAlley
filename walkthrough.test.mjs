@@ -1504,13 +1504,19 @@ test("the room has a scene-painted way back to the yard, not just the corner tex
     "clicking it returns to the yard, where the house hotspot lives");
 });
 
-/* home-pet.js's enterScene() always arrives at the scene's door - deliberate
- * for the very first sighting of the cat ("walking in to greet you"), but
- * homePetMarkup() used to call it for every switch between the yard and the
- * room too, not just that first sighting. A learner tapping between the two
- * views while decorating would see the cat land on the exact same dead-
- * centre spot every single time, which reads as being teleported to the
- * middle of the screen rather than a cat going about its day. */
+/* home-pet.js's enterScene() always arrives at the scene's door - meant for
+ * the very first sighting of the cat ("walking in to greet you") - and
+ * homePetMarkup() used to call it there. But `!prev` does not mean "the true
+ * first time this save has ever had a cat": homePetStates is memory-only and
+ * never saved, so `!prev` is true again on every single page load. That made
+ * "walking in" fire every time the game opened, not once, so the door tile
+ * was where the whole household was found on every visit - the exact bug
+ * this test's own title is about, just for the initial render instead of a
+ * scene switch. `!prev` now uses create() too, so a pet's first render lands
+ * on a normal resting anchor picked by its own seed, not the door. Restoring
+ * a real "walking in" moment needs an actual persisted flag for whether this
+ * save has met the cat before; there isn't one, so this is the safe default
+ * until there is. */
 test("switching between the yard and the room does not always re-seat the cat at the door", () => {
   const game = boot(plantedCamelliaSave());
   enterHome(game);
@@ -1518,8 +1524,9 @@ test("switching between the yard and the room does not always re-seat the cat at
     const pet = game.doc.querySelector(".home-pet");
     return pet ? { left: pet.style.left, top: pet.style.top } : null;
   };
-  // First sighting arrives through the yard door - that part is unchanged.
-  assert.deepEqual(petPos(), { left: "50%", top: "59%" });
+  // The very first render is a resting anchor now, not the door - see above.
+  assert.notDeepEqual(petPos(), { left: "50%", top: "59%" },
+    "the first render must not always drop the cat at the yard's door either");
 
   // Walking into the house is a real scene change and gets a fresh spot -
   // create() excludes door anchors from its pick, so this can never
