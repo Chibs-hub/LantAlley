@@ -186,3 +186,46 @@ test("an earned freeze actually survives into the next call and is spent", () =>
   assert.equal(covered.frozen, true);
   assert.equal(covered.freezes, 0, "and the freeze is spent");
 });
+
+test("a clock set backward cannot farm the streak", () => {
+  const p = load();
+
+  /* gap <= 1 in advanceStreak is also true for a negative gap, so a naive
+   * reading treated "the system clock moved backward" the same as "this is
+   * yesterday" and walked the streak forward either way. A learner who set
+   * their clock back a day, played, then set it forward again again passed
+   * through gap -1 and then gap 1 - two forward steps for zero real days,
+   * indefinitely repeatable, no freeze spent. */
+  const today = p.advanceStreak(null, at(2026, 9, 10));
+  assert.equal(today.streak, 1);
+
+  const rolledBack = p.advanceStreak(today, at(2026, 9, 9));
+  assert.equal(rolledBack.streak, 1, "a backward move must not advance the streak");
+  assert.equal(rolledBack.counted, false);
+  assert.equal(rolledBack.lastActiveDate, "2026-09-10",
+    "the recorded date must not move backward either, or a later forward " +
+    "hop from it would compute a shorter gap than the learner actually took");
+
+  // The forward hop that used to complete the exploit must see the streak
+  // and last-active date exactly as they were, not as the rollback left them.
+  const rolledForward = p.advanceStreak(rolledBack, at(2026, 9, 10));
+  assert.equal(rolledForward.streak, 1, "back to today must not count as a new day");
+  assert.equal(rolledForward.counted, false);
+
+  // Playing on, from the real day, still advances normally - this closes the
+  // exploit without freezing the streak in place.
+  const nextRealDay = p.advanceStreak(today, at(2026, 9, 11));
+  assert.equal(nextRealDay.streak, 2);
+});
+
+test("a clock set far backward does not fabricate a freeze spend either", () => {
+  const p = load();
+
+  // Held freezes must survive a rollback untouched - not spent, not gained.
+  const state = { streak: 5, freezes: 2, lastActiveDate: "2026-09-10" };
+  const rolledBack = p.advanceStreak(state, at(2026, 9, 1));
+  assert.equal(rolledBack.streak, 5);
+  assert.equal(rolledBack.freezes, 2);
+  assert.equal(rolledBack.frozen, false);
+  assert.equal(rolledBack.lastActiveDate, "2026-09-10");
+});

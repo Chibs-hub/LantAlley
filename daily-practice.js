@@ -90,6 +90,25 @@
     }
 
     var gap = daysBetween(last, key);
+
+    /* `gap <= 1` below means "yesterday, or later" - it was also true for
+     * "earlier than the last recorded day", because a negative number is
+     * also <= 1. A learner who set their system clock back a day, played,
+     * then set it forward again saw the same branch both times: gap -1 going
+     * back, gap 1 coming forward, streak up by one on each move, with no
+     * freeze spent and no limit on repeating it. Recording `lastActiveDate`
+     * is what makes that free: once it is written, the only way to satisfy
+     * `last === key` above and stop counting is to hold there, so counting
+     * only forward days is what closes the loop rather than just refusing
+     * this one negative case. A backward move is left exactly as it found
+     * the state - not counted, nothing spent, nothing written - so it cannot
+     * be used to set up a shorter last-active date for a later forward hop
+     * either. */
+    if(gap !== null && gap < 0){
+      return {streak:streak, freezes:freezes, lastActiveDate:last, counted:false,
+        frozen:false, milestone:0, earnedFreeze:false};
+    }
+
     var frozen = false;
     if(gap === null){
       streak = 1;                       // first session ever
