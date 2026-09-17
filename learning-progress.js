@@ -48,6 +48,7 @@
       activeWallpaper: "wallpaper-plain",
       activePet: "cat",
       activePets: [],
+      ownedPets: [],
       garden: emptyGarden(),
       // The earned Inn route is independent from home inventory. A fresh save
       // begins with its rewards and cat locked; a legacy save is normalized
@@ -128,7 +129,31 @@
       ? stored.activeWallpaper : "wallpaper-plain";
     next.activePet = stored.activePet === "bird" ? "bird" : "cat";
     next.activePets = Array.isArray(stored.activePets) ? stored.activePets.slice() : null;
-    next.ownedPets = Array.isArray(stored.ownedPets) ? stored.ownedPets.slice() : null;
+
+    /* Ownership used to be one chosen companion (`activePet`) with nothing
+     * recorded about what else was owned. `ownedPets` is validated against
+     * the real catalogue here rather than copied as-is - a stray or invalid
+     * entry (hand-edited storage, a species later removed from the shop)
+     * survived every reload otherwise, since nothing downstream re-checked
+     * it either.
+     *
+     * A save with no `ownedPets` array at all is not a save with no pets: a
+     * v365-era record only ever stored the one chosen companion, and its Inn
+     * cat reward already being claimed is what used to grant a companion in
+     * the first place under that system. Granting only the one last chosen
+     * would take the other away the moment this ran; owning nothing would
+     * take both. Granting both is the only direction that cannot lose one,
+     * which is what "without taking either companion away" means below. */
+    var storedOwnedPets = Array.isArray(stored.ownedPets) ? stored.ownedPets : null;
+    if(storedOwnedPets){
+      next.ownedPets = root.LanternHomePets
+        ? root.LanternHomePets.normalizeOwned(storedOwnedPets)
+        : storedOwnedPets.slice();
+    }else if(next.innJourney.catUnlocked){
+      next.ownedPets = ["cat", "bird"];
+    }else{
+      next.ownedPets = [];
+    }
 
     var gardenSource = stored.garden || emptyGarden();
     var gardenDefault = emptyGarden();

@@ -7,8 +7,8 @@
  * Bump CACHE_VERSION whenever any shell file changes, or returning players
  * will keep the old build.
  */
-var CACHE_VERSION = "lantern-alley-v404";
-// Fix: a clock set backward could no longer farm the daily streak.
+var CACHE_VERSION = "lantern-alley-v405";
+// Fix: pet ownership survives a reload with real validation, not a silent copy.
 
 // audio-index.js assigns to `self`, so the worker and the page share one list
 // of clip paths. Importing it here means new lines are cached automatically
@@ -47,6 +47,7 @@ var SHELL = [
   "./home-pet.js",
   "./home-bird.js",
   "./home-pet-spots.js",
+  "./home-pets.js",
   // The house and yard. A learner who installed the game offline and
   // walks home to a broken image has lost the reward, not a decoration.
   "./assets/home/exterior/open-house-yard-v1.webp",
@@ -157,11 +158,11 @@ var SHELL = [
   "./manifest.webmanifest",
   "./assets/branding/lantern-mark-v2.png",
   "./assets/social/lantern-alley-share-v2.jpg",
-  "./icons/icon-192.png?v=404",
-  "./icons/icon-512.png?v=404",
-  "./icons/icon-192-maskable.png?v=404",
-  "./icons/icon-512-maskable.png?v=404",
-  "./icons/apple-touch-icon.png?v=404",
+  "./icons/icon-192.png?v=405",
+  "./icons/icon-512.png?v=405",
+  "./icons/icon-192-maskable.png?v=405",
+  "./icons/icon-512-maskable.png?v=405",
+  "./icons/apple-touch-icon.png?v=405",
   "./assets/kon/kon-idle.webp",
   "./assets/kon/kon-wave-left.webp",
   "./assets/kon/kon-wave-right.webp",
