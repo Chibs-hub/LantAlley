@@ -6,6 +6,16 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-17 - Make the next lesson obvious on the map (v403)
+
+Added a separate linear lesson path above the illustrated map. The path keeps
+Entrance, Moonview Inn, Market, Tea House, Station and Shrine in learning order,
+shows completed, in-progress, next and locked states, and highlights one clear
+next step. It scrolls horizontally on narrow screens so every stage remains a
+touch-sized control without squeezing the map. The home remains separate from
+the lesson sequence. CSS-generated markers were used instead of new raster art
+so the states stay crisp at every screen size.
+
 ### 2026-09-17 - Ground home and yard objects in their scenes (v402)
 
 Placed objects shared one shadow at the bottom of their image box. That missed

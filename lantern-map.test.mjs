@@ -86,6 +86,13 @@ test("the page provides one semantic map selection and inline detail surface", (
   assert.match(html, /id="map-detail-action"/);
 });
 
+test("the page provides a linear lesson path separate from the illustrated map", () => {
+  const html = read("index.html");
+
+  assert.match(html, /id="map-stage-path"/);
+  assert.match(html, /aria-label="学習の順番"/);
+});
+
 test("map selection is separate from navigation and preparing places expose no action", () => {
   const app = read("app.js");
 
@@ -95,6 +102,15 @@ test("map selection is separate from navigation and preparing places expose no a
   assert.match(app, /LanternAlleyMap\.getAction/);
   assert.match(app, /mapDetailAction\.style\.display = action \? "inline-flex" : "none"/);
   assert.match(app, /enterLocation\(action\.locationKey\)/);
+});
+
+test("the map renders the ordered lesson path with an explicit next stage", () => {
+  const app = read("app.js");
+
+  assert.match(app, /var STAGE_ORDER = \["entrance", "home-inn", "market", "tea-house", "station", "shrine"\]/);
+  assert.match(app, /function renderStagePath\(\)/);
+  assert.match(app, /data-stage-key/);
+  assert.match(app, /map-stage-next/);
 });
 
 test("the illustrated map keeps visible adaptive destinations without legacy graph furniture", () => {

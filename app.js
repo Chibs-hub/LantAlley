@@ -1871,6 +1871,64 @@
     renderMap();
   }
 
+  function stagePathNextKey(){
+    for(var i = 0; i < STAGE_ORDER.length; i += 1){
+      var key = STAGE_ORDER[i];
+      var place = LanternAlleyMap.getDestination(key);
+      if(!place) continue;
+      var progressState = LanternAlleyMap.resolveState(key, state);
+      if(progressState === "in-progress") return key;
+      if(progressState !== "completed" && locationUnlocked(key)) return key;
+    }
+    return null;
+  }
+
+  function renderStagePath(){
+    var path = $("map-stage-path");
+    var rail = $("map-stage-rail");
+    var nextLabel = $("map-stage-path-next");
+    if(!path || !rail) return;
+
+    var nextKey = stagePathNextKey();
+    var nextPlace = nextKey ? LanternAlleyMap.getDestination(nextKey) : null;
+    if(nextLabel){
+      nextLabel.className = "map-stage-next";
+      nextLabel.textContent = nextPlace ? "次: " + nextPlace.name : "すべて完了";
+    }
+
+    rail.innerHTML = "";
+    STAGE_ORDER.forEach(function(key, index){
+      var place = LanternAlleyMap.getDestination(key);
+      if(!place) return;
+
+      var progressState = LanternAlleyMap.resolveState(key, state);
+      var unlocked = locationUnlocked(key);
+      if(!unlocked) progressState = "locked";
+      var isNext = key === nextKey;
+      var statusText = progressState === "completed" ? "完了"
+        : progressState === "in-progress" ? "学習中"
+        : progressState === "locked" ? "ロック"
+        : isNext ? "次へ"
+        : "未訪問";
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "map-stage-link state-" + progressState + (isNext ? " is-next" : "");
+      btn.setAttribute("data-stage-key", key);
+      btn.setAttribute("aria-label", (index + 1) + "、" + place.name + "、" + statusText);
+      if(isNext) btn.setAttribute("aria-current", "step");
+      btn.innerHTML =
+        '<span class="map-stage-number">' + (progressState === "completed" ? "✓" : (index + 1)) + '</span>' +
+        '<span class="map-stage-name">' + place.name + '</span>' +
+        '<span class="map-stage-state">' + statusText + '</span>';
+      btn.addEventListener("click", function(){
+        selectMapDestination(key);
+        var action = locationUnlocked(key) ? LanternAlleyMap.getAction(key, state) : null;
+        if(action) runMapAction(key);
+      });
+      rail.appendChild(btn);
+    });
+  }
+
   function renderMap(){
     var destinationsEl = $("map-destinations");
     var completedCount = 0;
@@ -1903,6 +1961,7 @@
       });
       destinationsEl.appendChild(btn);
     });
+    renderStagePath();
     $("map-progress-text").textContent = "灯り " + completedCount + " / " + LanternAlleyMap.destinations.length;
     /* 灯り 0 / 6 sat there from the first visit with nothing saying what it
      * counted. The explanation belongs next to the number rather than in
