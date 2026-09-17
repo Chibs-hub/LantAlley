@@ -3889,13 +3889,27 @@ test("the check at the end of a place asks a missed word again until it is right
   assert.equal(game.$("encounter-total").textContent, "2", "it counts words owed, not questions asked");
   assert.equal(game.$("encounter-progress").textContent, "0", "nothing cleared yet");
 
-  // Miss the first word. It has to come back, so nothing is cleared and the
-  // round is not over.
+  /* Miss the first word on purpose, rather than by luck.
+   *
+   * stageCheckCard prefers a "meaning" question, and card() places the
+   * correct option with assemble(), which shuffles through the real
+   * unseeded Math.random() - buildPracticeCards(item, catalog, undefined, 6)
+   * passes no random of its own. Clicking options[0] assumed that position
+   * was always wrong; measured directly, correctIndex lands on every
+   * position roughly one time in six, so that assumption made this test
+   * fail about one run in six for no reason connected to the code under
+   * test. The label is not random, though - it is item.meanings[0], the
+   * same value the render loop puts into the button's own text - so finding
+   * the option whose text does not match it and clicking that one guesses
+   * wrong on every run, not most of them. */
+  const correctLabel = probe.context.LanternCurriculumCatalog.getItem(owed[0]).meanings[0];
   const options = asked();
-  const firstCard = game.doc.querySelector(".question-control");
-  assert.ok(firstCard, "there is something to answer");
-  options[0].click();
+  const wrongOption = options.find((b) => b.textContent.trim() !== correctLabel);
+  assert.ok(wrongOption, "at least one rendered option must not be the right answer");
+  wrongOption.click();
   game.clock.advance(300);
+  assert.ok(!game.$("stamp").className.includes("good"),
+    "the option picked for its wrong label must actually have scored as wrong");
   game.$("btn-next").click();
   game.clock.advance(400);
   assert.ok(asked().length >= 4, "a missed word brings the round back rather than ending it");
