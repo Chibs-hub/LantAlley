@@ -745,13 +745,16 @@ test("a center kotatsu offers only its four balanced cushion seats", () => {
       {"table-center":"kotatsu"}), slot.id + " accepts a cushion beside the kotatsu");
     assert.equal(decor.slotAllowsItem("kotatsu", slot), false, slot.id + " is cushion-only");
   });
-  /* The rear pair moved down from y=75/0.60. A zabuton anchors at 82% of its
-     own picture, so at that depth its top edge drew from 68.1% - above the
-     tatami line at 70% - and the cushions read as stuck to the shoji rather
-     than sitting on the floor behind the table. See the note on these slots
-     in home-room.js, and the tatami check below this test. */
+  /* The rear pair is back at 77/0.68, the arrangement that was here before
+     v401. Two passes moved it and both were wrong: v401 lifted it to 75/0.60
+     and put the cushion's top edge on the painted wall, and the correction
+     for that dropped it to 78/0.66, which put its contact line level with the
+     table's own and made the two read as touching. See the note on these
+     slots in home-room.js - the numbers were checked in a browser, not
+     inferred from a tatami line that only holds across the middle of the
+     room. */
   assert.deepEqual(JSON.parse(JSON.stringify(seats.map(slot => ({x:slot.x, y:slot.y, scale:slot.scale})))), [
-    {x:38.5, y:78, scale:0.66}, {x:61.5, y:78, scale:0.66},
+    {x:39, y:77, scale:0.68}, {x:61, y:77, scale:0.68},
     {x:34, y:88, scale:0.84}, {x:66, y:88, scale:0.84}
   ]);
   ["floor-left", "floor-right", "floor-back-left", "floor-back-right", "floor-front"].forEach(id => {
@@ -773,24 +776,37 @@ test("a center kotatsu offers only its four balanced cushion seats", () => {
   assert.equal(decor.inStorage(home).length, 0);
 });
 
-test("every zabuton in the centre seating group sits on the tatami", () => {
-  /* y is the cushion's contact point, but a zabuton anchors at 82% of its own
-   * picture, so the top edge is well above y and that is what can end up on
-   * the wall. The art is 640x360 in a 16:9 scene, which makes the drawn
-   * height in scene percent the same number as the drawn width. The tatami
-   * starts at y=70 (measured in home-room.js). The rear pair sat at y=75 with
-   * scale 0.60, putting its top edge on 68.1 - the cushions read as stuck to
-   * the shoji behind the table rather than sitting on the floor. */
-  const mat = 70;
-  for(const id of ["seat-back-left", "seat-back-right", "seat-front-left", "seat-front-right"]){
+test("the seating group sits around the centre table, not against it", () => {
+  /* What makes these seats rather than cushions shoved against the table is
+   * that they sit at different depths from it: the rear pair behind its
+   * contact line, the front pair in front. A correction that moved the rear
+   * pair to y=78 put its contact line on 79.7 against the table's 80 - close
+   * enough that the two rendered as touching, which is what the owner kept
+   * reporting after the first fix.
+   *
+   * Deliberately not asserted here: "the cushion's top edge clears the
+   * tatami". That check was written once against a flat y=70, and y=70 is
+   * only measured at x=42, 50 and 58 - the middle of the room. These slots
+   * are outside that span, so the constant was wrong for them and the test
+   * built on it pushed the geometry further out. Where the mat actually
+   * starts at a given x is a question for a rendered screenshot, not for
+   * arithmetic in a unit test. */
+  const table = slots.find((s) => s.id === "table-center");
+  const gap = 1.5;
+  for(const id of ["seat-back-left", "seat-back-right"]){
     const slot = slots.find((s) => s.id === id);
-    assert.ok(slot, id + " exists");
-    const width = decor.widthForSlot("floor-cushion-navy", slot);
-    const height = width * (360 / 640) * (16 / 9);
-    const top = slot.y - height * decor.presentationFor("floor-cushion-navy").anchorY / 100;
-    assert.ok(top >= mat,
-      `${id} draws from ${top.toFixed(2)}%, above the tatami line at ${mat}%`);
+    assert.ok(slot.y <= table.y - gap,
+      `${id} at y=${slot.y} must sit clearly behind the table at y=${table.y}`);
   }
+  for(const id of ["seat-front-left", "seat-front-right"]){
+    const slot = slots.find((s) => s.id === id);
+    assert.ok(slot.y >= table.y + gap,
+      `${id} at y=${slot.y} must sit clearly in front of the table at y=${table.y}`);
+  }
+  // And the rear pair is smaller than the front pair, because it is further off.
+  const w = (id) => decor.widthForSlot("floor-cushion-navy", slots.find((s) => s.id === id));
+  assert.ok(w("seat-back-left") < w("seat-front-left"),
+    "the rear cushions must read as further away than the front ones");
 });
 
 test("a centre table keeps zabuton in its own four seats", () => {

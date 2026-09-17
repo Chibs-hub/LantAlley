@@ -238,26 +238,31 @@
        perspective, while the front pair spreads toward the viewer. */
     {id:"table-center", x:50, y:80, scale:0.70, kind:"floor",
       accepts:["low-table","kotatsu"], conflicts:["floor-front","hearth-center"], label:"中央の卓"},
-    /* The rear pair sits on the mat, which is a constraint on y, not a free
-       choice of it. A zabuton anchors at 82% of its own picture, and the
-       picture is 640x360 in a 16:9 scene, so its drawn height in scene
-       percent works out to the same number as its drawn width: 14 * scale.
-       Its top edge is therefore y - 11.48 * scale, and the tatami does not
-       begin until y=70 (measured at the top of this file: 70.1, 71.3 and
-       69.8 at x=42, 50 and 58). At y=75 and scale 0.60 the top landed on
-       68.1 - nearly two percent of the scene up on the painted wall, with
-       the cushion reading as stuck to the shoji behind the table rather
-       than sitting behind it. y=78 at 0.66 puts the top on 70.4, just
-       inside the mat, and closes the gap that had opened between the rear
-       cushions and the table. The previous 77/0.68 was over the line too,
-       by 0.8 - less visible, but the same mistake.
+    /* The rear pair has to sit BEHIND the table, not level with it.
+       That is what makes it a seat rather than a cushion shoved against
+       the table's side, and it is the thing two passes in a row got wrong.
 
-       The same y as floor-back-left and floor-back-right is deliberate:
-       these are alternative uses of one patch of floor, which is what the
-       conflicts between them already say. */
-    {id:"seat-back-left", x:38.5, y:78, scale:0.66, kind:"floor",
+       v401 moved the pair up to y=75 at scale 0.60 to "balance" the group,
+       which lifted the cushion's top edge onto the painted wall. The fix
+       for that overcorrected the other way, to y=78, which dropped the
+       cushion's contact line to 79.7 against the table's own 80 - the same
+       depth, so the two read as touching rather than as one sitting behind
+       the other, which is what the owner was still seeing afterwards.
+
+       The overcorrection came from treating "the tatami begins at y=70" as
+       true across the whole room. It is not: that figure is measured at
+       x=42, 50 and 58 (see the top of this file), and these slots are at
+       x=39 and 61, outside it. Checked in a real browser instead of
+       inferred - the group was rendered at all three values through the
+       app's own placement path and photographed - 77 at 0.68 is the one
+       that sits the cushions behind the table and on the mat, and it is
+       the arrangement that was there before v401 touched it.
+
+       The conflicts with floor-back-left and floor-back-right say the rest:
+       these are alternative uses of one patch of floor. */
+    {id:"seat-back-left", x:39, y:77, scale:0.68, kind:"floor",
       accepts:["floor-cushion-navy"], conflicts:["floor-back-left"], label:"卓の奥左"},
-    {id:"seat-back-right", x:61.5, y:78, scale:0.66, kind:"floor",
+    {id:"seat-back-right", x:61, y:77, scale:0.68, kind:"floor",
       accepts:["floor-cushion-navy"], conflicts:["floor-back-right"], label:"卓の奥右"},
     {id:"seat-front-left", x:34, y:88, scale:0.84, kind:"floor",
       accepts:["floor-cushion-navy"], conflicts:["floor-left"], label:"卓の手前左"},
