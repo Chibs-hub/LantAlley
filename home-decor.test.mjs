@@ -745,16 +745,15 @@ test("a center kotatsu offers only its four balanced cushion seats", () => {
       {"table-center":"kotatsu"}), slot.id + " accepts a cushion beside the kotatsu");
     assert.equal(decor.slotAllowsItem("kotatsu", slot), false, slot.id + " is cushion-only");
   });
-  /* The rear pair is back at 77/0.68, the arrangement that was here before
-     v401. Two passes moved it and both were wrong: v401 lifted it to 75/0.60
-     and put the cushion's top edge on the painted wall, and the correction
-     for that dropped it to 78/0.66, which put its contact line level with the
-     table's own and made the two read as touching. See the note on these
-     slots in home-room.js - the numbers were checked in a browser, not
-     inferred from a tatami line that only holds across the middle of the
-     room. */
+  /* The rear pair's depth (y=77, scale=0.68) has been right since before
+     v401 - two passes tuned it anyway and both were wrong, because the
+     actual defect was x: at 39/61 the cushion's own edge rendered inside
+     the kotatsu's footprint. See the note on these slots in home-room.js -
+     33/67 clears the table's edge, checked against the widest thing that
+     can occupy the centre, not inferred from a tatami line that only holds
+     across the middle of the room. */
   assert.deepEqual(JSON.parse(JSON.stringify(seats.map(slot => ({x:slot.x, y:slot.y, scale:slot.scale})))), [
-    {x:39, y:77, scale:0.68}, {x:61, y:77, scale:0.68},
+    {x:33, y:77, scale:0.68}, {x:67, y:77, scale:0.68},
     {x:34, y:88, scale:0.84}, {x:66, y:88, scale:0.84}
   ]);
   ["floor-left", "floor-right", "floor-back-left", "floor-back-right", "floor-front"].forEach(id => {
@@ -807,6 +806,45 @@ test("the seating group sits around the centre table, not against it", () => {
   const w = (id) => decor.widthForSlot("floor-cushion-navy", slots.find((s) => s.id === id));
   assert.ok(w("seat-back-left") < w("seat-front-left"),
     "the rear cushions must read as further away than the front ones");
+});
+
+test("the rear seats clear the centre table's own footprint", () => {
+  /* This is the check three passes of tuning y never ran. Depth ordering
+   * (the test above) can pass while the cushion's rendered edge still lands
+   * inside the table's rendered edge - which is exactly what shipped in
+   * v407 and is what the owner's own screenshot showed: at x=39, scale
+   * 0.68, the cushion's right edge came out at 43.76% of the scene while
+   * the kotatsu's left edge sits at 41.6%, a 2.16-point overlap. A seat
+   * "behind" the table by y that still overlaps it by x reads as shoved
+   * against its side, not seated behind it.
+   *
+   * Checked against every item that can occupy table-center or
+   * hearth-center, not just the kotatsu, because the widest one is the
+   * real constraint. */
+  const centerSlot = slots.find((s) => s.id === "table-center");
+  const hearthSlot = slots.find((s) => s.id === "hearth-center");
+  const centerItems = ["kotatsu", "low-table", "irori"];
+  const edgesOf = (itemId, slot) => {
+    const w = decor.widthForSlot(itemId, itemId === "irori" ? hearthSlot : centerSlot);
+    return {left: slot.x - w / 2, right: slot.x + w / 2};
+  };
+  const gapMargin = 1;
+  for(const itemId of centerItems){
+    const table = edgesOf(itemId, itemId === "irori" ? hearthSlot : centerSlot);
+    for(const id of ["seat-back-left", "seat-back-right"]){
+      const seatSlot = slots.find((s) => s.id === id);
+      const seatWidth = decor.widthForSlot("floor-cushion-navy", seatSlot);
+      const seatLeft = seatSlot.x - seatWidth / 2;
+      const seatRight = seatSlot.x + seatWidth / 2;
+      if(id === "seat-back-left"){
+        assert.ok(seatRight <= table.left - gapMargin,
+          `${id}'s right edge (${seatRight.toFixed(2)}) must clear ${itemId}'s left edge (${table.left.toFixed(2)}) by at least ${gapMargin}`);
+      }else{
+        assert.ok(seatLeft >= table.right + gapMargin,
+          `${id}'s left edge (${seatLeft.toFixed(2)}) must clear ${itemId}'s right edge (${table.right.toFixed(2)}) by at least ${gapMargin}`);
+      }
+    }
+  }
 });
 
 test("a centre table keeps zabuton in its own four seats", () => {

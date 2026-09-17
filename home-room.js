@@ -240,29 +240,33 @@
       accepts:["low-table","kotatsu"], conflicts:["floor-front","hearth-center"], label:"中央の卓"},
     /* The rear pair has to sit BEHIND the table, not level with it.
        That is what makes it a seat rather than a cushion shoved against
-       the table's side, and it is the thing two passes in a row got wrong.
+       the table's side, and it is the thing three passes in a row got
+       wrong - twice by tuning y, which was never the actual defect.
 
        v401 moved the pair up to y=75 at scale 0.60 to "balance" the group,
        which lifted the cushion's top edge onto the painted wall. The fix
        for that overcorrected the other way, to y=78, which dropped the
        cushion's contact line to 79.7 against the table's own 80 - the same
-       depth, so the two read as touching rather than as one sitting behind
-       the other, which is what the owner was still seeing afterwards.
+       depth, so the two read as touching. y was then put back to 77/0.68 -
+       the pre-v401 arrangement - and the owner still reported it unfixed,
+       with a screenshot to prove it.
 
-       The overcorrection came from treating "the tatami begins at y=70" as
-       true across the whole room. It is not: that figure is measured at
-       x=42, 50 and 58 (see the top of this file), and these slots are at
-       x=39 and 61, outside it. Checked in a real browser instead of
-       inferred - the group was rendered at all three values through the
-       app's own placement path and photographed - 77 at 0.68 is the one
-       that sits the cushions behind the table and on the mat, and it is
-       the arrangement that was there before v401 touched it.
+       Measuring that screenshot's own numbers against the table found the
+       real fault: at x=39, a cushion at scale 0.68 has a right edge at
+       43.76% of the scene. The kotatsu's own left edge sits at 41.6%. The
+       cushion's edge was 2.16 points INSIDE the table's footprint - it was
+       rendered overlapping the table, which reads as shoved against its
+       side regardless of what y says about depth. Depth was never the
+       defect; x was. Moving the pair outward to x=33/67 clears the table's
+       left/right edges (checked against both kotatsu and the wider irori
+       hearth) with room to spare, while leaving y=77/0.68 - the depth that
+       was never actually wrong - untouched.
 
        The conflicts with floor-back-left and floor-back-right say the rest:
        these are alternative uses of one patch of floor. */
-    {id:"seat-back-left", x:39, y:77, scale:0.68, kind:"floor",
+    {id:"seat-back-left", x:33, y:77, scale:0.68, kind:"floor",
       accepts:["floor-cushion-navy"], conflicts:["floor-back-left"], label:"卓の奥左"},
-    {id:"seat-back-right", x:61, y:77, scale:0.68, kind:"floor",
+    {id:"seat-back-right", x:67, y:77, scale:0.68, kind:"floor",
       accepts:["floor-cushion-navy"], conflicts:["floor-back-right"], label:"卓の奥右"},
     {id:"seat-front-left", x:34, y:88, scale:0.84, kind:"floor",
       accepts:["floor-cushion-navy"], conflicts:["floor-left"], label:"卓の手前左"},
