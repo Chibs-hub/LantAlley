@@ -238,9 +238,26 @@
        perspective, while the front pair spreads toward the viewer. */
     {id:"table-center", x:50, y:80, scale:0.70, kind:"floor",
       accepts:["low-table","kotatsu"], conflicts:["floor-front","hearth-center"], label:"中央の卓"},
-    {id:"seat-back-left", x:38.5, y:75, scale:0.60, kind:"floor",
+    /* The rear pair sits on the mat, which is a constraint on y, not a free
+       choice of it. A zabuton anchors at 82% of its own picture, and the
+       picture is 640x360 in a 16:9 scene, so its drawn height in scene
+       percent works out to the same number as its drawn width: 14 * scale.
+       Its top edge is therefore y - 11.48 * scale, and the tatami does not
+       begin until y=70 (measured at the top of this file: 70.1, 71.3 and
+       69.8 at x=42, 50 and 58). At y=75 and scale 0.60 the top landed on
+       68.1 - nearly two percent of the scene up on the painted wall, with
+       the cushion reading as stuck to the shoji behind the table rather
+       than sitting behind it. y=78 at 0.66 puts the top on 70.4, just
+       inside the mat, and closes the gap that had opened between the rear
+       cushions and the table. The previous 77/0.68 was over the line too,
+       by 0.8 - less visible, but the same mistake.
+
+       The same y as floor-back-left and floor-back-right is deliberate:
+       these are alternative uses of one patch of floor, which is what the
+       conflicts between them already say. */
+    {id:"seat-back-left", x:38.5, y:78, scale:0.66, kind:"floor",
       accepts:["floor-cushion-navy"], conflicts:["floor-back-left"], label:"卓の奥左"},
-    {id:"seat-back-right", x:61.5, y:75, scale:0.60, kind:"floor",
+    {id:"seat-back-right", x:61.5, y:78, scale:0.66, kind:"floor",
       accepts:["floor-cushion-navy"], conflicts:["floor-back-right"], label:"卓の奥右"},
     {id:"seat-front-left", x:34, y:88, scale:0.84, kind:"floor",
       accepts:["floor-cushion-navy"], conflicts:["floor-left"], label:"卓の手前左"},

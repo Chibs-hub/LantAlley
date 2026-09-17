@@ -7,8 +7,8 @@
  * Bump CACHE_VERSION whenever any shell file changes, or returning players
  * will keep the old build.
  */
-var CACHE_VERSION = "lantern-alley-v405";
-// Fix: pet ownership survives a reload with real validation, not a silent copy.
+var CACHE_VERSION = "lantern-alley-v406";
+// Fix: the kotatsu rear cushions sit on the tatami instead of up on the shoji.
 
 // audio-index.js assigns to `self`, so the worker and the page share one list
 // of clip paths. Importing it here means new lines are cached automatically
@@ -158,11 +158,11 @@ var SHELL = [
   "./manifest.webmanifest",
   "./assets/branding/lantern-mark-v2.png",
   "./assets/social/lantern-alley-share-v2.jpg",
-  "./icons/icon-192.png?v=405",
-  "./icons/icon-512.png?v=405",
-  "./icons/icon-192-maskable.png?v=405",
-  "./icons/icon-512-maskable.png?v=405",
-  "./icons/apple-touch-icon.png?v=405",
+  "./icons/icon-192.png?v=406",
+  "./icons/icon-512.png?v=406",
+  "./icons/icon-192-maskable.png?v=406",
+  "./icons/icon-512-maskable.png?v=406",
+  "./icons/apple-touch-icon.png?v=406",
   "./assets/kon/kon-idle.webp",
   "./assets/kon/kon-wave-left.webp",
   "./assets/kon/kon-wave-right.webp",

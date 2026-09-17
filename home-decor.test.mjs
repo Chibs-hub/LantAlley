@@ -745,8 +745,13 @@ test("a center kotatsu offers only its four balanced cushion seats", () => {
       {"table-center":"kotatsu"}), slot.id + " accepts a cushion beside the kotatsu");
     assert.equal(decor.slotAllowsItem("kotatsu", slot), false, slot.id + " is cushion-only");
   });
+  /* The rear pair moved down from y=75/0.60. A zabuton anchors at 82% of its
+     own picture, so at that depth its top edge drew from 68.1% - above the
+     tatami line at 70% - and the cushions read as stuck to the shoji rather
+     than sitting on the floor behind the table. See the note on these slots
+     in home-room.js, and the tatami check below this test. */
   assert.deepEqual(JSON.parse(JSON.stringify(seats.map(slot => ({x:slot.x, y:slot.y, scale:slot.scale})))), [
-    {x:38.5, y:75, scale:0.60}, {x:61.5, y:75, scale:0.60},
+    {x:38.5, y:78, scale:0.66}, {x:61.5, y:78, scale:0.66},
     {x:34, y:88, scale:0.84}, {x:66, y:88, scale:0.84}
   ]);
   ["floor-left", "floor-right", "floor-back-left", "floor-back-right", "floor-front"].forEach(id => {
@@ -766,4 +771,35 @@ test("a center kotatsu offers only its four balanced cushion seats", () => {
     "floor-cushion-navy", "floor-cushion-navy", "floor-cushion-navy", "floor-cushion-navy"
   ]);
   assert.equal(decor.inStorage(home).length, 0);
+});
+
+test("every zabuton in the centre seating group sits on the tatami", () => {
+  /* y is the cushion's contact point, but a zabuton anchors at 82% of its own
+   * picture, so the top edge is well above y and that is what can end up on
+   * the wall. The art is 640x360 in a 16:9 scene, which makes the drawn
+   * height in scene percent the same number as the drawn width. The tatami
+   * starts at y=70 (measured in home-room.js). The rear pair sat at y=75 with
+   * scale 0.60, putting its top edge on 68.1 - the cushions read as stuck to
+   * the shoji behind the table rather than sitting on the floor. */
+  const mat = 70;
+  for(const id of ["seat-back-left", "seat-back-right", "seat-front-left", "seat-front-right"]){
+    const slot = slots.find((s) => s.id === id);
+    assert.ok(slot, id + " exists");
+    const width = decor.widthForSlot("floor-cushion-navy", slot);
+    const height = width * (360 / 640) * (16 / 9);
+    const top = slot.y - height * decor.presentationFor("floor-cushion-navy").anchorY / 100;
+    assert.ok(top >= mat,
+      `${id} draws from ${top.toFixed(2)}%, above the tatami line at ${mat}%`);
+  }
+});
+
+test("a centre table keeps zabuton in its own four seats", () => {
+  // The restriction that came in with the seating group: with a table down,
+  // a cushion belongs to the arrangement, not to any spare patch of floor.
+  const seat = slots.find((s) => s.id === "seat-back-left");
+  const generic = slots.find((s) => s.id === "floor-left");
+  assert.equal(decor.slotAllowsItem("floor-cushion-navy", generic, {"table-center":"kotatsu"}), false);
+  assert.equal(decor.slotAllowsItem("floor-cushion-navy", seat, {"table-center":"kotatsu"}), true);
+  // With no table, the generic floor is open again.
+  assert.equal(decor.slotAllowsItem("floor-cushion-navy", generic, {}), true);
 });
