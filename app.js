@@ -1884,49 +1884,16 @@
   }
 
   function renderStagePath(){
-    var path = $("map-stage-path");
-    var rail = $("map-stage-rail");
-    var nextLabel = $("map-stage-path-next");
-    if(!path || !rail) return;
-
+    var route = $("map-stage-route-line");
+    if(!route) return;
     var nextKey = stagePathNextKey();
-    var nextPlace = nextKey ? LanternAlleyMap.getDestination(nextKey) : null;
-    if(nextLabel){
-      nextLabel.className = "map-stage-next";
-      nextLabel.textContent = nextPlace ? "次: " + nextPlace.name : "すべて完了";
-    }
-
-    rail.innerHTML = "";
-    STAGE_ORDER.forEach(function(key, index){
+    var points = [];
+    STAGE_ORDER.forEach(function(key){
       var place = LanternAlleyMap.getDestination(key);
       if(!place) return;
-
-      var progressState = LanternAlleyMap.resolveState(key, state);
-      var unlocked = locationUnlocked(key);
-      if(!unlocked) progressState = "locked";
-      var isNext = key === nextKey;
-      var statusText = progressState === "completed" ? "完了"
-        : progressState === "in-progress" ? "学習中"
-        : progressState === "locked" ? "ロック"
-        : isNext ? "次へ"
-        : "未訪問";
-      var btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "map-stage-link state-" + progressState + (isNext ? " is-next" : "");
-      btn.setAttribute("data-stage-key", key);
-      btn.setAttribute("aria-label", (index + 1) + "、" + place.name + "、" + statusText);
-      if(isNext) btn.setAttribute("aria-current", "step");
-      btn.innerHTML =
-        '<span class="map-stage-number">' + (progressState === "completed" ? "✓" : (index + 1)) + '</span>' +
-        '<span class="map-stage-name">' + place.name + '</span>' +
-        '<span class="map-stage-state">' + statusText + '</span>';
-      btn.addEventListener("click", function(){
-        selectMapDestination(key);
-        var action = locationUnlocked(key) ? LanternAlleyMap.getAction(key, state) : null;
-        if(action) runMapAction(key);
-      });
-      rail.appendChild(btn);
+      points.push(place.position.x + "," + place.position.y);
     });
+    route.setAttribute("points", points.join(" "));
   }
 
   function renderMap(){
@@ -1942,6 +1909,12 @@
       var btn = document.createElement("button");
       btn.type = "button";
       btn.className = "map-destination state-" + progressState;
+      var stageIndex = STAGE_ORDER.indexOf(place.key);
+      if(stageIndex >= 0){
+        var nextKey = stagePathNextKey();
+        if(place.key === nextKey) btn.className += " is-next";
+        btn.setAttribute("aria-current", place.key === nextKey ? "step" : "false");
+      }
       btn.style.left = place.position.x + "%";
       btn.style.top = place.position.y + "%";
       btn.setAttribute("data-map-key", place.key);
@@ -1949,6 +1922,7 @@
       btn.setAttribute("aria-pressed", String(place.key === selectedMapKey));
       btn.innerHTML =
         '<span class="map-pin" aria-hidden="true"></span>' +
+        (stageIndex >= 0 ? '<span class="map-stage-marker" aria-hidden="true">' + (stageIndex + 1) + '</span>' : '') +
         '<span class="map-destination-label">' + place.name + '</span>';
       btn.addEventListener("click", function(){
         // Clicking the place on the map enters it. Selecting and then hunting

@@ -86,11 +86,11 @@ test("the page provides one semantic map selection and inline detail surface", (
   assert.match(html, /id="map-detail-action"/);
 });
 
-test("the page provides a linear lesson path separate from the illustrated map", () => {
+test("the page provides a linear lesson route inside the illustrated map", () => {
   const html = read("index.html");
 
-  assert.match(html, /id="map-stage-path"/);
-  assert.match(html, /aria-label="学習の順番"/);
+  assert.match(html, /id="map-stage-route"/);
+  assert.match(html, /id="map-stage-route-line"/);
 });
 
 test("map selection is separate from navigation and preparing places expose no action", () => {
@@ -109,8 +109,9 @@ test("the map renders the ordered lesson path with an explicit next stage", () =
 
   assert.match(app, /var STAGE_ORDER = \["entrance", "home-inn", "market", "tea-house", "station", "shrine"\]/);
   assert.match(app, /function renderStagePath\(\)/);
-  assert.match(app, /data-stage-key/);
-  assert.match(app, /map-stage-next/);
+  assert.match(app, /map-stage-route-line/);
+  assert.match(app, /map-stage-marker/);
+  assert.match(app, /is-next/);
 });
 
 test("the illustrated map keeps visible adaptive destinations without legacy graph furniture", () => {
