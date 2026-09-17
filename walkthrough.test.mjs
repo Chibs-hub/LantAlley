@@ -1871,6 +1871,49 @@ test("a plant only grows while it is in the ground", () => {
     "the shift it missed is not paid out retroactively");
 });
 
+/* completeDailySession() in app.js composes these same two calls - it is not
+ * exercised through the UI here for the same reason the episode-credit path
+ * above isn't: driving twenty real practice cards (three answer kinds,
+ * shuffled options, no test-only skip - catalog practice explicitly hides
+ * btn-skip-question) to reach one gate check would be a large, fragile test
+ * of code these two calls already cover. This locks the contract app.js
+ * relies on: a session at or above the 80% gate credits the garden once for
+ * the day, by a key the code's own daily:<dayKey> convention must produce
+ * (mirroring "episode:<id>" for shifts), and a second good session the same
+ * day is free coins with no second credit - the exact bug a per-session
+ * credit id would have caused, and creditLesson's own dedup already blocks
+ * for free. */
+test("a passing daily practice session grows the garden once per day", () => {
+  const game = boot();
+  const garden = game.context.LanternHomeGarden;
+  const daily = game.context.LanternDailyPractice;
+
+  var state = garden.emptyGarden();
+  const bought = garden.buy(state, 500, "camellia");
+  const planted = garden.plant(bought.garden, bought.instanceId, "garden-left-1",
+    game.context.LanternHomeRoom.scenes().yard.slots);
+
+  const passing = daily.sessionEarnings(16, 20);           // 80%, the gate itself
+  assert.ok(passing.accuracy >= daily.GATE_ACCURACY, "16/20 must clear the gate");
+  const dayKey = daily.dayKey(Date.now());
+
+  const first = garden.creditLesson(planted.garden, "daily:" + dayKey, passing.perfect ? 1 : 0);
+  assert.ok(first.granted > 0, "a session at the gate must grow something");
+  assert.equal(first.garden.plants[0].growthPoints, first.granted);
+
+  // A second passing session the same day pays coins again but must not
+  // credit the garden twice - same key, same dedup episodes already rely on.
+  const second = garden.creditLesson(first.garden, "daily:" + dayKey, 0);
+  assert.equal(second.granted, 0, "the same day must not credit twice");
+  assert.equal(second.garden.plants[0].growthPoints, first.granted,
+    "growth from a second same-day session does not stack");
+
+  // Below the gate, app.js never calls creditLesson at all - accuracy is
+  // checked before the call, not inside it.
+  const failing = daily.sessionEarnings(10, 20);
+  assert.ok(failing.accuracy < daily.GATE_ACCURACY, "10/20 must not clear the gate");
+});
+
 test("garden growth notices use natural Japanese for flower stages and trees", () => {
   const cases = [
     { typeId: "camellia", stage: "sprout", want: "「椿」の芽が出ました。" },

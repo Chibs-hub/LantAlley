@@ -3167,11 +3167,32 @@
 
   // Finishing a session is what counts a day towards the streak - not opening
   // the app, and not answering one card.
+  /* The garden used to grow only from story episodes, which are finite: once
+   * a learner has cleared them, every remaining plant is stuck at whatever
+   * stage it reached that day, forever, while the shop keeps selling new
+   * ones. Daily practice is the one part of the game "worth doing forever"
+   * (see the file's own opening comment in daily-practice.js), so it is also
+   * the one renewable source the garden can draw on.
+   *
+   * Gated on the same 80% accuracy bar as the coin bonus, so a tapped-through
+   * session grows nothing. creditId is date-keyed rather than per-session, so
+   * a second good session the same day is free coins with no second credit -
+   * creditLesson's own usedCreditIds dedup already gives "once per day" for
+   * free, the same mechanism "episode:<id>" already leans on for "once per
+   * episode". */
   function completeDailySession(correct, total){
     if(typeof LanternDailyPractice === "undefined") return null;
     var earnings = LanternDailyPractice.sessionEarnings(correct, total);
     var bonus = earnings.gate + earnings.perfect;
     var paidBonus = bonus ? earnPracticeCoins(bonus) : 0;
+
+    if(earnings.accuracy >= LanternDailyPractice.GATE_ACCURACY
+        && typeof LanternHomeGarden !== "undefined"){
+      var dayKey = LanternDailyPractice.dayKey(Date.now());
+      var credited = LanternHomeGarden.creditLesson(
+        gardenState(), "daily:" + dayKey, earnings.perfect ? 1 : 0);
+      state.garden = credited.garden;
+    }
 
     var streak = LanternDailyPractice.advanceStreak({
       streak: state.streak, freezes: state.freezes, lastActiveDate: state.lastActiveDate
