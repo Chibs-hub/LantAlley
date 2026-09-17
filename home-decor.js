@@ -510,7 +510,7 @@
     var slot = (slots || []).filter(function(s){ return s.id === slotId; })[0];
     if(!slot) return {ok:false, reason:"noslot", home:home};
     if(slot.kind !== item.kind) return {ok:false, reason:"wrongkind", home:home};
-    if(!slotAllowsItem(id, slot, home && home.placed)){
+    if(!slotAllowsItem(id, slot, home)){
       return {ok:false, reason:"restricted", home:home};
     }
 
@@ -532,9 +532,20 @@
             home:{owned:((home && home.owned) || []).slice(), placed:placed}};
   }
 
-  function slotAllowsItem(id, slot, placed){
+  /* The third argument is the room, as either the whole `home` record or just
+   * its `placed` map. It wants to be the whole record anywhere a conflict can
+   * be reached, because "a slot this one excludes already holds this very
+   * item" has two different answers and ownership is what separates them:
+   * moving your only copy empties that slot, so it is fine; placing a spare
+   * copy from storage leaves it filled, so two mutually exclusive slots both
+   * end up occupied and the two objects render stacked. Given only a `placed`
+   * map there is no way to tell, and the honest answer there is no - a caller
+   * that cannot say what is owned cannot be granted the move. */
+  function slotAllowsItem(id, slot, context){
     var item = typeof id === "string" ? getItem(id) : id;
     if(!item || !slot) return false;
+    var home = context && Array.isArray(context.owned) ? context : null;
+    var placed = home ? (home.placed || {}) : context;
     /* A kotatsu or low table turns the room's middle into one clear seating
        arrangement. When the learner selects a zabuton, offer only its four
        companion seats instead of mixing them with unrelated floor targets. */
@@ -544,7 +555,18 @@
     if(item.allowedSlots && item.allowedSlots.indexOf(slot.id) < 0) return false;
     if(slot.purpose && (!item.allowedSlots || item.allowedSlots.indexOf(slot.id) < 0)) return false;
     if((slot.conflicts || []).some(function(other){
-      return placed && placed[other] && placed[other] !== item.id;
+      var occupant = placed && placed[other];
+      if(!occupant) return false;
+      if(occupant !== item.id) return true;
+      /* Same item, mutually exclusive slot. Only a placement that lifts that
+         copy is allowed, and place() lifts every copy exactly when they are
+         all already down - with one still in storage it adds another object
+         instead of moving the one that is out. */
+      if(!home) return true;
+      var placedCopies = Object.keys(placed).reduce(function(total, key){
+        return total + (placed[key] === item.id ? 1 : 0);
+      }, 0);
+      return placedCopies < ownedCount(home, item.id);
     })) return false;
     return true;
   }

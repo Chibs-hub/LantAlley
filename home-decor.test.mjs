@@ -850,6 +850,43 @@ test("the rear seats tuck behind the centre piece rather than beside it", () => 
     "the rear cushions must be drawn smaller than the front ones");
 });
 
+test("a spare copy cannot fill two mutually exclusive slots at once", () => {
+  /* `floor-front` and `table-center` exclude each other, but the conflict
+   * guard used to wave the case through whenever the occupant was the SAME
+   * item - a rule written so that moving your only copy is not blocked by
+   * itself. With a second copy in storage that is not a move: the first one
+   * stays put and a second object goes down, so both excluded slots end up
+   * filled and the two render stacked on top of each other in the middle of
+   * the room. Ownership is what tells the two apart. */
+  const front = slots.find((s) => s.id === "floor-front");
+  const centre = slots.find((s) => s.id === "table-center");
+  assert.ok(front.conflicts.includes("table-center"), "the two must exclude each other");
+
+  let spare = {owned: ["low-table", "low-table"], placed: {}};
+  spare = decor.place(spare, "low-table", centre.id, slots).home;
+  const second = decor.place(spare, "low-table", front.id, slots);
+  assert.equal(second.ok, false, "a second copy must not fill the excluded slot");
+  assert.equal(second.reason, "restricted");
+  assert.deepEqual(JSON.parse(JSON.stringify(second.home.placed)),
+    {"table-center": "low-table"});
+
+  // The move the guard was written for still has to work.
+  let only = {owned: ["low-table"], placed: {}};
+  only = decor.place(only, "low-table", centre.id, slots).home;
+  const moved = decor.place(only, "low-table", front.id, slots);
+  assert.equal(moved.ok, true, "moving the only copy must still be allowed");
+  assert.deepEqual(JSON.parse(JSON.stringify(moved.home.placed)),
+    {"floor-front": "low-table"});
+
+  // And copies in slots that do not exclude each other are untouched.
+  let pair = {owned: ["low-table", "low-table"], placed: {}};
+  pair = decor.place(pair, "low-table", "floor-left", slots).home;
+  const beside = decor.place(pair, "low-table", "floor-right", slots);
+  assert.equal(beside.ok, true, "two copies may stand in unrelated slots");
+  assert.deepEqual(JSON.parse(JSON.stringify(beside.home.placed)),
+    {"floor-left": "low-table", "floor-right": "low-table"});
+});
+
 test("a centre table keeps zabuton in its own four seats", () => {
   // The restriction that came in with the seating group: with a table down,
   // a cushion belongs to the arrangement, not to any spare patch of floor.
