@@ -3228,3 +3228,7 @@ body:has(.about-panel:not([hidden])) .feedback-open{visibility:hidden;pointer-ev
   .inn-room-illustrated .inn-scene-zones.awaiting-drop .inn-hotspot > .inn-caption{opacity:1;transform:translate(-50%,0)}
   .inn-room-illustrated [data-key="remove-recycle"] > .inn-caption{top:calc(100% + 5px);bottom:auto}
 }
+
+/* The running build, shown only in debug mode beside the banner text. */
+.debug-build{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.72rem;
+  opacity:.85;white-space:nowrap}

@@ -955,6 +955,29 @@
   $("btn-debug-mode").setAttribute("aria-pressed", String(debugEnabled));
   $("btn-debug-mode").addEventListener("click", function(){ switchDebugMode(!debugEnabled); });
   $("debug-banner").hidden = !debugEnabled;
+  /* The build this device is actually running, read off the loaded modules
+     rather than off anything written by hand. The stamp on the script URL says
+     which shell the browser fetched; seat-back-left's x says which home-room.js
+     is answering, which is the thing a screenshot cannot show. */
+  (function(){
+    var readout = $("debug-build");
+    if(!readout) return;
+    var stamp = "?";
+    var tag = document.querySelector('script[src*="home-room.js"]');
+    if(tag){
+      var match = /[?&]v=(\d+)/.exec(tag.getAttribute("src") || "");
+      if(match) stamp = "v" + match[1];
+    }
+    var seat = null;
+    if(window.LanternHomeRoom && LanternHomeRoom.slots){
+      seat = LanternHomeRoom.slots().filter(function(slot){
+        return slot.id === "seat-back-left";
+      })[0] || null;
+    }
+    readout.textContent = seat
+      ? stamp + " · seat x=" + seat.x + " s=" + seat.scale
+      : stamp;
+  })();
   $("btn-debug-exit").addEventListener("click", function(){ switchDebugMode(false); });
 
   function restoreTitleMenuFocus(fallback){
