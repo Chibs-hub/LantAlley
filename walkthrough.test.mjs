@@ -2029,10 +2029,18 @@ test("everything the unlock grants has somewhere it can go", () => {
     if (decor.isWallpaper(id)) continue;          // wallpaper hangs on the room
     const item = decor.getItem(id);
     assert.ok(item, id + " is owned but is in no catalogue");
-    const fits = slots.filter((slot) => slot.kind === item.kind);
+    /* Kind alone used to pick the candidate slot, which is weaker than the
+     * engine's own rule: a hearth or a byobu restricts itself to specific
+     * slots on purpose (irori to hearth-center, by design - it is a built-in
+     * fixture-sized feature, not furniture that goes wherever there is
+     * floor), and a seat slot accepts only a cushion. A same-kind slot the
+     * engine would refuse read here as this test's own bug. Filtering
+     * through slotAllowsItem asks the one question that matters: does a real
+     * slot exist that the actual placement engine will take this into. */
+    const fits = slots.filter((slot) => slot.kind === item.kind
+      && decor.slotAllowsItem(item.id, slot, saved.home.placed));
     assert.ok(fits.length > 0,
       item.id + ' is kind "' + item.kind + '" and no slot in either scene takes it');
-    // and the engine agrees, rather than only the kinds matching
     const placed = decor.place(saved.home, item.id, fits[0].id, slots);
     assert.equal(placed.ok, true, item.id + " could not be placed in " + fits[0].id);
   }
