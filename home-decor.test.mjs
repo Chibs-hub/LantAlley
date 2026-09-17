@@ -388,6 +388,27 @@ test("buying takes the price for each copy and refuses only when short", () => {
   assert.equal(decor.ownedCount(second.home, "low-table"), 2);
 });
 
+test("floor decor carries a contact shadow matched to its footprint", () => {
+  const expected = {
+    "floor-cushion-navy": {contactWidth:72, contactHeight:8},
+    "low-table": {contactWidth:76, contactHeight:7},
+    kotatsu: {contactWidth:82, contactHeight:8},
+    "folding-screen": {contactWidth:68, contactHeight:4},
+    "floor-lantern": {contactWidth:34, contactHeight:5},
+    irori: {contactWidth:74, contactHeight:7}
+  };
+  for(const [id, want] of Object.entries(expected)){
+    const got = decor.presentationFor(id);
+    assert.equal(got.contactWidth, want.contactWidth, `${id} shadow width`);
+    assert.equal(got.contactHeight, want.contactHeight, `${id} shadow height`);
+    assert.equal(got.contactY, got.anchorY, `${id} shadow meets its placement anchor`);
+  }
+  assert.equal(decor.presentationFor("scroll").contactWidth, 0,
+    "wall art must not cast a floor-contact shadow");
+  assert.equal(decor.presentationFor("wind-chime").contactWidth, 0,
+    "hanging art must not cast a floor-contact shadow");
+});
+
 test("an item you do not own cannot be placed", () => {
   const put = decor.place(empty(), "low-table", "floor-left", slots);
   assert.equal(put.ok, false);

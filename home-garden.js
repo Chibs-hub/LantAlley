@@ -47,6 +47,26 @@
     return TYPES.filter(function(type){ return type.id === typeId; })[0] || null;
   }
 
+  /* The shadow belongs to what meets the gravel, not to the canopy. A tree
+   * lands on a trunk and root flare; a shrub or planted bed has a broader
+   * patch. Keeping this beside the catalogue means every yard species carries
+   * its own physical footprint instead of inheriting one generic oval. */
+  var CONTACT = {
+    "cherry-tree": {width:22, height:5},
+    "japanese-maple": {width:22, height:5},
+    hydrangea: {width:54, height:7},
+    camellia: {width:46, height:7},
+    iris: {width:38, height:6},
+    chrysanthemum: {width:44, height:6},
+    "lantern-flower-bed": {width:58, height:7},
+    sunflower: {width:28, height:6}
+  };
+
+  function contactFor(typeId){
+    var row = CONTACT[typeId] || {width:36, height:6};
+    return {width:row.width, height:row.height};
+  }
+
   function emptyGarden(){
     return {plants:[], usedCreditIds:[], starterClaimed:false,
             starterSceneryClaimed:false, nextInstanceId:1};
@@ -273,6 +293,7 @@
     restoreStarterLayout:restoreStarterLayout,
     creditLesson:creditLesson,
     acknowledgeAnimations:acknowledgeAnimations,
-    lessonsRemaining:lessonsRemaining
+    lessonsRemaining:lessonsRemaining,
+    contactFor:contactFor
   });
 })(typeof self !== "undefined" ? self : this);

@@ -1,6 +1,6 @@
 # Lantern Alley Project Handoff
 
-Last updated: 2026-09-17 (v401)
+Last updated: 2026-09-17 (v402)
 
 A browser game that teaches JLPT N2 Japanese. Vanilla JS, CSS and HTML, no build step, no framework, offline-capable.
 
@@ -113,6 +113,15 @@ instead of mixing them with generic floor dots. The table is smaller and set
 slightly higher; the rear cushions are compact and the front pair remains
 larger, giving the complete four-seat group balanced tatami perspective.
 sw.js is v401.
+
+**Latest v402 status (2026-09-17):** indoor decor shadows now meet each
+object's calibrated placement anchor and use a footprint suited to that object,
+rather than one oval at the image-box bottom. Yard trees, shrubs, flowers and
+planted beds likewise carry species-specific contact geometry at their measured
+base. Silhouette-wide drop shadows were removed, and yard art is graded toward
+the background's muted palette without opacity. The populated room and yard
+were visually checked in the production mobile renderer at 390px. sw.js is
+v402.
 
 **Latest v397 status (2026-09-16):** owner-directed 屏風 placement supersedes
 the v395 edge-only arrangement. The screens now stand inside the tatami at

@@ -5992,6 +5992,11 @@
     return LanternHomeDecor.presentationFor(item && item.id).flipX ? " scaleX(-1)" : "";
   }
 
+  function decorContact(item){
+    var row = LanternHomeDecor.presentationFor(item && item.id);
+    return {width:row.contactWidth, height:row.contactHeight, y:row.contactY};
+  }
+
   /* A slot on a piece of furniture exists only while that furniture does.
    * `requires` names the slot the furniture stands in; if nothing is in it,
    * this plank is not a place in the room and must not be offered, drawn
@@ -6338,6 +6343,8 @@
       var type = LanternHomeGarden.catalogue().filter(function(row){
         return row.id === plant.typeId;
       })[0];
+      var contact = LanternHomeGarden.contactFor
+        ? LanternHomeGarden.contactFor(plant.typeId) : {width:36, height:6};
       var vary = plantVariation(plant.id);
       var width = (((type && type.sceneWidth) || 12) * (slot.scale || 1) * vary.size).toFixed(2);
       html += '<div class="home-plant' + (plant.pendingAnimation ? " is-growing" : "") + '"'
@@ -6349,6 +6356,7 @@
         + ' rotate(' + vary.tilt + 'deg) scaleX(' + vary.mirror + ');'
         + '--plant-lift-max:' + (PLANT_LIFT_CEILING[plant.typeId] || 1.6) + ';'
         + '--plant-base:' + base + ';'
+        + '--contact-width:' + contact.width + ';--contact-height:' + contact.height + ';'
         + '--plant-lamp:' + Math.max(0, Math.min(1,
             plantLampProximity(slot) + vary.lampBias)).toFixed(3) + '"'
         + ' data-plant="' + plant.id + '" role="button" tabindex="0"'
@@ -6410,11 +6418,15 @@
         if(!slotAvailable(slot, home.placed)) return;
         var item = decor.getItem(here) || {name:""};
         var placedSlot = {x:slot.x, y:decorSceneTop(item, slot)};
-        html += positioned("home-item", placedSlot, decorArt(here, item.name),
+        var contact = decorContact(item);
+        html += positioned("home-item" + (contact.width ? " has-contact" : ""),
+          placedSlot, decorArt(here, item.name),
           ' data-slot-item="' + slot.id + '" role="button" tabindex="0"'
             + ' data-item-kind="' + (item.kind || "") + '"'
             + ' aria-label="' + item.name + ' をかたづける"',
           'width:' + decorSceneWidth(item, slot) + '%;z-index:' + slotDepthZ(slot)
+            + ';--contact-width:' + contact.width + ';--contact-height:' + contact.height
+            + ';--contact-y:' + contact.y
             + ';transform:translate(-50%,-'
             + decorSceneAnchor(item) + '%) scaleY(' + decorSceneScaleY(item) + ')'
             + decorSceneFlip(item)

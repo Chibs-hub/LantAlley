@@ -256,20 +256,20 @@
    * it up there would be extrapolating past the evidence.
    */
   var PRESENTATION = {
-    "floor-cushion-navy": {width:14, anchorY:82},
-    "rug-plain":          {width:20, anchorY:55, scaleY:0.58},
+    "floor-cushion-navy": {width:14, anchorY:82, contactWidth:72, contactHeight:8},
+    "rug-plain":          {width:20, anchorY:55, scaleY:0.58, contactWidth:88, contactHeight:3},
     // 10 was a 60cm pot on the floor. On a shelf at 0.52 that came to 44cm,
     // most of the shelf's own height; 7 is about 31cm, a bonsai you display.
-    "plant-small":        {width:7, anchorY:100},
-    "low-table":          {width:23, anchorY:100},
-    brazier:               {width:11.5, anchorY:100},
-    kotatsu:               {width:24, anchorY:100},
-    "folding-screen":     {width:43, anchorY:100},
-    "floor-lantern":      {width:8, anchorY:100},
+    "plant-small":        {width:7, anchorY:100, contactWidth:42, contactHeight:5},
+    "low-table":          {width:23, anchorY:100, contactWidth:76, contactHeight:7},
+    brazier:               {width:11.5, anchorY:100, contactWidth:58, contactHeight:6},
+    kotatsu:               {width:24, anchorY:100, contactWidth:82, contactHeight:8},
+    "folding-screen":     {width:43, anchorY:100, contactWidth:68, contactHeight:4},
+    "floor-lantern":      {width:8, anchorY:100, contactWidth:34, contactHeight:5},
     // A built-in hearth is roughly one tatami wide. Its tall cutout includes
     // the angled jizaikagi above it, while its base remains 1.0m on the floor.
-    irori:                {width:28.1, anchorY:100},
-    "chrysanthemum-pot":   {width:9.5, anchorY:100},
+    irori:                {width:28.1, anchorY:100, contactWidth:74, contactHeight:7},
+    "chrysanthemum-pot":   {width:9.5, anchorY:100, contactWidth:48, contactHeight:6},
     scroll:                {width:7, anchorY:50},
     "wall-lamp":          {width:5.5, anchorY:50},
     fan:                   {width:11.5, anchorY:50},
@@ -298,12 +298,12 @@
      * measures the transparent padding too and reads about twice the object.
      * The visible-fill test knows the difference; trust it over a ruler held
      * against the box. At the shelf's 0.52 these land near 16cm and 15cm. */
-    teapot:                {width:4.6, anchorY:100},
-    books:                 {width:5.6, anchorY:100},
-    "cat-figure":         {width:5, anchorY:100},
-    daruma:                {width:4, anchorY:100},
-    "sakura-bonsai":      {width:7.5, anchorY:100},
-    "pine-bonsai":        {width:7.5, anchorY:100},
+    teapot:                {width:4.6, anchorY:100, contactWidth:52, contactHeight:5},
+    books:                 {width:5.6, anchorY:100, contactWidth:70, contactHeight:4},
+    "cat-figure":         {width:5, anchorY:100, contactWidth:52, contactHeight:5},
+    daruma:                {width:4, anchorY:100, contactWidth:54, contactHeight:5},
+    "sakura-bonsai":      {width:7.5, anchorY:100, contactWidth:48, contactHeight:5},
+    "pine-bonsai":        {width:7.5, anchorY:100, contactWidth:48, contactHeight:5},
     /* 20.3 because the slot it goes in scales by 0.74, and 20.3 x 0.74 is the
        15% the fixture on the right is drawn at - the two shelves are the same
        piece of furniture and must come out the same size.
@@ -316,8 +316,8 @@
        without a second photograph. The left plank slots are mirrored to
        match - a mirrored staggered shelf has its high plank on the other
        side. */
-    "display-shelf":      {width:20.3, anchorY:100, flipX:true},
-    "sill-plant":         {width:7.6, anchorY:100},
+    "display-shelf":      {width:20.3, anchorY:100, flipX:true, contactWidth:74, contactHeight:6},
+    "sill-plant":         {width:7.6, anchorY:100, contactWidth:46, contactHeight:5},
     "wind-chime":         {width:4, anchorY:0, offsetY:0}
   };
 
@@ -330,7 +330,10 @@
     var row = PRESENTATION[id] || {width:10, anchorY:100};
     return {width:row.width, anchorY:row.anchorY,
             scaleY:row.scaleY || 1, offsetY:row.offsetY || 0,
-            flipX:!!row.flipX};
+            flipX:!!row.flipX,
+            contactWidth:row.contactWidth || 0,
+            contactHeight:row.contactHeight || 0,
+            contactY:row.contactY == null ? row.anchorY : row.contactY};
   }
 
   // Intrinsic raster ratios: fit height too, so tall ornaments cannot pass

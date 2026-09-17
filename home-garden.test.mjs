@@ -134,6 +134,24 @@ test("garden species use individual scene widths instead of one global size", ()
   assert.ok(Math.min(...Object.values(widths)) >= 8, "no species is a speck");
 });
 
+test("garden contact shadows follow trunks, shrubs, and planted beds", () => {
+  const expected = {
+    "cherry-tree": {width:22, height:5},
+    "japanese-maple": {width:22, height:5},
+    hydrangea: {width:54, height:7},
+    camellia: {width:46, height:7},
+    iris: {width:38, height:6},
+    chrysanthemum: {width:44, height:6},
+    "lantern-flower-bed": {width:58, height:7},
+    sunflower: {width:28, height:6}
+  };
+  for(const [id, want] of Object.entries(expected)){
+    assert.deepEqual(JSON.parse(JSON.stringify(garden.contactFor(id))), want, id);
+  }
+  assert.deepEqual(JSON.parse(JSON.stringify(garden.contactFor("missing"))),
+    {width:36, height:6}, "unknown plants keep a safe contact footprint");
+});
+
 test("normalization removes the retired automatic maple but keeps purchased maples", () => {
   const cleaned = garden.normalize({
     plants: [

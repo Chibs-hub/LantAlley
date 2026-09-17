@@ -6,6 +6,18 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-17 - Ground home and yard objects in their scenes (v402)
+
+Placed objects shared one shadow at the bottom of their image box. That missed
+the real contact line of padded art such as zabuton and gave a lantern, screen,
+table and tree the same footprint. Indoor decor now carries per-object contact
+geometry anchored to its placement baseline. Each yard species likewise uses
+a trunk-, shrub- or bed-sized footprint at its measured plant base. Removed the
+silhouette-wide drop shadows that made cutouts look pasted on, and reduced the
+yard art's saturation and contrast to match the weathered house and gravel
+without making any object transparent. Verified the populated room and yard in
+the production mobile renderer at 390px.
+
 ### 2026-09-17 - Balance the kotatsu seating group (v401)
 
 The first center seating attempt offered every generic floor target after the
