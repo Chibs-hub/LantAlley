@@ -6,6 +6,12 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-18 - Quiet the lesson route overlay (v415)
+
+Reduced the route stroke and stage signs so the illustrated alley remains the
+main visual. The route is now thinner and more transparent, and the numbered
+signs use smaller translucent badges with a restrained next cue.
+
 ### 2026-09-17 - Put the lesson route onto the map (v414)
 
 Moved the linear lesson path into the illustrated map after the separate mobile

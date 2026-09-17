@@ -380,12 +380,12 @@
   .map-scene{position:relative;width:100%;aspect-ratio:3/2;overflow:hidden;background-image:linear-gradient(0deg,rgba(14,15,31,.16),rgba(14,15,31,.03)),url("assets/map/lantern-alley-map-v1.jpg");background-size:cover;background-position:center;isolation:isolate}
   .map-scene::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;box-shadow:inset 0 0 46px rgba(5,7,18,.56)}
   .map-stage-route{position:absolute;inset:0;z-index:1;width:100%;height:100%;overflow:visible;pointer-events:none}
-  #map-stage-route-line{fill:none;stroke:#e4b565;stroke-width:1.1;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:2.1 1.6;opacity:.76;filter:drop-shadow(0 1px 1px rgba(24,14,8,.92))}
+  #map-stage-route-line{fill:none;stroke:#f0c879;stroke-width:.65;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1.7 2.1;opacity:.46}
   #map-destinations{position:absolute;inset:0;z-index:2}
   .map-destination{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:44px;min-height:44px;padding:0;border:0;background:transparent;color:#fff9e9;cursor:pointer;font-family:'Zen Maru Gothic',sans-serif;filter:drop-shadow(0 4px 6px rgba(0,0,0,.72))}
   .map-pin{position:relative;width:34px;height:43px;border:3px solid #f5d48d;border-radius:50% 50% 50% 12px;background:#3d2b25;transform:rotate(-45deg);box-shadow:0 0 0 3px rgba(41,28,27,.72);transition:transform .16s ease,background .16s ease}
   .map-pin::before{content:"";position:absolute;inset:7px;border-radius:50%;background:#d96d3f;box-shadow:0 0 14px #ffc356}
-  .map-stage-marker{position:absolute;top:-5px;right:-13px;z-index:2;display:grid;place-items:center;width:19px;height:19px;border:1px solid #f3d18f;border-radius:50%;background:#3a2924;color:#ffe8b0;font-size:.62rem;font-weight:900;line-height:1;transform:rotate(0deg);box-shadow:0 1px 4px rgba(0,0,0,.72)}
+  .map-stage-marker{position:absolute;top:-2px;right:-9px;z-index:2;display:grid;place-items:center;width:16px;height:16px;border:1px solid rgba(243,209,143,.82);border-radius:50%;background:rgba(58,41,36,.72);color:#ffe8b0;font-size:.55rem;font-weight:900;line-height:1;transform:rotate(0deg);box-shadow:0 1px 3px rgba(0,0,0,.55)}
   .map-destination-label{margin-top:6px;padding:4px 8px;border:1px solid #d8b879;border-radius:7px;background:rgba(33,24,23,.92);font-family:'Shippori Mincho',serif;font-size:.78rem;font-weight:800;line-height:1.2;letter-spacing:.03em;white-space:nowrap}
   .map-destination:hover .map-pin,.map-destination[aria-pressed="true"] .map-pin{transform:rotate(-45deg) scale(1.13);background:#f2d28c}
   .map-destination[aria-pressed="true"] .map-pin::before{background:#fff3bc;box-shadow:0 0 24px #ffd260}
@@ -393,9 +393,9 @@
   .map-destination.state-completed .map-pin::before{background:#d8e2bd;box-shadow:0 0 18px #d9e8b0}
   .map-destination.state-completed .map-pin::after{content:"✓";position:absolute;inset:5px;z-index:2;display:grid;place-items:center;transform:rotate(45deg);color:#263e2d;font-weight:900;font-size:1rem}
   .map-destination.state-completed .map-stage-marker{border-color:#b9d69e;background:#304633;color:#eff8d5}
-  .map-destination.is-next .map-pin{box-shadow:0 0 0 4px rgba(255,210,122,.34),0 0 18px rgba(255,194,91,.64)}
-  .map-destination.is-next .map-stage-marker{border-color:#ffd27a;background:#b96f30;color:#fff9e9;box-shadow:0 0 10px rgba(255,194,91,.68)}
-  .map-destination.is-next .map-stage-marker::after{content:"次";position:absolute;left:21px;white-space:nowrap;padding:2px 5px;border:1px solid #ffd27a;border-radius:5px;background:rgba(49,31,24,.94);color:#ffd27a;font-size:.56rem}
+  .map-destination.is-next .map-pin{box-shadow:0 0 0 3px rgba(255,210,122,.24),0 0 12px rgba(255,194,91,.42)}
+  .map-destination.is-next .map-stage-marker{border-color:rgba(255,210,122,.9);background:rgba(185,111,48,.82);color:#fff9e9;box-shadow:0 0 7px rgba(255,194,91,.48)}
+  .map-destination.is-next .map-stage-marker::after{content:"次";position:absolute;left:18px;white-space:nowrap;padding:1px 4px;border:1px solid rgba(255,210,122,.82);border-radius:4px;background:rgba(49,31,24,.78);color:#ffd27a;font-size:.5rem}
   .map-destination.state-preparing .map-pin{opacity:.72;filter:saturate(.45)}
 
   .map-detail{display:grid;grid-template-columns:78px minmax(0,1fr) auto;align-items:center;gap:15px;min-height:132px;padding:14px 18px;background:#fbf5e9;border-top:7px solid #5b3927;box-shadow:inset 0 5px #9c6945}
