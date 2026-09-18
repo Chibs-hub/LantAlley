@@ -111,7 +111,8 @@ test("the map renders the ordered lesson path with an explicit next stage", () =
   assert.match(app, /var STAGE_ORDER = \["entrance", "home-inn", "market", "tea-house", "station", "shrine"\]/);
   assert.match(app, /function renderStagePath\(\)/);
   assert.match(app, /map-stage-route-line/);
-  assert.match(app, /map-stage-marker/);
+  assert.match(app, /map-destination-label/);
+  assert.doesNotMatch(app, /map-pin/);
   assert.match(app, /is-next/);
   assert.match(app, /if\(stageIndex >= 0 && !unlocked\) return/);
   assert.match(app, /function travelMapKon\(key\)/);
@@ -174,7 +175,8 @@ test("going home is never gated on understanding", () => {
   // would be circular.
   assert.match(app, /if\(place && place\.kind === "home"\) return homeHasGift\(\);/);
   assert.match(app, /function homeHasGift\(\)/);
-  assert.match(app, /map-home-glyph/);
+  assert.match(app, /map-home-icon/);
+  assert.match(app, /assets\/map\/home-marker-v1\.png/);
   // And it is not one of the ordered stages, so it cannot block the next place
   // or be blocked by the last one.
   const order = /var STAGE_ORDER = \[([^\]]+)\]/.exec(app);

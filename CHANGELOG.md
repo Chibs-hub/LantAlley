@@ -6,11 +6,13 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
-### 2026-09-18 - Refine the home map marker (v418)
+### 2026-09-18 - Simplify the map destination marks (v419)
 
-Reworked the home sign to share the lesson pins' teardrop silhouette, warm edge
-and contact shadow while carrying a small upright house glyph inside. This keeps
-わが家 distinct from lessons without making it look like a separate UI system.
+Removed every generic lesson pin and numbered badge from the illustrated map.
+Accessible lesson names are now the only fixed map marks, while the existing Kon
+traveler remains the sole moving position cue. Replaced the CSS home pin with a
+small painted machiya illustration so わが家 belongs to the alley rather than a
+separate interface layer.
 
 ### 2026-09-18 - Move and gate the home destination (v417)
 

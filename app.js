@@ -1952,7 +1952,7 @@
       if(progressState === "completed") completedCount += 1;
       var btn = document.createElement("button");
       btn.type = "button";
-      btn.className = "map-destination state-" + progressState;
+      btn.className = "map-destination state-" + progressState + (place.kind === "home" ? " is-home" : " is-stage");
       if(stageIndex >= 0){
         var nextKey = stagePathNextKey();
         if(place.key === nextKey) btn.className += " is-next";
@@ -1964,8 +1964,7 @@
       btn.setAttribute("aria-label", place.name + "、" + statusLabel);
       btn.setAttribute("aria-pressed", String(place.key === selectedMapKey));
       btn.innerHTML =
-        (place.kind === "home" ? '<span class="map-home-marker" aria-hidden="true"><span class="map-home-glyph"></span></span>' : '<span class="map-pin" aria-hidden="true"></span>') +
-        (stageIndex >= 0 ? '<span class="map-stage-marker" aria-hidden="true">' + (stageIndex + 1) + '</span>' : '') +
+        (place.kind === "home" ? '<img class="map-home-icon" src="assets/map/home-marker-v1.png" alt="" aria-hidden="true">' : '') +
         '<span class="map-destination-label">' + place.name + '</span>';
       btn.addEventListener("click", function(){
         // Clicking the place on the map enters it. Selecting and then hunting

@@ -1,6 +1,6 @@
 # Lantern Alley Project Handoff
 
-Last updated: 2026-09-18 (v418)
+Last updated: 2026-09-18 (v419)
 
 A browser game that teaches JLPT N2 Japanese. Vanilla JS, CSS and HTML, no build step, no framework, offline-capable.
 
@@ -20,23 +20,18 @@ Sections 1, 3, 4, 5, 6, 8, 13, 14 and 15 are reference: what the game is, how it
 
 ## 0. Current status
 
-**Latest v418 status (2026-09-18):** the lesson path is now integrated into the
+**Latest v419 status (2026-09-18):** the lesson path is integrated into the
 illustrated map instead of appearing as a separate mobile rail. Entrance,
-Moonview Inn, Market, Tea House, Station and Shrine are connected in learning
-order. Existing map pins remain the controls and carry small numbered signs;
-completed, in-progress, next and locked states stay on those pins, with the next
-destination receiving a warm "次" marker. わが家 remains separate from the lesson
-sequence. Locked lesson pins are hidden while the route remains visible. A small
+Moonview Inn, Market, Tea House, Station and Shrine remain connected in learning
+order. Lesson names are now the only fixed location marks: generic pins,
+numbered badges and the "next" pin cue were removed so the artwork remains
+visible. Locked lesson names stay hidden while the route remains visible. A small
 Kon traveler uses the existing fox artwork and animates to an accessible stage
-before entry. A fresh map opens on Entrance rather than a locked destination.
-The SVG route and CSS signs remain reduced in opacity and size so they do not
-obscure the illustrated background, especially on mobile. The title screen now
-keeps its wordmark at the top and entry controls below it on phones. No new image
-asset was needed. わが家 moved to the lower-left house area off the route and
-stays hidden until the first home gift is received; saves that already visited
-home retain access. Its sign now shares the lesson pin silhouette with an
-upright house glyph inside, so it is distinct but visually part of the same map
-system.
+before entry. The next accessible lesson name receives only a light warm outline.
+わが家 remains off the lesson sequence at the lower-left house area and stays
+hidden until the first home gift is received; saves that already visited home
+retain access. It now uses a small transparent painted machiya illustration,
+cached for offline use, rather than a CSS pin.
 The change is currently uncommitted in the working tree.
 
 **Latest audit (v350, committed and pushed 2026-09-11):** the changes below
