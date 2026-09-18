@@ -3751,6 +3751,13 @@
     renderStreakBadge(null);
   }
 
+  // Whichever run is in progress: an episode keeps its own on previewState,
+  // the three days keep theirs in trainingStreak.
+  function currentStreak(){
+    if(previewState && previewState.satisfaction) return previewState.satisfaction.streak;
+    return trainingStreak.streak;
+  }
+
   // Paint the HUD badge from a satisfaction record, or clear it without one.
   function renderStreakBadge(sat){
     var el = document.getElementById("streak-badge");
@@ -9200,7 +9207,18 @@
     stamp.style.animation = "none";
     void stamp.offsetWidth;
     stamp.style.animation = "";
-    $("feedback-text").innerHTML = text;
+    /* The streak is repeated here, not only in the HUD.
+     *
+     * On a phone the layout is taller than the screen, and while a question is
+     * being answered the bar is scrolled off the top - so the badge marking a
+     * run of correct answers was earned where nobody was looking. This row is
+     * the one thing guaranteed to be on screen at that moment: it is what
+     * bringIntoView below scrolls to. */
+    var run = isCorrect ? currentStreak() : 0;
+    $("feedback-text").innerHTML = text
+      + (run >= 2 ? '<span class="feedback-streak">🔥 ' + run + ' 連続'
+          + (STREAK_BONUSES[run] ? '<b> +¥' + STREAK_BONUSES[run] + '</b>' : '')
+          + '</span>' : '');
     row.classList.add("show");
     bringIntoView(row);
   }

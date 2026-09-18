@@ -198,6 +198,10 @@
 
   .title-entry-panel{position:relative;z-index:3;display:flex;flex-direction:column;align-items:flex-start;gap:12px;max-width:430px}
   .build-stamp{margin:0;order:-1;font-size:.68rem;font-weight:700;letter-spacing:.08em;color:rgba(247,223,171,.6)}
+  /* Shown beside the verdict, which is the one row a phone is guaranteed to
+     have on screen when an answer lands. */
+  .feedback-streak{display:inline-flex;align-items:center;gap:4px;margin-left:8px;padding:2px 9px;border-radius:999px;background:linear-gradient(180deg,#5a2f12,#3a1b09);border:1.5px solid #ffb43d;color:#ffd970;font-size:.8rem;font-weight:900;white-space:nowrap;vertical-align:middle;animation:streak-pop .34s cubic-bezier(.34,1.56,.64,1)}
+  .feedback-streak b{color:#7ee07e}
   .progress-note{
     max-width:38ch;
     padding:7px 11px;
