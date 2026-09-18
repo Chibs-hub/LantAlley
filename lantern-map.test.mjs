@@ -91,6 +91,7 @@ test("the page provides a linear lesson route inside the illustrated map", () =>
 
   assert.match(html, /id="map-stage-route"/);
   assert.match(html, /id="map-stage-route-line"/);
+  assert.match(html, /id="map-home-route-line"/);
   assert.match(html, /id="map-kon-marker"/);
 });
 
@@ -110,7 +111,9 @@ test("the map renders the ordered lesson path with an explicit next stage", () =
 
   assert.match(app, /var STAGE_ORDER = \["entrance", "home-inn", "market", "tea-house", "station", "shrine"\]/);
   assert.match(app, /function renderStagePath\(\)/);
+  assert.match(app, /function renderHomeRoute\(\)/);
   assert.match(app, /map-stage-route-line/);
+  assert.match(app, /map-home-route-line/);
   assert.match(app, /map-destination-label/);
   assert.doesNotMatch(app, /map-pin/);
   assert.match(app, /is-next/);
@@ -153,8 +156,9 @@ test("わが家 is a place on the map, never a lesson", () => {
   assert.equal(home.kind, "home", "it is marked as not a lesson");
   assert.equal(home.playableLocationKey, "home");
 
-  // It sits beside a house off the learning route, not at the route's center.
-  assert.ok(home.position.x < 30 && home.position.y > 65, "home is off-route: " + home.position.x + "," + home.position.y);
+  // It sits in the lower-right house area, reached by the branch that leaves
+  // Entrance down the central steps; it is never part of lesson progression.
+  assert.ok(home.position.x > 75 && home.position.y > 70, "home is lower-right: " + home.position.x + "," + home.position.y);
 
   // It has its own state, so it never reads as unvisited or half-finished.
   assert.equal(map.resolveState("home", {}), "home");

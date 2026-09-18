@@ -1897,6 +1897,30 @@
     route.setAttribute("points", points.join(" "));
   }
 
+  function renderHomeRoute(){
+    var route = $("map-home-route-line");
+    var entrance = LanternAlleyMap.getDestination("entrance");
+    var home = LanternAlleyMap.getDestination("home");
+    if(!route || !entrance || !home) return;
+    // Home is a reward destination, so its spur appears with its marker rather
+    // than suggesting a route to a place a new learner cannot enter yet.
+    if(!locationUnlocked("home")){
+      route.setAttribute("points", "");
+      return;
+    }
+    // First go down the central steps, then turn toward the lower-right house.
+    // Keeping the bend separate from the home endpoint makes the branch follow
+    // the painted alley instead of cutting through the buildings diagonally.
+    var stairY = Math.min(96, entrance.position.y + 7);
+    var turnX = Math.min(home.position.x - 10, entrance.position.x + 18);
+    route.setAttribute("points", [
+      entrance.position.x + "," + entrance.position.y,
+      entrance.position.x + "," + stairY,
+      turnX + "," + stairY,
+      home.position.x + "," + home.position.y
+    ].join(" "));
+  }
+
   function mapTravelerStartKey(){
     if(mapTravelerKey && LanternAlleyMap.getDestination(mapTravelerKey)) return mapTravelerKey;
     if(state.currentKey && LanternAlleyMap.getDestination(state.currentKey) && locationUnlocked(state.currentKey)){
@@ -1978,6 +2002,7 @@
       destinationsEl.appendChild(btn);
     });
     renderStagePath();
+    renderHomeRoute();
     renderMapTraveler();
     $("map-progress-text").textContent = "灯り " + completedCount + " / " + LanternAlleyMap.destinations.length;
     /* 灯り 0 / 6 sat there from the first visit with nothing saying what it

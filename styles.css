@@ -383,6 +383,7 @@
   .map-scene::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;box-shadow:inset 0 0 46px rgba(5,7,18,.56)}
   .map-stage-route{position:absolute;inset:0;z-index:1;width:100%;height:100%;overflow:visible;pointer-events:none}
   #map-stage-route-line{fill:none;stroke:#f0c879;stroke-width:.65;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1.7 2.1;opacity:.46}
+  #map-home-route-line{fill:none;stroke:#f0c879;stroke-width:.75;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1.5 2.2;opacity:.68}
   .map-kon-marker{position:absolute;z-index:3;width:30px;height:30px;display:grid;place-items:center;transform:translate(-50%,-108%);border:2px solid rgba(255,218,145,.9);border-radius:50%;background:radial-gradient(circle at 50% 38%,rgba(255,224,160,.82),rgba(132,69,36,.7) 72%);box-shadow:0 2px 7px rgba(0,0,0,.58),0 0 10px rgba(255,190,82,.24);pointer-events:none;transition:left .52s cubic-bezier(.22,1,.36,1),top .52s cubic-bezier(.22,1,.36,1),transform .18s ease}
   .map-kon-marker img{width:26px;height:26px;object-fit:contain;filter:drop-shadow(0 2px 2px rgba(27,15,10,.62))}
   .map-kon-marker.is-traveling{transform:translate(-50%,-108%) scale(1.12);box-shadow:0 2px 7px rgba(0,0,0,.58),0 0 16px rgba(255,190,82,.5)}

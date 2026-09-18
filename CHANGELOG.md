@@ -6,6 +6,13 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-18 - Move home to the lower-right map branch (v420)
+
+Moved わが家 to the lower-right house area. Its route now leaves the Entrance,
+travels down the central steps, then turns toward home. The branch appears only
+after the first home gift unlocks the destination, so a new learner never sees a
+path to an unavailable reward.
+
 ### 2026-09-18 - Simplify the map destination marks (v419)
 
 Removed every generic lesson pin and numbered badge from the illustrated map.
