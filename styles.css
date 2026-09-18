@@ -1572,14 +1572,14 @@
   @media(prefers-reduced-motion:reduce){.inn-object,.inn-action,.inn-drop-zone{transition:none}.tea-steam:before,.tea-steam:after{animation:none}.inn-room-viewport::before{transition:none}.room-light-bright::after{animation:none;opacity:.22}}
 
 /* Guest satisfaction bar — visible during episodes. */
-.streak-badge{min-height:1.4em;text-align:center;font-size:.82rem;font-weight:800;color:#ffd700;text-shadow:0 1px 3px rgba(0,0,0,.5);letter-spacing:.03em}
+.streak-badge{position:relative;align-self:center;padding:6px 16px;border-radius:999px;background:linear-gradient(180deg,#3a1f10,#24120a);border:2px solid #efb95d;color:#ffdc73;font-size:1.02rem;font-weight:900;letter-spacing:.05em;line-height:1.1;white-space:nowrap;box-shadow:0 3px 10px rgba(0,0,0,.5),inset 0 1px rgba(255,226,166,.28)}
 .streak-badge:empty{display:none}
-.streak-pop{animation:streak-pop .3s ease-out}
+.streak-pop{animation:streak-pop .34s cubic-bezier(.34,1.56,.64,1)}
 .streak-reset{animation:streak-out .35s ease-in forwards}
-.streak-bonus{margin-left:6px;color:#5cb85c;font-size:.78rem;font-weight:900;animation:streak-coin .8s ease-out forwards}
-@keyframes streak-pop{0%{transform:scale(.7);opacity:0}60%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
-@keyframes streak-out{to{opacity:0;transform:translateY(-4px)}}
-@keyframes streak-coin{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-12px)}}
+.streak-bonus{position:absolute;left:50%;top:-22px;transform:translateX(-50%);color:#7ee07e;font-size:1.05rem;font-weight:900;text-shadow:0 2px 6px rgba(0,0,0,.6);pointer-events:none;animation:streak-coin 1.1s ease-out forwards}
+@keyframes streak-pop{0%{transform:scale(.72)}60%{transform:scale(1.18)}100%{transform:scale(1)}}
+@keyframes streak-out{to{opacity:0;transform:translateY(-4px) scale(.9)}}
+@keyframes streak-coin{0%{opacity:0;transform:translate(-50%,4px) scale(.8)}25%{opacity:1;transform:translate(-50%,-6px) scale(1.15)}100%{opacity:0;transform:translate(-50%,-34px) scale(1)}}
 @keyframes guest-sat-in{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
 .guest-sat-summary{text-align:center;padding:16px;display:flex;flex-direction:column;align-items:center;gap:6px}
 .guest-sat-summary-face{font-size:2.8rem;line-height:1;animation:guest-sat-in .5s}
