@@ -67,7 +67,6 @@
       + '<div class="guest-sat-track">'
       + '<div class="guest-sat-fill" style="width:' + sat.score + '%"></div>'
       + '</div>'
-      + '<span class="guest-sat-label">' + f.label + '</span>'
       + '</div>';
   }
 
@@ -80,8 +79,6 @@
     if(faceEl){ faceEl.textContent = f.emoji; faceEl.setAttribute("aria-label", f.label); }
     var fill = bar.querySelector(".guest-sat-fill");
     if(fill) fill.style.width = sat.score + "%";
-    var label = bar.querySelector(".guest-sat-label");
-    if(label) label.textContent = f.label;
     bar.classList.remove("guest-sat-bump", "guest-sat-drop");
     void bar.offsetWidth;
     bar.classList.add(sat.streak > 0 ? "guest-sat-bump" : "guest-sat-drop");
