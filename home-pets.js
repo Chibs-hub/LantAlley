@@ -24,11 +24,8 @@
   }
 
   function normalizeOwned(value){
-    var seen = {};
     return (Array.isArray(value) ? value : []).filter(function(id){
-      if(!get(id) || seen[id]) return false;
-      seen[id] = true;
-      return true;
+      return !!get(id);
     });
   }
 
@@ -49,7 +46,6 @@
     var pet = get(id);
     var wallet = Math.max(0, Number(money) || 0);
     if(!pet) return unchanged(ownedPets, wallet, "missing");
-    if(owns(ownedPets, id)) return unchanged(ownedPets, wallet, "owned");
     if(wallet < pet.price) return unchanged(ownedPets, wallet, "poor");
     var next = normalizeOwned(ownedPets);
     next.push(id);

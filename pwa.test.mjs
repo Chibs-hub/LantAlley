@@ -102,6 +102,15 @@ test("optional telemetry modules load before the game and work offline", () => {
   assert.match(sw, /"\.\/telemetry\.js"/);
 });
 
+test("the pet shop keeps every pet species available and keeps its shelf readable", () => {
+  const app = read("app.js");
+  const css = read("styles.css");
+  assert.match(app, /function ownedPetCount\(species\)/);
+  assert.match(app, /data-buy-pet/);
+  assert.match(app, /ownedCount \+ \(pet\.counter \|\| "匹"\)/);
+  assert.match(css, /\.home-shop-bg\{[^}]*brightness\(\.62\)/);
+});
+
 test("painted home time variants are not re-tinted as if they shared one sunset image", () => {
   const css = read("styles.css");
   for(const period of ["morning", "day", "evening", "night"]){

@@ -5646,6 +5646,11 @@
     return state.ownedPets && state.ownedPets.indexOf(id) >= 0;
   }
 
+  function ownedPetCount(species){
+    if(!state.ownedPets) return 0;
+    return state.ownedPets.filter(function(id){ return id === species; }).length;
+  }
+
   function isPetActive(species){
     return state.activePets && state.activePets.some(function(iid){ return iidSpecies(iid) === species; });
   }
@@ -7090,16 +7095,12 @@
     var money = state.money || 0;
     var html = "";
     PET_CATALOGUE.forEach(function(pet){
-      var owned = ownsPet(pet.id);
+      var ownedCount = ownedPetCount(pet.id);
       var count = activePetCount(pet.id);
       var art = '<div class="home-pet-shop-sprite" style="background-image:url(\'' + pet.sprite + '\');"></div>';
-      if(!owned){
-        html += dockCard(art, pet.nameJp, "¥" + pet.price, 'data-buy-pet="' + pet.id + '"',
-          money >= pet.price ? "" : " is-locked");
-      } else {
-        var sub = count > 0 ? count + (pet.counter || "匹") + "いる ✓" : "今はいない";
-        html += dockCard(art, pet.nameJp, sub, "", " is-owned" + (count > 0 ? " is-active-pet" : ""));
-      }
+      var sub = "¥" + pet.price + (ownedCount ? "　持っている " + ownedCount + (pet.counter || "匹") : "");
+      html += dockCard(art, pet.nameJp, sub, 'data-buy-pet="' + pet.id + '"',
+        (money >= pet.price ? "" : " is-locked") + (count > 0 ? " is-active-pet" : ""));
     });
     return html;
   }
