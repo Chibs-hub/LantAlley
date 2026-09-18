@@ -1572,6 +1572,14 @@
   @media(prefers-reduced-motion:reduce){.inn-object,.inn-action,.inn-drop-zone{transition:none}.tea-steam:before,.tea-steam:after{animation:none}.inn-room-viewport::before{transition:none}.room-light-bright::after{animation:none;opacity:.22}}
 
 /* Guest satisfaction bar — visible during episodes. */
+.streak-badge{min-height:1.4em;text-align:center;font-size:.82rem;font-weight:800;color:#ffd700;text-shadow:0 1px 3px rgba(0,0,0,.5);letter-spacing:.03em}
+.streak-badge:empty{display:none}
+.streak-pop{animation:streak-pop .3s ease-out}
+.streak-reset{animation:streak-out .35s ease-in forwards}
+.streak-bonus{margin-left:6px;color:#5cb85c;font-size:.78rem;font-weight:900;animation:streak-coin .8s ease-out forwards}
+@keyframes streak-pop{0%{transform:scale(.7);opacity:0}60%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+@keyframes streak-out{to{opacity:0;transform:translateY(-4px)}}
+@keyframes streak-coin{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-12px)}}
 @keyframes guest-sat-in{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
 .guest-sat-summary{text-align:center;padding:16px;display:flex;flex-direction:column;align-items:center;gap:6px}
 .guest-sat-summary-face{font-size:2.8rem;line-height:1;animation:guest-sat-in .5s}

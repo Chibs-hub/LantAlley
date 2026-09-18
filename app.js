@@ -3724,6 +3724,33 @@
     });
   }
 
+  var STREAK_BONUSES = {3:30, 5:80, 7:150, 10:300};
+  function updateStreakBadge(sat, prevStreak){
+    var el = document.getElementById("streak-badge");
+    if(!el) return;
+    if(sat.streak >= 2){
+      el.textContent = "🔥 " + sat.streak + " 連続";
+      el.classList.remove("streak-reset");
+      el.classList.add("streak-pop");
+      var bonus = STREAK_BONUSES[sat.streak];
+      if(bonus){
+        state.money = (state.money || 0) + bonus;
+        saveProgress();
+        renderHud();
+        var tip = document.createElement("span");
+        tip.className = "streak-bonus";
+        tip.textContent = "+¥" + bonus;
+        el.appendChild(tip);
+      }
+    } else if(prevStreak >= 2){
+      el.classList.remove("streak-pop");
+      el.classList.add("streak-reset");
+      setTimeout(function(){ el.textContent = ""; el.classList.remove("streak-reset"); }, 400);
+    } else {
+      el.textContent = "";
+    }
+  }
+
   function clearPreviewTimer(){
     if(previewState && previewState.tick){
       clearInterval(previewState.tick);
@@ -3772,7 +3799,9 @@
         if(previewState.missed.indexOf(entry.question.id) < 0) previewState.missed.push(entry.question.id);
         rememberMissedTarget(entry.question);
         if(previewState.satisfaction && typeof GuestSatisfaction !== "undefined"){
+          var prevStreak = previewState.satisfaction.streak;
           GuestSatisfaction.timeout(previewState.satisfaction);
+          updateStreakBadge(previewState.satisfaction, prevStreak);
         }
         showFeedback(false, "時間切れです。お客様を待たせました。この問題は最後にもう一度出ます。");
         revealEpisodeTarget(entry.question);
@@ -4003,9 +4032,12 @@
         + '<p class="reading-document-ask">' + mark(doc.ask) + '</p></div>'
       : "";
 
+    var streakHTML = previewState.satisfaction && previewState.satisfaction.streak >= 2
+      ? '<div class="streak-badge" id="streak-badge">🔥 ' + previewState.satisfaction.streak + ' 連続</div>' : '<div class="streak-badge" id="streak-badge"></div>';
     var scene = $("scene");
     scene.innerHTML = '<div class="inn-workspace">'
       + innShiftProgressMarkup(currentEpisode(), previewState.index, previewState.list.length)
+      + streakHTML
       + '<p class="inn-instruction" id="inn-instruction"></p>'
       + '<div class="repair-timer" id="preview-timer"><span class="repair-timer-fill" id="preview-timer-fill"></span><b id="preview-timer-text">…</b></div>'
       + docMarkup
@@ -4057,7 +4089,9 @@
       if(!correct) rememberMissedTarget(question);
       if(previewState.satisfaction && typeof GuestSatisfaction !== "undefined"){
         var fast = previewState.timer && previewState.timer.remaining > previewState.timer.total * 0.5;
+        var prevStreak = previewState.satisfaction.streak;
         GuestSatisfaction.record(previewState.satisfaction, correct, fast);
+        updateStreakBadge(previewState.satisfaction, prevStreak);
       }
       var earned = 0;
       scheduleReview(question.target, correct);
