@@ -886,6 +886,15 @@
   // re-read on every load. The v2 key is left alone: if this build is rolled
   // back, that record is still the learner's progress.
   if(migratedFromV2) saveProgress();
+  // The build stamp is read off a loaded script's own URL, so it reports what
+  // the device is running rather than what was last pushed.
+  (function renderBuildStamp(){
+    var readout = $("build-stamp");
+    if(!readout) return;
+    var tag = document.querySelector('script[src*="app.js"]');
+    var match = tag ? /[?&]v=(\d+)/.exec(tag.getAttribute("src") || "") : null;
+    readout.textContent = match ? "build v" + match[1] : "build ?";
+  })();
   (function renderTitleMessage(){
     var note = $("progress-note");
     var unfinished = unfinishedPlace();

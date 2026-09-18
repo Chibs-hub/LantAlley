@@ -197,6 +197,7 @@
   }
 
   .title-entry-panel{position:relative;z-index:3;display:flex;flex-direction:column;align-items:flex-start;gap:12px;max-width:430px}
+  .build-stamp{margin:0;order:-1;font-size:.68rem;font-weight:700;letter-spacing:.08em;color:rgba(247,223,171,.6)}
   .progress-note{
     max-width:38ch;
     padding:7px 11px;
@@ -504,7 +505,9 @@
   .mastery-track span{display:block;width:0;height:100%;border-radius:inherit;background:linear-gradient(90deg,#d97835,#ffd36b);transition:width .35s ease}
   .money-hud{min-width:58px;padding:5px 9px;border:1px solid rgba(247,200,119,.5);border-radius:99px;background:rgba(28,16,10,.55);color:#ffe4a0;font-weight:800;text-align:center}
   .map-destination.state-locked{filter:grayscale(.8);opacity:.58}
-  @media(max-width:560px){.learning-hud{width:100%;justify-content:space-between}.mastery-hud{flex:1;grid-template-columns:auto minmax(60px,1fr) auto}}
+  /* The row carries three things on a phone now, and on a 320px screen the
+     third was pushed past the right edge rather than wrapping under. */
+  @media(max-width:560px){.learning-hud{width:100%;justify-content:space-between;flex-wrap:wrap;row-gap:6px}.mastery-hud{flex:1;grid-template-columns:auto minmax(60px,1fr) auto}}
 
   .narration{
     font-size:0.9rem; color:#5a4d3f; font-style:italic;
