@@ -379,13 +379,12 @@ test("buying takes the price for each copy and refuses only when short", () => {
   assert.ok(decor.owns(bought.home, "low-table"));
 
   const again = decor.buy(bought.home, bought.money, "low-table");
-  assert.equal(again.ok, false, "the second copy is too expensive for the remaining wallet");
-  assert.equal(again.reason, "poor");
+  assert.equal(again.ok, false, "a centerpiece cannot be bought twice");
+  assert.equal(again.reason, "single");
 
   const second = decor.buy(bought.home, 300, "low-table");
-  assert.equal(second.ok, true, "the home store should sell a second copy");
-  assert.equal(second.money, 100);
-  assert.equal(decor.ownedCount(second.home, "low-table"), 2);
+  assert.equal(second.ok, false, "a centerpiece may only be bought once");
+  assert.equal(second.reason, "single");
 });
 
 test("floor decor carries a contact shadow matched to its footprint", () => {

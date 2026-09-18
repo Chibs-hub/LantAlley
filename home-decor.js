@@ -473,6 +473,7 @@
     var item = getItem(id);
     var wallet = Number(money) || 0;
     if(!item) return {ok:false, reason:"unknown", home:home, money:wallet};
+    if(item.singlePurchase && owns(home, id)) return {ok:false, reason:"single", home:home, money:wallet};
     if(wallet < item.price) return {ok:false, reason:"poor", home:home, money:wallet};
     var next = {owned:((home && home.owned) || []).concat([id]), placed:copyPlaced(home)};
     return {ok:true, reason:null, home:next, money:wallet - item.price, spent:item.price};

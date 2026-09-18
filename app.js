@@ -7573,6 +7573,7 @@
       var result = decor.buy(homeState(), state.money || 0, buy.getAttribute("data-buy"));
       if(!result.ok){
         if(result.reason === "poor") homeSay("お金が足りません。もう少し稼ぎましょう。");
+        else if(result.reason === "single") homeSay("これは一つだけ買える家具です。");
         return;
       }
       state.home = result.home;
