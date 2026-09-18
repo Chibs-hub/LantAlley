@@ -136,6 +136,48 @@ test("corrected teaching sentences remain natural and story-consistent", () => {
   assert.match(complete.prompt.jp, /見回りを（　　）した部屋の数/);
 });
 
+test("the audited keigo and collocation errors stay fixed", () => {
+  const context = loadInn();
+  const teach = (word) => context.N2HomeInnStage.getTeaching(word);
+
+  /* ご〜してください puts 謙譲語 on the listener: ご案内する is what the
+     speaker does, so asking someone else for it has to drop the する.
+     文化庁's own keigo guidance lists ご確認してください / お伝えしてください
+     as the same error. The sentence also now shows the へ its pattern names. */
+  assert.equal(teach("案内").sentence, "お客様を二階のお部屋へご案内ください。");
+  assert.doesNotMatch(teach("案内").sentence, /ご案内してください/);
+
+  /* An honorific verb and a plain existence verb cannot share one honoured
+     subject: お発ちになる needs いらっしゃいます, which the 指定 card already
+     gets right. */
+  assert.match(teach("事情").sentence, /お発ちになるお客様がいらっしゃいます/);
+
+  /* 納める is pay / supply / accept - the catalogue teaches it on 税金を納める.
+     Folding futon into a closet is 収める at best and しまう in practice, so
+     the card was teaching a sense this word does not carry. */
+  assert.match(teach("納める").sentence, /税を、期日までに役所に納めて/);
+  assert.doesNotMatch(teach("納める").sentence, /押し入れ/);
+
+  // A card's pattern has to appear in the sentence under it.
+  assert.equal(teach("判子").pattern, "判子を押す");
+  assert.match(teach("判子").sentence, /判子を出して、書類に押して/);
+  assert.equal(teach("浴衣").pattern, "浴衣を返す");
+  assert.match(teach("浴衣").sentence, /お返しになっていません/);
+});
+
+test("group labels keep one letter width across the dinner task", () => {
+  /* Kon names the groups in the setup and the task screen names them again a
+     moment later. They were Ｃ/Ｄ in one and C/D in the other - the learner is
+     asked to match a letter that is not the same character. */
+  const fullWidth = /[\uFF21-\uFF3A\uFF41-\uFF5A\uFF10-\uFF19]/;
+  const offenders = stageSource
+    .split("\n")
+    .map((line, i) => [i + 1, line])
+    .filter(([, line]) => fullWidth.test(line));
+  assert.deepEqual(offenders.map(([n]) => n), [],
+    "no full-width Latin letters or digits in the Inn's Japanese");
+});
+
 test("dinner scheduling states which group goes first so the scored solution is unique", () => {
   const context = loadInn();
   const practice = context.N2HomeInnStage.practice.find((item) => item.focusWord === "調整");

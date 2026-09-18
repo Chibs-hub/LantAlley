@@ -5459,8 +5459,12 @@
   }
 
   var PET_CATALOGUE = [
-    {id:"cat",  nameJp:"三毛猫",   price:1000, sprite:"assets/home/pet/calico-sit-v1.png"},
-    {id:"bird", nameJp:"うぐいす", price:1000, sprite:"assets/home/pet/uguisu-perch-v1.png"}
+    /* `counter` because Japanese counts a bird and a cat differently: birds
+       take 羽, four-legged animals 匹. "1匹のうぐいす" is what a shop sign
+       might say casually, but this is a game that teaches the language, so
+       the shelf should not be the one place that gets a counter wrong. */
+    {id:"cat",  nameJp:"三毛猫",   counter:"匹", price:1000, sprite:"assets/home/pet/calico-sit-v1.png"},
+    {id:"bird", nameJp:"うぐいす", counter:"羽", price:1000, sprite:"assets/home/pet/uguisu-perch-v1.png"}
   ];
 
   function inferOwnedPets(save){
@@ -6956,7 +6960,7 @@
         html += dockCard(art, pet.nameJp, "¥" + pet.price, 'data-buy-pet="' + pet.id + '"',
           money >= pet.price ? "" : " is-locked");
       } else {
-        var sub = count > 0 ? count + "匹いる ✓" : "今はいない";
+        var sub = count > 0 ? count + (pet.counter || "匹") + "いる ✓" : "今はいない";
         html += dockCard(art, pet.nameJp, sub, "", " is-owned" + (count > 0 ? " is-active-pet" : ""));
       }
     });

@@ -98,7 +98,7 @@
      */
     "案内": {
       target:"w-annai",
-      sentence:"お客様を二階のお部屋までご案内してください。",
+      sentence:"お客様を二階のお部屋へご案内ください。",
       pattern:"〜を〜へ案内する"
     },
     "注文": {
@@ -145,7 +145,7 @@
     },
     "判子": {
       target:"w-hanko",
-      sentence:"帳場の引き出しから宿の判子を出してください。",
+      sentence:"帳場の引き出しから宿の判子を出して、書類に押してください。",
       pattern:"判子を押す"
     },
     "郵送": {
@@ -219,7 +219,7 @@
     },
     "事情": {
       target:"w-jijou",
-      sentence:"急なご事情で、朝早くお発ちになるお客様がいます。",
+      sentence:"急なご事情で、朝早くお発ちになるお客様がいらっしゃいます。",
       pattern:"事情がある"
     },
     "世話": {
@@ -251,7 +251,7 @@
     },
     "納める": {
       target:"v-osameru-2",
-      sentence:"お布団はたたんで押し入れに納めてください。",
+      sentence:"今月分の宿泊税を、期日までに役所に納めてください。",
       pattern:"〜を〜に納める"
     },
     "戻す": {
@@ -279,7 +279,12 @@
     "浴衣": {
       target:"w-yukata",
       sentence:"三番のお客様は、浴衣を二枚まだお返しになっていません。",
-      pattern:"浴衣を貸す"
+      /* 貸す before: the card named a collocation the sentence never showed,
+         so the one line a learner reads for 浴衣 taught 返す while the card
+         claimed 貸す. The sentence is the deliberate keigo fix from "Fix
+         remaining Inn teaching Japanese" and is correct as it stands - it is
+         the pattern that was describing a different sentence. */
+      pattern:"浴衣を返す"
     },
     "務める": {
       target:"w-tsutomeru-2",
@@ -611,7 +616,7 @@
     "コン：「食事処を開けます。前の組が使った座布団が、向きばらばらのままです。」",
     "コン：「お食事の間に客室を回ります。三番のシーツに染みがついていました。」",
     "コン：「時刻が決まりました。厨房を見てきてください。早く着いたお客様の分のごはんが冷めています。」",
-    "コン：「二日目は帳場から始めます。今夜はＣグループとＤグループが同じ時刻をご希望です。食事処には一組ずつしかご案内できません。」",
+    "コン：「二日目は帳場から始めます。今夜はCグループとDグループが同じ時刻をご希望です。食事処には一組ずつしかご案内できません。」",
     "コン：「今日はよく回りました。最後にもう一つ、明日の朝食の配膳をお願いしたいのですが。」"
   ];
 
@@ -644,7 +649,7 @@
     // Played last: late evening, the final guest of the three days.
     "コン：「夜も遅くなりました。最後のお客様のお茶が冷めてしまったそうです。」",
     // Played second: late morning, before the dining room is committed.
-    "コン：「午前のうちに今夜の夕食の時間を決めます。ＡグループとＢグループが同じ時刻をご希望です。食事処には一組ずつご案内します。」",
+    "コン：「午前のうちに今夜の夕食の時間を決めます。AグループとBグループが同じ時刻をご希望です。食事処には一組ずつご案内します。」",
     // Played third: early afternoon, arranging tomorrow while there is time.
     "コン：「昼過ぎに一息つきました。明日の朝、駅までお客様をお送りする人が必要です。」"
   ];
