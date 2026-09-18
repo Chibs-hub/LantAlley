@@ -7,7 +7,7 @@
  * Bump CACHE_VERSION whenever any shell file changes, or returning players
  * will keep the old build.
  */
-var CACHE_VERSION = "lantern-alley-v433";
+var CACHE_VERSION = "lantern-alley-v434";
 // Fix: the kotatsu's rear cushions sit behind the table again, as they did before v401.
 
 // audio-index.js assigns to `self`, so the worker and the page share one list

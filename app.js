@@ -2573,6 +2573,7 @@
   function endMasteryLoop(){
     var key = state.currentKey;
     previewState = null;
+    renderStreakBadge(null);
     forgetEpisode();
     if(stageComplete(key) && stageMastery(key) === 100) state.visited[key] = true;
     saveProgress();
@@ -2910,6 +2911,7 @@
     var rows = correctionList();
     practiceState = null;
     previewState = null;
+    renderStreakBadge(null);
     screenCharacter.hidden = true;
     screenTitle.style.display = "none";
     screenMap.style.display = "none";
@@ -3725,6 +3727,19 @@
   }
 
   var STREAK_BONUSES = {3:30, 5:80, 7:150, 10:300};
+
+  // Paint the HUD badge from a satisfaction record, or clear it without one.
+  function renderStreakBadge(sat){
+    var el = document.getElementById("streak-badge");
+    if(!el) return;
+    if(sat && sat.streak >= 1){
+      el.textContent = "🔥 " + sat.streak + " 連続";
+    }else{
+      el.textContent = "";
+      el.classList.remove("streak-pop", "streak-reset");
+    }
+  }
+
   function updateStreakBadge(sat, prevStreak){
     var el = document.getElementById("streak-badge");
     if(!el) return;
@@ -4032,12 +4047,12 @@
         + '<p class="reading-document-ask">' + mark(doc.ask) + '</p></div>'
       : "";
 
-    var streakHTML = previewState.satisfaction && previewState.satisfaction.streak >= 1
-      ? '<div class="streak-badge" id="streak-badge">🔥 ' + previewState.satisfaction.streak + ' 連続</div>' : '<div class="streak-badge" id="streak-badge"></div>';
+    // The badge lives in the HUD, which stays on screen; inside the scene it
+    // sat below Kon's speech bubble, where a phone never scrolls to.
+    renderStreakBadge(previewState.satisfaction);
     var scene = $("scene");
     scene.innerHTML = '<div class="inn-workspace">'
       + innShiftProgressMarkup(currentEpisode(), previewState.index, previewState.list.length)
-      + streakHTML
       + '<p class="inn-instruction" id="inn-instruction"></p>'
       + '<div class="repair-timer" id="preview-timer"><span class="repair-timer-fill" id="preview-timer-fill"></span><b id="preview-timer-text">…</b></div>'
       + docMarkup
@@ -4212,6 +4227,7 @@
       }
     }
     previewState = null;
+    renderStreakBadge(null);
     forgetEpisode();
     if(sat && typeof GuestSatisfaction !== "undefined"){
       showSatisfactionSummary(sat, finished, function(){

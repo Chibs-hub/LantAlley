@@ -1572,7 +1572,7 @@
   @media(prefers-reduced-motion:reduce){.inn-object,.inn-action,.inn-drop-zone{transition:none}.tea-steam:before,.tea-steam:after{animation:none}.inn-room-viewport::before{transition:none}.room-light-bright::after{animation:none;opacity:.22}}
 
 /* Guest satisfaction bar — visible during episodes. */
-.streak-badge{position:relative;align-self:center;padding:6px 16px;border-radius:999px;background:linear-gradient(180deg,#3a1f10,#24120a);border:2px solid #efb95d;color:#ffdc73;font-size:1.02rem;font-weight:900;letter-spacing:.05em;line-height:1.1;white-space:nowrap;box-shadow:0 3px 10px rgba(0,0,0,.5),inset 0 1px rgba(255,226,166,.28)}
+.streak-badge{position:relative;display:inline-flex;align-items:center;align-self:center;padding:4px 11px;border-radius:999px;background:linear-gradient(180deg,#5a2f12,#3a1b09);border:1.5px solid #ffb43d;color:#ffd970;font-size:.86rem;font-weight:900;letter-spacing:.03em;line-height:1.15;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.5),inset 0 1px rgba(255,226,166,.3)}
 .streak-badge:empty{display:none}
 .streak-pop{animation:streak-pop .34s cubic-bezier(.34,1.56,.64,1)}
 .streak-reset{animation:streak-out .35s ease-in forwards}
