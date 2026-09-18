@@ -6,6 +6,73 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-18 - Give Kon a contextual title-screen message (v423)
+
+The title screen no longer says that Kon remembers without saying what or why.
+It now selects one concise Japanese line for a first visit, a saved lesson,
+an active lesson, the next unlocked lesson, review, or full completion. Counts
+remain secondary. The selector and offline-shell ordering are regression-tested.
+
+### 2026-09-18 - Curate unsafe Japanese corpus examples (v422)
+
+Removed eight sexual, hostile, or needlessly clinical OpenJLPT/Tatoeba examples
+from the shipped learner catalog while retaining their vocabulary entries. Fixed
+five incorrect or unnatural sentences, added a regression test, and regenerated
+the Japanese review list from the runtime content.
+
+### 2026-09-18 - Put home in the true lower-right map corner (v421)
+
+Adjusted わが家 to the actual visible lower-right corner while leaving an
+8px right margin and 9px label margin on a 390px phone. Its branch endpoint
+moves with it, retaining the route down the stairs from Entrance.
+
+### 2026-09-18 - Move home to the lower-right map branch (v420)
+
+Moved わが家 to the lower-right house area. Its route now leaves the Entrance,
+travels down the central steps, then turns toward home. The branch appears only
+after the first home gift unlocks the destination, so a new learner never sees a
+path to an unavailable reward.
+
+### 2026-09-18 - Simplify the map destination marks (v419)
+
+Removed every generic lesson pin and numbered badge from the illustrated map.
+Accessible lesson names are now the only fixed map marks, while the existing Kon
+traveler remains the sole moving position cue. Replaced the CSS home pin with a
+small painted machiya illustration so わが家 belongs to the alley rather than a
+separate interface layer.
+
+### 2026-09-18 - Move and gate the home destination (v417)
+
+Moved わが家 from the center of the lesson route to the lower-left house area,
+so it no longer reads as one of the lesson stops. The home now appears only
+after the learner receives a home gift, while existing players who already
+visited it keep access. Its map sign is a small house silhouette rather than a
+lesson lantern pin.
+
+### 2026-09-18 - Show accessible map pins and guide Kon to the stage (v416)
+
+Locked lesson destinations no longer render as map buttons; the route remains
+visible so the learner can see where progression leads. Added a small Kon traveler
+marker using the existing production fox artwork, with a short movement animation
+to the selected accessible destination before entering it. The fresh map now
+opens on Entrance and the mobile title layout keeps the wordmark at the top with
+the entry action anchored below it.
+
+### 2026-09-18 - Quiet the lesson route overlay (v415)
+
+Reduced the route stroke and stage signs so the illustrated alley remains the
+main visual. The route is now thinner and more transparent, and the numbered
+signs use smaller translucent badges with a restrained next cue.
+
+### 2026-09-17 - Put the lesson route onto the map (v414)
+
+Moved the linear lesson path into the illustrated map after the separate mobile
+rail made the screen feel crowded. A connected route now runs through Entrance,
+Moonview Inn, Market, Tea House, Station and Shrine. Existing map pins remain the
+controls, each lesson pin carries a small numbered sign, and the next destination
+gets a warm next marker. The home remains separate from the lesson sequence.
+The route is CSS/SVG rather than new raster art so it stays crisp at every size.
+
 ### 2026-09-17 - Ground home and yard objects in their scenes (v402)
 
 Placed objects shared one shadow at the bottom of their image box. That missed

@@ -743,8 +743,10 @@
   var screenCharacter = $("screen-character");
   var screenMap = $("screen-map");
   var screenGame = $("screen-game");
-  var selectedMapKey = "home-inn";
+  var selectedMapKey = "entrance";
   var selectedMapAction = null;
+  var mapTravelerKey = null;
+  var mapTravelTimer = null;
   // The episode as it stood at the last save: which question, what was missed,
   // and the correction queue if the round had started.
   var savedEpisode = null;
@@ -875,14 +877,36 @@
   // re-read on every load. The v2 key is left alone: if this build is rolled
   // back, that record is still the learner's progress.
   if(migratedFromV2) saveProgress();
-  if(visitedCount() > 0){
+  (function renderTitleMessage(){
     var note = $("progress-note");
+    var unfinished = unfinishedPlace();
+    var destinations = LanternAlleyMap.destinations.filter(function(place){
+      return place.key !== "entrance" && place.kind !== "home";
+    });
+    var active = destinations.find(function(place){
+      return locationUnlocked(place.key) && LanternAlleyMap.resolveState(place.key, state) === "in-progress";
+    });
+    var next = destinations.find(function(place){
+      return locationUnlocked(place.key) && LanternAlleyMap.resolveState(place.key, state) === "available";
+    });
+    var message = LanternTitleMessage.select({
+      visitedCount:visitedCount(),
+      unfinishedPlaceName:unfinished && unfinished.name,
+      currentPlaceName:active && active.name,
+      nextPlaceName:next && next.name,
+      allStagesComplete:destinations.length > 0 && destinations.every(function(place){
+        return LanternAlleyMap.resolveState(place.key, state) === "completed";
+      })
+    });
     note.hidden = false;
-    note.textContent = "コンが覚えています　訪れた場所 " + visitedCount() + "/" + locations.length +
-      "　星 " + starCount();
+    note.textContent = message.text + (visitedCount() > 0
+      ? "　訪れた場所 " + visitedCount() + "/" + locations.length + "　星 " + starCount()
+      : "");
+    if(visitedCount() > 0){
     $("btn-start").textContent = "路地へ戻る";
     $("btn-restart").hidden = false;
-  }
+    }
+  })();
 
   $("btn-start").addEventListener("click", function(){
     // The alley opens at its entrance. Sending a first-time player straight
@@ -1871,6 +1895,94 @@
     renderMap();
   }
 
+  function stagePathNextKey(){
+    for(var i = 0; i < STAGE_ORDER.length; i += 1){
+      var key = STAGE_ORDER[i];
+      var place = LanternAlleyMap.getDestination(key);
+      if(!place) continue;
+      var progressState = LanternAlleyMap.resolveState(key, state);
+      if(progressState === "in-progress") return key;
+      if(progressState !== "completed" && locationUnlocked(key)) return key;
+    }
+    return null;
+  }
+
+  function renderStagePath(){
+    var route = $("map-stage-route-line");
+    if(!route) return;
+    var points = [];
+    STAGE_ORDER.forEach(function(key){
+      var place = LanternAlleyMap.getDestination(key);
+      if(!place) return;
+      points.push(place.position.x + "," + place.position.y);
+    });
+    route.setAttribute("points", points.join(" "));
+  }
+
+  function renderHomeRoute(){
+    var route = $("map-home-route-line");
+    var entrance = LanternAlleyMap.getDestination("entrance");
+    var home = LanternAlleyMap.getDestination("home");
+    if(!route || !entrance || !home) return;
+    // Home is a reward destination, so its spur appears with its marker rather
+    // than suggesting a route to a place a new learner cannot enter yet.
+    if(!locationUnlocked("home")){
+      route.setAttribute("points", "");
+      return;
+    }
+    // First go down the central steps, then turn toward the lower-right house.
+    // Keeping the bend separate from the home endpoint makes the branch follow
+    // the painted alley instead of cutting through the buildings diagonally.
+    var stairY = Math.min(96, entrance.position.y + 7);
+    var turnX = Math.min(home.position.x - 10, entrance.position.x + 18);
+    route.setAttribute("points", [
+      entrance.position.x + "," + entrance.position.y,
+      entrance.position.x + "," + stairY,
+      turnX + "," + stairY,
+      home.position.x + "," + home.position.y
+    ].join(" "));
+  }
+
+  function mapTravelerStartKey(){
+    if(mapTravelerKey && LanternAlleyMap.getDestination(mapTravelerKey)) return mapTravelerKey;
+    if(state.currentKey && LanternAlleyMap.getDestination(state.currentKey) && locationUnlocked(state.currentKey)){
+      return state.currentKey;
+    }
+    if(selectedMapKey && LanternAlleyMap.getDestination(selectedMapKey) && locationUnlocked(selectedMapKey)){
+      return selectedMapKey;
+    }
+    return "entrance";
+  }
+
+  function renderMapTraveler(){
+    var marker = $("map-kon-marker");
+    if(!marker) return;
+    mapTravelerKey = mapTravelerStartKey();
+    var place = LanternAlleyMap.getDestination(mapTravelerKey);
+    if(!place) return;
+    marker.style.left = place.position.x + "%";
+    marker.style.top = place.position.y + "%";
+    marker.setAttribute("aria-label", "コンは" + place.name + "にいます");
+  }
+
+  function travelMapKon(key){
+    var marker = $("map-kon-marker");
+    var place = LanternAlleyMap.getDestination(key);
+    if(!marker || !place) return;
+    if(mapTravelTimer) clearTimeout(mapTravelTimer);
+    mapTravelerKey = key;
+    marker.classList.add("is-traveling");
+    marker.style.left = place.position.x + "%";
+    marker.style.top = place.position.y + "%";
+    marker.setAttribute("aria-label", "コンが" + place.name + "へ向かっています");
+    mapTravelTimer = setTimeout(function(){
+      marker.classList.remove("is-traveling");
+      marker.setAttribute("aria-label", "コンは" + place.name + "にいます");
+      var action = LanternAlleyMap.getAction(key, state);
+      if(action) runMapAction(key);
+    }, 520);
+  }
+
   function renderMap(){
     var destinationsEl = $("map-destinations");
     var completedCount = 0;
@@ -1879,18 +1991,26 @@
       var progressState = LanternAlleyMap.resolveState(place.key, state);
       var unlocked = locationUnlocked(place.key);
       if(!unlocked) progressState = "locked";
+      var stageIndex = STAGE_ORDER.indexOf(place.key);
+      if(place.kind === "home" && !unlocked) return;
+      if(stageIndex >= 0 && !unlocked) return;
       var statusLabel = progressState === "locked" ? "未開放" : LanternAlleyMap.stateLabels[progressState];
       if(progressState === "completed") completedCount += 1;
       var btn = document.createElement("button");
       btn.type = "button";
-      btn.className = "map-destination state-" + progressState;
+      btn.className = "map-destination state-" + progressState + (place.kind === "home" ? " is-home" : " is-stage");
+      if(stageIndex >= 0){
+        var nextKey = stagePathNextKey();
+        if(place.key === nextKey) btn.className += " is-next";
+        btn.setAttribute("aria-current", place.key === nextKey ? "step" : "false");
+      }
       btn.style.left = place.position.x + "%";
       btn.style.top = place.position.y + "%";
       btn.setAttribute("data-map-key", place.key);
       btn.setAttribute("aria-label", place.name + "、" + statusLabel);
       btn.setAttribute("aria-pressed", String(place.key === selectedMapKey));
       btn.innerHTML =
-        '<span class="map-pin" aria-hidden="true"></span>' +
+        (place.kind === "home" ? '<img class="map-home-icon" src="assets/map/home-marker-v1.png" alt="" aria-hidden="true">' : '') +
         '<span class="map-destination-label">' + place.name + '</span>';
       btn.addEventListener("click", function(){
         // Clicking the place on the map enters it. Selecting and then hunting
@@ -1899,10 +2019,13 @@
         // just select, so their story shows and nothing dead is offered.
         selectMapDestination(place.key);
         var action = locationUnlocked(place.key) ? LanternAlleyMap.getAction(place.key, state) : null;
-        if(action) runMapAction(place.key);
+        if(action) travelMapKon(place.key);
       });
       destinationsEl.appendChild(btn);
     });
+    renderStagePath();
+    renderHomeRoute();
+    renderMapTraveler();
     $("map-progress-text").textContent = "灯り " + completedCount + " / " + LanternAlleyMap.destinations.length;
     /* 灯り 0 / 6 sat there from the first visit with nothing saying what it
      * counted. The explanation belongs next to the number rather than in
@@ -2029,7 +2152,7 @@
   }
 
   function renderMapDetail(){
-    var place = LanternAlleyMap.getDestination(selectedMapKey) || LanternAlleyMap.getDestination("home-inn");
+    var place = LanternAlleyMap.getDestination(selectedMapKey) || LanternAlleyMap.getDestination("entrance");
     var progressState = LanternAlleyMap.resolveState(place.key, state);
     var unlocked = locationUnlocked(place.key);
     var action = unlocked ? LanternAlleyMap.getAction(place.key, state) : null;
@@ -2341,13 +2464,20 @@
   }
 
   function locationUnlocked(key){
-    // The home is never locked. Coins may unlock what goes inside it; nothing
-    // about understanding decides whether a learner can go home.
     var place = LanternAlleyMap.getDestination(key);
-    if(place && place.kind === "home") return true;
+    // The first gift makes the home available. Existing players who already
+    // visited it keep access during this migration.
+    if(place && place.kind === "home") return homeHasGift();
     var mastery = {};
     STAGE_ORDER.forEach(function(stageKey){ mastery[stageKey] = stageMastery(stageKey); });
     return LanternLearningEconomy.isUnlocked(key, STAGE_ORDER, mastery);
+  }
+
+  function homeHasGift(){
+    if(state.homeVisited === true) return true;
+    var owned = state.home && Array.isArray(state.home.owned) ? state.home.owned : [];
+    var plants = state.garden && Array.isArray(state.garden.plants) ? state.garden.plants : [];
+    return owned.length > 0 || plants.length > 0;
   }
 
   /* ---- 仕上げの稽古: keep asking until the place is actually learned ----

@@ -86,6 +86,15 @@ test("the page provides one semantic map selection and inline detail surface", (
   assert.match(html, /id="map-detail-action"/);
 });
 
+test("the page provides a linear lesson route inside the illustrated map", () => {
+  const html = read("index.html");
+
+  assert.match(html, /id="map-stage-route"/);
+  assert.match(html, /id="map-stage-route-line"/);
+  assert.match(html, /id="map-home-route-line"/);
+  assert.match(html, /id="map-kon-marker"/);
+});
+
 test("map selection is separate from navigation and preparing places expose no action", () => {
   const app = read("app.js");
 
@@ -95,6 +104,30 @@ test("map selection is separate from navigation and preparing places expose no a
   assert.match(app, /LanternAlleyMap\.getAction/);
   assert.match(app, /mapDetailAction\.style\.display = action \? "inline-flex" : "none"/);
   assert.match(app, /enterLocation\(action\.locationKey\)/);
+});
+
+test("the map renders the ordered lesson path with an explicit next stage", () => {
+  const app = read("app.js");
+
+  assert.match(app, /var STAGE_ORDER = \["entrance", "home-inn", "market", "tea-house", "station", "shrine"\]/);
+  assert.match(app, /function renderStagePath\(\)/);
+  assert.match(app, /function renderHomeRoute\(\)/);
+  assert.match(app, /map-stage-route-line/);
+  assert.match(app, /map-home-route-line/);
+  assert.match(app, /map-destination-label/);
+  assert.doesNotMatch(app, /map-pin/);
+  assert.match(app, /is-next/);
+  assert.match(app, /if\(stageIndex >= 0 && !unlocked\) return/);
+  assert.match(app, /function travelMapKon\(key\)/);
+  assert.match(app, /var selectedMapKey = "entrance"/);
+});
+
+test("the phone title keeps the wordmark at the top and entry controls at the bottom", () => {
+  const css = read("styles.css");
+  const mobile = css.slice(css.indexOf("@media(max-width:620px)"), css.indexOf(".btn{"));
+
+  assert.match(mobile, /justify-content:flex-start/);
+  assert.match(mobile, /\.title-entry-panel\{width:100%;margin-top:auto/);
 });
 
 test("the illustrated map keeps visible adaptive destinations without legacy graph furniture", () => {
@@ -123,9 +156,13 @@ test("わが家 is a place on the map, never a lesson", () => {
   assert.equal(home.kind, "home", "it is marked as not a lesson");
   assert.equal(home.playableLocationKey, "home");
 
-  // Roughly central, so it sits among the places rather than after them.
-  assert.ok(home.position.x > 35 && home.position.x < 65, "x is central: " + home.position.x);
-  assert.ok(home.position.y > 30 && home.position.y < 60, "y is central: " + home.position.y);
+  // It sits in the lower-right house area, reached by the branch that leaves
+  // Entrance down the central steps; it is never part of lesson progression.
+  assert.deepEqual(
+    { ...home.position },
+    { x: 91, y: 88 },
+    "home sits at the visible lower-right corner with room for its label",
+  );
 
   // It has its own state, so it never reads as unvisited or half-finished.
   assert.equal(map.resolveState("home", {}), "home");
@@ -141,10 +178,13 @@ test("わが家 is a place on the map, never a lesson", () => {
 
 test("going home is never gated on understanding", () => {
   const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
-  // Coins may unlock what goes inside the room. Nothing about the mastery
-  // gauge decides whether a learner may go home - gating the reward on the
-  // thing it rewards would be circular.
-  assert.match(app, /if\(place && place\.kind === "home"\) return true;/);
+  // The first gift unlocks the home. Nothing about the mastery gauge decides
+  // whether a learner may go home - gating the reward on the thing it rewards
+  // would be circular.
+  assert.match(app, /if\(place && place\.kind === "home"\) return homeHasGift\(\);/);
+  assert.match(app, /function homeHasGift\(\)/);
+  assert.match(app, /map-home-icon/);
+  assert.match(app, /assets\/map\/home-marker-v1\.png/);
   // And it is not one of the ordered stages, so it cannot block the next place
   // or be blocked by the last one.
   const order = /var STAGE_ORDER = \[([^\]]+)\]/.exec(app);

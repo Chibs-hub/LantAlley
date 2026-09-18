@@ -90,9 +90,13 @@ test("optional telemetry modules load before the game and work offline", () => {
   const sw = read("sw.js");
   const configAt = html.indexOf('src="telemetry-config.js');
   const telemetryAt = html.indexOf('src="telemetry.js');
+  const titleMessageAt = html.indexOf('src="title-message.js');
   const appAt = html.indexOf('src="app.js');
   assert.ok(configAt >= 0, "the public telemetry configuration is loaded");
   assert.ok(telemetryAt > configAt, "the adapter follows its configuration");
+  assert.ok(titleMessageAt > telemetryAt, "title dialogue loads after telemetry and before the app");
+  assert.ok(appAt > titleMessageAt, "the app loads after title dialogue");
+  assert.match(sw, /"\.\/title-message\.js"/, "the offline shell caches title dialogue");
   assert.ok(appAt > telemetryAt, "the game starts after its optional adapter");
   assert.match(sw, /"\.\/telemetry-config\.js"/);
   assert.match(sw, /"\.\/telemetry\.js"/);

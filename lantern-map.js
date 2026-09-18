@@ -25,7 +25,7 @@
       name:"わが家",
       story:"コンが路地の奥に小さな部屋を見つけてくれました。仕事が終わったら、ここへ帰ります。",
       focus:"稼いだお金で、少しずつ整えていく場所です。",
-      position:{x:51,y:45},
+      position:{x:91,y:88},
       availability:"implemented",
       playableLocationKey:"home",
       // Not a lesson. Nothing here is gated on understanding, and nothing here

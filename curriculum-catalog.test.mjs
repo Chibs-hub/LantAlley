@@ -50,6 +50,59 @@ test("words the source omits come from the project supplement", () => {
   assert.ok(catalog.items.some((item) => item.canonical === "暖める"), "暖める must still exist");
 });
 
+test("catalog examples exclude unsafe corpus artifacts and keep corrected Japanese", () => {
+  const catalog = loadCatalog();
+  const examples = catalog.items.flatMap((item) => item.examples || []);
+  const removed = [
+    "精液は瓶詰めにする価値はあるよ。",
+    "自慰は狂気に繋がる。",
+    "神はゲイだ。",
+    "さっさと死ね！",
+    "おとといきやがれ！",
+    "ふざけるな！",
+    "排尿障害があります。",
+    "私は患者です。",
+  ];
+  for (const text of removed) {
+    assert.ok(!examples.some((example) => example.ja === text), "unsafe example remains: " + text);
+  }
+
+  assert.equal(catalog.getItem("v-shitagau").examples[0].ja, "子供は親に従う。");
+  assert.equal(catalog.getItem("v-suru").examples[0].ja, "今日、東京はとても寒くなるでしょう。");
+  assert.equal(catalog.getItem("w-shihei").examples[0].ja, "私は１０ドル札をなくした。");
+  assert.equal(catalog.getItem("w-miman").examples[0].ja, "クッキーはまだ５歳になっていない。");
+  assert.equal(catalog.getItem("w-jokyouju").examples[0].ja, "私は教授です。いや、もっと正確に言えば助教授です。");
+});
+
+test("high-priority examples model N2 words in safe, complete situations", () => {
+  const catalog = loadCatalog();
+  const expected = new Map([
+    ["v-akireru", "そんな言い訳にはあきれる。"],
+    ["w-junkan", "血液は体の中を循環している。"],
+    ["w-ketsueki", "血液は体の中を循環している。"],
+    ["w-houki", "玄関を掃除したあと、箒を物置にしまった。"],
+    ["v-susumeru", "初めて来た人には、駅前の案内所を勧めている。"],
+    ["w-souko", "お店の荷物は、裏の倉庫にしまってある。"],
+    ["w-hanzai", "警察は犯罪を防ぐために、夜の見回りをしている。"],
+  ]);
+
+  for (const [id, text] of expected) {
+    assert.equal(catalog.getItem(id).examples[0].ja, text, `unexpected example for ${id}`);
+  }
+  for (const id of ["w-shitai", "w-jisatsu", "w-omae"]) {
+    assert.equal(catalog.getItem(id).examples.length, 0, `${id} needs a labelled context before it has an example`);
+  }
+});
+
+test("catalog examples do not use generic placeholder-name dialogue", () => {
+  const catalog = loadCatalog();
+  const placeholderNames = /(?:トム|メアリー|スーザン|ジョン|ビルは)/;
+  const generic = catalog.items
+    .flatMap((item) => (item.examples || []).map((example) => `${item.id}: ${example.ja}`))
+    .filter((text) => placeholderNames.test(text));
+  assert.equal(generic.length, 0, `generic corpus dialogue remains: ${generic.join(" | ")}`);
+});
+
 test("every word the Inn teaches is in the catalog", () => {
   const catalog = loadCatalog();
   for (const word of ["揃える", "代える", "温める", "調整", "引き受ける"]) {
