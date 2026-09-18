@@ -174,6 +174,7 @@ test("going home is never gated on understanding", () => {
   // would be circular.
   assert.match(app, /if\(place && place\.kind === "home"\) return homeHasGift\(\);/);
   assert.match(app, /function homeHasGift\(\)/);
+  assert.match(app, /map-home-glyph/);
   // And it is not one of the ordered stages, so it cannot block the next place
   // or be blocked by the last one.
   const order = /var STAGE_ORDER = \[([^\]]+)\]/.exec(app);

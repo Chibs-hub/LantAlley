@@ -1964,7 +1964,7 @@
       btn.setAttribute("aria-label", place.name + "、" + statusLabel);
       btn.setAttribute("aria-pressed", String(place.key === selectedMapKey));
       btn.innerHTML =
-        (place.kind === "home" ? '<span class="map-home-marker" aria-hidden="true"></span>' : '<span class="map-pin" aria-hidden="true"></span>') +
+        (place.kind === "home" ? '<span class="map-home-marker" aria-hidden="true"><span class="map-home-glyph"></span></span>' : '<span class="map-pin" aria-hidden="true"></span>') +
         (stageIndex >= 0 ? '<span class="map-stage-marker" aria-hidden="true">' + (stageIndex + 1) + '</span>' : '') +
         '<span class="map-destination-label">' + place.name + '</span>';
       btn.addEventListener("click", function(){

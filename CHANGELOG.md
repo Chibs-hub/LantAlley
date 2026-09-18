@@ -6,6 +6,12 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-18 - Refine the home map marker (v418)
+
+Reworked the home sign to share the lesson pins' teardrop silhouette, warm edge
+and contact shadow while carrying a small upright house glyph inside. This keeps
+わが家 distinct from lessons without making it look like a separate UI system.
+
 ### 2026-09-18 - Move and gate the home destination (v417)
 
 Moved わが家 from the center of the lesson route to the lower-left house area,
