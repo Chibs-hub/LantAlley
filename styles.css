@@ -298,7 +298,7 @@
     /* A phone crops the painting to its middle, which is where the alley
        runs: the stairs, the tea-house lanterns and the wet stones stay in
        frame, and the text still stands on the dark stones at the bottom. */
-    #screen-title.title-scene{min-height:calc(100svh - var(--title-chrome));padding:30px 22px 24px;background-position:58% center;gap:16px}
+    #screen-title.title-scene{min-height:calc(100svh - var(--title-chrome));padding:34px 20px 20px;background-position:58% center;gap:0;justify-content:flex-start}
     /* Never let the title break. At 320px it split after 言葉, which reads as
        two words rather than one name; the clamp is sized so five characters
        and their tracking fit the narrowest phone in one line. */
@@ -310,11 +310,13 @@
        button beside her is the errand and she is the welcome, and because
        the two of them share one line of ground; bottom:11% clears the
        feedback pill fixed 14px off the bottom right. */
-    .title-kon{right:-2%;bottom:12%;top:auto;width:min(33vw,148px);z-index:0}
-    .title-entry-panel{width:100%}
+    .title-kon{right:-2%;bottom:13%;top:auto;width:min(28vw,120px);z-index:0;opacity:.9}
+    .title-entry-panel{width:100%;margin-top:auto;padding-top:18px}
     .title-scene .title-actions{width:100%;align-items:flex-start;flex-direction:column}
-    .title-scene .btn-primary{width:min(72%,264px);padding:14px 22px}
+    .title-scene .btn-primary{width:min(78%,280px);padding:14px 22px}
+    .title-utility{margin-top:8px}
   }
+  @media(prefers-reduced-motion:reduce){.map-kon-marker{transition:none}.map-kon-marker.is-traveling{transform:translate(-50%,-108%)}}
 
   .btn{
     font-family:'Zen Maru Gothic', sans-serif;
@@ -381,6 +383,9 @@
   .map-scene::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;box-shadow:inset 0 0 46px rgba(5,7,18,.56)}
   .map-stage-route{position:absolute;inset:0;z-index:1;width:100%;height:100%;overflow:visible;pointer-events:none}
   #map-stage-route-line{fill:none;stroke:#f0c879;stroke-width:.65;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1.7 2.1;opacity:.46}
+  .map-kon-marker{position:absolute;z-index:3;width:30px;height:30px;display:grid;place-items:center;transform:translate(-50%,-108%);border:2px solid rgba(255,218,145,.9);border-radius:50%;background:radial-gradient(circle at 50% 38%,rgba(255,224,160,.82),rgba(132,69,36,.7) 72%);box-shadow:0 2px 7px rgba(0,0,0,.58),0 0 10px rgba(255,190,82,.24);pointer-events:none;transition:left .52s cubic-bezier(.22,1,.36,1),top .52s cubic-bezier(.22,1,.36,1),transform .18s ease}
+  .map-kon-marker img{width:26px;height:26px;object-fit:contain;filter:drop-shadow(0 2px 2px rgba(27,15,10,.62))}
+  .map-kon-marker.is-traveling{transform:translate(-50%,-108%) scale(1.12);box-shadow:0 2px 7px rgba(0,0,0,.58),0 0 16px rgba(255,190,82,.5)}
   #map-destinations{position:absolute;inset:0;z-index:2}
   .map-destination{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:44px;min-height:44px;padding:0;border:0;background:transparent;color:#fff9e9;cursor:pointer;font-family:'Zen Maru Gothic',sans-serif;filter:drop-shadow(0 4px 6px rgba(0,0,0,.72))}
   .map-pin{position:relative;width:34px;height:43px;border:3px solid #f5d48d;border-radius:50% 50% 50% 12px;background:#3d2b25;transform:rotate(-45deg);box-shadow:0 0 0 3px rgba(41,28,27,.72);transition:transform .16s ease,background .16s ease}

@@ -91,6 +91,7 @@ test("the page provides a linear lesson route inside the illustrated map", () =>
 
   assert.match(html, /id="map-stage-route"/);
   assert.match(html, /id="map-stage-route-line"/);
+  assert.match(html, /id="map-kon-marker"/);
 });
 
 test("map selection is separate from navigation and preparing places expose no action", () => {
@@ -112,6 +113,17 @@ test("the map renders the ordered lesson path with an explicit next stage", () =
   assert.match(app, /map-stage-route-line/);
   assert.match(app, /map-stage-marker/);
   assert.match(app, /is-next/);
+  assert.match(app, /if\(stageIndex >= 0 && !unlocked\) return/);
+  assert.match(app, /function travelMapKon\(key\)/);
+  assert.match(app, /var selectedMapKey = "entrance"/);
+});
+
+test("the phone title keeps the wordmark at the top and entry controls at the bottom", () => {
+  const css = read("styles.css");
+  const mobile = css.slice(css.indexOf("@media(max-width:620px)"), css.indexOf(".btn{"));
+
+  assert.match(mobile, /justify-content:flex-start/);
+  assert.match(mobile, /\.title-entry-panel\{width:100%;margin-top:auto/);
 });
 
 test("the illustrated map keeps visible adaptive destinations without legacy graph furniture", () => {

@@ -6,6 +6,15 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-18 - Show accessible map pins and guide Kon to the stage (v416)
+
+Locked lesson destinations no longer render as map buttons; the route remains
+visible so the learner can see where progression leads. Added a small Kon traveler
+marker using the existing production fox artwork, with a short movement animation
+to the selected accessible destination before entering it. The fresh map now
+opens on Entrance and the mobile title layout keeps the wordmark at the top with
+the entry action anchored below it.
+
 ### 2026-09-18 - Quiet the lesson route overlay (v415)
 
 Reduced the route stroke and stage signs so the illustrated alley remains the
