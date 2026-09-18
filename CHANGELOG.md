@@ -6,6 +6,12 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-18 - Put home in the true lower-right map corner (v421)
+
+Adjusted わが家 to the actual visible lower-right corner while leaving an
+8px right margin and 9px label margin on a 390px phone. Its branch endpoint
+moves with it, retaining the route down the stairs from Entrance.
+
 ### 2026-09-18 - Move home to the lower-right map branch (v420)
 
 Moved わが家 to the lower-right house area. Its route now leaves the Entrance,

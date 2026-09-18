@@ -158,7 +158,11 @@ test("わが家 is a place on the map, never a lesson", () => {
 
   // It sits in the lower-right house area, reached by the branch that leaves
   // Entrance down the central steps; it is never part of lesson progression.
-  assert.ok(home.position.x > 75 && home.position.y > 70, "home is lower-right: " + home.position.x + "," + home.position.y);
+  assert.deepEqual(
+    { ...home.position },
+    { x: 91, y: 88 },
+    "home sits at the visible lower-right corner with room for its label",
+  );
 
   // It has its own state, so it never reads as unvisited or half-finished.
   assert.equal(map.resolveState("home", {}), "home");
