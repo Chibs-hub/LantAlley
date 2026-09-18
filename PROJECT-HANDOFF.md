@@ -1,6 +1,6 @@
 # Lantern Alley Project Handoff
 
-Last updated: 2026-09-18 (v416)
+Last updated: 2026-09-18 (v417)
 
 A browser game that teaches JLPT N2 Japanese. Vanilla JS, CSS and HTML, no build step, no framework, offline-capable.
 
@@ -20,7 +20,7 @@ Sections 1, 3, 4, 5, 6, 8, 13, 14 and 15 are reference: what the game is, how it
 
 ## 0. Current status
 
-**Latest v416 status (2026-09-18):** the lesson path is now integrated into the
+**Latest v417 status (2026-09-18):** the lesson path is now integrated into the
 illustrated map instead of appearing as a separate mobile rail. Entrance,
 Moonview Inn, Market, Tea House, Station and Shrine are connected in learning
 order. Existing map pins remain the controls and carry small numbered signs;
@@ -32,7 +32,9 @@ before entry. A fresh map opens on Entrance rather than a locked destination.
 The SVG route and CSS signs remain reduced in opacity and size so they do not
 obscure the illustrated background, especially on mobile. The title screen now
 keeps its wordmark at the top and entry controls below it on phones. No new image
-asset was needed.
+asset was needed. わが家 moved to the lower-left house area off the route and
+stays hidden until the first home gift is received; saves that already visited
+home retain access. Its sign is a distinct CSS house silhouette.
 The change is currently uncommitted in the working tree.
 
 **Latest audit (v350, committed and pushed 2026-09-11):** the changes below

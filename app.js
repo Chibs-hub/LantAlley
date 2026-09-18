@@ -1946,6 +1946,7 @@
       var unlocked = locationUnlocked(place.key);
       if(!unlocked) progressState = "locked";
       var stageIndex = STAGE_ORDER.indexOf(place.key);
+      if(place.kind === "home" && !unlocked) return;
       if(stageIndex >= 0 && !unlocked) return;
       var statusLabel = progressState === "locked" ? "未開放" : LanternAlleyMap.stateLabels[progressState];
       if(progressState === "completed") completedCount += 1;
@@ -1963,7 +1964,7 @@
       btn.setAttribute("aria-label", place.name + "、" + statusLabel);
       btn.setAttribute("aria-pressed", String(place.key === selectedMapKey));
       btn.innerHTML =
-        '<span class="map-pin" aria-hidden="true"></span>' +
+        (place.kind === "home" ? '<span class="map-home-marker" aria-hidden="true"></span>' : '<span class="map-pin" aria-hidden="true"></span>') +
         (stageIndex >= 0 ? '<span class="map-stage-marker" aria-hidden="true">' + (stageIndex + 1) + '</span>' : '') +
         '<span class="map-destination-label">' + place.name + '</span>';
       btn.addEventListener("click", function(){
@@ -2417,13 +2418,20 @@
   }
 
   function locationUnlocked(key){
-    // The home is never locked. Coins may unlock what goes inside it; nothing
-    // about understanding decides whether a learner can go home.
     var place = LanternAlleyMap.getDestination(key);
-    if(place && place.kind === "home") return true;
+    // The first gift makes the home available. Existing players who already
+    // visited it keep access during this migration.
+    if(place && place.kind === "home") return homeHasGift();
     var mastery = {};
     STAGE_ORDER.forEach(function(stageKey){ mastery[stageKey] = stageMastery(stageKey); });
     return LanternLearningEconomy.isUnlocked(key, STAGE_ORDER, mastery);
+  }
+
+  function homeHasGift(){
+    if(state.homeVisited === true) return true;
+    var owned = state.home && Array.isArray(state.home.owned) ? state.home.owned : [];
+    var plants = state.garden && Array.isArray(state.garden.plants) ? state.garden.plants : [];
+    return owned.length > 0 || plants.length > 0;
   }
 
   /* ---- 仕上げの稽古: keep asking until the place is actually learned ----

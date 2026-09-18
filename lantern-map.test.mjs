@@ -152,9 +152,8 @@ test("わが家 is a place on the map, never a lesson", () => {
   assert.equal(home.kind, "home", "it is marked as not a lesson");
   assert.equal(home.playableLocationKey, "home");
 
-  // Roughly central, so it sits among the places rather than after them.
-  assert.ok(home.position.x > 35 && home.position.x < 65, "x is central: " + home.position.x);
-  assert.ok(home.position.y > 30 && home.position.y < 60, "y is central: " + home.position.y);
+  // It sits beside a house off the learning route, not at the route's center.
+  assert.ok(home.position.x < 30 && home.position.y > 65, "home is off-route: " + home.position.x + "," + home.position.y);
 
   // It has its own state, so it never reads as unvisited or half-finished.
   assert.equal(map.resolveState("home", {}), "home");
@@ -170,10 +169,11 @@ test("わが家 is a place on the map, never a lesson", () => {
 
 test("going home is never gated on understanding", () => {
   const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
-  // Coins may unlock what goes inside the room. Nothing about the mastery
-  // gauge decides whether a learner may go home - gating the reward on the
-  // thing it rewards would be circular.
-  assert.match(app, /if\(place && place\.kind === "home"\) return true;/);
+  // The first gift unlocks the home. Nothing about the mastery gauge decides
+  // whether a learner may go home - gating the reward on the thing it rewards
+  // would be circular.
+  assert.match(app, /if\(place && place\.kind === "home"\) return homeHasGift\(\);/);
+  assert.match(app, /function homeHasGift\(\)/);
   // And it is not one of the ordered stages, so it cannot block the next place
   // or be blocked by the last one.
   const order = /var STAGE_ORDER = \[([^\]]+)\]/.exec(app);

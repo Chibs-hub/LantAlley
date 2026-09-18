@@ -6,6 +6,14 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-18 - Move and gate the home destination (v417)
+
+Moved わが家 from the center of the lesson route to the lower-left house area,
+so it no longer reads as one of the lesson stops. The home now appears only
+after the learner receives a home gift, while existing players who already
+visited it keep access. Its map sign is a small house silhouette rather than a
+lesson lantern pin.
+
 ### 2026-09-18 - Show accessible map pins and guide Kon to the stage (v416)
 
 Locked lesson destinations no longer render as map buttons; the route remains
