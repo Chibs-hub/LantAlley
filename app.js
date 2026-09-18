@@ -3698,11 +3698,29 @@
       + '</div></div>';
     $("btn-words-begin").addEventListener("click", function(event){
       event.stopImmediatePropagation();
-      /* The words the board marked はじめて are taught inside the hour, one
-       * block at a time - see teachBlockIfNeeded, which the first question
-       * runs through. Teaching all of them here put twenty screens in front
-       * of a ten-question shift. */
-      renderPreviewQuestion();
+      var loc = getLocation(state.currentKey);
+      if(!loc || !loc.getTeaching){ renderPreviewQuestion(); return; }
+      var known = (state.masteredByStage || {})[state.currentKey] || [];
+      var seen = {};
+      var queue = [];
+      previewState.list.forEach(function(row){
+        var id = row.question && row.question.target;
+        if(!id || seen[id] || known.indexOf(id) >= 0) return;
+        seen[id] = true;
+        var item = typeof LanternCurriculumCatalog !== "undefined"
+          ? LanternCurriculumCatalog.getItem(id) : null;
+        if(!item || !loc.getTeaching(item.canonical)) return;
+        queue.push({word:item.canonical, target:id});
+      });
+      if(!queue.length){ renderPreviewQuestion(); return; }
+      if(queue.length > 1) queue = queue.slice(1).concat(queue.slice(0, 1));
+      previewState.taughtAll = true;
+      startTeaching(loc, queue, {
+        badge:"今夜の言葉",
+        note:"ここからは本番です。時間内に答えてください。",
+        button:"受付を始めます",
+        then:function(){ renderPreviewQuestion(); }
+      });
     });
   }
 
@@ -3830,11 +3848,8 @@
    */
   function teachBlockIfNeeded(){
     if(!previewState) return false;
-    /* The shift only. The finishing round reuses this renderer, and it exists
-     * to prove words the learner has already met - teaching them there would
-     * put cards in front of the one part of the place whose whole job is to
-     * ask, and its list has no blocks to teach by. */
     if(previewState.masteryRound) return false;
+    if(previewState.taughtAll) return false;
     var entry = previewState.list[previewState.index];
     if(!entry) return false;
     var loc = getLocation(state.currentKey);
