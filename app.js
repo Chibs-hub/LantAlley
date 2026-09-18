@@ -3728,7 +3728,7 @@
   function updateStreakBadge(sat, prevStreak){
     var el = document.getElementById("streak-badge");
     if(!el) return;
-    if(sat.streak >= 2){
+    if(sat.streak >= 1){
       el.textContent = "🔥 " + sat.streak + " 連続";
       el.classList.remove("streak-reset");
       el.classList.add("streak-pop");
@@ -3742,7 +3742,7 @@
         tip.textContent = "+¥" + bonus;
         el.appendChild(tip);
       }
-    } else if(prevStreak >= 2){
+    } else if(prevStreak >= 1){
       el.classList.remove("streak-pop");
       el.classList.add("streak-reset");
       setTimeout(function(){ el.textContent = ""; el.classList.remove("streak-reset"); }, 400);
@@ -4032,7 +4032,7 @@
         + '<p class="reading-document-ask">' + mark(doc.ask) + '</p></div>'
       : "";
 
-    var streakHTML = previewState.satisfaction && previewState.satisfaction.streak >= 2
+    var streakHTML = previewState.satisfaction && previewState.satisfaction.streak >= 1
       ? '<div class="streak-badge" id="streak-badge">🔥 ' + previewState.satisfaction.streak + ' 連続</div>' : '<div class="streak-badge" id="streak-badge"></div>';
     var scene = $("scene");
     scene.innerHTML = '<div class="inn-workspace">'

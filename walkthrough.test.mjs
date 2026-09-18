@@ -3962,3 +3962,45 @@ test("the check at the end of a place asks a missed word again until it is right
   assert.equal(game.$("encounter-progress").textContent, "0",
     "a word that was missed clears nothing");
 });
+
+/* The streak badge is the only thing on an episode screen that pays a run of
+ * correct answers while the run is still going. It shipped unreadable once, and
+ * nothing here would have caught it rendering not at all. */
+test("a run of correct episode answers shows a streak badge", async () => {
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game);
+  startEpisodeAfterTraining(game);
+  game.$("btn-episode-begin").click();
+  game.clock.advance(300);
+  game.$("btn-brief-begin").click();
+  game.clock.advance(300);
+  passWordBoard(game, 300);
+
+  const day = game.context.N2InnEpisodes.episodes[0].days[0];
+  assert.ok(game.$("streak-badge"), "the episode screen carries a streak badge");
+  assert.equal(game.$("streak-badge").textContent, "",
+    "nothing is claimed before anything is answered");
+
+  // An episode waits for 次 between questions; answering alone does not advance.
+  const answerCorrectly = (index) => {
+    const choices = game.$("preview-controls").querySelectorAll("button");
+    assert.ok(choices.length, `question ${index + 1} offers answers`);
+    choices[day.questions[index].answer.correctIndex].click();
+    game.clock.advance(2600);
+  };
+
+  answerCorrectly(0);
+  assert.match(game.$("streak-badge").textContent, /1/,
+    "the first correct answer already shows the streak, so it is discoverable");
+  game.$("btn-next").click();
+  game.clock.advance(900);
+
+  answerCorrectly(1);
+  assert.match(game.$("streak-badge").textContent, /2/,
+    "two correct answers in a row show the streak");
+
+  game.$("btn-next").click();
+  game.clock.advance(900);
+  assert.match(game.$("streak-badge").textContent, /2/,
+    "the streak survives onto the next question's screen");
+});
