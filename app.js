@@ -2582,7 +2582,7 @@
   function endMasteryLoop(){
     var key = state.currentKey;
     previewState = null;
-    renderStreakBadge(null);
+    resetTrainingStreak();
     forgetEpisode();
     if(stageComplete(key) && stageMastery(key) === 100) state.visited[key] = true;
     saveProgress();
@@ -2920,7 +2920,7 @@
     var rows = correctionList();
     practiceState = null;
     previewState = null;
-    renderStreakBadge(null);
+    resetTrainingStreak();
     screenCharacter.hidden = true;
     screenTitle.style.display = "none";
     screenMap.style.display = "none";
@@ -3737,6 +3737,20 @@
 
   var STREAK_BONUSES = {3:30, 5:80, 7:150, 10:300};
 
+  /* The training's own streak. Episodes keep theirs on previewState, which the
+   * three days do not have, so this one is a plain counter with the same badge
+   * and the same milestone payouts. */
+  var trainingStreak = {streak:0};
+  function trackTrainingStreak(isCorrect){
+    var prev = trainingStreak.streak;
+    trainingStreak.streak = isCorrect ? prev + 1 : 0;
+    updateStreakBadge(trainingStreak, prev);
+  }
+  function resetTrainingStreak(){
+    trainingStreak.streak = 0;
+    renderStreakBadge(null);
+  }
+
   // Paint the HUD badge from a satisfaction record, or clear it without one.
   function renderStreakBadge(sat){
     var el = document.getElementById("streak-badge");
@@ -4236,7 +4250,7 @@
       }
     }
     previewState = null;
-    renderStreakBadge(null);
+    resetTrainingStreak();
     forgetEpisode();
     if(sat && typeof GuestSatisfaction !== "undefined"){
       showSatisfactionSummary(sat, finished, function(){
@@ -5109,6 +5123,7 @@
   }
 
   function startStagePhase(loc, phase, items, startIndex){
+    resetTrainingStreak();
     state.stagePhase = phase;
     state.phaseItems = items || null;
     state.encounterIndex = startIndex || 0;
@@ -8988,6 +9003,10 @@
     var stage = getLocation(prompt.stageKey);
     var items = state.phaseItems || stage.getPhaseItems(state.stagePhase);
     showKonStageResponse(stage, prompt, isCorrect, selectedKey);
+    // The three days earn the streak too. It was wired into episodes only, so
+    // a learner working through the training - which is where everyone starts,
+    // and where most of the playing happens - never saw the badge at all.
+    trackTrainingStreak(isCorrect);
     // Outside the isCorrect branch: a missed word has to enter the schedule
     // too, or the one word the learner actually struggled with is the one
     // word that never comes back.
