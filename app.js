@@ -43,6 +43,15 @@
       }
     }
   ];
+
+  /* Declared here rather than beside the stage helpers that use it.
+   * `var` hoists the name but not the value, so a caller that runs during
+   * load - the title screen asks locationUnlocked which place to name -
+   * reached it as undefined and threw before the button handlers below it
+   * were ever attached, leaving the title up with nothing clickable. It is
+   * a constant list, so the safe fix is for it to exist before anything can
+   * ask for it. */
+  var STAGE_ORDER = ["entrance", "home-inn", "market", "tea-house", "station", "shrine"];
   locations.push(N2HomeInnStage);
 
   // The four later places have no room to walk into - their whole stage is the
@@ -2442,8 +2451,6 @@
     var done = state.episodesDone || {};
     return stage.episodes.every(function(episode){ return !!done[episode.id]; });
   }
-
-  var STAGE_ORDER = ["entrance", "home-inn", "market", "tea-house", "station", "shrine"];
 
   function stageMaterial(key){
     if(key === "entrance") return ["entrance-greeting"];

@@ -532,6 +532,33 @@ test("dismissing the title menu outside it does not leave focus in hidden conten
   assert.equal(trigger.focused, true, "focus returns to the visible disclosure button");
 });
 
+test("constants the title screen reads at load are declared before it runs", () => {
+  /* The title screen asks locationUnlocked which place to name next, and that
+   * reads STAGE_ORDER. `var` hoists the name but not the value, so when the
+   * declaration sat below the title code the lookup got undefined and threw -
+   * during load, before the button handlers further down were attached. The
+   * result was a title screen with nothing clickable, and no test caught it:
+   * this harness's map has no destinations, so the `.find()` that reaches
+   * locationUnlocked never runs its callback here.
+   *
+   * A source check rather than a behavioural one for that reason. */
+  const app = read("app.js");
+  const declaredAt = app.indexOf("var STAGE_ORDER");
+  assert.ok(declaredAt > -1, "STAGE_ORDER must still be declared");
+
+  const titleAt = app.indexOf("function renderTitleMessage");
+  assert.ok(titleAt > -1, "the title message renderer must still exist");
+  assert.ok(declaredAt < titleAt,
+    `STAGE_ORDER is declared at ${declaredAt} but the title screen runs at ${titleAt}`);
+
+  // And before any other use, not merely before this one.
+  const firstUse = app.indexOf("STAGE_ORDER", declaredAt + "var STAGE_ORDER".length);
+  const earlierUse = app.slice(0, declaredAt).indexOf("STAGE_ORDER");
+  assert.equal(earlierUse, -1,
+    "nothing may reference STAGE_ORDER above its declaration");
+  assert.ok(firstUse > declaredAt);
+});
+
 test("save-status messages follow the panel's English interface language", () => {
   const app = read("app.js");
 
