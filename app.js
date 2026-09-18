@@ -6737,7 +6737,7 @@
       stored.forEach(function(stack){
         var item = LanternHomeDecor.getItem(stack.id);
         html += dockCard(decorCardArt(stack.id), item.name,
-          item.category + (stack.count > 1 ? " · ×" + stack.count : ""),
+          item.category + " · ×" + stack.count,
           'data-pick="' + stack.id + '"',
           (homeSelected && homeSelected.kind === "decor" && homeSelected.id === stack.id) ? " is-picked" : "");
       });
@@ -6760,10 +6760,11 @@
     LanternHomeDecor.catalogue().forEach(function(item){
       var owned = LanternHomeDecor.owns(homeState(), item.id);
       var quantity = LanternHomeDecor.ownedCount(homeState(), item.id);
+      var soldOut = item.singlePurchase && owned;
       html += dockCard(decorCardArt(item.id), item.name,
-        owned ? "持っている " + quantity + "個 · ¥" + item.price : "¥" + item.price,
-        'data-buy="' + item.id + '"',
-        owned ? " is-owned" : (money >= item.price ? "" : " is-locked"));
+        soldOut ? "持っている ×1" : (owned ? "持っている " + quantity + "個 · ¥" + item.price : "¥" + item.price),
+        'data-buy="' + item.id + '"' + (soldOut ? " disabled" : ""),
+        soldOut ? " is-owned" : (money >= item.price ? "" : " is-locked"));
     });
     return html;
   }
@@ -7082,10 +7083,11 @@
         if(!shopHasArtFor(item.id)) return;
         var owned = LanternHomeDecor.owns(homeState(), item.id);
         var quantity = LanternHomeDecor.ownedCount(homeState(), item.id);
+        var soldOut = item.singlePurchase && owned;
         html += dockCard(decorCardArt(item.id), item.name,
-          owned ? "持っている " + quantity + "個 · ¥" + item.price : "¥" + item.price,
-          'data-buy="' + item.id + '"',
-          owned ? " is-owned" : (money >= item.price ? "" : " is-locked"));
+          soldOut ? "持っている ×1" : (owned ? "持っている " + quantity + "個 · ¥" + item.price : "¥" + item.price),
+          'data-buy="' + item.id + '"' + (soldOut ? " disabled" : ""),
+          soldOut ? " is-owned" : (money >= item.price ? "" : " is-locked"));
       });
     }
     return html || '<p class="home-empty">商品はまだありません。</p>';

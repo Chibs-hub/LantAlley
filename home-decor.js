@@ -50,7 +50,7 @@
      svg:'<rect x="-14" y="-4" width="28" height="24" rx="4" fill="#9c6b4a" stroke="#6b4530" stroke-width="3"/>'
        + '<path d="M0 -4 C -18 -20 -12 -40 0 -34 C 12 -40 18 -20 0 -4 Z" fill="#4f7d4a"/>'
        + '<path d="M0 -6 L0 -30" stroke="#2f5a2c" stroke-width="3"/>'},
-    {id:"low-table", name:"座卓", kind:"floor", price:200, category:"床",
+    {id:"low-table", name:"座卓", kind:"floor", price:200, category:"床", singlePurchase:true,
      image:"assets/home/decor/low-table-round-v1.webp",
      svg:'<rect x="-46" y="-16" width="92" height="12" rx="4" fill="#7d5230" stroke="#573719" stroke-width="3"/>'
        + '<rect x="-38" y="-4" width="8" height="22" fill="#573719"/>'
@@ -61,13 +61,13 @@
        + '<path d="M-30 10 L-24 -14 L24 -14 L30 10 Z" fill="#6b5340" stroke="#3f3021" stroke-width="3"/>'
        + '<ellipse cx="0" cy="-14" rx="24" ry="8" fill="#2b1c11"/>'
        + '<path d="M-8 -18 q6 -12 8 -4 q4 -10 8 2" stroke="#ffb454" stroke-width="3" fill="none"/>'},
-    {id:"irori", name:"囲炉裏", kind:"floor", price:500, category:"床",
+    {id:"irori", name:"囲炉裏", kind:"floor", price:500, category:"床", singlePurchase:true,
      image:"assets/home/decor/irori-jizaikagi-v1.png",
      allowedSlots:["hearth-center"],
      svg:'<rect x="-42" y="-18" width="84" height="36" rx="5" fill="#4b2e1b" stroke="#2b1a11" stroke-width="4"/>'
        + '<rect x="-28" y="-7" width="56" height="22" rx="3" fill="#25201b"/>'
        + '<path d="M-12 9 Q0 -18 12 9" fill="none" stroke="#f49a3d" stroke-width="5"/>'},
-    {id:"kotatsu", name:"こたつ", kind:"floor", price:260, category:"床",
+    {id:"kotatsu", name:"こたつ", kind:"floor", price:260, category:"床", singlePurchase:true,
      image:"assets/home/decor/kotatsu-blue-v1.webp",
      svg:'<rect x="-44" y="-16" width="88" height="32" rx="8" fill="#334b72"/><rect x="-38" y="-24" width="76" height="12" rx="4" fill="#7d5230"/>'},
     {id:"folding-screen", name:"屏風", kind:"floor", price:360, category:"床",

@@ -111,6 +111,16 @@ test("the pet shop keeps every pet species available and keeps its shelf readabl
   assert.match(css, /\.home-shop-bg\{[^}]*brightness\(\.62\)/);
 });
 
+test("home shop distinguishes repeatable stock from one-time centerpieces", () => {
+  const app = read("app.js");
+  const decor = read("home-decor.js");
+  assert.match(decor, /id:"irori"[^\n]*singlePurchase:true/);
+  assert.match(decor, /id:"kotatsu"[^\n]*singlePurchase:true/);
+  assert.match(decor, /id:"low-table"[^\n]*singlePurchase:true/);
+  assert.match(app, /" · ×" \+ stack\.count/);
+  assert.match(app, /item\.singlePurchase && owned/);
+});
+
 test("painted home time variants are not re-tinted as if they shared one sunset image", () => {
   const css = read("styles.css");
   for(const period of ["morning", "day", "evening", "night"]){
