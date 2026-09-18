@@ -3773,7 +3773,6 @@
         rememberMissedTarget(entry.question);
         if(previewState.satisfaction && typeof GuestSatisfaction !== "undefined"){
           GuestSatisfaction.timeout(previewState.satisfaction);
-          GuestSatisfaction.updateBar($("scene"), previewState.satisfaction);
         }
         showFeedback(false, "時間切れです。お客様を待たせました。この問題は最後にもう一度出ます。");
         revealEpisodeTarget(entry.question);
@@ -4004,12 +4003,9 @@
         + '<p class="reading-document-ask">' + mark(doc.ask) + '</p></div>'
       : "";
 
-    var satBar = previewState.satisfaction && typeof GuestSatisfaction !== "undefined"
-      ? GuestSatisfaction.barHTML(previewState.satisfaction) : "";
     var scene = $("scene");
     scene.innerHTML = '<div class="inn-workspace">'
       + innShiftProgressMarkup(currentEpisode(), previewState.index, previewState.list.length)
-      + satBar
       + '<p class="inn-instruction" id="inn-instruction"></p>'
       + '<div class="repair-timer" id="preview-timer"><span class="repair-timer-fill" id="preview-timer-fill"></span><b id="preview-timer-text">…</b></div>'
       + docMarkup
@@ -4062,7 +4058,6 @@
       if(previewState.satisfaction && typeof GuestSatisfaction !== "undefined"){
         var fast = previewState.timer && previewState.timer.remaining > previewState.timer.total * 0.5;
         GuestSatisfaction.record(previewState.satisfaction, correct, fast);
-        GuestSatisfaction.updateBar($("scene"), previewState.satisfaction);
       }
       var earned = 0;
       scheduleReview(question.target, correct);

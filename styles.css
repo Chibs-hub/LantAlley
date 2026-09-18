@@ -1572,17 +1572,6 @@
   @media(prefers-reduced-motion:reduce){.inn-object,.inn-action,.inn-drop-zone{transition:none}.tea-steam:before,.tea-steam:after{animation:none}.inn-room-viewport::before{transition:none}.room-light-bright::after{animation:none;opacity:.22}}
 
 /* Guest satisfaction bar — visible during episodes. */
-.guest-sat{display:flex;align-items:center;gap:6px;padding:3px 8px;border-radius:8px;background:rgba(57,31,20,.55);animation:guest-sat-in .35s ease-out}
-.guest-sat-face{font-size:1rem;line-height:1;transition:transform .3s}
-.guest-sat-track{flex:1;height:6px;border-radius:4px;background:rgba(255,255,255,.18);overflow:hidden}
-.guest-sat-fill{height:100%;border-radius:6px;transition:width .5s ease-out,background .4s}
-[data-level="angry"]  .guest-sat-fill{background:#e05252}
-[data-level="neutral"] .guest-sat-fill{background:#d4a643}
-[data-level="ok"]     .guest-sat-fill{background:#8db86b}
-[data-level="happy"]  .guest-sat-fill{background:#5cb85c}
-[data-level="thrilled"] .guest-sat-fill{background:linear-gradient(90deg,#5cb85c,#ffd700)}
-.guest-sat-bump .guest-sat-face{transform:scale(1.2);transition:transform .15s}
-.guest-sat-drop .guest-sat-face{transform:scale(.85);transition:transform .15s}
 @keyframes guest-sat-in{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
 .guest-sat-summary{text-align:center;padding:16px;display:flex;flex-direction:column;align-items:center;gap:6px}
 .guest-sat-summary-face{font-size:2.8rem;line-height:1;animation:guest-sat-in .5s}
