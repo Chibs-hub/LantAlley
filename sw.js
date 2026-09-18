@@ -7,7 +7,7 @@
  * Bump CACHE_VERSION whenever any shell file changes, or returning players
  * will keep the old build.
  */
-var CACHE_VERSION = "lantern-alley-v421";
+var CACHE_VERSION = "lantern-alley-v423";
 // Fix: the kotatsu's rear cushions sit behind the table again, as they did before v401.
 
 // audio-index.js assigns to `self`, so the worker and the page share one list
@@ -22,6 +22,7 @@ var SHELL = [
   "./telemetry-config.js",
   "./debug-mode.js",
   "./telemetry.js",
+  "./title-message.js",
   "./app.js",
   "./entrance-stage-logic.js",
   "./moonview-inn-interactions.js",
@@ -159,11 +160,11 @@ var SHELL = [
   "./manifest.webmanifest",
   "./assets/branding/lantern-mark-v2.png",
   "./assets/social/lantern-alley-share-v2.jpg",
-  "./icons/icon-192.png?v=421",
-  "./icons/icon-512.png?v=421",
-  "./icons/icon-192-maskable.png?v=421",
-  "./icons/icon-512-maskable.png?v=421",
-  "./icons/apple-touch-icon.png?v=421",
+  "./icons/icon-192.png?v=423",
+  "./icons/icon-512.png?v=423",
+  "./icons/icon-192-maskable.png?v=423",
+  "./icons/icon-512-maskable.png?v=423",
+  "./icons/apple-touch-icon.png?v=423",
   "./assets/kon/kon-idle.webp",
   "./assets/kon/kon-wave-left.webp",
   "./assets/kon/kon-wave-right.webp",

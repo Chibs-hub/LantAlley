@@ -877,14 +877,36 @@
   // re-read on every load. The v2 key is left alone: if this build is rolled
   // back, that record is still the learner's progress.
   if(migratedFromV2) saveProgress();
-  if(visitedCount() > 0){
+  (function renderTitleMessage(){
     var note = $("progress-note");
+    var unfinished = unfinishedPlace();
+    var destinations = LanternAlleyMap.destinations.filter(function(place){
+      return place.key !== "entrance" && place.kind !== "home";
+    });
+    var active = destinations.find(function(place){
+      return locationUnlocked(place.key) && LanternAlleyMap.resolveState(place.key, state) === "in-progress";
+    });
+    var next = destinations.find(function(place){
+      return locationUnlocked(place.key) && LanternAlleyMap.resolveState(place.key, state) === "available";
+    });
+    var message = LanternTitleMessage.select({
+      visitedCount:visitedCount(),
+      unfinishedPlaceName:unfinished && unfinished.name,
+      currentPlaceName:active && active.name,
+      nextPlaceName:next && next.name,
+      allStagesComplete:destinations.length > 0 && destinations.every(function(place){
+        return LanternAlleyMap.resolveState(place.key, state) === "completed";
+      })
+    });
     note.hidden = false;
-    note.textContent = "コンが覚えています　訪れた場所 " + visitedCount() + "/" + locations.length +
-      "　星 " + starCount();
+    note.textContent = message.text + (visitedCount() > 0
+      ? "　訪れた場所 " + visitedCount() + "/" + locations.length + "　星 " + starCount()
+      : "");
+    if(visitedCount() > 0){
     $("btn-start").textContent = "路地へ戻る";
     $("btn-restart").hidden = false;
-  }
+    }
+  })();
 
   $("btn-start").addEventListener("click", function(){
     // The alley opens at its entrance. Sending a first-time player straight

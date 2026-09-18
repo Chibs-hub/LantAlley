@@ -6,6 +6,20 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-18 - Give Kon a contextual title-screen message (v423)
+
+The title screen no longer says that Kon remembers without saying what or why.
+It now selects one concise Japanese line for a first visit, a saved lesson,
+an active lesson, the next unlocked lesson, review, or full completion. Counts
+remain secondary. The selector and offline-shell ordering are regression-tested.
+
+### 2026-09-18 - Curate unsafe Japanese corpus examples (v422)
+
+Removed eight sexual, hostile, or needlessly clinical OpenJLPT/Tatoeba examples
+from the shipped learner catalog while retaining their vocabulary entries. Fixed
+five incorrect or unnatural sentences, added a regression test, and regenerated
+the Japanese review list from the runtime content.
+
 ### 2026-09-18 - Put home in the true lower-right map corner (v421)
 
 Adjusted わが家 to the actual visible lower-right corner while leaving an

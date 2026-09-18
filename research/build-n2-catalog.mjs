@@ -141,6 +141,107 @@ const READING_CORRECTIONS = new Map([
   ["賛成", "さんせい"],
 ]);
 
+/* OpenJLPT examples include imported Tatoeba sentences. They are useful source
+ * material, but an example is displayed to learners and therefore needs a
+ * separate audience check. Keep the vocabulary rows, remove only examples
+ * that are sexual, hostile, or needlessly clinical, and repair the five
+ * confirmed wording errors below. */
+const REMOVED_EXAMPLES = new Set([
+  "精液は瓶詰めにする価値はあるよ。",
+  "自慰は狂気に繋がる。",
+  "神はゲイだ。",
+  "さっさと死ね！",
+  "おとといきやがれ！",
+  "ふざけるな！",
+  "排尿障害があります。",
+  "私は患者です。",
+  "死体はまだ上がらない。",
+  "彼は自殺をした。",
+  "おまえは首だ。",
+]);
+/* Some words are valid N2 vocabulary but cannot be shown in a general-audience
+ * game without content or register labels. Keep their dictionary rows and
+ * omit every imported example until those labels exist in the learning UI. */
+const WORDS_WITHOUT_UNLABELLED_EXAMPLES = new Set(["死体", "自殺", "おまえ", "逮捕"]);
+const EXAMPLE_CORRECTIONS = new Map([
+  ["子供は子宮に従う。", { ja:"子供は親に従う。", en:"Children obey their parents." }],
+  ["今日、東京はとても寒く為るでしょう。", { ja:"今日、東京はとても寒くなるでしょう。", en:"Today, Tokyo will get very cold." }],
+  ["私は１０ドル紙幣をなくした。", { ja:"私は１０ドル札をなくした。", en:"I lost a ten-dollar bill." }],
+  ["クッキーは５歳未満だ。", { ja:"クッキーはまだ５歳になっていない。", en:"Cookie is not yet five years old." }],
+  ["私は教授です、いやもっと正確に言えば、助教授です。", { ja:"私は教授です。いや、もっと正確に言えば助教授です。", en:"I'm a professor, or rather an associate professor, to be exact." }],
+  ["結婚が聞いてあきれる！", { ja:"そんな言い訳にはあきれる。", en:"That excuse is unbelievable." }],
+  ["血液の循環。", { ja:"血液は体の中を循環している。", en:"Blood circulates through the body." }],
+  ["酔っ払っておそく家に帰ったかどで、怒った女房は亭主に食ってかかり、箒で亭主をひっぱたいた。", { ja:"玄関を掃除したあと、箒を物置にしまった。", en:"After cleaning the entryway, I put the broom away in the storage room." }],
+  ["誰かに自殺を勧めることは犯罪ですか？", { ja:"初めて来た人には、駅前の案内所を勧めている。", en:"I recommend the information center in front of the station to first-time visitors." }],
+  ["その倉庫は麻薬密売者の隠れみのだった。", { ja:"お店の荷物は、裏の倉庫にしまってある。", en:"The shop's supplies are stored in the warehouse behind it." }],
+  ["これは戦争犯罪だ。", { ja:"警察は犯罪を防ぐために、夜の見回りをしている。", en:"The police patrol at night to prevent crime." }],
+  ["トムはしきりに謝った。", { ja:"宿の主人は、遅れて着いた客にしきりに謝った。", en:"The innkeeper repeatedly apologized to the guest who arrived late." }],
+  ["トムは結婚指輪をはめるの？", { ja:"祭りの日は、指輪をはめて出かける。", en:"On festival days, I put on a ring before going out." }],
+  ["マイクは笑った。", { ja:"案内所のマイクから、次の電車の知らせが流れた。", en:"An announcement about the next train came over the information desk microphone." }],
+  ["トム、マラソンで優勝したよ。", { ja:"町のマラソン大会は、川沿いの道を走る。", en:"The town marathon follows the road along the river." }],
+  ["トムはメンバーですか？", { ja:"この清掃隊のメンバーを募集している。", en:"We are recruiting members for this cleanup team." }],
+  ["メアリーは、鏡に映る自分の姿に目をやった。", { ja:"池に映る灯りがきれいだ。", en:"The lights reflected in the pond are beautiful." }],
+  ["メアリーは艶やかな黒髪をしている。", { ja:"店先には、艶のある漆の器が並んでいる。", en:"Glossy lacquerware is displayed in front of the shop." }],
+  ["トムは脳外科医だ。", { ja:"外科の受付は二階です。", en:"The surgery department reception is on the second floor." }],
+  ["トムは学部卒だ。", { ja:"大学では、文学部で日本語を学んでいる。", en:"I study Japanese in the faculty of literature at university." }],
+  ["トムは感激するだろう。", { ja:"客が喜んでくれて、店主は感激した。", en:"The shopkeeper was moved because the guest was pleased." }],
+  ["トムの監督です。", { ja:"映画館で、好きな監督の作品を見た。", en:"I saw a film by my favorite director at the cinema." }],
+  ["トムは教養がある。", { ja:"図書館で本を読んで、教養を深めている。", en:"I read at the library to broaden my knowledge." }],
+  ["トムは賢い。", { ja:"分からないときに尋ねるのは、賢い選択だ。", en:"Asking when you do not understand is a wise choice." }],
+  ["トムは顕微鏡が欲しい。", { ja:"学校の理科室で顕微鏡を使った。", en:"I used a microscope in the school science room." }],
+  ["トムは高校の後輩です。", { ja:"店の後輩に仕事を教えている。", en:"I am teaching the work to my junior colleague at the shop." }],
+  ["トムは社会的交流が苦手だ。", { ja:"祭りでは、町の人と旅人が交流できる。", en:"At the festival, townspeople and travelers can interact." }],
+  ["トムは好き嫌いないよ。", { ja:"好き嫌いをせずに、野菜も食べよう。", en:"Try to eat vegetables without being picky." }],
+  ["どうにかしてトムを支える。", { ja:"みんなで宿の準備を支えよう。", en:"Let us all support the inn's preparations." }],
+  ["電話が鳴る。スーザンは受話器を取り上げる。", { ja:"電話が鳴ったので、店主が受話器を取り上げた。", en:"The phone rang, so the shopkeeper picked up the receiver." }],
+  ["トムと連絡が取れる？", { ja:"駅に着いたら、家族と連絡が取れた。", en:"When I arrived at the station, I was able to contact my family." }],
+  ["トムは私の助手です。", { ja:"茶屋の主人の助手として、料理を手伝っている。", en:"I help with cooking as the tea house owner's assistant." }],
+  ["トムは承認した。", { ja:"計画は町の会議で承認された。", en:"The plan was approved at the town meeting." }],
+  ["トムは消防士だ。", { ja:"消防の訓練が、広場で行われている。", en:"A fire service drill is being held in the square." }],
+  ["先生はジョンに賞品を与えた。", { ja:"クイズに正解して、小さな賞品をもらった。", en:"I answered the quiz correctly and received a small prize." }],
+  ["トム、そこの醤油取って。", { ja:"焼き魚に醤油を少しかける。", en:"I put a little soy sauce on grilled fish." }],
+  ["トムは上級のスノーボーダーだ。", { ja:"上級の授業では、長い会話を練習する。", en:"In the advanced class, we practice long conversations." }],
+  ["トムは１０月上旬からここにいます。", { ja:"桜は四月上旬に咲き始める。", en:"Cherry blossoms begin to bloom in early April." }],
+  ["トムったら、寝間着のまま授業にきたのよ。", { ja:"寝間着のまま、玄関の外に出ないでね。", en:"Do not go outside the entrance in your pajamas." }],
+  ["トムが真っ先に着いた。", { ja:"駅に着いたら、真っ先に案内所へ行こう。", en:"When we arrive at the station, let us go to the information center first." }],
+  ["トムは真剣だ。", { ja:"宿の仕事について、真剣に考えている。", en:"I am thinking seriously about my work at the inn." }],
+  ["トムは大学進学を決意した。", { ja:"高校を卒業したら、進学するか就職するか考える。", en:"After high school graduation, I will consider further study or work." }],
+  ["誓うよ、ジョン。", { ja:"二人は神社で、これからも助け合うと誓った。", en:"The two promised at the shrine to continue helping each other." }],
+  ["トムは選択した。", { ja:"二つの道から、一つを選択してください。", en:"Please choose one of the two paths." }],
+  ["トムの送別会に行くの？", { ja:"春には、町を出る人の送別会を開く。", en:"In spring, we hold farewell parties for people leaving town." }],
+  ["トムはとっても頭がいいって、人々は口を揃える。", { ja:"みんなが口を揃えて、その店の料理をほめた。", en:"Everyone praised the shop's food in unison." }],
+  ["トムは体育の先生だ。", { ja:"体育の授業で、校庭を走った。", en:"I ran around the schoolyard in physical education class." }],
+  ["トムは反対するかもよ。", { ja:"この提案に対する意見を聞かせてください。", en:"Please share your opinion about this proposal." }],
+  ["トムは大学院生です。", { ja:"大学院で、日本語教育について研究している。", en:"I research Japanese-language education in graduate school." }],
+  ["トムは地質学を専攻してた。", { ja:"海辺の地質を調べる見学会に参加した。", en:"I joined a field trip to study the geology of the coast." }],
+  ["トムとは仲良しよ。", { ja:"市場の店主と茶屋の主人は仲良しだ。", en:"The market shopkeeper and tea house owner are close friends." }],
+  ["トムに直接言えよ。", { ja:"分からないことは、店員に直接聞いてください。", en:"Please ask a clerk directly about anything you do not understand." }],
+  ["トムの専攻は哲学だ。", { ja:"大学で哲学を学んでいる。", en:"I study philosophy at university." }],
+  ["トムは鉄道オタクだ。", { ja:"鉄道で旅をすると、景色をゆっくり楽しめる。", en:"When traveling by rail, you can enjoy the scenery slowly." }],
+  ["さぁ、トムの登場です。", { ja:"祭りの舞台に、太鼓の演奏者が登場した。", en:"A taiko performer appeared on the festival stage." }],
+  ["もうすぐ、トムの貯金が底を突く。", { ja:"旅の途中で、お金が底を突かないように気をつけよう。", en:"Let us be careful not to run out of money during the trip." }],
+  ["トムは呑気でマイペースな性格だ。", { ja:"休日は、川辺で呑気に過ごした。", en:"I spent my day off relaxing by the river." }],
+  ["トムはインドの農村事情に詳しい。", { ja:"農村では、季節ごとに違う作物が育つ。", en:"Different crops grow in rural villages each season." }],
+  ["トムは馬を売買している。", { ja:"この店では、古い本の売買もしている。", en:"This shop also buys and sells old books." }],
+  ["トムって、不潔ね。", { ja:"台所を不潔なままにしないでください。", en:"Please do not leave the kitchen unclean." }],
+  ["トムと別れるの？", { ja:"駅で友人との別れを惜しんだ。", en:"I was sad to part with a friend at the station." }],
+  ["ビルは編集部員です。", { ja:"町の広報誌を編集する仕事をしている。", en:"I work editing the town newsletter." }],
+  ["トムは弓矢で魚を捕るのが好きだ。", { ja:"川で魚を捕るには、地域の決まりを守る。", en:"To catch fish in the river, follow the local rules." }],
+  ["トムは幼児です。", { ja:"幼児が遊べる場所は、入口の近くです。", en:"The area where young children can play is near the entrance." }],
+  ["トムは蝋燭を吹き消した。", { ja:"停電に備えて、蝋燭を用意しておく。", en:"Keep candles ready in case of a power outage." }],
+  ["ビルは論争が巧みだ。", { ja:"町の会議では、計画をめぐる論争が続いた。", en:"A debate over the plan continued at the town meeting." }],
+  ["明日トムと話し合うよ。", { ja:"困ったことがあれば、みんなで話し合おう。", en:"If there is a problem, let us discuss it together." }],
+  ["トムは贅沢三昧だ。", { ja:"旅先で温泉に入るのは、小さな贅沢だ。", en:"Enjoying a hot spring while traveling is a small luxury." }],
+]);
+
+function curatedExamples(canonical, value) {
+  if (WORDS_WITHOUT_UNLABELLED_EXAMPLES.has(canonical)) return [];
+  return parseList(value)
+    .filter((example) => example && example.ja && !REMOVED_EXAMPLES.has(example.ja))
+    .slice(0, 1)
+    .map((example) => ({ ...example, ...(EXAMPLE_CORRECTIONS.get(example.ja) || {}) }));
+}
+
 const excluded = [];
 const byWord = new Map();
 
@@ -196,7 +297,7 @@ for (const file of ["research/openjlpt/n2.json", "research/openjlpt/n3.json"]) {
     if (byWord.has(canonical)) continue;
     byWord.set(canonical, {
       canonical, reading, aliases, meanings,
-      examples: parseList(record.examples).filter((e) => e && e.ja).slice(0, 1),
+      examples: curatedExamples(canonical, record.examples),
       level, source: "openjlpt", reviewed: false, derivedReading, readingRepaired,
       hasKanji: KANJI.test(canonical),
       type: inferType(meanings),
