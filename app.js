@@ -3564,7 +3564,8 @@
     if(!list.length) return;
     setInnFocusCues(false);
     snapshotMastery(state.currentKey);
-    previewState = {index:0, list:list, answered:false, missed:[], missedTargets:[], repair:null};
+    previewState = {index:0, list:list, answered:false, missed:[], missedTargets:[], repair:null,
+      satisfaction: typeof GuestSatisfaction !== "undefined" ? GuestSatisfaction.create(list.length) : null};
     var episode = currentEpisode();
     trackTelemetry("episode_started", {episode_id:episode ? episode.id : null});
     screenTitle.style.display = "none";
@@ -3752,6 +3753,10 @@
         var entry = previewState.list[previewState.index];
         if(previewState.missed.indexOf(entry.question.id) < 0) previewState.missed.push(entry.question.id);
         rememberMissedTarget(entry.question);
+        if(previewState.satisfaction && typeof GuestSatisfaction !== "undefined"){
+          GuestSatisfaction.timeout(previewState.satisfaction);
+          GuestSatisfaction.updateBar($("scene"), previewState.satisfaction);
+        }
         showFeedback(false, "時間切れです。お客様を待たせました。この問題は最後にもう一度出ます。");
         revealEpisodeTarget(entry.question);
         advancePreviewLater(false);
@@ -3984,9 +3989,12 @@
         + '<p class="reading-document-ask">' + mark(doc.ask) + '</p></div>'
       : "";
 
+    var satBar = previewState.satisfaction && typeof GuestSatisfaction !== "undefined"
+      ? GuestSatisfaction.barHTML(previewState.satisfaction) : "";
     var scene = $("scene");
     scene.innerHTML = '<div class="inn-workspace">'
       + innShiftProgressMarkup(currentEpisode(), previewState.index, previewState.list.length)
+      + satBar
       + '<p class="inn-instruction" id="inn-instruction"></p>'
       + '<div class="repair-timer" id="preview-timer"><span class="repair-timer-fill" id="preview-timer-fill"></span><b id="preview-timer-text">…</b></div>'
       + docMarkup
@@ -4036,6 +4044,11 @@
         rememberEpisode();
       }
       if(!correct) rememberMissedTarget(question);
+      if(previewState.satisfaction && typeof GuestSatisfaction !== "undefined"){
+        var fast = previewState.timer && previewState.timer.remaining > previewState.timer.total * 0.5;
+        GuestSatisfaction.record(previewState.satisfaction, correct, fast);
+        GuestSatisfaction.updateBar($("scene"), previewState.satisfaction);
+      }
       var earned = 0;
       scheduleReview(question.target, correct);
       if(correct){
@@ -4138,16 +4151,61 @@
 
   function endEpisodePreview(){
     var finished = currentEpisode();
+    var sat = previewState ? previewState.satisfaction : null;
     if(finished){
       if(!state.episodesDone) state.episodesDone = {};
       creditGardenFor(finished);
       state.episodesDone[finished.id] = true;
       trackTelemetry("episode_completed", {episode_id:finished.id});
-      // The lantern lights when the whole place is done, not one shift of it.
       if(stageComplete(state.currentKey) && stageMastery(state.currentKey) === 100) state.visited[state.currentKey] = true;
+    }
+    if(sat && typeof GuestSatisfaction !== "undefined"){
+      var satReward = GuestSatisfaction.reward(sat.score);
+      if(satReward.coins){
+        state.money = (state.money || 0) + satReward.coins;
+        saveProgress();
+        renderHud();
+      }
     }
     previewState = null;
     forgetEpisode();
+    if(sat && typeof GuestSatisfaction !== "undefined"){
+      showSatisfactionSummary(sat, finished, function(){
+        continueAfterEpisode(finished);
+      });
+      return;
+    }
+    continueAfterEpisode(finished);
+  }
+  function showSatisfactionSummary(sat, episode, then){
+    setInnScene("lobby");
+    setInnFocusCues(false);
+    $("stage-phase-row").style.display = "none";
+    $("encounter-status").style.display = "none";
+    $("hint-btn").style.display = "none";
+    $("hint-box").classList.remove("show");
+    $("feedback-row").classList.remove("show");
+    $("next-row").style.display = "none";
+    $("narration").textContent = "";
+    var f = GuestSatisfaction.face(sat.score);
+    var line = "コン：「お疲れさまでした。" + f.label + "です！」";
+    if(dialogueFlow) dialogueFlow.start(line, false); else $("jp-line").textContent = line;
+    speak(line, sat.score >= 50 ? "correct" : "wrong");
+    $("scene-label").textContent = episode ? "月見宿 - " + episode.title : "月見宿";
+    $("romaji-line").textContent = "";
+    $("meaning-line").textContent = "";
+    $("meaning-line").classList.remove("show");
+    $("scene").innerHTML = '<div class="episode-open"><div class="episode-open-card">'
+      + '<p class="episode-open-kicker">お客様の満足度</p>'
+      + GuestSatisfaction.summaryHTML(sat)
+      + '<button class="btn btn-primary" id="btn-sat-continue">つづける →</button>'
+      + '</div></div>';
+    $("btn-sat-continue").addEventListener("click", function(event){
+      event.stopImmediatePropagation();
+      then();
+    });
+  }
+  function continueAfterEpisode(finished){
     /* The check at the end of the place, before it is called finished.
      *
      * A place is forty words over three training days and four shifts, and

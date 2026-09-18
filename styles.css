@@ -1571,6 +1571,28 @@
   }
   @media(prefers-reduced-motion:reduce){.inn-object,.inn-action,.inn-drop-zone{transition:none}.tea-steam:before,.tea-steam:after{animation:none}.inn-room-viewport::before{transition:none}.room-light-bright::after{animation:none;opacity:.22}}
 
+/* Guest satisfaction bar — visible during episodes. */
+.guest-sat{display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:10px;background:rgba(57,31,20,.72);animation:guest-sat-in .35s ease-out}
+.guest-sat-face{font-size:1.3rem;line-height:1;transition:transform .3s}
+.guest-sat-track{flex:1;height:10px;border-radius:6px;background:rgba(255,255,255,.18);overflow:hidden}
+.guest-sat-fill{height:100%;border-radius:6px;transition:width .5s ease-out,background .4s}
+[data-level="angry"]  .guest-sat-fill{background:#e05252}
+[data-level="neutral"] .guest-sat-fill{background:#d4a643}
+[data-level="ok"]     .guest-sat-fill{background:#8db86b}
+[data-level="happy"]  .guest-sat-fill{background:#5cb85c}
+[data-level="thrilled"] .guest-sat-fill{background:linear-gradient(90deg,#5cb85c,#ffd700)}
+.guest-sat-label{min-width:4em;color:#f2ddb6;font-size:.72rem;font-weight:800;text-align:right}
+.guest-sat-bump .guest-sat-face{transform:scale(1.3);transition:transform .15s}
+.guest-sat-drop .guest-sat-face{transform:scale(.85);transition:transform .15s}
+@keyframes guest-sat-in{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.guest-sat-summary{text-align:center;padding:16px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.guest-sat-summary-face{font-size:2.8rem;line-height:1;animation:guest-sat-in .5s}
+.guest-sat-summary-stars{font-size:1.4rem;letter-spacing:.2em;color:#ffd700;text-shadow:0 2px 4px rgba(0,0,0,.3)}
+.guest-sat-summary-label{margin:0;font-size:1.1rem;font-weight:800;color:#3d2717}
+.guest-sat-summary-msg{margin:0;color:#65462f;font-size:.84rem}
+.guest-sat-summary-coins{margin:0;color:#8c4e1e;font-size:.88rem;font-weight:900;animation:guest-sat-in .6s}
+.guest-sat-summary-streak{margin:0;color:#5a8a3e;font-size:.78rem;font-weight:700}
+
 /* Question controls.
    Sized in em so they grow with the page text: at 200% zoom a px-sized button
    keeps its box while its label grows, which is how labels get clipped. */

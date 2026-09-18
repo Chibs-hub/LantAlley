@@ -28,6 +28,7 @@ var SHELL = [
   "./moonview-inn-interactions.js",
   "./n2-home-inn-stage.js",
   "./n2-inn-episodes.js",
+  "./guest-satisfaction.js",
   "./n2-market-episodes.js",
   "./n2-teahouse-episodes.js",
   "./n2-station-episodes.js",
