@@ -7,7 +7,7 @@
  * Bump CACHE_VERSION whenever any shell file changes, or returning players
  * will keep the old build.
  */
-var CACHE_VERSION = "lantern-alley-v442";
+var CACHE_VERSION = "lantern-alley-v443";
 // Fix: the kotatsu's rear cushions sit behind the table again, as they did before v401.
 
 // audio-index.js assigns to `self`, so the worker and the page share one list
@@ -161,11 +161,11 @@ var SHELL = [
   "./manifest.webmanifest",
   "./assets/branding/lantern-mark-v2.png",
   "./assets/social/lantern-alley-share-v2.jpg",
-  "./icons/icon-192.png?v=442",
-  "./icons/icon-512.png?v=442",
-  "./icons/icon-192-maskable.png?v=442",
-  "./icons/icon-512-maskable.png?v=442",
-  "./icons/apple-touch-icon.png?v=442",
+  "./icons/icon-192.png?v=443",
+  "./icons/icon-512.png?v=443",
+  "./icons/icon-192-maskable.png?v=443",
+  "./icons/icon-512-maskable.png?v=443",
+  "./icons/apple-touch-icon.png?v=443",
   "./assets/kon/kon-idle.webp",
   "./assets/kon/kon-wave-left.webp",
   "./assets/kon/kon-wave-right.webp",
@@ -180,6 +180,9 @@ var SHELL = [
   "./assets/inn/scenes/hallway.jpg",
   "./assets/inn/scenes/office.jpg",
   "./assets/inn/scenes/courtyard.jpg",
+  "./assets/inn/scenes/lobby-day.jpg",
+  "./assets/inn/scenes/hallway-day.jpg",
+  "./assets/inn/scenes/guest-room-day.jpg",
   "./assets/map/lantern-alley-map-v1.jpg",
   "./assets/title/lantern-alley-title-v1.webp",
   "./assets/entrance/wooden-gate-v1.webp",

@@ -718,12 +718,13 @@
    * keywords, which showed front-desk work in a guest room, a desk notice in
    * the kitchen because 茶屋 contains 茶, and the fireworks courtyard for a
    * schedule read at the desk. Episode 2 is the morning's paperwork, so it is
-   * set in the office - the one painted room lit by day. */
+   * set in the office; Episode 4 is the last day, so it uses the daytime
+   * lobby, hallway and guest room. */
   var SCENES = {
     "inn-e01":["lobby", "dining", "room", "room", "room", "hallway", "lobby", "lobby", "lobby", "lobby"],
     "inn-e02":["office", "office", "office", "office", "office", "office", "office", "office", "office", "office"],
     "inn-e03":["lobby", "room", "lobby", "lobby", "lobby", "lobby", "lobby", "lobby", "room", "lobby"],
-    "inn-e04":["lobby", "hallway", "hallway", "office", "room", "office", "office", "office", "office", "office"]
+    "inn-e04":["lobby-day", "hallway-day", "hallway-day", "office", "room-day", "office", "office", "office", "office", "office"]
   };
   [episode1, episode2, episode3, episode4].forEach(function(episode){
     var index = 0;

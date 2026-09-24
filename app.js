@@ -5379,7 +5379,12 @@
     dining:"assets/inn/scenes/dining-hall.jpg",
     hallway:"assets/inn/scenes/hallway.jpg",
     office:"assets/inn/scenes/office.jpg",
-    courtyard:"assets/inn/scenes/courtyard.jpg"
+    courtyard:"assets/inn/scenes/courtyard.jpg",
+    // Daytime versions of the same three rooms, same camera. The other six
+    // paintings are night; the office was the only room lit by day.
+    "lobby-day":"assets/inn/scenes/lobby-day.jpg",
+    "hallway-day":"assets/inn/scenes/hallway-day.jpg",
+    "room-day":"assets/inn/scenes/guest-room-day.jpg"
   };
   function innSceneFor(prompt){
     // Authored first: a question that names its room is never guessed at.

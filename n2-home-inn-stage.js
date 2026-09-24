@@ -589,7 +589,8 @@
   var INN_SCENE_BY_DAY = {
     guided:["room", "room", "kitchen", "office", "kitchen"],
     a:["dining", "room", "kitchen", "office", "kitchen"],
-    b:["room", "room", "room", "office", "office"]
+    // Day 3 opens in the morning (the bulb), so that room is the daytime one.
+    b:["room", "room-day", "room", "office", "office"]
   };
 
   encounters.forEach(function(item, index){

@@ -497,6 +497,9 @@ test("the offline build owns both player choices and the Inn scene set", () => {
     "assets/inn/scenes/hallway.jpg",
     "assets/inn/scenes/office.jpg",
     "assets/inn/scenes/courtyard.jpg",
+    "assets/inn/scenes/lobby-day.jpg",
+    "assets/inn/scenes/hallway-day.jpg",
+    "assets/inn/scenes/guest-room-day.jpg",
   ];
   for (const asset of assets) assert.match(worker, new RegExp(asset.replaceAll("/", "\\/")));
   for (const asset of [

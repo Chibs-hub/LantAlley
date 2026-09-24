@@ -505,7 +505,8 @@ test("every Inn episode question names the room it happens in", () => {
   // Guessing the background from keywords put the front desk in a guest room
   // and a desk notice in the kitchen, because 茶屋 contains 茶.
   const { N2InnEpisodes: stage } = load();
-  const rooms = new Set(["room", "lobby", "kitchen", "dining", "hallway", "office", "courtyard"]);
+  const rooms = new Set(["room", "lobby", "kitchen", "dining", "hallway", "office", "courtyard",
+    "lobby-day", "hallway-day", "room-day"]);
   for (const episode of stage.episodes) {
     for (const day of episode.days) {
       for (const question of day.questions) {
@@ -556,5 +557,16 @@ test("the briefings state the clock the questions actually run", () => {
   const { N2InnEpisodes: stage } = load();
   for (const episode of stage.episodes) {
     assert.ok(!episode.briefing.points.some((point) => /短い返事は五秒/.test(point)), episode.id);
+  }
+});
+
+test("the last day's rooms are painted by day", () => {
+  // Episode 4 is the closing day - guests leave in the morning - and it was
+  // played entirely against night paintings outside the office.
+  const { N2InnEpisodes: stage } = load();
+  const e4 = stage.episodes.find((e) => e.id === "inn-e04");
+  const scenes = e4.days.flatMap((day) => day.questions.map((q) => q.innScene));
+  for (const scene of scenes) {
+    assert.ok(scene === "office" || /-day$/.test(scene), `inn-e04 uses night art: ${scene}`);
   }
 });

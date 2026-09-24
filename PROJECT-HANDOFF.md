@@ -1,6 +1,6 @@
 # Lantern Alley Project Handoff
 
-Last updated: 2026-09-24 (v442)
+Last updated: 2026-09-24 (v443)
 
 A browser game that teaches JLPT N2 Japanese. Vanilla JS, CSS and HTML, no build step, no framework, offline-capable.
 
@@ -19,6 +19,12 @@ A browser game that teaches JLPT N2 Japanese. Vanilla JS, CSS and HTML, no build
 Sections 1, 3, 4, 5, 6, 8, 13, 14 and 15 are reference: what the game is, how it is designed, where the files are, how it ships, and what data it draws on.
 
 ## 0. Current status
+
+**v443 (2026-09-24):** daytime paintings of the lobby, hallway and guest
+room (the owner's `*-day.png` masters; `*-day.jpg` at 1200x800 is what ships,
+the `*-day-v2.png` alternates are brighter and unused). Episode 4's farewell,
+back door, room count and 女将 question, and Day 3's morning bulb, now show
+day. Scene keys `lobby-day`, `hallway-day`, `room-day`.
 
 **v442 (2026-09-24):** the button after passed training says 「第一話へ」
 (it said 「路地へ戻る」 but opens the reward and Episode 1); reply questions
