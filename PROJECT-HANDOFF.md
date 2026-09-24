@@ -1,6 +1,6 @@
 # Lantern Alley Project Handoff
 
-Last updated: 2026-09-24 (v443)
+Last updated: 2026-09-24 (v444)
 
 A browser game that teaches JLPT N2 Japanese. Vanilla JS, CSS and HTML, no build step, no framework, offline-capable.
 
@@ -19,6 +19,14 @@ A browser game that teaches JLPT N2 Japanese. Vanilla JS, CSS and HTML, no build
 Sections 1, 3, 4, 5, 6, 8, 13, 14 and 15 are reference: what the game is, how it is designed, where the files are, how it ships, and what data it draws on.
 
 ## 0. Current status
+
+**v444 (2026-09-24):** phone size floor. Every screen from the title through
+all 40 episode questions and the home (yard, room, shop tabs) was measured
+in Chromium at 360, 390 and 430px: no sideways scroll, no script errors,
+all text 11px or more, every control hit at 44px (drawn or invisible). The
+block is "Phone size floor (v444)" in styles.css. The only item the checker
+still lists is the house door hotspot outside the room's pannable view,
+which is by design. Not checked on a real iPhone/Android.
 
 **v443 (2026-09-24):** daytime paintings of the lobby, hallway and guest
 room (the owner's `*-day.png` masters; `*-day.jpg` at 1200x800 is what ships,

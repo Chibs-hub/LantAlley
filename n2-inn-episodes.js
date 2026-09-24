@@ -33,7 +33,7 @@
     id:"inn-e01",
     title:"宵の一時間",
     sourceNote:NOTE,
-    progress:{label:"今夜の仕事", beats:["受付","お茶とタオル","部屋","予定","満室"]},
+    progress:{label:"今夜の仕事", beats:["受付","お世話","部屋","予定","満室"]},
     intro:{jp:"コン：「三日間の練習、お疲れさまでした。今夜はお祭りの前の晩です。お客様が次々にいらっしゃいますから、いよいよ本番です。」", audio:true},
     // Spoken before the first question: the rules of an episode, in Japanese.
     briefing:{

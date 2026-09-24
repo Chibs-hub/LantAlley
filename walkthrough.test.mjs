@@ -4109,3 +4109,19 @@ test("a run of correct episode answers shows a streak badge", async () => {
   assert.match(game.$("streak-badge").textContent, /2/,
     "the streak survives onto the next question's screen");
 });
+
+test("on a phone, small print is at least 11px and small controls hit at 44px", () => {
+  // Measured at 360, 390 and 430px: labels were 9-10px, and the romaji switch,
+  // speaker, restart, back and shop buttons were under a finger's size.
+  const css = read("styles.css");
+  const block = css.slice(css.indexOf("/* ---- Phone size floor (v444)"));
+  for (const selector of [".metric-gloss", ".inn-journey-status", ".map-destination-label",
+    ".inn-shift-beat", ".inn-new-word-kicker", ".job-state", ".home-card-sub"]) {
+    assert.ok(new RegExp(selector.replace(/[.]/g, "\\.") + "[^{]*\\{[^}]*font-size:11px").test(block),
+      selector + " has an 11px floor on phones");
+  }
+  assert.match(block, /\.switch::before\{width:44px;height:44px\}/);
+  assert.match(block, /\.speak-btn::before\{content:"";position:absolute;inset:-9px -7px\}/);
+  assert.match(block, /\.stage-restart\{min-height:44px/);
+  assert.match(block, /\.home-menu-button,\.home-tab,\.home-shop-chrome button,\.home-howto,\.home-yard-more button\{min-height:44px\}/);
+});

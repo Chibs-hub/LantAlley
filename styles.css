@@ -3259,6 +3259,71 @@ body:has(.about-panel:not([hidden])) .feedback-open{visibility:hidden;pointer-ev
   }
 }
 
+/* ---- Phone size floor (v444) ----
+   Measured at 360, 390 and 430px wide: nothing scrolled sideways, but several
+   labels were 9-10px and several controls were smaller to hit than a finger.
+   Text here is held at 11px or more; controls get a 44px hit area, drawn or
+   invisible, so nothing that looks small has to move to be easy to press. */
+.speak-btn{position:relative}
+.speak-btn::before{content:"";position:absolute;inset:-9px -7px}
+.switch::before{width:44px;height:44px}
+@media(max-width:760px){
+  .metric-gloss{font-size:11px}
+  .screen-gloss,.map-heading .screen-gloss{font-size:11px}
+  .map-destination-label{font-size:11px}
+  .inn-journey-status{font-size:11px}
+  .romaji-toggle,.inn-stage .romaji-toggle,.entrance-stage .romaji-toggle{font-size:11px}
+  .inn-stage .inn-focus-cue:not([hidden]){font-size:11px}
+  .inn-stage .inn-new-word-kicker{font-size:11px;letter-spacing:.08em}
+  .inn-stage .inn-shift-beat{font-size:11px}
+  .stage-restart{min-height:44px;padding-inline:12px}
+  /* The "1 Read Kon's request" pill and the romaji switch shared one line and
+     ran into each other at 360px. The switch takes its own row instead. */
+  .inn-stage .romaji-toggle{position:static;justify-content:flex-end;margin:0 0 6px}
+  /* The continue marker sat under the speaker button in the same corner. The
+     bubble keeps its right padding clear, so the marker goes top-right. */
+  .inn-stage .dialogue-continue{top:8px;bottom:auto;right:6px}
+  /* The room's drop spots follow the painting, and a few are thin strips on a
+     phone. Each is given room to hit in the direction nothing else is. */
+  .inn-room-illustrated .inn-drop-zone::after{content:"";position:absolute;top:var(--hit-t,0);right:var(--hit-r,0);bottom:var(--hit-b,0);left:var(--hit-l,0)}
+  .inn-room-illustrated .inn-drop-zone[data-key="remove-recycle"]{--hit-r:-19px;--hit-t:-2px}
+  .inn-room-illustrated .inn-drop-zone[data-key="stove"]{--hit-t:-27px;--hit-b:-2px}
+  .inn-room-illustrated .inn-drop-zone[data-key="microwave"]{--hit-t:-2px;--hit-b:-20px}
+  .inn-room-illustrated .inn-drop-zone[data-key="g1"],
+  .inn-room-illustrated .inn-drop-zone[data-key="g2"]{--hit-t:-5px;--hit-b:-6px}
+  /* The rest of the small print, found by the same measurement. */
+  .inn-journey-label,.build-stamp,.entrance-stage .narration,.entrance-stage .player-caption,
+  #map-progress-text,.map-detail-status,.map-detail-focus,.inn-caption,.inn-reward-kicker,
+  .listen-again,.answer-workspace .inn-caption,.inn-room-illustrated .inn-caption{font-size:11px}
+  #btn-back-map,#btn-title-menu,#hint-btn,.map-detail-action,#btn-reward-home{min-height:44px}
+  #btn-title-menu{min-width:44px}
+  /* Drawn small on purpose; hit at full size. */
+  .listen-again{position:relative}
+  .inn-stage .listen-again{position:absolute}
+  .listen-again::before{content:"";position:absolute;inset:-6px 0}
+  button.inn-placed-object{position:relative}
+  button.inn-placed-object::before{content:"";position:absolute;inset:-8px}
+  /* Home and word board, from the second measurement pass. */
+  .job-state,.home-pan-hint,.home-scene-back,.home-card-sub,
+  .home-stage .home-shelf .home-card-sub{font-size:11px}
+  .home-scene-back{min-height:44px;min-width:44px}
+  .home-menu-button,.home-tab,.home-shop-chrome button,.home-howto,.home-yard-more button{min-height:44px}
+  /* Kon's text keeps clear of the top-right continue marker. */
+  .inn-stage .dialogue.entrance-dialogue .speech{padding-right:38px}
+}
+/* The map labels grew to 11px, and Kon's marker, which sits just above the
+   place point, covered the top of 「路地の入口」. It is lifted to clear it. */
+@media(max-width:760px){
+  .map-kon-marker{transform:translate(-50%,-140%)}
+  .map-kon-marker.is-traveling{transform:translate(-50%,-140%) scale(1.12)}
+}
+/* At 400px and under, five journey stops cannot fit a lamp beside each
+   label at 11px ("Shif..."), so the lamp sits above the label instead. */
+@media(max-width:400px){
+  .inn-journey-stop{grid-template-columns:1fr;grid-template-areas:"lamp" "label" "reward";justify-items:center;row-gap:2px}
+  .inn-journey-label{overflow:visible;text-overflow:clip}
+}
+
 /* Illustrated room targets follow the artwork's proportions, so some are
    smaller than a finger on a phone. Keep their visual footprint, but extend
    the button's hit area invisibly. Once an object is chosen, name every valid
