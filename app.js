@@ -5252,6 +5252,12 @@
     renderStagePrompt(loc);
   }
 
+  /* Where the button after passed training actually goes. It said
+   * 「路地へ戻る」 while advanceStagePhase opens the reward and Episode 1. */
+  function afterTrainingLabel(){
+    return typeof N2InnEpisodes !== "undefined" ? "第一話へ →" : "路地へ戻る →";
+  }
+
   function advanceStagePhase(loc){
     // The last Challenge answer arms a deferred advance and btn-next performs
     // the same advance immediately, so both can arrive here with the stage
@@ -9224,7 +9230,7 @@
           saveProgress();
           renderHud();
           showFeedback(true, "三日目の挑戦を達成しました。" + state.challengeScore + "/" + items.length + "、五つの言葉を思い出せました。明日、この五つの言葉をもう一度たしかめましょう。");
-          $("btn-next").textContent = "路地へ戻る →";
+          $("btn-next").textContent = afterTrainingLabel();
         }else{
           showFeedback(false, "三日目の結果は" + state.challengeScore + "/" + items.length + "です。間違えた言葉だけ復習しましょう。");
           $("btn-next").textContent = "間違えた言葉を復習する →";
@@ -9253,7 +9259,8 @@
         saveProgress();
         renderHud();
         showFeedback(true, "復習が終わりました。間違えた言葉をすべて思い出せました。");
-        $("btn-next").textContent = "路地へ戻る →";
+        // Not mastered means the challenge runs again (advanceStagePhase).
+        $("btn-next").textContent = state.stageMastered ? afterTrainingLabel() : "もう一度挑戦する →";
       }else if(isFinalEncounter && state.stagePhase === "learn"){
         showFeedback(true, prompt.completionFeedback || "一日目が終わりました。二日目は同じ言葉を別の場面で使います。");
         $("btn-next").textContent = prompt.completionNextLabel || "二日目へ →";

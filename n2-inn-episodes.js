@@ -51,7 +51,7 @@
       {day:1, mode:"learn", label:"宵の口", questions:[
         q("inn-e01-q01", "quick-response", "w-annai", 8,
           {jp:"二人部屋が三つ空いています。お客様：「二人ですが、部屋はありますか。」何と言いますか。", audio:true},
-          {type:"quick-response", options:["お荷物をお預かりします。","いいえ、分かりません。","はい、お部屋へご案内します。","もう閉まりました。"], correctIndex:2},
+          {type:"quick-response", options:["先にお荷物をお預かりします。","いいえ、分かりません。","はい、お部屋へご案内します。","もう閉まりました。"], correctIndex:2},
           {correct:"お客様は部屋へ向かいました。「案内する」は、人を連れて行くことです。",
            incorrect:"お客様を待たせてしまいました。まず部屋へご案内します。"},
           {prompt:"「案内する」の意味はどれですか。", options:["片づける","連れて行く"], correctIndex:1, seconds:5},
@@ -427,7 +427,7 @@
 
         q3("inn-e03-q02", "listening-task", "v-shiku", 5,
           {jp:"お布団を敷いてください。何をしますか。", audio:true},
-          {type:"quick-response", options:["たたんで押し入れにしまいます。","外に干します。","洗います。","畳の上に広げて寝られるようにします。"], correctIndex:3},
+          {type:"quick-response", options:["たたんで押し入れにしまいます。","お布団を外に出して、干しておきます。","洗います。","畳の上に広げて寝られるようにします。"], correctIndex:3},
           {correct:"敷けました。「敷く」は、平らに広げて置くことです。",
            incorrect:"「敷く」は、平らに広げて置くことです。しまうのとは逆です。"},
           {prompt:"「敷く」はどれのことですか。", options:["平らに広げて置く","たたんでしまう"], correctIndex:0, seconds:5},
@@ -469,7 +469,7 @@
 
         q3("inn-e03-q05", "listening-task", "v-atsukau", 5,
           {jp:"割れやすい物ですから、丁寧に扱ってください。何をしますか。", audio:true},
-          {type:"quick-response", options:["気をつけて手で持ちます。","高く積み上げます。","投げて渡します。","急いで運びます。"], correctIndex:0},
+          {type:"quick-response", options:["気をつけて手で持ちます。","重ねて高く積み上げます。","投げて渡します。","急いで運びます。"], correctIndex:0},
           {correct:"丁寧に扱えました。「扱う」は、物や人にある仕方で接したり、対応したりすることです。",
            incorrect:"「丁寧に扱う」は、気をつけて手で持つということです。"},
           {prompt:"「扱う」はどれのことですか。", options:["数を数える","物や人にある仕方で接する"], correctIndex:1, seconds:5},
@@ -700,7 +700,7 @@
 
         q4("inn-e04-q10", "integrated", "w-tsutomeru-2", 12,
           {jp:"この宿で、あなたはどんな役目をしましたか。三日間の練習のあとも、受付でお客様を案内し、帳場の仕事や見送りまで担当しました。何と言いますか。", audio:true},
-          {type:"quick-response", options:["早く終わらせました。","宿の受付係を務めました。","何もしていません。","部屋の数を数えました。"], correctIndex:1},
+          {type:"quick-response", options:["早く終わらせました。","宿の受付係を務めました。","何もしていません。","毎日、部屋の数を数えました。"], correctIndex:1},
           {correct:"よく分かっています。「務める」は、役目を引き受けて果たすことです。",
            incorrect:"受付で宿の仕事を担当してきました。その役目を「務めた」と言えます。"},
           {prompt:"「務める」はどれのことですか。", options:["役目を引き受けて果たす","そばで見ている"], correctIndex:0, seconds:8},

@@ -535,6 +535,22 @@ test("no correct answer gives itself away by being far the longest", () => {
   }
 });
 
+test("the right answer is the longest option no more often than chance", () => {
+  // Four options put the answer longest about one time in four, ten of forty.
+  const { N2InnEpisodes: stage } = load();
+  let longest = 0;
+  for (const episode of stage.episodes) {
+    for (const day of episode.days) {
+      for (const question of day.questions) {
+        const lengths = question.answer.options.map((option) => option.length);
+        const ci = question.answer.correctIndex;
+        if (lengths[ci] > Math.max(...lengths.filter((_, i) => i !== ci))) longest += 1;
+      }
+    }
+  }
+  assert.ok(longest <= 10, `${longest} of 40 answers are the longest option`);
+});
+
 test("the briefings state the clock the questions actually run", () => {
   // They said short replies had five seconds; quick replies run eight.
   const { N2InnEpisodes: stage } = load();

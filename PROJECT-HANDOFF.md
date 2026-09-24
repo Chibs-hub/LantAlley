@@ -1,6 +1,6 @@
 # Lantern Alley Project Handoff
 
-Last updated: 2026-09-24 (v441)
+Last updated: 2026-09-24 (v442)
 
 A browser game that teaches JLPT N2 Japanese. Vanilla JS, CSS and HTML, no build step, no framework, offline-capable.
 
@@ -19,6 +19,12 @@ A browser game that teaches JLPT N2 Japanese. Vanilla JS, CSS and HTML, no build
 Sections 1, 3, 4, 5, 6, 8, 13, 14 and 15 are reference: what the game is, how it is designed, where the files are, how it ships, and what data it draws on.
 
 ## 0. Current status
+
+**v442 (2026-09-24):** the button after passed training says 「第一話へ」
+(it said 「路地へ戻る」 but opens the reward and Episode 1); reply questions
+say "Choose the right reply." rather than naming Kon; the right answer is now
+the longest option in 8 of 40 episode questions (test: at most 10). Same 4
+audio-only failures as v441, same 21 lines waiting.
 
 **Latest v441 status (2026-09-24):** fixes from the full Title-to-Inn-and-home
 audit. `node --test` runs 671 tests: 667 pass, and the 4 that fail are all

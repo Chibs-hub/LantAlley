@@ -19,8 +19,10 @@
   // English belongs only here. Every other string the learner reads while
   // answering is Japanese, or the answer becomes readable without the language.
   var HOW_TO = {
-    "single-choice": "Choose the reply Kon is asking for.",
-    "quick-response": "Choose the reply Kon is asking for.",
+    // Not "the reply Kon is asking for": half of these are a guest or the
+    // 女将 speaking, and their name is on the speech tab.
+    "single-choice": "Choose the right reply.",
+    "quick-response": "Choose the right reply.",
     "image-choice": "Choose the picture the request describes.",
     "direct-action": "Move the object the request names.",
     "ordered-action": "Do the steps in the order the request gives them.",
