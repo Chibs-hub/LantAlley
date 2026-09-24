@@ -3507,6 +3507,13 @@
       missedTargets: (previewState.missedTargets || []).slice(),
       taughtBlocks: Object.assign({}, previewState.taughtBlocks || {}),
       teaching: previewState.teaching || null,
+      // Whether the board's words were handed off to the up-front batch
+      // instead of the old per-block teaching, and whether that batch has
+      // actually finished - without these two a reload mid-batch forgot both,
+      // and either replayed the whole batch from card one or fell back to
+      // teaching the same words again a block at a time.
+      taughtAll: !!previewState.taughtAll,
+      wordsTaught: !!previewState.wordsTaught,
       inRepair: !!previewState.repair,
       repairQueue: previewState.repair ? previewState.repair.queue.slice() : []
     };
@@ -3538,6 +3545,8 @@
       missedTargets: (savedEpisode.missedTargets || []).slice(),
       taughtBlocks: Object.assign({}, savedEpisode.taughtBlocks || {}),
       teaching: savedEpisode.teaching || null,
+      taughtAll: !!savedEpisode.taughtAll,
+      wordsTaught: !!savedEpisode.wordsTaught,
       repair: null
     };
     screenTitle.style.display = "none";
@@ -3709,29 +3718,12 @@
       + '</div></div>';
     $("btn-words-begin").addEventListener("click", function(event){
       event.stopImmediatePropagation();
-      var loc = getLocation(state.currentKey);
-      if(!loc || !loc.getTeaching){ renderPreviewQuestion(); return; }
-      var known = (state.masteredByStage || {})[state.currentKey] || [];
-      var seen = {};
-      var queue = [];
-      previewState.list.forEach(function(row){
-        var id = row.question && row.question.target;
-        if(!id || seen[id] || known.indexOf(id) >= 0) return;
-        seen[id] = true;
-        var item = typeof LanternCurriculumCatalog !== "undefined"
-          ? LanternCurriculumCatalog.getItem(id) : null;
-        if(!item || !loc.getTeaching(item.canonical)) return;
-        queue.push({word:item.canonical, target:id});
-      });
-      if(!queue.length){ renderPreviewQuestion(); return; }
-      if(queue.length > 1) queue = queue.slice(1).concat(queue.slice(0, 1));
+      // Marked here, before the first card renders, so a reload during the
+      // batch resumes it (resumeEpisodeWordsIfNeeded) instead of falling back
+      // to the old one-block-at-a-time teaching this board replaced.
       previewState.taughtAll = true;
-      startTeaching(loc, queue, {
-        badge:"今夜の言葉",
-        note:"ここからは本番です。時間内に答えてください。",
-        button:"受付を始めます",
-        then:function(){ renderPreviewQuestion(); }
-      });
+      rememberEpisode();
+      renderPreviewQuestion();
     });
   }
 
@@ -3967,8 +3959,57 @@
     });
   }
 
+  // The board's はじめて words, taught as one batch right after it rather than
+  // doled out a block at a time during the shift. Its own sentinel block name
+  // keeps it out of teachBlockIfNeeded's per-day bookkeeping, and startIndex
+  // lets a reload pick the batch back up instead of restarting it - a save
+  // written mid-batch used to lose its place, because nothing here was
+  // persisted under any block previewState.teaching's resume logic knew about.
+  var EPISODE_WORDS_BLOCK = "\u0000episode-words";
+  function buildEpisodeWordsQueue(loc){
+    var known = (state.masteredByStage || {})[state.currentKey] || [];
+    var seen = {};
+    var queue = [];
+    previewState.list.forEach(function(row){
+      var id = row.question && row.question.target;
+      if(!id || seen[id] || known.indexOf(id) >= 0) return;
+      seen[id] = true;
+      var item = typeof LanternCurriculumCatalog !== "undefined"
+        ? LanternCurriculumCatalog.getItem(id) : null;
+      if(!item || !loc.getTeaching(item.canonical)) return;
+      queue.push({word:item.canonical, target:id});
+    });
+    if(queue.length > 1) queue = queue.slice(1).concat(queue.slice(0, 1));
+    return queue;
+  }
+
+  function resumeEpisodeWordsIfNeeded(){
+    if(!previewState || !previewState.taughtAll || previewState.wordsTaught) return false;
+    if(previewState.masteryRound) return false;
+    var loc = getLocation(state.currentKey);
+    if(!loc || !loc.getTeaching){ previewState.wordsTaught = true; return false; }
+    var queue = buildEpisodeWordsQueue(loc);
+    if(!queue.length){ previewState.wordsTaught = true; return false; }
+    var startIndex = previewState.teaching && previewState.teaching.label === EPISODE_WORDS_BLOCK
+      ? previewState.teaching.index : 0;
+    return startTeaching(loc, queue, {
+      block: EPISODE_WORDS_BLOCK,
+      startIndex: startIndex,
+      badge:"今夜の言葉",
+      note:"ここからは本番です。時間内に答えてください。",
+      button:"受付を始めます",
+      then:function(){
+        previewState.wordsTaught = true;
+        previewState.teaching = null;
+        rememberEpisode();
+        renderPreviewQuestion();
+      }
+    });
+  }
+
   function renderPreviewQuestion(){
     if(teachBlockIfNeeded()) return;
+    if(resumeEpisodeWordsIfNeeded()) return;
     var entry = previewState.list[previewState.index];
     var question = entry.question;
     // The episode reuses the Challenge dialogue DOM. Reset its controls for

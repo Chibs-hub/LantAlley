@@ -3495,6 +3495,9 @@ test("leaving during teaching feedback cancels its pending advance", async () =>
 });
 
 test("episode teaching resumes at the last studied card after reload", async () => {
+  // The board's はじめて words are now taught as one batch right after it,
+  // rather than doled out a block at a time during the shift - so a fresh
+  // episode 1 opens on all five words the three days never covered, not two.
   const game = boot(null, "?skip=1");
   await enterTheInn(game);
   startEpisodeAfterTraining(game);
@@ -3508,11 +3511,11 @@ test("episode teaching resumes at the last studied card after reload", async () 
   const word = game.doc.querySelector(".teach-word").textContent;
   const reloaded = boot(JSON.parse(game.storage.getItem("lanternAlley.v3")), "?skip=1");
   await openResumedInnScheduleChallenge(reloaded);
-  assert.equal(reloaded.doc.querySelector(".teach-count").textContent, "2 / 2");
+  assert.equal(reloaded.doc.querySelector(".teach-count").textContent, "2 / 5");
   assert.equal(reloaded.doc.querySelector(".teach-word").textContent, word);
 });
 
-test("an episode recap counts only the words in its teaching block", async () => {
+test("an episode recap counts every word taught up front, not just one block's worth", async () => {
   const game = boot(null, "?skip=1");
   await enterTheInn(game);
   startEpisodeAfterTraining(game);
@@ -3526,9 +3529,9 @@ test("an episode recap counts only the words in its teaching block", async () =>
       .find((b) => b.getAttribute("data-correct") === "1").click();
     game.clock.advance(900);
   }
-  assert.equal(game.doc.querySelectorAll(".teach-recap-word").length, 2);
-  assert.match(game.doc.querySelector(".episode-open-title").textContent, /2/,
-    "a two-word block must not claim five words were studied");
+  assert.equal(game.doc.querySelectorAll(".teach-recap-word").length, 5);
+  assert.match(game.doc.querySelector(".episode-open-title").textContent, /5/,
+    "the recap must claim all five words the batch actually taught");
 });
 
 test("Kon wears her portrait from the moment the app boots", () => {
