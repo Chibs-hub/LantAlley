@@ -1,6 +1,6 @@
 # Lantern Alley Project Handoff
 
-Last updated: 2026-09-18 (v423)
+Last updated: 2026-09-24 (v439)
 
 A browser game that teaches JLPT N2 Japanese. Vanilla JS, CSS and HTML, no build step, no framework, offline-capable.
 
@@ -20,7 +20,28 @@ Sections 1, 3, 4, 5, 6, 8, 13, 14 and 15 are reference: what the game is, how it
 
 ## 0. Current status
 
-**Latest v423 status (2026-09-18):** the title screen now gives Kon a
+**Latest v439 status (2026-09-24):** `node --test` runs 661 tests: 657 pass,
+4 fail, and all 4 are the same gap - five Inn lines reworded in the
+2026-09-14 Japanese polish after their audio was recorded. They are listed in
+`audio-pending.txt`; recording them is an owner action (section 11, A.1).
+Since v423:
+- **Streak badge.** A run of correct answers shows `🔥 N 連続` beside the
+  wallet in the HUD and again beside 正解です in the feedback row - the HUD
+  scrolls off a phone screen while answering, the feedback row does not.
+  Bonus coins at 3/5/7/10 in a row. Works in both the three training days and
+  the episodes; resets on a miss or timeout and when a place is left. The
+  earlier satisfaction meter was removed from play as unclear; its end-of-
+  episode summary (stars, tip, best streak) remains (`guest-satisfaction.js`).
+- **Episode words are taught in one batch** right after the word board,
+  instead of a block at a time mid-shift. A reload mid-batch resumes on the
+  same card (`taughtAll` / `wordsTaught` in the saved episode).
+- **The title screen shows the loaded build** (`build v439`), read off
+  `app.js`'s own URL. Ask a tester for it before debugging "I don't see it".
+- **Walkthrough suite back to 140/140.** Most failures were drivers not
+  waiting for `travelMapKon`'s 520 ms walk before the screen swaps; wait
+  600 ms after clicking a map destination.
+
+**v423 status (2026-09-18):** the title screen now gives Kon a
 context-specific Japanese prompt, not the contextless `コンが覚えています` status.
 The prompt prioritizes an unfinished lesson, then an active lesson, next
 unlocked lesson, review, or completion; progress counts are secondary. The
@@ -302,7 +323,7 @@ Coins earned at the inn and the market buy furniture, wallpaper and plants for a
 Three things, and **none of them are code**:
 
 1. **The Japanese has never been reviewed by a native speaker.** 215 items. Only the owner can do this. `?review=1`.
-2. **Most of the audio does not exist.** 506 of 620 spoken lines have no clip.
+2. **Some of the audio does not exist.** 107 of 621 spoken lines have no clip (measured 2026-09-24) - five in the Inn's training days, the rest in episodes. Section 11, A.1.
 3. **Most of the art does not exist.** Four of eight plant species and six of twenty-one furniture items render as vector stand-ins; four of five places have no scene art; the cat has no true sitting pose.
 
 The full list, with what each one is blocked on, is section 11.
@@ -536,7 +557,7 @@ Browser progress is not part of the project folder. Copying the folder transfers
 node --test
 ```
 
-That is now the correct command and it needs no file list. 259 tests pass, 0 fail.
+That is now the correct command and it needs no file list. As of 2026-09-24, 661 tests: 657 pass, 4 fail - all four are the five unrecorded lines in `audio-pending.txt` (section 11, A.1), and pass once those clips exist.
 
 The suite guards three different things.
 
@@ -614,9 +635,19 @@ Grouped by **who can actually do it**, because most of what is left is not code 
 
 ### A. Only the owner can do these
 
-1. **69 lines need their audio rendered.** Every authored question used to open by literally saying コン：「...」 - naming Kon before every single question, on top of the 「コン (Kon)」 tab the speech bubble already shows above it. v363 removes the name from all 69 questions that had it (not from a line quoting someone else through her, which keeps its tag). This supersedes the note in v362 about three lines: those three changed text again here, on top of the fix that day, and are part of this same 69.
+1. **Record the five lines in `audio-pending.txt` - the only failing tests.** Reworded in the 2026-09-14 Japanese polish (commits 71a2607, 153d57f, 8afcaa6) after their clips were made: the Day 3 dinner-schedule request, the 温める praise, two 引き受ける praises and the 引き受ける correction. Run on your own machine:
 
-   `python generate-audio.py` finds all 69 itself - it hashes each line's text and only (re)renders what does not match an existing clip, then prunes what nothing asks for anymore, so nothing here needs a manual list. It cannot be run from a Claude Code session: the sandbox's egress policy answers 403 to `speech.platform.bing.com:443`, which is the gate working as intended rather than a fault to route around. Until it is run those 69 questions are silent, which `hasClip` and `spokenDuration` already handle - the clock paces a clipless line as if it had been spoken. All 69 lines lost only a name, not their meaning, so they do not need the review below on that account, though the three from v362 still do.
+   ```
+   python generate-audio.py --only audio-pending.txt
+   ```
+
+   `--only` renders just those lines, adds them to `audio-index.js`, and deletes nothing. Then bump the release (section 12) and commit the five `.mp3` files with `audio-index.js`. After that `node --test` is fully green, and `audio-pending.txt` can be deleted. Tested 2026-09-24 in a throwaway copy with the network call stubbed: index round-trip byte-identical, exactly five clips added, none removed, all 661 tests passing.
+
+   It cannot be run from a Claude Code session: the egress policy answers 403 to `speech.platform.bing.com:443` (rechecked 2026-09-24) - the gate working as intended, not a fault to route around.
+
+   **Do not run plain `python generate-audio.py` without deciding first.** Measured 2026-09-24 it would render **107** lines (the five above, two Kon day-openers in the Inn, and 100 across the five places' episodes) and **delete 106** clips for lines nothing speaks any more. Both are probably right, but it is a large, one-way change to review and listen to, not a side effect of recording five lines. Until then clipless lines are paced by `spokenDuration`, so they are silent rather than broken.
+
+   **Every clip must stay one voice in one encoding:** `ja-JP-NanamiNeural`, rate `-8%`, MPEG-2 Layer III, 48 kbps, 24 kHz, mono - all 620 existing clips match (header scan, 2026-09-24), and voice and rate have not changed since the script was written. The script now rejects a freshly rendered clip in any other format, and `pwa.test.mjs` fails on one - a different `edge_tts` version is the likely cause if either fires. Neither can hear a change in Microsoft's voice model itself, so listen to new clips once.
 
 2. **Native review of the Japanese.** 200 questions, five story arcs, all of Kon's dialogue, the eight tutorial lines at the house, every garden and shop string - authored in this project, never checked by a native speaker. Everything else is cheap to change; this is the one thing nobody else can do. `?review=1` walks all 215 items in place with the clock off and an おかしい checkbox. `generate-audio.py` hashes its input, so corrections later cost only the lines that changed.
 
@@ -773,6 +804,7 @@ Nothing in this group is a code task. Listed so a coding session does not start 
 
 - **Run `node research/balance-answers.mjs` after authoring questions.** By hand, the correct answer lands first far too often.
 - **Bump `CACHE_VERSION` in `sw.js` on every shipped change.** It stamps `?v=` onto every script and stylesheet URL, which is the only thing that reliably defeats both caches. A test ties the two together, so forgetting fails the suite. `pwa.test.mjs` no longer pins the literal version - it used to, and every bump broke it.
+- **A release bump moves four places, not two:** `CACHE_VERSION` in `sw.js`, every `?v=` in `index.html`, the icon `?v=` stamps in `manifest.webmanifest`, and the `icons/...?v=` entries in `sw.js`'s SHELL. v429-v438 moved only the first two, so the page asked for `apple-touch-icon.png?v=438` while the worker had cached `?v=428` and the iOS icon missed the offline cache. `pwa.test.mjs` ("share the finished Lantern Alley identity") catches it.
 - **Do not verify through the built artifact.** That advice was written when the Artifact was the delivery surface; it is retired, and the build is now a cut-down demo. Verify against the served app, and read section 2 first - the service worker will hand you a stale shell, or even `index.html` in place of a URL it does not recognise, which looks exactly like a broken build.
 - **Prefer a test that renders over a test that matches source text.** `walkthrough.test.mjs` exists because a source-text suite passed while the game crashed.
 - **Check that a catalog id exists before using it as a target.** Eleven invented ids reached a draft in one sitting.

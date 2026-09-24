@@ -14,6 +14,11 @@ Files are named by a hash of the text, so re-running only regenerates lines
 that actually changed. Delete assets/audio to force a full rebuild.
 
 Usage:  python generate-audio.py
+        python generate-audio.py --only audio-pending.txt
+
+--only renders just the lines listed in the file (one per line), adds them to
+the existing audio-index.js, and prunes nothing - for recording a few edited
+lines without re-rendering or deleting anything else.
 """
 import asyncio
 import hashlib
@@ -84,32 +89,15 @@ async def render(text, path):
                  % (os.path.basename(path), found, EXPECTED_HEADER))
 
 
-async def main():
-    groups = collect_groups()
-    lines = [text for group in groups.values() for text in group]
-    os.makedirs(OUT_DIR, exist_ok=True)
+def read_index():
+    """The two maps already in audio-index.js, so --only can add to them."""
+    text = open(INDEX_JS, encoding='utf-8').read()
+    audio = text.split('self.LanternAlleyAudio = ', 1)[1].split(';\n', 1)[0]
+    grouped = text.split('self.LanternAlleyAudioGroups = ', 1)[1].rsplit(';', 1)[0]
+    return json.loads(audio), json.loads(grouped)
 
-    index = {}
-    made = skipped = 0
 
-    for text in lines:
-        name = key_for(text) + '.mp3'
-        path = os.path.join(OUT_DIR, name)
-        index[text] = OUT_DIR.replace(os.sep, '/') + '/' + name
-
-        if os.path.exists(path) and os.path.getsize(path) > 0:
-            skipped += 1
-            continue
-        await render(text, path)
-        made += 1
-        print('  rendered  %s  %s' % (name, text[:34]))
-
-    # Paths rather than lines: the worker wants a cache list, and repeating the
-    # Japanese would double the size of this file for nothing.
-    group_paths = {
-        name: [index[text] for text in texts] for name, texts in groups.items()
-    }
-
+def write_index(index, group_paths):
     # A .js file rather than .json so it works over file:// too, where fetch()
     # of a local JSON file is blocked as a cross-origin request.
     #
@@ -134,6 +122,62 @@ async def main():
         json.dumps(group_paths, ensure_ascii=False, indent=2, sort_keys=True),
     )
     open(INDEX_JS, 'w', encoding='utf-8', newline='').write(body)
+
+
+async def render_only(list_path):
+    wanted = [l.strip() for l in open(list_path, encoding='utf-8') if l.strip()]
+    group_of = {text: name for name, texts in collect_groups().items() for text in texts}
+    unknown = [text for text in wanted if text not in group_of]
+    if unknown:
+        # A line the game never speaks would be cached for nothing, and one
+        # with a typo would be recorded under a key nothing looks up.
+        sys.exit('not a line the game speaks:\n  ' + '\n  '.join(unknown))
+    index, group_paths = read_index()
+    os.makedirs(OUT_DIR, exist_ok=True)
+    for text in wanted:
+        name = key_for(text) + '.mp3'
+        path = os.path.join(OUT_DIR, name)
+        rel = OUT_DIR.replace(os.sep, '/') + '/' + name
+        if not (os.path.exists(path) and os.path.getsize(path) > 0):
+            await render(text, path)
+            print('  rendered  %s  %s' % (name, text[:34]))
+        index[text] = rel
+        paths = group_paths.setdefault(group_of[text], [])
+        if rel not in paths:
+            paths.append(rel)
+    write_index(index, group_paths)
+    print('\n%d lines recorded, nothing pruned; wrote %s' % (len(wanted), INDEX_JS))
+
+
+async def main():
+    if len(sys.argv) == 3 and sys.argv[1] == '--only':
+        await render_only(sys.argv[2])
+        return
+    groups = collect_groups()
+    lines = [text for group in groups.values() for text in group]
+    os.makedirs(OUT_DIR, exist_ok=True)
+
+    index = {}
+    made = skipped = 0
+
+    for text in lines:
+        name = key_for(text) + '.mp3'
+        path = os.path.join(OUT_DIR, name)
+        index[text] = OUT_DIR.replace(os.sep, '/') + '/' + name
+
+        if os.path.exists(path) and os.path.getsize(path) > 0:
+            skipped += 1
+            continue
+        await render(text, path)
+        made += 1
+        print('  rendered  %s  %s' % (name, text[:34]))
+
+    # Paths rather than lines: the worker wants a cache list, and repeating the
+    # Japanese would double the size of this file for nothing.
+    group_paths = {
+        name: [index[text] for text in texts] for name, texts in groups.items()
+    }
+    write_index(index, group_paths)
 
     # Drop clips for lines that no longer exist, so edited sentences do not
     # leave their old audio behind to be shipped and cached forever.
