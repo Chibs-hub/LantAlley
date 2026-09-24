@@ -50,9 +50,38 @@ def key_for(text):
     return hashlib.sha1(text.encode('utf-8')).hexdigest()[:12]
 
 
+# Every existing clip is MPEG-2 Layer III, 48 kbps, 24 kHz, mono. Only missing
+# lines are rendered, so clips accumulate across runs and edge_tts versions;
+# one that came out differently would sound different mid-lesson.
+EXPECTED_HEADER = {'version': 2, 'layer': 1, 'bitrate': 6, 'rate': 1, 'mono': True}
+
+
+def mp3_header(path):
+    data = open(path, 'rb').read()
+    at = 0
+    if data[:3] == b'ID3':
+        at = 10 + ((data[6] << 21) | (data[7] << 14) | (data[8] << 7) | data[9])
+    while at < len(data) - 4 and not (data[at] == 0xFF and (data[at + 1] & 0xE0) == 0xE0):
+        at += 1
+    return {
+        'version': (data[at + 1] >> 3) & 3,
+        'layer': (data[at + 1] >> 1) & 3,
+        'bitrate': (data[at + 2] >> 4) & 15,
+        'rate': (data[at + 2] >> 2) & 3,
+        'mono': ((data[at + 3] >> 6) & 3) == 3,
+    }
+
+
 async def render(text, path):
     speech = edge_tts.Communicate(text, VOICE, rate=RATE)
     await speech.save(path)
+    found = mp3_header(path)
+    if found != EXPECTED_HEADER:
+        os.remove(path)
+        sys.exit('rendered %s in a different format from every other clip:\n'
+                 '  got      %s\n  expected %s\n'
+                 'Check the installed edge_tts version before re-running.'
+                 % (os.path.basename(path), found, EXPECTED_HEADER))
 
 
 async def main():

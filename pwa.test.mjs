@@ -368,6 +368,34 @@ test("audio generation collects the Entrance tutorial lines", () => {
   }
 });
 
+/* Every clip is one voice in one encoding. generate-audio.py only renders
+ * lines that have no file yet, so clips are made across many runs, on
+ * different machines and edge_tts versions - a clip that came out at another
+ * sample rate or bitrate would sit among the rest unnoticed and sound
+ * different mid-lesson. The header is the part that can be checked here; the
+ * voice and rate are pinned in generate-audio.py. */
+test("every audio clip shares the same MP3 encoding", () => {
+  const dir = new URL("./assets/audio/", import.meta.url);
+  const clips = readdirSync(dir).filter((name) => name.endsWith(".mp3"));
+  assert.ok(clips.length > 0, "there are clips to check");
+  for (const name of clips) {
+    const bytes = readFileSync(new URL(name, dir));
+    let at = 0;
+    if (bytes.subarray(0, 3).toString("latin1") === "ID3") {
+      at = 10 + ((bytes[6] << 21) | (bytes[7] << 14) | (bytes[8] << 7) | bytes[9]);
+    }
+    while (at < bytes.length - 4 && !(bytes[at] === 0xff && (bytes[at + 1] & 0xe0) === 0xe0)) at += 1;
+    const version = (bytes[at + 1] >> 3) & 3;   // 2 = MPEG-2
+    const layer = (bytes[at + 1] >> 1) & 3;     // 1 = Layer III
+    const bitrate = (bytes[at + 2] >> 4) & 15;  // MPEG-2 L3 index 6 = 48 kbps
+    const rate = (bytes[at + 2] >> 2) & 3;      // MPEG-2 index 1 = 24000 Hz
+    const mono = ((bytes[at + 3] >> 6) & 3) === 3;
+    assert.deepEqual({ version, layer, bitrate, rate, mono },
+      { version: 2, layer: 1, bitrate: 6, rate: 1, mono: true },
+      `${name} is not MPEG-2 Layer III, 48 kbps, 24 kHz, mono like the other clips`);
+  }
+});
+
 test("Kon's spoken replies have clips, not just the requests", () => {
   const map = audioIndex().LanternAlleyAudio;
   const context = {};
