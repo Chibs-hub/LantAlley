@@ -887,20 +887,20 @@ test("the audio-only schedule question offers a clear replay control", async () 
 test("the audio-only replay control repeats the hidden Japanese request", async () => {
   const game = boot(resumedScheduleChallengeSave(), "?skip=1");
   await openResumedInnScheduleChallenge(game);
+  const question = "Aグループは18時以降、Bグループは20時までに夕食を始められます。Aグループを先にご案内します。一組の食事には2時間かかります。夕食の開始時刻を調整してください。";
+  /* A stand-in clip, so this checks what replay says rather than which
+   * recordings happen to exist. game.heard only grows through Audio(), which
+   * the synthesis fallback never touches - and whether every reachable line
+   * is recorded is pwa.test.mjs's job, not this one's. */
+  game.context.LanternAlleyAudio[question] = "assets/audio/test-replay-standin.mp3";
+  const before = game.heard.length;
 
   game.$("btn-listen-again").click();
   await tick();
   game.clock.advance(600);
 
-  /* game.heard only grows when a pre-recorded clip exists for the exact text
-   * passed to speak() - the fake Audio() constructor is what records it, and
-   * speakWithSynthesis's fallback never touches Audio at all. This question's
-   * Japanese gained a clause ("Aグループを先にご案内します。") after its clip
-   * was recorded, so the exact-text lookup in playClip() no longer matches and
-   * the line falls back to synthesis - correctly, since regenerating audio is
-   * on hold until the Inn's Japanese is finalized. That leaves nothing here to
-   * assert about a specific clip; the invariant this test still owns is that
-   * replaying never reveals the hidden Japanese in writing. */
+  assert.equal(game.heard.length, before + 1, "replay starts another audio clip");
+  assert.equal(game.lastHeard(), question, "the spoken request is replayed, not the visible placeholder");
   assert.equal(game.$("jp-line").textContent, "音声を聞いてください。",
     "replaying does not reveal the audio-only question in writing");
 });

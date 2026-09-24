@@ -491,7 +491,9 @@ test("a question that has been settled stops accepting taps and looks settled", 
   // running out of time did not, so the buttons sat there live-looking and
   // inert - which reads as a broken game rather than a clock that ran out.
   assert.match(app, /function settlePreviewChoices/);
-  assert.match(app, /previewState\.answered = true;[\s\S]{0,400}settlePreviewChoices\(value\)/);
+  // The answer path also passes the correct index, so a miss can mark the
+  // right choice too; only the first argument is pinned here.
+  assert.match(app, /previewState\.answered = true;[\s\S]{0,400}settlePreviewChoices\(value[,)]/);
   assert.match(app, /timer\.expired[\s\S]{0,400}settlePreviewChoices\(-1\)/);
   // And the clock must not depend on a recording that may not exist.
   assert.match(app, /function hasClip/);
