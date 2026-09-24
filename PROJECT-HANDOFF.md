@@ -1,6 +1,6 @@
 # Lantern Alley Project Handoff
 
-Last updated: 2026-09-24 (v439)
+Last updated: 2026-09-24 (v440)
 
 A browser game that teaches JLPT N2 Japanese. Vanilla JS, CSS and HTML, no build step, no framework, offline-capable.
 
@@ -20,11 +20,11 @@ Sections 1, 3, 4, 5, 6, 8, 13, 14 and 15 are reference: what the game is, how it
 
 ## 0. Current status
 
-**Latest v439 status (2026-09-24):** `node --test` runs 661 tests: 657 pass,
-4 fail, and all 4 are the same gap - five Inn lines reworded in the
-2026-09-14 Japanese polish after their audio was recorded. They are listed in
-`audio-pending.txt`; recording them is an owner action (section 11, A.1).
-Since v423:
+**Latest v440 status (2026-09-24):** `node --test` runs 661 tests, all pass.
+**Every spoken line has a clip**: the owner ran the full `generate-audio.py`
+locally - 107 rendered, 514 unchanged, 106 unused clips pruned - so all 621
+lines, across all five places, are voiced. All 621 clips share one encoding
+(checked). Since v423:
 - **Streak badge.** A run of correct answers shows `🔥 N 連続` beside the
   wallet in the HUD and again beside 正解です in the feedback row - the HUD
   scrolls off a phone screen while answering, the feedback row does not.
@@ -35,7 +35,7 @@ Since v423:
 - **Episode words are taught in one batch** right after the word board,
   instead of a block at a time mid-shift. A reload mid-batch resumes on the
   same card (`taughtAll` / `wordsTaught` in the saved episode).
-- **The title screen shows the loaded build** (`build v439`), read off
+- **The title screen shows the loaded build** (`build v440`), read off
   `app.js`'s own URL. Ask a tester for it before debugging "I don't see it".
 - **Walkthrough suite back to 140/140.** Most failures were drivers not
   waiting for `travelMapKon`'s 520 ms walk before the screen swaps; wait
@@ -323,7 +323,7 @@ Coins earned at the inn and the market buy furniture, wallpaper and plants for a
 Three things, and **none of them are code**:
 
 1. **The Japanese has never been reviewed by a native speaker.** 215 items. Only the owner can do this. `?review=1`.
-2. **Some of the audio does not exist.** 107 of 621 spoken lines have no clip (measured 2026-09-24) - five in the Inn's training days, the rest in episodes. Section 11, A.1.
+2. ~~Some of the audio does not exist.~~ **Done 2026-09-24:** all 621 spoken lines have a clip. Any later rewording needs its own run - section 11, A.1.
 3. **Most of the art does not exist.** Four of eight plant species and six of twenty-one furniture items render as vector stand-ins; four of five places have no scene art; the cat has no true sitting pose.
 
 The full list, with what each one is blocked on, is section 11.
@@ -557,7 +557,7 @@ Browser progress is not part of the project folder. Copying the folder transfers
 node --test
 ```
 
-That is now the correct command and it needs no file list. As of 2026-09-24, 661 tests: 657 pass, 4 fail - all four are the five unrecorded lines in `audio-pending.txt` (section 11, A.1), and pass once those clips exist.
+That is now the correct command and it needs no file list. As of 2026-09-24 (v440), 661 tests pass, 0 fail.
 
 The suite guards three different things.
 
@@ -635,17 +635,9 @@ Grouped by **who can actually do it**, because most of what is left is not code 
 
 ### A. Only the owner can do these
 
-1. **Record the five lines in `audio-pending.txt` - the only failing tests.** Reworded in the 2026-09-14 Japanese polish (commits 71a2607, 153d57f, 8afcaa6) after their clips were made: the Day 3 dinner-schedule request, the 温める praise, two 引き受ける praises and the 引き受ける correction. Run on your own machine:
+1. ~~**Record the missing audio.**~~ **Done 2026-09-24** by the owner on their own machine: full run, 107 rendered, 514 unchanged, 106 pruned; every spoken line now has a clip and every clip is the same encoding. Checked after the push: no index entry points at a missing file, and none of the 106 pruned clips was still spoken.
 
-   ```
-   python generate-audio.py --only audio-pending.txt
-   ```
-
-   `--only` renders just those lines, adds them to `audio-index.js`, and deletes nothing. Then bump the release (section 12) and commit the five `.mp3` files with `audio-index.js`. After that `node --test` is fully green, and `audio-pending.txt` can be deleted. Tested 2026-09-24 in a throwaway copy with the network call stubbed: index round-trip byte-identical, exactly five clips added, none removed, all 661 tests passing.
-
-   It cannot be run from a Claude Code session: the egress policy answers 403 to `speech.platform.bing.com:443` (rechecked 2026-09-24) - the gate working as intended, not a fault to route around.
-
-   **Do not run plain `python generate-audio.py` without deciding first.** Measured 2026-09-24 it would render **107** lines (the five above, two Kon day-openers in the Inn, and 100 across the five places' episodes) and **delete 106** clips for lines nothing speaks any more. Both are probably right, but it is a large, one-way change to review and listen to, not a side effect of recording five lines. Until then clipless lines are paced by `spokenDuration`, so they are silent rather than broken.
+   **Next time a line is reworded,** record just that line: put it in a text file (one line each, copied from the game data) and run `py generate-audio.py --only <file>` - it renders only those lines, adds them to `audio-index.js` and prunes nothing. A plain run renders everything missing and prunes everything unused; fine when that is the intent, but check the numbers first. Either way, then bump the release (section 12). It cannot run from a Claude Code cloud session: the egress policy answers 403 to `speech.platform.bing.com:443`. Past runs were all made on the owner's own machine (`py`, Python 3.14, with Node on PATH for `collect-spoken-lines.js`).
 
    **Every clip must stay one voice in one encoding:** `ja-JP-NanamiNeural`, rate `-8%`, MPEG-2 Layer III, 48 kbps, 24 kHz, mono - all 620 existing clips match (header scan, 2026-09-24), and voice and rate have not changed since the script was written. The script now rejects a freshly rendered clip in any other format, and `pwa.test.mjs` fails on one - a different `edge_tts` version is the likely cause if either fires. Neither can hear a change in Microsoft's voice model itself, so listen to new clips once.
 

@@ -14,7 +14,7 @@ Files are named by a hash of the text, so re-running only regenerates lines
 that actually changed. Delete assets/audio to force a full rebuild.
 
 Usage:  python generate-audio.py
-        python generate-audio.py --only audio-pending.txt
+        python generate-audio.py --only lines.txt
 
 --only renders just the lines listed in the file (one per line), adds them to
 the existing audio-index.js, and prunes nothing - for recording a few edited
