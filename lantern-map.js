@@ -14,7 +14,7 @@
     {
       key:"home-inn",
       name:"月見宿",
-      story:"宿の主人が、明日の客を迎える準備を手伝ってほしいそうです。",
+      story:"お祭りの間、月見宿のコンが宿の仕事を手伝ってほしいそうです。",
       focus:"部屋の物を動かし、聞こえた依頼どおりに行動します。",
       position:{x:19,y:62},
       availability:"implemented",

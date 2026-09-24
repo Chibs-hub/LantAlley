@@ -1,6 +1,6 @@
 # Lantern Alley Project Handoff
 
-Last updated: 2026-09-24 (v440)
+Last updated: 2026-09-24 (v441)
 
 A browser game that teaches JLPT N2 Japanese. Vanilla JS, CSS and HTML, no build step, no framework, offline-capable.
 
@@ -19,6 +19,37 @@ A browser game that teaches JLPT N2 Japanese. Vanilla JS, CSS and HTML, no build
 Sections 1, 3, 4, 5, 6, 8, 13, 14 and 15 are reference: what the game is, how it is designed, where the files are, how it ships, and what data it draws on.
 
 ## 0. Current status
+
+**Latest v441 status (2026-09-24):** fixes from the full Title-to-Inn-and-home
+audit. `node --test` runs 671 tests: 667 pass, and the 4 that fail are all
+"this spoken line has no clip" - **21 reworded lines wait on an approved TTS
+run** (plain `py generate-audio.py`: it renders only the missing lines and
+prunes the 21 they replace). Until then those lines use the device voice.
+- **Bugs:** re-entering the Inn after passing training resumed Day 3 instead
+  of Episode 1, and any save made there (claiming the reward, resuming an
+  episode after reload) wrote the passed training back as Day 1 -
+  `enterLocation` now loads the held record before anything saves. The map
+  lit the Inn and said 完了 at 5/40 words (`mapProgress()`); the lantern count
+  no longer counts the home (max was 6/7); the Entrance card read 0/1 beside
+  100%; the home header's star count (never set) is gone; the shop no longer
+  sells the calico before Episode 4 gives it.
+- **Scenes:** every training task and episode question names its painted room
+  (`innScene`); keyword guessing is only the fallback. Episode 2 is all office.
+  **Still art-limited:** six of seven scene paintings are night, so morning and
+  daytime scenes outside the office (Day 3's first task, Episode 4's farewell)
+  still show a night room.
+- **Text:** training labels per day; tea no longer reheated on a stove (Day 1
+  is soup); Day 1 no longer sends you to rest after agreeing to serve dinner;
+  day names said once; review rung no longer replays Day 1's clock; E1 room
+  counts agree; E2 is festival day, its mailing is a lost item sent this
+  morning; E3 wallet is checked by two staff and recorded; E4 納める is paying
+  the lodging tax (the card's sense), lodging referrals go to an inn, unreturned
+  yukata get a phone call. Seven answers that were far the longest are no
+  longer. Catalog glosses: Inn senses first, no "(1)" markers
+  (`research/build-n2-catalog.mjs`, regenerated).
+- **UI:** on a phone Feedback sits below the game instead of floating over it;
+  the Entrance narration and wrong-answer panel no longer cover Kon or the
+  action buttons; a guest's or the 女将's line shows their name on the tab.
 
 **Latest v440 status (2026-09-24):** `node --test` runs 661 tests, all pass.
 **Every spoken line has a clip**: the owner ran the full `generate-audio.py`

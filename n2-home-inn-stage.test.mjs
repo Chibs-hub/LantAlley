@@ -753,7 +753,7 @@ test("the story runs in order across the learn phase", () => {
   // Day 1 must stay inside day 1: arrival preparation -> arrival -> planning
   // tomorrow -> dinner service. It previously announced 朝になりました before
   // returning to the evening of the same day, so the day ran backwards.
-  const beats = ["もうすぐ", "到着しました", "明日の予定", "夕食を配る人"];
+  const beats = ["もうすぐ", "到着しました", "明日の掃除の予定", "夕食を配る人"];
   let cursor = -1;
   for (const beat of beats) {
     const at = story.indexOf(beat, cursor + 1);
@@ -1059,7 +1059,7 @@ test("the challenge day runs in story order", () => {
   assert.deepEqual(order, ["取り替える", "調整", "引き受ける", "揃える", "温める"]);
 
   const story = stage.getPhaseItems("challenge").map((item) => item.narration).join(" ");
-  const beats = ["三日目の朝", "午前のうちに", "昼過ぎ", "夕方の支度", "夜も遅く"];
+  const beats = ["朝のうちに", "午前のうちに", "昼過ぎ", "夕方の支度", "夜も遅く"];
   let cursor = -1;
   for (const beat of beats) {
     const at = story.indexOf(beat, cursor + 1);
@@ -1546,4 +1546,37 @@ test("a word board never promises teaching the place cannot give", () => {
   }
   assert.equal(glosses.size, words.length,
     "two words sharing a gloss would offer the same answer twice, one marked wrong");
+});
+
+test("the review rung built on Day 1's task does not replay Day 1's clock", () => {
+  // 「もうすぐ最初のお客様が来ます」 and 「一日目の最後に」 were read out
+  // at the end of the third day.
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(readFileSync(stageUrl, "utf8"), context);
+  const stage = context.N2HomeInnStage;
+  for (const item of stage.encounters) {
+    const rung = stage.getReviewItem(item.focusWord, 1);
+    assert.doesNotMatch(rung.narration, /もうすぐ|一日目の最後|到着しました/, item.focusWord);
+    assert.doesNotMatch(stage.getKonResponse(rung, true), /休んで/, item.focusWord);
+  }
+});
+
+test("every training task names its room and its own label", () => {
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(readFileSync(stageUrl, "utf8"), context);
+  const stage = context.N2HomeInnStage;
+  const all = stage.getPhaseItems("learn").concat(stage.practice, stage.challenge);
+  for (const item of all) assert.ok(item.innScene, `${item.variant} ${item.focusWord} names a room`);
+  // Day 2 and Day 3 read their labels from Day 1: 「お茶が冷めてしまった」
+  // sat over the rice, 「洗面所で」 over the sheets and a light bulb.
+  const labelsOf = (items) => Array.from(items, (item) => item.label);
+  for (const later of [stage.practice, stage.challenge]) {
+    for (const item of later) {
+      const day1 = stage.encounters.find((entry) => entry.focusWord === item.focusWord);
+      assert.notEqual(item.label, day1.label, `${item.variant} ${item.focusWord} has its own label`);
+    }
+  }
+  assert.ok(labelsOf(stage.encounters).length === 5);
 });

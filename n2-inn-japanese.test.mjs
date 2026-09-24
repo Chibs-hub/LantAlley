@@ -82,7 +82,12 @@ test("延期 sentence order uses the event as the object of 延期する", () =>
 test("the ledger wording distinguishes finished work from an ongoing shipment", () => {
   const context = loadInn();
   const q = question(context, "inn-e02", "inn-e02-q05");
-  assert.match(q.prompt.jp, /通知の手紙/);
+  // What was mailed is a departed guest's lost item, sent this morning. It
+  // was "the notice letter, sent yesterday" - a notice about a change made
+  // today, posted to guests who were still in the house.
+  assert.match(q.prompt.jp, /忘れ物/);
+  assert.match(q.prompt.jp, /今朝のうちに/);
+  assert.doesNotMatch(q.prompt.jp + q.feedback.incorrect, /昨日のうちに/);
   assert.match(q.prompt.jp, /郵送の手続きは終わっています/);
   assert.match(q.prompt.jp, /作業の完了/);
   assert.equal(q.answer.options[q.answer.correctIndex], "済み");

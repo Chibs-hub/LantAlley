@@ -68,7 +68,7 @@
    */
   var TEACHING = {
     "揃える": {
-      sentence:"お客様の分のスリッパを四つ揃えてください。",
+      sentence:"お客様の分のスリッパを四足揃えてください。",
       pattern:"〜を揃える"
     },
     "取り替える": {
@@ -76,7 +76,7 @@
       pattern:"〜を〜に取り替える"
     },
     "温める": {
-      sentence:"お茶をコンロでもう一度温めてください。",
+      sentence:"スープをコンロでもう一度温めてください。",
       pattern:"〜を温める"
     },
     "調整": {
@@ -354,7 +354,7 @@
       focusWord:"取り替える",
       reading:"とりかえる",
       actionType:"object interaction",
-      label:"洗面所で",
+      label:"客室のタオル",
       narration:"コン：「座る場所はきれいになりました。お客様は旅のあとで顔を洗いますが、前のお客様のタオルがまだ残っています。」",
       jp:"古いタオルを洗濯かごに入れて、新しいタオルに取り替えてください。",
       romaji:"Furui taoru o sentakukago ni irete, atarashii taoru ni torikaete kudasai.",
@@ -374,18 +374,20 @@
       focusWord:"温める",
       reading:"あたためる",
       actionType:"visible movement",
-      label:"お茶が冷めてしまった",
-      narration:"コン：「お客様が到着しました。部屋を準備している間に、歓迎のお茶が冷めてしまいました。このままでは出せません。」",
-      jp:"お茶をコンロでもう一度温めてください。",
-      romaji:"Ocha o konro de mou ichido atatamete kudasai.",
-      meaning:"Please warm the tea on the stove once more.",
-      successReply:"ありがとうございます。お茶が温まりました。これでお客様に出せます。",
+      label:"スープが冷めてしまった",
+      // Soup, not the welcome tea it used to be: an inn brews a fresh pot
+      // rather than reheating cold tea on a stove.
+      narration:"コン：「お客様が到着しました。部屋を準備している間に、お出しするスープが冷めてしまいました。このままでは出せません。」",
+      jp:"スープをコンロでもう一度温めてください。",
+      romaji:"Suupu o konro de mou ichido atatamete kudasai.",
+      meaning:"Please warm the soup on the stove once more.",
+      successReply:"ありがとうございます。スープが温まりました。これでお客様に出せます。",
       retryReply:"頼まれた物と、温め方をもう一度確認してください。",
       hint:"温める means to warm or heat something.",
       options:[
-        {key:"warm", emoji:"♨️", label:"Warm the tea"},
+        {key:"warm", emoji:"♨️", label:"Warm the soup"},
         {key:"pour", emoji:"🫖", label:"Pour it away"},
-        {key:"cool", emoji:"🧊", label:"Cool the tea"}
+        {key:"cool", emoji:"🧊", label:"Cool the soup"}
       ],
       correct:"warm"
     },
@@ -407,7 +409,7 @@
       // side is unchanged: two hours of cleaning before the fixed 15:00
       // arrival. Both facts remain load-bearing - removing either changes
       // which bound produces 13:00.
-      narration:"コン：「お客様が部屋で休んでいる間に、明日の予定を決めておきましょう。お客様のチェックアウト時刻と、次のお客様の到着時刻を確認して、掃除を始める時間を調整してください。」",
+      narration:"コン：「お客様が部屋で休んでいる間に、明日の掃除の予定を決めておきましょう。」",
       jp:"お客様は12時にチェックアウトするそうです。チェックアウトの1時間後から掃除ができます。掃除には2時間必要です。次のお客様は15時に到着します。掃除を始める時間を調整してください。",
       romaji:"Okyakusama wa juuniji ni chekku auto suru sou desu. Chekku auto no ichijikan go kara souji ga dekimasu. Souji ni wa nijikan hitsuyou desu. Tsugi no okyakusama wa juugoji ni touchaku shimasu. Souji o hajimeru jikan o chousei shite kudasai.",
       meaning:"The guest says they'll check out at 12:00. Cleaning can start one hour after checkout at the earliest. Cleaning needs two hours. The next guest arrives at 15:00. Coordinate what time to start cleaning.",
@@ -431,7 +433,7 @@
       jp:"今夜の夕食の配膳を引き受けていただけませんか。",
       romaji:"Kon'ya no yuushoku no haizen o hikiukete itadakemasen ka.",
       meaning:"Would you be willing to undertake serving tonight's dinner?",
-      successReply:"ありがとうございます。一日目の仕事はこれで終わりです。今夜は宿で休んでください。",
+      successReply:"ありがとうございます。夕食の配膳が済んだら、一日目の仕事はおしまいです。",
       retryReply:"まだ夕食の配膳を引き受ける返事になっていません。返事を選び直してください。",
       hint:"引き受ける means to undertake, take over, or accept responsibility for something.",
       // Refusing a favour is a legitimate, correctly-understood Japanese reply.
@@ -443,7 +445,7 @@
         {key:"decline", emoji:"", label:"すみません、引き受けられません。"}
       ],
       correct:"accept",
-      completionFeedback:"コン：「一日目の仕事が終わりました。宿で休んで、明日もよろしくお願いします。」",
+      completionFeedback:"コン：「一日目の仕事が終わりました。配膳のあとはゆっくり休んで、明日もよろしくお願いします。」",
       completionNextLabel:"二日目へ"
     }
   ];
@@ -511,7 +513,7 @@
   var guidedInteractions = [
     roomScene({verb:"arrange", attribute:"color"}),
     roomScene({verb:"replace", target:"towel"}),
-    roomScene({verb:"warm", target:"tea"}),
+    roomScene({verb:"warm", target:"soup"}),
     {
       scene:"cleaning",
       // "Move the time card" named neither the control (a slider) nor which
@@ -526,7 +528,7 @@
     {
       scene:"errand",
       controlHelp:"Choose your reply.",
-      clue:"The innkeeper has asked you something and is waiting for an answer.",
+      clue:"Kon has asked you something and is waiting for an answer.",
       replies:[
         {key:"accept", label:"はい、引き受けます。"},
         {key:"decline", label:"すみません、引き受けられません。"}
@@ -547,7 +549,7 @@
     {
       scene:"errand",
       controlHelp:"Choose your reply.",
-      clue:"The entrance needs sweeping before it opens, and the innkeeper is already making breakfast.",
+      clue:"A guest has to be seen to the station tomorrow morning, and Kon has asked you to take it on.",
       replies:[
         {key:"accept", label:"はい、引き受けます。"},
         {key:"decline", label:"すみません、引き受けられません。"}
@@ -577,26 +579,40 @@
   ];
 
   var mechanicNames = ["arrange", "replace", "warm", "coordinate", "undertake"];
+
+  /* Which painted room each task happens in, by encounter index.
+   *
+   * app.js used to guess the background from keywords in the request, which
+   * put Day 1's guest-room cushions in the dining hall and sent the station
+   * send-off to the kitchen. Named here instead, next to the narration that
+   * says where the learner is. Keys are app.js's INN_SCENES. */
+  var INN_SCENE_BY_DAY = {
+    guided:["room", "room", "kitchen", "office", "kitchen"],
+    a:["dining", "room", "kitchen", "office", "kitchen"],
+    b:["room", "room", "room", "office", "office"]
+  };
+
   encounters.forEach(function(item, index){
     item.mechanic = mechanicNames[index];
     item.variant = "guided";
     item.interaction = guidedInteractions[index];
+    item.innScene = INN_SCENE_BY_DAY.guided[index];
   });
 
   var practiceVariantsA = [
-    {jp:"二つのマットに、同じ向きの座布団を二枚ずつ揃えてください。", romaji:"Futatsu no matto ni, onaji muki no zabuton o nimai zutsu soroete kudasai.", narration:"The cushions have been used again and now face different directions.", meaning:"Please place two cushions facing the same direction on each mat.", successReply:"座布団の向きが揃いました。これで朝食の準備を続けられます。"},
-    {jp:"汚れたシーツを洗濯かごに入れて、新しいシーツに取り替えてください。", romaji:"Yogoreta shiitsu o sentakukago ni irete, atarashii shiitsu ni torikaete kudasai.", narration:"A marked sheet remains beside the fresh linen.", meaning:"Put the stained sheet in the laundry basket, then replace it with a new one.", successReply:"新しいシーツになりました。これで今夜のお客様を迎えられます。"},
-    {jp:"ごはんを電子レンジで温めてください。", romaji:"Gohan o denshi renji de atatamete kudasai.", narration:"The evening meal has gone cold.", meaning:"Please warm the rice in the microwave.", successReply:"ごはんが温まりました。みんなで食事にしましょう。"},
-    {jp:"Cグループは18時以降、Dグループは20時までに夕食を始められます。Cグループを先にご案内します。一組の食事には2時間かかります。夕食の開始時刻を調整してください。", romaji:"C guruupu wa juuhachiji ikou, D guruupu wa nijuji made ni yuushoku o hajimeraremasu. C guruupu o saki ni goannai shimasu. Hitokumi no shokuji ni wa nijikan kakarimasu. Yuushoku no kaishi jikoku o chousei shite kudasai.", narration:"Two groups need dinner seatings, with Group C served first and enough time before Group D.", meaning:"Coordinate the two dinner start times using the booking windows, with Group C first.", successReply:"Cグループは18時、Dグループは20時になりました。これで順番に夕食をお出しできます。"},
-    {jp:"三番から六番のお部屋の布団敷きを引き受けていただけませんか。", romaji:"Sanban kara rokuban no oheya no futonjiki o hikiukete itadakemasen ka.", narration:"Four rooms still need their futons laid out before the guests return.", meaning:"Would you take on laying out the futons for rooms three to six?", successReply:"ありがとうございます。お客様が戻るまでに間に合いました。"}
+    {label:"食事処の座布団", jp:"二つのマットに、同じ向きの座布団を二枚ずつ揃えてください。", romaji:"Futatsu no matto ni, onaji muki no zabuton o nimai zutsu soroete kudasai.", narration:"The cushions have been used again and now face different directions.", meaning:"Please place two cushions facing the same direction on each mat.", successReply:"座布団の向きが揃いました。これで朝食の準備を続けられます。"},
+    {label:"客室のシーツ", jp:"汚れたシーツを洗濯かごに入れて、新しいシーツに取り替えてください。", romaji:"Yogoreta shiitsu o sentakukago ni irete, atarashii shiitsu ni torikaete kudasai.", narration:"A marked sheet remains beside the fresh linen.", meaning:"Put the stained sheet in the laundry basket, then replace it with a new one.", successReply:"新しいシーツになりました。これで今夜のお客様を迎えられます。"},
+    {label:"冷めたごはん", jp:"ごはんを電子レンジで温めてください。", romaji:"Gohan o denshi renji de atatamete kudasai.", narration:"The evening meal has gone cold.", meaning:"Please warm the rice in the microwave.", successReply:"ごはんが温まりました。みんなで食事にしましょう。"},
+    {label:"今夜の夕食の時間", jp:"Cグループは18時以降、Dグループは20時までに夕食を始められます。Cグループを先にご案内します。一組の食事には2時間かかります。夕食の開始時刻を調整してください。", romaji:"C guruupu wa juuhachiji ikou, D guruupu wa nijuji made ni yuushoku o hajimeraremasu. C guruupu o saki ni goannai shimasu. Hitokumi no shokuji ni wa nijikan kakarimasu. Yuushoku no kaishi jikoku o chousei shite kudasai.", narration:"Two groups need dinner seatings, with Group C served first and enough time before Group D.", meaning:"Coordinate the two dinner start times using the booking windows, with Group C first.", successReply:"Cグループは18時、Dグループは20時になりました。これで順番に夕食をお出しできます。"},
+    {label:"明日の朝食", jp:"三番から六番のお部屋の布団敷きを引き受けていただけませんか。", romaji:"Sanban kara rokuban no oheya no futonjiki o hikiukete itadakemasen ka.", narration:"Four rooms still need their futons laid out before the guests return.", meaning:"Would you take on laying out the futons for rooms three to six?", successReply:"ありがとうございます。お客様が戻るまでに間に合いました。"}
   ];
 
   var practiceVariantsB = [
-    {jp:"二つのマットに、同じ大きさの座布団を二枚ずつ揃えてください。", romaji:"Futatsu no matto ni, onaji ookisa no zabuton o nimai zutsu soroete kudasai.", narration:"The cushions are still mixed across the tatami.", meaning:"Please place two cushions of the same size on each mat.", successReply:"座布団の大きさが揃いました。これで部屋が整いました。"},
-    {jp:"切れた電球を回収箱に入れて、新しい電球に取り替えてください。", romaji:"Kireta denkyuu o kaishuubako ni irete, atarashii denkyuu ni torikaete kudasai.", narration:"A lamp in the hallway has gone dark.", meaning:"Put the burned-out bulb in the recycling box, then replace it with a new one.", successReply:"新しい電球がつきました。これで廊下が明るくなります。"},
-    {jp:"スープをコンロで温めてください。", romaji:"Suupu o konro de atatamete kudasai.", narration:"A guest returns late to a counter of cold dishes.", meaning:"Please warm the soup on the stove.", successReply:"スープが温まりました。お客様に出しましょう。"},
+    {label:"客室の座布団", jp:"二つのマットに、同じ大きさの座布団を二枚ずつ揃えてください。", romaji:"Futatsu no matto ni, onaji ookisa no zabuton o nimai zutsu soroete kudasai.", narration:"The cushions are still mixed across the tatami.", meaning:"Please place two cushions of the same size on each mat.", successReply:"座布団の大きさが揃いました。これで部屋が整いました。"},
+    {label:"切れた電球", jp:"切れた電球を回収箱に入れて、新しい電球に取り替えてください。", romaji:"Kireta denkyuu o kaishuubako ni irete, atarashii denkyuu ni torikaete kudasai.", narration:"A lamp in the guest room has gone dark.", meaning:"Put the burned-out bulb in the recycling box, then replace it with a new one.", successReply:"新しい電球がつきました。これで部屋が明るくなります。"},
+    {label:"最後のお客様", jp:"スープをコンロで温めてください。", romaji:"Suupu o konro de atatamete kudasai.", narration:"A guest returns late to a counter of cold dishes.", meaning:"Please warm the soup on the stove.", successReply:"スープが温まりました。お客様に出しましょう。"},
     {label:"夕食の時間を決める", jp:"Aグループは18時以降、Bグループは20時までに夕食を始められます。Aグループを先にご案内します。一組の食事には2時間かかります。夕食の開始時刻を調整してください。", romaji:"A guruupu wa juuhachiji ikou, B guruupu wa nijuji made ni yuushoku o hajimeraremasu. A guruupu o saki ni goannai shimasu. Hitokumi no shokuji ni wa nijikan kakarimasu. Yuushoku no kaishi jikoku o chousei shite kudasai.", narration:"Both groups requested the same dinner time. Group A goes first, can begin at 18:00 or later, Group B must begin by 20:00, and each meal needs two hours.", meaning:"Coordinate the two dinner start times using the booking windows and meal length, with Group A first.", successReply:"Aグループは18時、Bグループは20時になりました。これで順番に夕食をお出しできます。"},
-    {jp:"明日の朝、玄関の掃除を引き受けていただけませんか。", romaji:"Ashita no asa, genkan no souji o hikiukete itadakemasen ka.", narration:"The entrance has to be swept before it opens tomorrow.", meaning:"Would you take on sweeping the entrance tomorrow morning?", successReply:"ありがとうございます。これで朝のお客様を気持ちよくお迎えできます。"}
+    {label:"駅までのお見送り", jp:"明日の朝、駅までお客様をお送りする仕事を引き受けていただけませんか。", romaji:"Ashita no asa, eki made okyakusama o ookuri suru shigoto o hikiukete itadakemasen ka.", narration:"A guest has to be seen to the station tomorrow morning.", meaning:"Would you take on seeing a guest to the station tomorrow morning?", successReply:"ありがとうございます。これで明日の朝のお見送りは安心です。"}
   ];
 
   /* Day 2's own shift, and deliberately not the same shape as the others.
@@ -613,10 +629,10 @@
    * without every other table having to be reshuffled with it.
    */
   var evidenceNarrationsA = [
-    "コン：「食事処を開けます。前の組が使った座布団が、向きばらばらのままです。」",
+    "コン：「食事処を開けます。前の組が使った座布団が、向きがばらばらのままです。」",
     "コン：「お食事の間に客室を回ります。三番のシーツに染みがついていました。」",
     "コン：「時刻が決まりました。厨房を見てきてください。早く着いたお客様の分のごはんが冷めています。」",
-    "コン：「二日目は帳場から始めます。今夜はCグループとDグループが同じ時刻をご希望です。食事処には一組ずつしかご案内できません。」",
+    "コン：「まず帳場から始めます。今夜はCグループとDグループが同じ時刻をご希望です。食事処には一組ずつしかご案内できません。」",
     "コン：「今日はよく回りました。最後にもう一つ、明日の朝食の配膳をお願いしたいのですが。」"
   ];
 
@@ -643,11 +659,11 @@
    */
   var evidenceNarrationsB = [
     // Played fourth: early evening, laying the dining room out again.
-    "コン：「夕方の支度です。昼の宴会のあと、大きさの違う座布団が二つのマットに残っています。」",
+    "コン：「夕方の支度です。客室に、大きさの違う座布団がばらばらに置かれています。」",
     // Played first: the morning of the third day.
-    "コン：「三日目の朝です。廊下の電球が切れていました。暗くなる前に直しておきましょう。」",
+    "コン：「朝のうちに、客室の電球が切れているのが分かりました。お客様がお戻りになる前に直しておきましょう。」",
     // Played last: late evening, the final guest of the three days.
-    "コン：「夜も遅くなりました。最後のお客様のお茶が冷めてしまったそうです。」",
+    "コン：「夜も遅くなりました。最後のお客様にお出しするものが冷めてしまったそうです。」",
     // Played second: late morning, before the dining room is committed.
     "コン：「午前のうちに今夜の夕食の時間を決めます。AグループとBグループが同じ時刻をご希望です。食事処には一組ずつご案内します。」",
     // Played third: early afternoon, arranging tomorrow while there is time.
@@ -933,6 +949,7 @@
       interaction:guided ? guidedInteractions[index]
         : (variant ? alternateInteractions[index] : practiceInteractionsA[index]),
       variant:phase + "-" + tag,
+      innScene:INN_SCENE_BY_DAY[tag][index],
       label:text.label || base.label,
       narration:guided ? base.narration
         : (variant ? evidenceNarrationsB[index] : evidenceNarrationsA[index]),
@@ -1008,13 +1025,24 @@
     return -1;
   }
 
+  /* The middle rung reuses Day 1's task, and Day 1's narration is tied to
+   * Day 1's clock: 「もうすぐ最初のお客様が来ます」 and 「一日目の最後に」
+   * were being read out at the end of the third day. The task says what it is
+   * instead. The favour's reply sent the learner to bed before dinner, so it is
+   * replaced too. */
+  var REVIEW_GUIDED_NARRATION = "コン：「一日目と同じ仕事を、もう一度やってみましょう。」";
+  var REVIEW_GUIDED_REPLIES = {4:"ありがとうございます。では、配膳をお願いします。"};
+
   function getReviewItem(word, pass){
     var index = indexOfWord(word);
     if(index < 0) return null;
     var rung = REVIEW_LADDER[Math.max(0, Number(pass) || 0) % REVIEW_LADDER.length];
-    return copyItem(phaseItem(index, rung.variant, "review", rung.format), {
-      reviewPass:Math.max(0, Number(pass) || 0)
-    });
+    var changes = {reviewPass:Math.max(0, Number(pass) || 0)};
+    if(rung.variant === "guided"){
+      changes.narration = REVIEW_GUIDED_NARRATION;
+      if(REVIEW_GUIDED_REPLIES[index]) changes.successReply = REVIEW_GUIDED_REPLIES[index];
+    }
+    return copyItem(phaseItem(index, rung.variant, "review", rung.format), changes);
   }
 
   function getReviewLadderLength(){

@@ -681,15 +681,15 @@ test("tester controls remain touch-sized and cannot sit beneath the update bar",
   assert.match(css, /\.feedback-open\{[^}]*z-index:[1-9][0-9]{2,}/);
 });
 
-test("feedback moves clear of active phone action docks and modal dialogs", () => {
+test("feedback cannot cover the game on a phone, and yields to modal dialogs", () => {
   const css = read("styles.css");
+  const html = read("index.html");
 
   assert.match(css,
-    /body:has\(#screen-game\[style\*="display: block"\] #next-row\[style\*="display: block"\]\) \.feedback-open\{bottom:calc\(76px/,
-    "an active Continue dock lifts Feedback above its button");
-  assert.match(css,
-    /body:has\(#screen-game\[style\*="display: block"\] #feedback-row\.show\) \.feedback-open\{bottom:calc\(152px/,
-    "an answer explanation gets its own clearance above Continue");
+    /@media\(max-width:760px\)\{\s*\.feedback-open\{position:static;/,
+    "on a phone Feedback is in the page flow rather than floating over answers");
+  assert.ok(html.indexOf('id="btn-feedback"') > html.indexOf('id="screen-game"'),
+    "in the flow it must come after the game, not above it");
   assert.match(css,
     /body:has\(\.about-panel:not\(\[hidden\]\)\) \.feedback-open\{visibility:hidden;pointer-events:none\}/,
     "a modal owns the screen instead of competing with the floating feedback button");
@@ -1661,6 +1661,37 @@ test("a purchased pet is visible before the Inn cat reward", () => {
     "an owned pet can be managed before the Inn cat reward");
 });
 
+test("the shop does not sell the calico before the Inn gives it", () => {
+  // The cat is Episode 4's reward. Selling the same cat beside it for ¥1000
+  // made the final reward something a learner could simply skip.
+  const before = boot(plantedCamelliaSave({
+    money: 5000, ownedPets: [], activePets: [],
+    innJourney: { version: 1, claimed: {}, catUnlocked: false },
+  }));
+  enterHome(before);
+  before.doc.querySelectorAll("[data-home-shop]")[0].click();
+  before.clock.advance(50);
+  before.doc.querySelectorAll("[data-shop-category]")
+    .find((b) => b.getAttribute("data-shop-category") === "pets").click();
+  before.clock.advance(50);
+  assert.equal(before.doc.querySelectorAll('[data-buy-pet="cat"]').length, 0,
+    "no cat on the shelf before it is earned");
+  assert.equal(before.doc.querySelectorAll('[data-buy-pet="bird"]').length, 1);
+
+  const after = boot(plantedCamelliaSave({
+    money: 5000, ownedPets: ["cat"], activePets: ["cat-0"],
+    innJourney: { version: 1, claimed: {}, catUnlocked: true },
+  }));
+  enterHome(after);
+  after.doc.querySelectorAll("[data-home-shop]")[0].click();
+  after.clock.advance(50);
+  after.doc.querySelectorAll("[data-shop-category]")
+    .find((b) => b.getAttribute("data-shop-category") === "pets").click();
+  after.clock.advance(50);
+  assert.equal(after.doc.querySelectorAll('[data-buy-pet="cat"]').length, 1,
+    "once earned, a second cat can be bought");
+});
+
 test("the shop explains an unaffordable pet purchase", () => {
   const game = boot(plantedCamelliaSave({
     money: 0,
@@ -2297,7 +2328,7 @@ test("?skip=1's Inn skip controls also show when a save reloads mid-stage", asyn
   // just short of it and never reached the resumed stage at all.
   reloaded.clock.advance(600);
 
-  assert.equal(reloaded.$("scene-label").textContent, "月見宿・N2 - 洗面所で",
+  assert.equal(reloaded.$("scene-label").textContent, "月見宿・N2 - 客室のタオル",
     "resumed onto the second item, not restarted");
   assert.equal(reloaded.$("btn-skip-question").hidden, false,
     "shown after a real reload resumes mid-stage, not just on a fresh stage start");
@@ -3097,6 +3128,48 @@ function retainedProgress() {
   }
   return progress;
 }
+
+test("re-entering the Inn after passing training goes on to Episode 1, not back into Day 3", async () => {
+  // Reported path: finish training, choose "Visit home" on the reward, come
+  // back to the Inn. The saved days were resumed, so Day 3's last question
+  // reappeared in place of the episode the reward screen had promised.
+  const game = boot(clearedInnSave());
+  game.$("btn-start").click();
+  game.clock.advance(600);
+  game.doc.querySelectorAll(".map-destination")
+    .find((b) => b.textContent.includes("月見宿")).click();
+  game.clock.advance(900);
+  assert.ok(game.$("inn-reward"), "the unclaimed training reward is shown first");
+  const afterClaim = JSON.parse(game.storage.getItem("lanternAlley.v3")).stages["home-inn"];
+  assert.equal(afterClaim.mastered, true,
+    "claiming the reward must not save the passed training back as Day 1");
+  game.$("btn-reward-home").click();
+  game.clock.advance(300);
+
+  // Straight back in from the home.
+  game.doc.querySelectorAll("[data-home-map]")[0].click();
+  game.clock.advance(600);
+  game.doc.querySelectorAll(".map-destination")
+    .find((b) => b.textContent.includes("月見宿")).click();
+  game.clock.advance(900);
+  assert.equal(game.$("inn-reward"), null, "the reward is not handed out twice");
+  assert.ok(game.$("btn-episode-begin"), "Episode 1's opening card is shown");
+  assert.notEqual(game.$("stage-phase-badge").textContent.indexOf("三日目"), 0);
+});
+
+test("the map lights the Inn only when the whole place is held", () => {
+  // Passing training sets visited, which lit the Inn's lantern and labelled it
+  // 完了 at 5 of 40 words. And the home has no lantern, so it is not counted.
+  const game = boot(clearedInnSave());
+  game.$("btn-start").click();
+  game.clock.advance(600);
+  const inn = game.doc.querySelectorAll(".map-destination")
+    .find((b) => b.textContent.includes("月見宿"));
+  assert.ok(!inn.className.includes("state-completed"), "the Inn is in progress, not finished");
+  const places = game.context.LanternAlleyMap.destinations.filter((p) => p.kind !== "home").length;
+  assert.equal(game.$("map-progress-text").textContent, "灯り 1 / " + places,
+    "only the Entrance is lit, out of places that have a lantern");
+});
 
 test("clearing the shift is silver; only retention across days is gold", async () => {
   // Mastery used to be one flag, earned inside a single sitting, and it wrote

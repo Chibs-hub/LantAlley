@@ -13180,7 +13180,7 @@ Total: 13426 unique Japanese-containing strings.
 
 ## app.js (302 unique strings)
 
-- Lines 19: "提灯に明かりがともり、小さな狐のコンが木箱の上から声をかけます。"
+- Lines 19: "提灯に明かりがともり、小さな狐のコンが声をかけます。"
 - Lines 20: "まず、私にお辞儀してください。"
 - Lines 22: "お辞儀をしてください。"
 - Lines 23: "「お辞儀」は、体を前に傾ける日本のあいさつです。"

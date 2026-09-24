@@ -16,7 +16,7 @@
       pos:{x:12, y:80},
       label:"The Alley Entrance",
       interactiveDuo:true,
-      narration:"提灯に明かりがともり、小さな狐のコンが木箱の上から声をかけます。",
+      narration:"提灯に明かりがともり、小さな狐のコンが声をかけます。",
       jp:"まず、私にお辞儀してください。",
       romaji:"Mazu, watashi ni ojigi shite kudasai.",
       meaning:"お辞儀をしてください。",
@@ -741,6 +741,42 @@
     cancelSchedule:function(timer){ clearTimeout(timer); }
   });
 
+  /* Who is talking, from the line itself.
+   *
+   * The bubble's name tab always read コン, so a guest's complaint and the
+   * 女将's question were printed under Kon's name, and Kon's own lines kept a
+   * redundant 「コン：「…」」 wrapper inside a tab that already said コン. A line
+   * that is one speaker's words from start to end is shown without the wrapper
+   * under that speaker's name. A line that only quotes someone - Kon setting
+   * the scene and then repeating what a guest said - stays Kon's. Display
+   * only: the audio clip is keyed on the full line, which speak() still has. */
+  var SPEAKER_TABS = {"コン":"コン (Kon)", "お客様":"お客様 (Guest)", "女将さん":"女将さん (Okami)"};
+  function splitSpeaker(text){
+    var line = String(text == null ? "" : text);
+    var match = /^(コン|お客様|女将さん)：「/.exec(line);
+    if(!match || line.slice(-1) !== "」") return {speaker:null, text:line};
+    var depth = 0;
+    for(var i = match[0].length - 1; i < line.length; i++){
+      var ch = line.charAt(i);
+      if(ch === "「") depth += 1;
+      else if(ch === "」"){
+        depth -= 1;
+        if(depth === 0 && i !== line.length - 1) return {speaker:null, text:line};
+      }
+    }
+    return {speaker:match[1], text:line.slice(match[0].length, -1)};
+  }
+  var startDialogueLine = dialogueFlow.start;
+  dialogueFlow.start = function(text, animate){
+    var split = splitSpeaker(text);
+    var shell = $("dialogue-shell");
+    if(shell){
+      if(split.speaker && split.speaker !== "コン") shell.setAttribute("data-speaker", SPEAKER_TABS[split.speaker]);
+      else shell.removeAttribute("data-speaker");
+    }
+    return startDialogueLine(split.text, animate);
+  };
+
   dialoguePanel.addEventListener("click", function(){ dialogueFlow.activate(); });
   dialoguePanel.addEventListener("keydown", function(event){
     if(event.key !== "Enter" && event.key !== " ") return;
@@ -902,10 +938,10 @@
       return place.key !== "entrance" && place.kind !== "home";
     });
     var active = destinations.find(function(place){
-      return locationUnlocked(place.key) && LanternAlleyMap.resolveState(place.key, state) === "in-progress";
+      return locationUnlocked(place.key) && LanternAlleyMap.resolveState(place.key, mapProgress()) === "in-progress";
     });
     var next = destinations.find(function(place){
-      return locationUnlocked(place.key) && LanternAlleyMap.resolveState(place.key, state) === "available";
+      return locationUnlocked(place.key) && LanternAlleyMap.resolveState(place.key, mapProgress()) === "available";
     });
     var message = LanternTitleMessage.select({
       visitedCount:visitedCount(),
@@ -913,7 +949,7 @@
       currentPlaceName:active && active.name,
       nextPlaceName:next && next.name,
       allStagesComplete:destinations.length > 0 && destinations.every(function(place){
-        return LanternAlleyMap.resolveState(place.key, state) === "completed";
+        return LanternAlleyMap.resolveState(place.key, mapProgress()) === "completed";
       })
     });
     note.hidden = false;
@@ -1918,7 +1954,7 @@
       var key = STAGE_ORDER[i];
       var place = LanternAlleyMap.getDestination(key);
       if(!place) continue;
-      var progressState = LanternAlleyMap.resolveState(key, state);
+      var progressState = LanternAlleyMap.resolveState(key, mapProgress());
       if(progressState === "in-progress") return key;
       if(progressState !== "completed" && locationUnlocked(key)) return key;
     }
@@ -1996,7 +2032,7 @@
     mapTravelTimer = setTimeout(function(){
       marker.classList.remove("is-traveling");
       marker.setAttribute("aria-label", "コンは" + place.name + "にいます");
-      var action = LanternAlleyMap.getAction(key, state);
+      var action = LanternAlleyMap.getAction(key, mapProgress());
       if(action) runMapAction(key);
     }, 520);
   }
@@ -2006,14 +2042,14 @@
     var completedCount = 0;
     destinationsEl.innerHTML = "";
     LanternAlleyMap.destinations.forEach(function(place){
-      var progressState = LanternAlleyMap.resolveState(place.key, state);
+      var progressState = LanternAlleyMap.resolveState(place.key, mapProgress());
       var unlocked = locationUnlocked(place.key);
       if(!unlocked) progressState = "locked";
       var stageIndex = STAGE_ORDER.indexOf(place.key);
       if(place.kind === "home" && !unlocked) return;
       if(stageIndex >= 0 && !unlocked) return;
       var statusLabel = progressState === "locked" ? "未開放" : LanternAlleyMap.stateLabels[progressState];
-      if(progressState === "completed") completedCount += 1;
+      if(progressState === "completed" && place.kind !== "home") completedCount += 1;
       var btn = document.createElement("button");
       btn.type = "button";
       btn.className = "map-destination state-" + progressState + (place.kind === "home" ? " is-home" : " is-stage");
@@ -2036,7 +2072,7 @@
         // picture behind it. Places with no action - the 準備中 ones - still
         // just select, so their story shows and nothing dead is offered.
         selectMapDestination(place.key);
-        var action = locationUnlocked(place.key) ? LanternAlleyMap.getAction(place.key, state) : null;
+        var action = locationUnlocked(place.key) ? LanternAlleyMap.getAction(place.key, mapProgress()) : null;
         if(action) travelMapKon(place.key);
       });
       destinationsEl.appendChild(btn);
@@ -2044,7 +2080,10 @@
     renderStagePath();
     renderHomeRoute();
     renderMapTraveler();
-    $("map-progress-text").textContent = "灯り " + completedCount + " / " + LanternAlleyMap.destinations.length;
+    // The home has no lantern to light, so it is not counted: with it, the
+    // counter topped out at 6 / 7.
+    $("map-progress-text").textContent = "灯り " + completedCount + " / "
+      + LanternAlleyMap.destinations.filter(function(place){ return place.kind !== "home"; }).length;
     /* 灯り 0 / 6 sat there from the first visit with nothing saying what it
      * counted. The explanation belongs next to the number rather than in
      * Kon's tutorial: every spoken Entrance line needs a pre-rendered clip
@@ -2058,7 +2097,7 @@
     // tutorial rather than a place with words to learn, so the note stays
     // until a real place is finished.
     var placesDone = LanternAlleyMap.destinations.filter(function(place){
-      return place.key !== "entrance" && LanternAlleyMap.resolveState(place.key, state) === "completed";
+      return place.key !== "entrance" && LanternAlleyMap.resolveState(place.key, mapProgress()) === "completed";
     }).length;
     goalNote.hidden = placesDone > 0;
     if(!goalNote.hidden){
@@ -2135,7 +2174,7 @@
 
   function runMapAction(key){
     if(!locationUnlocked(key)) return;
-    var action = LanternAlleyMap.getAction(key, state);
+    var action = LanternAlleyMap.getAction(key, mapProgress());
     if(action) enterLocation(action.locationKey);
   }
 
@@ -2171,9 +2210,9 @@
 
   function renderMapDetail(){
     var place = LanternAlleyMap.getDestination(selectedMapKey) || LanternAlleyMap.getDestination("entrance");
-    var progressState = LanternAlleyMap.resolveState(place.key, state);
+    var progressState = LanternAlleyMap.resolveState(place.key, mapProgress());
     var unlocked = locationUnlocked(place.key);
-    var action = unlocked ? LanternAlleyMap.getAction(place.key, state) : null;
+    var action = unlocked ? LanternAlleyMap.getAction(place.key, mapProgress()) : null;
     var statusText = unlocked ? LanternAlleyMap.stateLabels[progressState] : "🔒 未開放";
     if(place.key === "home-inn" && state.stageProgress.homeInn){
       var medalIcons = {bronze:"🥉",silver:"🥈",gold:"🥇"};
@@ -2222,7 +2261,12 @@
       var seen = {};
       material.forEach(function(id){ seen[id] = true; });
       var total = Object.keys(seen).length;
-      var known = ((state.masteredByStage || {})[place.key] || []).length;
+      // The Entrance's one greeting is held the moment it is answered - its
+      // gauge reads state.visited, not masteredByStage - so the word count
+      // follows the same source rather than reading 0 / 1 beside 100%.
+      var known = place.key === "entrance"
+        ? (state.visited.entrance ? total : 0)
+        : ((state.masteredByStage || {})[place.key] || []).length;
       var showProgress = unlocked && total > 0;
       progressBox.hidden = !showProgress;
       if(showProgress){
@@ -2472,6 +2516,18 @@
       });
     });
     return ids;
+  }
+
+  /* What the map may call finished. `visited` is also set when the Inn's
+   * three training days are passed, which lit the Inn's lantern and labelled
+   * it 完了 at 5 of 40 words. A place is finished on the map only once every
+   * shift is done and every word held - the same rule the map's note states. */
+  function mapProgress(){
+    var lit = {};
+    Object.keys(state.visited || {}).forEach(function(key){
+      if(key === "entrance" || !stageFor(key) || (stageComplete(key) && stageMastery(key) === 100)) lit[key] = true;
+    });
+    return Object.assign({}, state, {visited:lit});
   }
 
   function stageMastery(key){
@@ -3586,6 +3642,10 @@
     snapshotMastery(state.currentKey);
     previewState = {index:0, list:list, answered:false, missed:[], missedTargets:[], repair:null,
       satisfaction: typeof GuestSatisfaction !== "undefined" ? GuestSatisfaction.create(list.length) : null};
+    // The three days' run belongs to the three days. Left on the HUD, Day 3's
+    // 「🔥 5 連続」 sat over the episode's opening card before a single episode
+    // question had been answered.
+    resetTrainingStreak();
     var episode = currentEpisode();
     trackTelemetry("episode_started", {episode_id:episode ? episode.id : null});
     screenTitle.style.display = "none";
@@ -4318,8 +4378,14 @@
     $("feedback-row").classList.remove("show");
     $("next-row").style.display = "none";
     $("narration").textContent = "";
-    var f = GuestSatisfaction.face(sat.score);
-    var line = "コン：「お疲れさまでした。" + f.label + "です！」";
+    // The finished episode is already marked done, so the journey strip above
+    // this card announced the next one ("You are on Episode 2") while the card
+    // still reported on Episode 1. It returns with the next screen.
+    var journey = $("inn-journey");
+    if(journey) journey.hidden = true;
+    // Kon reports how the guests felt. 「大満足です！」 in her mouth said that
+    // she herself was delighted.
+    var line = "コン：「お疲れさまでした。" + GuestSatisfaction.reward(sat.score).label + "」";
     if(dialogueFlow) dialogueFlow.start(line, false); else $("jp-line").textContent = line;
     speak(line, sat.score >= 50 ? "correct" : "wrong");
     $("scene-label").textContent = episode ? "月見宿 - " + episode.title : "月見宿";
@@ -5310,6 +5376,8 @@
     courtyard:"assets/inn/scenes/courtyard.jpg"
   };
   function innSceneFor(prompt){
+    // Authored first: a question that names its room is never guessed at.
+    if(prompt && prompt.innScene && INN_SCENES[prompt.innScene]) return prompt.innScene;
     var text = [prompt && prompt.target, prompt && prompt.mechanic,
       prompt && prompt.jp, prompt && prompt.prompt && prompt.prompt.jp].join(" ");
     if(/花火|祭|庭|外/.test(text)) return "courtyard";
@@ -5557,11 +5625,45 @@
     state.stageMastered = false;
     state.resumedStageEntry = false;
     if(loc.isHome){ renderHome(); return; }
+    /* saveProgress() rebuilds the Inn's training record from these in-memory
+     * fields whenever the current place is the Inn - and they were reset just
+     * above. Entering the Inn after training was passed, and then saving for
+     * any reason (claiming the training reward, resuming an episode after a
+     * reload), wrote the passed training back as Day 1, not mastered. The
+     * record is loaded back into memory first, so a save keeps what it says. */
+    var heldInn = loc.key === "home-inn" && state.stageProgress.homeInn
+      && state.stageProgress.homeInn.mastered ? state.stageProgress.homeInn : null;
+    if(heldInn){
+      state.stagePhase = heldInn.phase === "coldopen" ? "learn" : (heldInn.phase || "challenge");
+      state.encounterIndex = Number(heldInn.index) || 0;
+      state.challengeScore = Number(heldInn.challengeScore) || 0;
+      (heldInn.correctWords || []).forEach(function(word){ state.challengeCorrectWords[word] = true; });
+      (heldInn.trainingWords || []).forEach(function(word){ state.trainingCorrectWords[word] = true; });
+      state.dayMisses = {};
+      (heldInn.dayMisses || []).forEach(function(word){ state.dayMisses[word] = true; });
+      state.challengeMisses = loc.challenge ? loc.challenge.filter(function(item){
+        return (heldInn.misses || []).indexOf(item.focusWord) >= 0;
+      }) : [];
+      state.reviewPasses = Object.assign({}, heldInn.reviewPasses || {});
+      state.encounterMissed = !!heldInn.encounterMissed;
+      state.stageDeclined = !!heldInn.declined;
+      state.stageMastered = true;
+    }
     if(savedEpisode && savedEpisode.locationKey === loc.key && resumeEpisode()) return;
     // Every shift done, but the place is not yet held: finish it properly
     // rather than replaying an hour of questions already answered.
     if(stageFor(loc.key) && stageComplete(loc.key) && stageMastery(loc.key) < 100){
       if(startMasteryLoop(loc.key)) return;
+    }
+    // Training already passed: the saved days are finished history. Resuming
+    // them put a learner who chose "Visit home" on the reward screen back on
+    // Day 3's last question instead of the episode that screen promised.
+    if(heldInn && typeof N2InnEpisodes !== "undefined"){
+      installFoxAvatar(LanternAlleyLogic.shouldUseTransparentFox(loc.key, true));
+      renderHud();
+      if(showInnReward("training")) return;
+      startEpisode(loc.key);
+      return;
     }
     // An episode-only place has no room to walk into: the shift is the stage.
     if(!loc.encounters && stageFor(loc.key)){
@@ -5794,6 +5896,15 @@
     {id:"bird", nameJp:"うぐいす", counter:"羽", price:1000, sprite:"assets/home/pet/uguisu-perch-v1.png"}
   ];
 
+  /* The calico is the Inn's final reward ("Your cat"). Selling the same cat
+   * for ¥1000 beside it made the reward something any learner could skip, so
+   * the shop offers it only to someone who already owns one - a second cat,
+   * not the first. */
+  function petOnSale(pet){
+    return pet.id !== "cat" || ownsPet("cat")
+      || !!(state.innJourney && state.innJourney.catUnlocked);
+  }
+
   function inferOwnedPets(save){
     if(Array.isArray(save && save.ownedPets)) return save.ownedPets.slice();
     var pets = [];
@@ -5907,7 +6018,6 @@
       : '<button type="button" class="home-scene-back" data-home-map="1">&larr; Lantern Alley</button>';
     return '<div class="home-scene-chrome" aria-label="わが家の情報">'
       + back
-      + '<span class="home-scene-stars">' + (state.stars || 0) + ' ⭐</span>'
       + '<span class="home-scene-money">¥' + (state.money || 0) + '</span>'
       + '</div>';
   }
@@ -6877,7 +6987,7 @@
     if(homeTab === "garden"){
       var waiting = plantsInStorage();
       if(!(gardenState().plants || []).length){
-        return '<p class="home-empty">まだ何も植えていません。「店」で種を買ってみましょう。</p>';
+        return '<p class="home-empty">まだ何も植えていません。月見宿の仕事でもらうか、「店」で苗を買ってみましょう。</p>';
       }
       if(!waiting.length){
         return '<p class="home-empty">持っている草花は全部植えてあります。</p>'
@@ -6892,7 +7002,8 @@
          * the same half-grown tree was a sapling in the ground and a sprout in
          * the cupboard. */
         html += dockCard(plantFigure(plant.typeId, plantVisualStage(plant), ""),
-          plantName(plant.typeId), STAGE_JP[plant.stage] || plant.stage,
+          // In storage an unplanted seedling is a 苗, not 「植えたばかり」.
+          plantName(plant.typeId), plant.stage === "planted" ? "苗" : (STAGE_JP[plant.stage] || plant.stage),
           'data-pick-plant="' + plant.id + '"',
           (homeSelected && homeSelected.kind === "plant" && homeSelected.id === plant.id) ? " is-picked" : "");
       });
@@ -6997,7 +7108,7 @@
       });
     }
     PET_CATALOGUE.forEach(function(pet){
-      if(!ownsPet(pet.id)) wanted.push({name:pet.nameJp, price:pet.price});
+      if(!ownsPet(pet.id) && petOnSale(pet)) wanted.push({name:pet.nameJp, price:pet.price});
     });
 
     var short = wanted.filter(function(w){ return w.price > money; })
@@ -7022,7 +7133,7 @@
         + want.next.name + '」が買えます。</p>';
     }
     if(want.affordable){
-      return '<p class="home-goal">お店のものは今なら全部買えます。</p>';
+      return '<p class="home-goal">今のお金なら、お店のどの品も買えます。</p>';
     }
     return '<p class="home-goal">お店のものは全部そろいました。</p>';
   }
@@ -7032,7 +7143,7 @@
     var hasCushion = typeof LanternHomeDecor !== "undefined"
       && LanternHomeDecor.owns(homeState(), STARTER_DECOR);
     var message = hasCushion
-      ? "Complete Episode 1 to earn your camellia seed."
+      ? "Complete Episode 1 to earn your camellia seedling."
       : "Finish Inn Training to earn your first home item.";
     return '<aside class="home-first-reward" aria-label="Next home reward">'
       + '<p class="home-first-reward-kicker">Next home reward</p>'
@@ -7072,8 +7183,8 @@
      done:function(){ return homeDecorating; }},
 
     {id:"plant-seed",
-     jp:"コン：「椿の苗を持ち物に入れておきました。好きなところに植えてください。この庭の草花は、日にちではなく稽古で育ちます。」",
-     how:"Press the 椿 seed, then a glowing spot.",
+     jp:"コン：「月見宿でもらった椿の苗が、持ち物に入っています。好きなところに植えてください。この庭の草花は、日にちではなく稽古で育ちます。」",
+     how:"Press the 椿 seedling, then a glowing spot.",
      /* The seed the learner was just handed, not any plant already saved in
       * the yard. An older planted item must not skip this tutorial action. */
      done:function(){
@@ -7087,13 +7198,13 @@
      done:function(){ return homeView === "interior"; }},
 
     {id:"place-cushion",
-     jp:"コン：「座布団も持ち物に入れておきました。置きたいところに置いてください。」",
+     jp:"コン：「月見宿でもらった座布団も、持ち物に入っています。置きたいところに置いてください。」",
      how:"Press 飾る, then the 座布団, then a glowing spot.",
      done:function(){ return decorPlacedAt(STARTER_DECOR) !== null; }},
 
     {id:"move-cushion",
-     jp:"コン：「気に入らなければ、置いたものを押せば持ち物にもどせます。何度でもやり直せますよ。」",
-     how:"Press the cushion in the room to put it away again.",
+     jp:"コン：「置く場所を変えたいときは、置いたものを押して持ち物にもどし、また好きなところに置きます。何度でもやり直せますよ。」",
+     how:"Press the cushion in the room to take it back into your items - that is how you move it.",
      done:function(){ return homeTutorialMoved; }},
 
     {id:"finish",
@@ -7287,6 +7398,7 @@
     var money = state.money || 0;
     var html = "";
     PET_CATALOGUE.forEach(function(pet){
+      if(!petOnSale(pet)) return;
       var ownedCount = ownedPetCount(pet.id);
       var count = activePetCount(pet.id);
       var art = '<div class="home-pet-shop-sprite" style="background-image:url(\'' + pet.sprite + '\');"></div>';
@@ -7781,7 +7893,7 @@
     if(buyPet){
       var petId = buyPet.getAttribute("data-buy-pet");
       var petEntry = PET_CATALOGUE.filter(function(p){ return p.id === petId; })[0];
-      if(!petEntry) return;
+      if(!petEntry || !petOnSale(petEntry)) return;
       if((state.money || 0) < petEntry.price){ homeSay("お金が足りません。もう少し稼ぎましょう。"); return; }
       if(!state.ownedPets) state.ownedPets = [];
       state.ownedPets.push(petId);

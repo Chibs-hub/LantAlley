@@ -164,3 +164,21 @@ test("every reading is kana, because every reading is asked as a question", () =
   assert.equal(broken.length, 0,
     "a reading that is not kana cannot be asked for or answered: " + broken.join(", "));
 });
+
+test("meanings carry no dictionary sense numbers", () => {
+  // 見送る read "(1) to see off" on the learner's screen.
+  const catalog = loadCatalog();
+  const numbered = catalog.items.filter((item) => item.meanings.some((m) => /^\(\d+\)/.test(m)));
+  assert.equal(numbered.length, 0, numbered.slice(0, 5).map((item) => item.canonical).join(", "));
+});
+
+test("the Inn's words gloss first with the sense the Inn uses", () => {
+  const catalog = loadCatalog();
+  const first = (id) => catalog.getItem(id).meanings[0];
+  assert.equal(first("w-kakunin"), "confirmation");
+  assert.equal(first("w-kizu"), "damage");
+  assert.equal(first("w-kyakuma"), "guest room");
+  assert.match(first("w-yukata"), /^yukata/);
+  assert.match(first("v-osameru-2"), /^to pay/);
+  assert.equal(catalog.getItem("w-miokuru").type, "word", "stripping numbers left the id's type alone");
+});

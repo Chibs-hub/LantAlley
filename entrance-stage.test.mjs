@@ -219,8 +219,8 @@ test("entrance separates large scene characters from the bottom dialogue dock", 
   assert.match(html, /\.entrance-stage #scene > \.avatar\.avatar-animated\{position:absolute;width:170px;height:220px/);
   assert.match(html, /\.entrance-stage \.learning-context\{[^}]*align-self:end/);
   assert.match(html, /\.entrance-stage \.game-layout:has\(#scene\.entrance-actions-visible\) \.learning-context\{margin-bottom:162px\}/);
-  assert.match(html, /\.entrance-stage \.duo-stage\{left:35%;bottom:302px\}/);
-  assert.match(html, /\.entrance-stage #scene > \.avatar\.avatar-animated\{width:112px;height:145px;left:65%;bottom:302px\}/);
+  assert.match(html, /\.entrance-stage \.duo-stage\{left:35%;bottom:358px\}/);
+  assert.match(html, /\.entrance-stage #scene > \.avatar\.avatar-animated\{width:112px;height:145px;left:65%;bottom:358px\}/);
   assert.match(html, /\.entrance-stage \.entrance-action-grid\{right:8px;bottom:8px;width:calc\(100% - 16px\);min-height:145px;padding:7px 6px 6px\}/);
 });
 

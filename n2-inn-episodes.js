@@ -33,7 +33,7 @@
     id:"inn-e01",
     title:"宵の一時間",
     sourceNote:NOTE,
-    progress:{label:"今夜の仕事", beats:["受付","夕食","お茶","帳場","見送り"]},
+    progress:{label:"今夜の仕事", beats:["受付","お茶とタオル","部屋","予定","満室"]},
     intro:{jp:"コン：「三日間の練習、お疲れさまでした。今夜はお祭りの前の晩です。お客様が次々にいらっしゃいますから、いよいよ本番です。」", audio:true},
     // Spoken before the first question: the rules of an episode, in Japanese.
     briefing:{
@@ -42,7 +42,7 @@
       points:[
         "お客様は待っています。時間内に答えてください。",
         "音声は最後まで聞いてから、時間が始まります。",
-        "読む問題の制限時間は二分です。短い返事は五秒です。",
+        "読む問題の制限時間は二分です。音声の問題は五秒から十二秒です。",
         "もう一度聞きたいときは、スピーカーを押してください。",
         "間違えた仕事は、一時間の最後にもう一度出ます。"
       ]
@@ -50,7 +50,7 @@
     days:[
       {day:1, mode:"learn", label:"宵の口", questions:[
         q("inn-e01-q01", "quick-response", "w-annai", 8,
-          {jp:"二人部屋がひとつ空いています。お客様：「二人ですが、部屋はありますか。」何と言いますか。", audio:true},
+          {jp:"二人部屋が三つ空いています。お客様：「二人ですが、部屋はありますか。」何と言いますか。", audio:true},
           {type:"quick-response", options:["お荷物をお預かりします。","いいえ、分かりません。","はい、お部屋へご案内します。","もう閉まりました。"], correctIndex:2},
           {correct:"お客様は部屋へ向かいました。「案内する」は、人を連れて行くことです。",
            incorrect:"お客様を待たせてしまいました。まず部屋へご案内します。"},
@@ -92,12 +92,12 @@
       {day:2, mode:"practice", label:"食事どき", questions:[
         q("inn-e01-q04", "listening-task", "v-torikaeru", 5,
           {jp:"お客様：「タオルが濡れています。」", audio:true},
-          {type:"single-choice", options:["そのままにします。","タオルを温めます。","タオルを揃えます。","新しいタオルに取り替えます。"], correctIndex:3},
+          {type:"single-choice", options:["濡れたタオルを干しておきます。","タオルを温めてお渡しします。","タオルをきれいに揃えます。","新しいタオルに取り替えます。"], correctIndex:3},
           {correct:"新しいタオルをお渡ししました。ある物を同じ種類の別の物と交換するのが「取り替える」です。",
            incorrect:"濡れたままでした。同じ種類の新しい物と交換するのが「取り替える」です。"},
           {prompt:"「取り替える」に近い意味はどれですか。", options:["別の物と交換する","人の代わりをする"], correctIndex:0, seconds:8},
           [
-            "leaving it as it is - the guest is still waiting",
+            "hanging the wet one up to dry - the guest still has no dry towel",
             "温める - warming a wet towel does not dry it",
             "揃える - lining the towels up neatly, while this one is still wet",
             "取り替える - to swap it for another of the same kind"
@@ -117,7 +117,7 @@
           ]),
 
         q("inn-e01-q06", "reading", "w-souji", 120,
-          {jp:"【二階のお知らせ】\n一番　明日の朝十時にご出発\n二番　明日の朝十時にご出発\n三番　先ほどご出発になりました\n四番　明後日までご滞在\n五番　先ほどご出発になりました\n六番　工事中（入れません）\n七番　夕方にご到着の予定\n八番　掃除が終わっています\n※お客様がご出発になった部屋だけ、今から掃除します。\n※工事中の部屋と、掃除が終わっている部屋はしません。\n今から掃除をする部屋はどれですか。", audio:false},
+          {jp:"【二階のお知らせ】\n一番　明日の朝十時にご出発\n二番　明日の朝十時にご出発\n三番　先ほどご出発になりました\n四番　明後日までご滞在\n五番　先ほどご出発になりました\n六番　工事中（入れません）\n七番　今夜遅くにご到着の予定\n八番　掃除が終わっています\n※お客様がご出発になった部屋だけ、今から掃除します。\n※工事中の部屋と、掃除が終わっている部屋はしません。\n今から掃除をする部屋はどれですか。", audio:false},
           {type:"evidence-choice", options:["一番と二番","三番と五番","三番と五番と六番","四番と七番"], correctIndex:1},
           {correct:"三番と五番の掃除を始められます。お客様がご出発になった部屋だけを選べました。",
            incorrect:"お客様がご出発になったのは三番と五番だけです。ほかの部屋はまだお客様がいるか、掃除が終わっています。"},
@@ -172,15 +172,15 @@
 
         q("inn-e01-q10", "integrated", "v-kotowaru", 12,
           {jp:"お客様：「今から十人、泊まれますか。」二人部屋が二つしか空いていません。何と言いますか。", audio:true},
-          {type:"quick-response", options:["申し訳ありません。二人部屋が二つしか空いておりませんので、近くの宿をご案内いたします。","はい、大丈夫です。","何も言いません。","少々お待ちください。"], correctIndex:0},
+          {type:"quick-response", options:["申し訳ありません。二人部屋が二つしか空いておりませんので、近くの宿をご案内いたします。","はい、大丈夫です。二人部屋を二つご用意しますので、十人でお使いください。","少々お待ちください。空いているお部屋を確かめてまいりますので、こちらでお待ちください。","申し訳ありません。今夜はもう受付を終えておりますので、明日またお越しください。"], correctIndex:0},
           {correct:"正直に伝えられました。できないことを丁寧に伝えるのが「断る」です。",
            incorrect:"必要な部屋数をご用意できません。事情を丁寧に伝えてお断りしましょう。"},
           {prompt:"できないと丁寧に伝えることはどれですか。", options:["引き受ける","断る"], correctIndex:1, seconds:5},
           [
             "explaining the limited vacancy and offering practical help",
-            "promising rooms that do not exist",
-            "saying nothing, which leaves the guest waiting",
-            "asking them to wait, which delays an answer that will not change"
+            "promising two twin rooms to ten people",
+            "the free rooms are already known, so waiting delays an answer that will not change",
+            "untrue - the desk is open - and it leaves ten people with nowhere to go"
           ])
       ]}
     ]
@@ -215,13 +215,13 @@
     id:"inn-e02",
     title:"予約帳",
     sourceNote:NOTE2,
-    progress:{label:"朝の帳場", beats:["書類","確認","帳面","規則","昼支度"]},
-    intro:{jp:"コン：「お祭りの夜は終わりました。お客様はまだお休みですが、帳場の仕事は残っています。昨夜は耳の仕事でしたね。今朝は目と手の仕事です。」", audio:true},
+    progress:{label:"朝の帳場", beats:["書類","通知","帳面","予定","清書"]},
+    intro:{jp:"コン：「今日はいよいよお祭りの日です。お客様はまだお休みですが、帳場の仕事は残っています。昨夜は耳の仕事でしたね。今朝は目と手の仕事です。」", audio:true},
     briefing:{
       jp:"コン：「昼までに、この予約帳を正しくしてください。今朝は音声の問題はほとんどありません。漢字の書き方、言葉の形、文の組み立て、そして文章の中の言葉を選びます。読む問題は長いので、時間も長く取ってあります。間違えた仕事は、最後にもう一度だけ確認します。」",
       audio:true,
       points:[
-        "今朝は書く仕事です。音声の問題はほとんどありません。",
+        "今朝は読んで選ぶ仕事です。音声の問題はほとんどありません。",
         "かなで書いてある言葉を、正しい漢字で選びます。",
         "言葉の前や後ろにつく形を選びます。",
         "文を組み立てて、★の場所に入る言葉を選びます。",
@@ -287,20 +287,20 @@
           ]),
 
         q2("inn-e02-q05", "word-formation", "w-yuusou", 20,
-          {jp:"通知の手紙は昨日のうちに郵便局へ出し、郵送の手続きは終わっています。帳面に作業の完了を記すとき、「郵送（　　）」の（　　）に入るのはどれですか。"},
+          {jp:"昨日お発ちのお客様の忘れ物は、今朝のうちに郵便局から送り、郵送の手続きは終わっています。帳面に作業の完了を記すとき、「郵送（　　）」の（　　）に入るのはどれですか。"},
           {type:"single-choice", options:["待ち","済み","中","前"], correctIndex:1},
           {correct:"「郵送済み」です。「済み」は、もう終わったことを表します。",
-           incorrect:"昨日のうちに出したので、もう終わっています。終わったことを表す形を選びます。"},
+           incorrect:"今朝のうちに送ったので、もう終わっています。終わったことを表す形を選びます。"},
           {prompt:"「済み」がついた言葉が表すのはどれですか。", options:["もう終わった","これからする"], correctIndex:0, seconds:8},
           [
             "待ち would mean it is waiting to be sent",
-            "済み - already done, which is what sending it yesterday means",
+            "済み - already done, which is what sending it this morning means",
             "中 would describe an ongoing process, but the ledger is marking the mailing task as complete",
             "前 would mean it has not been sent yet"
           ]),
 
         q2("inn-e02-q06", "text-grammar", "w-sakujo", 120,
-          {jp:"【帳場の申し送り】\nゆうべのご予約のうち、お取り消しのご連絡があったものは、帳面から（　　）してください。\n※ 線を引くだけでは、次の人にどの予約が有効なのか分かりません。\n※ （　　）したご予約は、下の欄に日付とともに残してください。\n（　　）に入る言葉はどれですか。"},
+          {jp:"【帳場の申し送り】\nゆうべのご予約のうち、お取り消しのご連絡があったものは、帳面から（　　）してください。\n※ 線を引くだけでは、次の人にどの予約が有効なのか分かりません。\n※ お取り消しのご連絡は、別の「取り消し控え」に日付とともに書いておいてください。\n（　　）に入る言葉はどれですか。"},
           {type:"single-choice", options:["記録","郵送","削除","清書"], correctIndex:2},
           {correct:"「削除」です。取り消しの連絡があった予約を、帳面から消します。",
            incorrect:"取り消しの連絡があったのですから、帳面から消す言葉を選びます。"},
@@ -393,7 +393,7 @@
   var INN_RULES = [
     "お客様は待っています。時間内に答えてください。",
     "音声は最後まで聞いてから、時間が始まります。",
-    "読む問題の制限時間は二分です。短い返事は五秒です。",
+    "読む問題の制限時間は二分です。音声の問題は五秒から十二秒です。",
     "もう一度聞きたいときは、スピーカーを押してください。",
     "間違えた仕事は、最後にもう一度出ます。"
   ];
@@ -406,7 +406,7 @@
     id:"inn-e03",
     title:"戻り客",
     sourceNote:NOTE3,
-    progress:{label:"夜のお迎え", beats:["玄関","客室","帳面","対応","夜支度"]},
+    progress:{label:"夜のお迎え", beats:["玄関","対応","預かり品","帳面","夜支度"]},
     intro:{jp:"コン：「お祭りが終わりました。お客様が一度に戻っていらっしゃいます。雨に降られた方、帳面の予定より遅い方、いろいろです。書いてあるとおりにはいきません。」", audio:true},
     briefing:{jp:"コン：「これから一時間、戻っていらっしゃるお客様をお迎えします。帳面と違うことが必ず起こります。そのときは、紙より目の前の方を見てください。間違えた仕事は、最後にもう一度だけ確認します。」", audio:true, points:INN_RULES},
     days:[
@@ -414,12 +414,12 @@
 
         q3("inn-e03-q01", "listening-task", "w-yuka", 5,
           {jp:"玄関の床が濡れています。どこが濡れていますか。", audio:true},
-          {type:"quick-response", options:["足で踏む平らな面","天井","戸の外の道","二階の窓"], correctIndex:0},
+          {type:"quick-response", options:["玄関の、足で踏むところ","玄関の、上にある天井","玄関の、戸の外の道","二階の、廊下の窓"], correctIndex:0},
           {correct:"分かりました。「床」は、部屋の中で足を乗せる平らな面のことです。",
            incorrect:"「床」は、足で踏む平らな面のことです。"},
           {prompt:"「床」はどれのことですか。", options:["上を覆う面","足で踏む平らな面"], correctIndex:1, seconds:5},
           [
-            "the floor, the flat surface underfoot",
+            "the entrance floor, the flat surface underfoot",
             "the ceiling is overhead, not underfoot",
             "the road outside is not the floor of the entrance",
             "a window upstairs is neither"
@@ -456,7 +456,7 @@
 
         q3("inn-e03-q04", "quick-response", "v-kasanaru", 8,
           {jp:"同じ時刻に、三組のお客様がお戻りになりました。一度に三組には対応できません。何と言いますか。", audio:true},
-          {type:"quick-response", options:["三組はお受けできません。","順にご案内しますので、少々お待ちください。","後からいらしてください。","一度にお入りください。"], correctIndex:1},
+          {type:"quick-response", options:["三組とも、今夜はお受けできません。","順にご案内しますので、少々お待ちください。","お部屋が空くまで、外でお待ちください。","三組とも、一度にお入りください。"], correctIndex:1},
           {correct:"落ち着いて対応できました。「重なる」は、二つ以上のことが同じ時刻や場所に集中することです。",
            incorrect:"三組のお戻りが重なりました。お断りせず、順にご案内すると伝えます。"},
           {prompt:"「重なる」はどんな様子ですか。", options:["同じところに合わさる","ばらばらに離れる"], correctIndex:0, seconds:5},
@@ -481,13 +481,13 @@
           ]),
 
         q3("inn-e03-q06", "reading", "w-kizu", 120,
-          {jp:"【お預かり品の記録】\n一番　傘　　　　傷なし\n二番　風呂敷　　角に小さな傷\n三番　箱　　　　ふたに大きな傷\n※ 傷のあるお預かり品は、お返しの前に必ずお客様にお伝えします。\n※ 小さな傷でも、必ずお客様にお伝えします。\n※ 傷のない品については、何も申し上げません。\nお伝えするのは、どのお客様ですか。"},
+          {jp:"【お預かり品の記録】\n一番　傘　　　　傷なし\n二番　お盆　　　角に小さな傷\n三番　箱　　　　ふたに大きな傷\n※ 傷のあるお預かり品は、お返しの前に必ずお客様にお伝えします。\n※ 小さな傷でも、必ずお客様にお伝えします。\n※ 傷のない品については、何も申し上げません。\nお伝えするのは、どのお客様ですか。"},
           {type:"evidence-choice", options:["三番だけ","一番と三番","三組とも","二番と三番"], correctIndex:3},
           {correct:"二番と三番です。傷の大きさにかかわらずお伝えします。",
            incorrect:"小さな傷でもお伝えします。傷のない品だけは何も申し上げません。"},
           {prompt:"「傷」はどれのことですか。", options:["物についてしまった跡や損傷","品物の値段"], correctIndex:0, seconds:5},
           [
-            "the small mark on room two's cloth counts too",
+            "the small mark on room two's tray counts too",
             "room one's umbrella has no damage at all",
             "room one has nothing to report",
             "rooms two and three: any damage is reported, however small"
@@ -511,7 +511,7 @@
 
         q3("inn-e03-q08", "quick-response", "w-jijou", 8,
           {jp:"お客様：「急な用ができて、朝早く発ちたいのです。」朝食は八時からです。何と言いますか。", audio:true},
-          {type:"quick-response", options:["八時までお待ちください。","ご事情は承りました。朝食は早めにお出しできます。","朝食はお出しできません。","明日は無理です。"], correctIndex:1},
+          {type:"quick-response", options:["決まりですので、朝食は八時までお待ちください。","ご事情は承りました。朝食は早めにお出しできます。","申し訳ありませんが、朝食はお出しできません。","急なご用でも、明日の出発は無理でございます。"], correctIndex:1},
           {correct:"ご事情に合わせて対応できました。「事情」は、そうなっている理由や、その人が置かれている状況のことです。",
            incorrect:"急な用があるというご事情です。ご事情に合わせて朝食の時間を早められると伝えます。"},
           {prompt:"「事情」はどれのことですか。", options:["そうなっている理由や状況","品物の値段"], correctIndex:0, seconds:5},
@@ -519,7 +519,7 @@
             "making them wait ignores what they just explained",
             "acknowledging the reason and moving breakfast earlier",
             "refusing breakfast is more than the situation calls for",
-            "「impossible」 when it is merely earlier than usual"
+            "telling a guest they cannot leave when they choose"
           ]),
 
         q3("inn-e03-q09", "listening-task", "w-sewa", 5,
@@ -537,14 +537,14 @@
 
         q3("inn-e03-q10", "integrated", "v-azukaru", 12,
           {jp:"お客様が財布を置いて出ていかれました。女将さん：「帳場で保管しておきましょう。どうしますか。」何と言いますか。", audio:true},
-          {type:"quick-response", options:["中を数えて帳面に書きます。","お帰りまでそのままにします。","お預かりして、中は見ずに帳面に記録します。","私が持っておきます。"], correctIndex:2},
+          {type:"quick-response", options:["私一人で中身を数えて、帳面に書いておきます。","お帰りになるまで、そのままにしておきます。","お預かりして、二人で中身を確かめて記録します。","私のかばんに入れて、ずっと持っておきます。"], correctIndex:2},
           {correct:"正しい預かり方でした。「預かる」は、人の物をそのまま責任をもって保つことです。",
-           incorrect:"人の物です。中身を確認せず、預かったことだけを記録します。"},
+           incorrect:"お客様の大切な物です。お預かりして、二人で中身を確かめてから記録します。"},
           {prompt:"「預かる」はどれのことですか。", options:["自分の物にする","人の物を責任をもって保つ"], correctIndex:1, seconds:8},
           [
-            "counting the contents means going through someone's wallet",
+            "counting it alone - with no second person, nothing proves the amount later",
             "leaving it where it lies is not keeping it safe",
-            "take it into safekeeping and record it without opening it",
+            "take it into safekeeping, check the contents with a second person, and record them",
             "keeping it personally is not the inn keeping it"
           ])
       ]}
@@ -559,7 +559,7 @@
     id:"inn-e04",
     title:"宿を閉じる",
     sourceNote:NOTE4,
-    progress:{label:"最後の仕事", beats:["見送り","鍵","帳面","片付け","休館"]},
+    progress:{label:"最後の仕事", beats:["見送り","残りの仕事","部屋","休館","帳面"]},
     intro:{jp:"コン：「お祭りは昨日で終わりました。お客様が発たれたら、宿は冬の終わりまで閉めます。最後の日ですから、来たときより整えて出ましょう。」", audio:true},
     briefing:{jp:"コン：「これから、お見送りと戸締まりをします。順を守ってください。読む問題は長いので、時間も長く取ってあります。間違えた仕事は、最後にもう一度だけ確認します。」", audio:true, points:INN_RULES},
     days:[
@@ -567,7 +567,7 @@
 
         q4("inn-e04-q01", "quick-response", "w-miokuru", 8,
           {jp:"お客様が玄関を出ていかれます。何をしますか。", audio:true},
-          {type:"quick-response", options:["部屋の掃除を始めます。","帳面をつけます。","すぐに戸を閉めます。","姿が見えなくなるまでお見送りします。"], correctIndex:3},
+          {type:"quick-response", options:["お客様が出たら、すぐに部屋を掃除します。","帳場に戻って、帳面をつけます。","お客様が出たら、すぐに戸を閉めます。","姿が見えなくなるまでお見送りします。"], correctIndex:3},
           {correct:"見送れました。「見送る」は、行く人を見届けることです。",
            incorrect:"「見送る」は、行く人の姿を見届けることです。すぐ戸を閉めるのとは違います。"},
           {prompt:"「見送る」はどれのことですか。", options:["行く人を見届ける","来る人を迎える"], correctIndex:0, seconds:5},
@@ -599,7 +599,7 @@
           ]),
 
         q4("inn-e04-q03", "listening-point", "w-nokori", 8,
-          {jp:"残りのお部屋はいくつですか。六部屋のうち四部屋が済んでいます。何と言いますか。", audio:true},
+          {jp:"残りのお部屋はいくつですか。お客様がお使いになった六部屋のうち、四部屋が済んでいます。何と言いますか。", audio:true},
           {type:"quick-response", options:["残りは四部屋です。","残りは二部屋です。","残りはありません。","六部屋すべてです。"], correctIndex:1},
           {correct:"数えられました。「残り」は、まだ済んでいない分のことです。",
            incorrect:"六部屋のうち四部屋が済んでいますから、まだ二部屋あります。"},
@@ -614,17 +614,20 @@
 
       {day:2, mode:"practice", label:"部屋を戻す", questions:[
 
+        /* 納める is to pay or supply what is owed - the sense its teaching card
+         * uses. This asked for futons to be 納め-ed into a cupboard, which is
+         * しまう (or 収める), so the card and the question taught two words. */
         q4("inn-e04-q04", "listening-task", "v-osameru-2", 5,
-          {jp:"お布団を押し入れに納めてください。何をしますか。", audio:true},
-          {type:"quick-response", options:["畳の上に広げます。","外に干します。","きちんと入れてしまいます。","洗います。"], correctIndex:2},
-          {correct:"納められました。「納める」は、あるべき所にきちんと入れることです。",
-           incorrect:"「納める」は、あるべき所にきちんと入れることです。広げるのとは逆です。"},
-          {prompt:"「納める」はどれのことですか。", options:["外に広げる","あるべき所に入れる"], correctIndex:1, seconds:5},
+          {jp:"閉める前に、今月分の宿泊税を役所に納めてください。何をしますか。", audio:true},
+          {type:"quick-response", options:["役所に、相談だけしてきます。","役所に、期日を延ばしてもらいます。","期日までに、役所で税を払います。","今月分の書類を、帳場にしまいます。"], correctIndex:2},
+          {correct:"納められました。「納める」は、税やお金を決められた所に払うことです。",
+           incorrect:"「納める」は、税やお金を決められた所に払うことです。相談や延期とは違います。"},
+          {prompt:"「納める」はどれのことですか。", options:["お金を借りる","税やお金を払う"], correctIndex:1, seconds:5},
           [
-            "spreading them out is 敷く, the opposite job",
-            "airing them outside is a different task",
-            "putting them away properly in the cupboard",
-            "washing them is not putting them away"
+            "asking about it is not paying it",
+            "putting the date off is the opposite of paying on time",
+            "paying the tax at the office by the deadline",
+            "putting the papers away pays nothing"
           ]),
 
         q4("inn-e04-q05", "quick-response", "v-modosu", 8,
@@ -670,7 +673,7 @@
           ]),
 
         q4("inn-e04-q08", "reading", "v-tomeru", 120,
-          {jp:"【冬の間について】\n宿は今日から冬の終わりまで閉めます。\n※ 冬の間は、どなたもお泊めできません。\n※ 急なご用でいらした方には、茶屋か神社をご案内ください。\n※ 荷物だけなら、帳場でお預かりできます。\n冬の間に、荷物を持った方がいらしたら、何ができますか。"},
+          {jp:"【冬の間について】\n宿は今日から冬の終わりまで閉めます。\n※ 冬の間は、どなたもお泊めできません。\n※ お泊まりの場所が必要な方には、駅前の宿をご案内ください。\n※ 荷物だけなら、帳場でお預かりできます。\n冬の間に、荷物を持った方がいらしたら、何ができますか。"},
           {type:"evidence-choice", options:["お泊めします","何もできません","荷物をお預かりします","お部屋だけお貸しします"], correctIndex:2},
           {correct:"荷物のお預かりです。お泊めすることはできません。",
            incorrect:"泊めることはできませんが、荷物だけなら預かれると書いてあります。"},
@@ -683,9 +686,9 @@
           ]),
 
         q4("inn-e04-q09", "reading", "w-yukata", 120,
-          {jp:"【お貸ししたものの覚え】\n一番　浴衣　二枚　　お返しあり\n二番　浴衣　四枚　　お返しあり\n三番　浴衣　二枚　　お返しなし\n四番　浴衣　三枚　　お返しあり\n※ お返しのない分は、お客様のご住所へお便りを出します。\n※ お返しのあった分は、洗ってから納めます。\n※ 数が合わない部屋があれば、女将さんにお伝えします。\nお便りを出すのはどの部屋ですか。"},
-          {type:"evidence-choice", options:["どの部屋にも出しません","一番","二番と四番","三番"], correctIndex:3},
-          {correct:"三番です。お返しのない分について、お便りを出します。",
+          {jp:"【お貸ししたものの覚え】\n一番　浴衣　二枚　　お返しあり\n二番　浴衣　四枚　　お返しあり\n三番　浴衣　二枚　　お返しなし\n四番　浴衣　三枚　　お返しあり\n※ お返しのない分は、お客様にお電話でお尋ねします。\n※ お返しのあった分は、洗ってからしまいます。\n※ 数が合わない部屋があれば、女将さんにお伝えします。\nお電話でお尋ねするのはどの部屋ですか。"},
+          {type:"evidence-choice", options:["どの部屋にもかけません","一番","二番と四番","三番"], correctIndex:3},
+          {correct:"三番です。お返しのない分について、お電話でお尋ねします。",
            incorrect:"お返しのなかった部屋を探します。"},
           {prompt:"「浴衣」はどれのことですか。", options:["宿で着る薄い着物","足に履くもの"], correctIndex:0, seconds:5},
           [
@@ -710,6 +713,27 @@
       ]}
     ]
   };
+
+  /* The room each question happens in. app.js otherwise guesses from
+   * keywords, which showed front-desk work in a guest room, a desk notice in
+   * the kitchen because 茶屋 contains 茶, and the fireworks courtyard for a
+   * schedule read at the desk. Episode 2 is the morning's paperwork, so it is
+   * set in the office - the one painted room lit by day. */
+  var SCENES = {
+    "inn-e01":["lobby", "dining", "room", "room", "room", "hallway", "lobby", "lobby", "lobby", "lobby"],
+    "inn-e02":["office", "office", "office", "office", "office", "office", "office", "office", "office", "office"],
+    "inn-e03":["lobby", "room", "lobby", "lobby", "lobby", "lobby", "lobby", "lobby", "room", "lobby"],
+    "inn-e04":["lobby", "hallway", "hallway", "office", "room", "office", "office", "office", "office", "office"]
+  };
+  [episode1, episode2, episode3, episode4].forEach(function(episode){
+    var index = 0;
+    episode.days.forEach(function(day){
+      day.questions.forEach(function(question){
+        question.innScene = SCENES[episode.id][index];
+        index += 1;
+      });
+    });
+  });
 
   root.N2InnEpisodes = {
     key:"home-inn",

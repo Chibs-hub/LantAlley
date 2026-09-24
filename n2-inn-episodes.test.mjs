@@ -500,3 +500,45 @@ test("a question that has been settled stops accepting taps and looks settled", 
   assert.match(app, /hasClip\(question\.prompt\.jp\)/);
   assert.match(app, /function spokenDuration/);
 });
+
+test("every Inn episode question names the room it happens in", () => {
+  // Guessing the background from keywords put the front desk in a guest room
+  // and a desk notice in the kitchen, because 茶屋 contains 茶.
+  const { N2InnEpisodes: stage } = load();
+  const rooms = new Set(["room", "lobby", "kitchen", "dining", "hallway", "office", "courtyard"]);
+  for (const episode of stage.episodes) {
+    for (const day of episode.days) {
+      for (const question of day.questions) {
+        assert.ok(rooms.has(question.innScene), `${question.id} names a painted room`);
+      }
+    }
+  }
+  const e2 = stage.episodes.find((e) => e.id === "inn-e02");
+  e2.days.forEach((day) => day.questions.forEach((question) =>
+    assert.equal(question.innScene, "office", `${question.id} is the morning's desk work`)));
+});
+
+test("no correct answer gives itself away by being far the longest", () => {
+  // Seven questions had a right answer at least half as long again as any
+  // wrong one, so it could be picked without reading.
+  const { N2InnEpisodes: stage } = load();
+  for (const episode of stage.episodes) {
+    for (const day of episode.days) {
+      for (const question of day.questions) {
+        const lengths = question.answer.options.map((option) => option.length);
+        const correct = lengths[question.answer.correctIndex];
+        const longestWrong = Math.max(...lengths.filter((_, i) => i !== question.answer.correctIndex));
+        assert.ok(correct < longestWrong * 1.5,
+          `${question.id}: correct answer is ${correct} characters against ${longestWrong}`);
+      }
+    }
+  }
+});
+
+test("the briefings state the clock the questions actually run", () => {
+  // They said short replies had five seconds; quick replies run eight.
+  const { N2InnEpisodes: stage } = load();
+  for (const episode of stage.episodes) {
+    assert.ok(!episode.briefing.points.some((point) => /短い返事は五秒/.test(point)), episode.id);
+  }
+});

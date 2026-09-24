@@ -357,6 +357,35 @@ items.forEach((item, index) => {
 // it does not travel into the shipped catalogue.
 for (const item of items) delete item.readingRepaired;
 
+/* Sense numbers are the source dictionary's markup, not part of a meaning:
+ * 見送る's gloss read "(1) to see off" on the learner's screen. Stripped
+ * after ids are minted, because the type - and so the id prefix - is inferred
+ * from the raw first meaning and every save names words by id. */
+for (const item of items) item.meanings = item.meanings.map((m) => m.replace(/^\(\d+\)\s*/, ""));
+
+/* The sense a place's story uses, named first.
+ *
+ * Every screen that glosses a word shows its first meaning, and for these the
+ * source's first meaning is one the Inn never uses: 確認 as "affirmation",
+ * 傷 as "wound" beside a scratched box, 客間 as "parlor", 浴衣 as "bathrobe".
+ * The other senses are kept after it. 納める is paying what is owed, the
+ * sense its card and Episode 4 both use - not "to obtain". */
+const SENSE_FIRST = new Map([
+  ["w-kakunin", ["confirmation", "checking", "affirmation"]],
+  ["v-osameru-2", ["to pay (a tax or fee)", "to supply", "to accept", "to obtain", "to reap"]],
+  ["w-sakujo", ["deletion", "striking out", "erasure", "elimination"]],
+  ["w-kizu", ["damage", "scratch", "wound", "injury"]],
+  ["v-kasanaru", ["to coincide (at the same time)", "to overlap", "to be piled up"]],
+  ["w-kyakuma", ["guest room", "parlor"]],
+  ["w-nokori", ["the rest", "what remains", "remnant", "left-over"]],
+  ["w-yukata", ["yukata (light cotton kimono)", "informal summer kimono"]],
+  ["w-kigen-2", ["mood", "temper", "humour"]],
+  ["w-shitei", ["specifying", "setting (a time or place)", "designation"]],
+]);
+for (const item of items) {
+  if (SENSE_FIRST.has(item.id)) item.meanings = SENSE_FIRST.get(item.id);
+}
+
 const payload = { items, excluded };
 writeFileSync(
   new URL("curriculum-catalog.js", ROOT),
