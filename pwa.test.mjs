@@ -812,6 +812,24 @@ test("the bird companion runtime and every animation remain available offline", 
   }
 });
 
+test("the active cat and Shiba walking sheets are cached offline", () => {
+  const context = {self:null};
+  context.self = context;
+  vm.createContext(context);
+  vm.runInContext(read("home-pet.js"),context);
+  vm.runInContext(read("home-dog.js"),context);
+  const sprites = [
+    context.LanternHomePet.spriteFor({behavior:"walk",frame:0}),
+    context.LanternHomeDog.spriteFor({behavior:"walk",frame:0,profile:{gait:"amble"}}),
+    context.LanternHomeDog.spriteFor({behavior:"walk",frame:0,profile:{gait:"trot"}})
+  ];
+  const sw = read("sw.js");
+  for (const sprite of sprites) {
+    assert.ok(existsSync(new URL("./" + sprite.path,import.meta.url)),sprite.path);
+    assert.ok(sw.includes('"./' + sprite.path + '"'),sprite.path + " unavailable offline");
+  }
+});
+
 test("the four new garden species use their matching production stages", () => {
   const app = read("app.js");
   const sw = read("sw.js");

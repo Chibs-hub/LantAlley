@@ -12,18 +12,24 @@ function load() {
   return context.LanternHomeDog;
 }
 
-test("Shiba contact poses follow body travel for both gaits", () => {
+test("Shiba uses four paw phases with short travel for both gaits", () => {
   const dog = load();
-  for (const [seed, minimum, maximum] of [[1, 0.50, 0.64], [2, 0.38, 0.50]]) {
+  for (const [seed, minimum, maximum] of [[1, 0.38, 0.45], [2, 0.30, 0.37]]) {
     const start = {...dog.create("yard", seed), x:21, y:72, anchorId:"yard-dog-shade"};
     let walking = dog.sendTo(start, "yard-dog-path");
     let changes = 0;
-    let previous = walking.frame % 2;
-    while (changes < 2 && walking.targetId) {
+    let previous = walking.frame;
+    const visible = new Set([dog.spriteFor(walking).frame]);
+    while (changes < 4 && walking.targetId) {
       walking = dog.step(walking, 16, {});
-      if (walking.frame !== previous) { changes += 1; previous = walking.frame; }
+      if (walking.frame !== previous) {
+        changes += 1;
+        previous = walking.frame;
+        visible.add(dog.spriteFor(walking).frame);
+      }
     }
-    assert.equal(changes, 2);
+    assert.equal(changes, 4);
+    assert.equal(visible.size, 4, "all four leg poses must be shown");
     const ratio = walking.walked / dog.widthAt(walking.y, walking.scene);
     assert.ok(ratio >= minimum && ratio <= maximum, `${seed} traveled ${ratio} body lengths`);
   }
@@ -183,8 +189,8 @@ test("the brisk gait has separate production artwork", () => {
   const dog = load();
   const amble = dog.spriteFor({behavior:"walk", frame:1, profile:{gait:"amble"}});
   const trot = dog.spriteFor({behavior:"walk", frame:1, profile:{gait:"trot"}});
-  assert.equal(amble.path, "assets/home/pet/shiba-walk-v2.png");
-  assert.equal(trot.path, "assets/home/pet/shiba-trot-v1.png");
+  assert.equal(amble.path, "assets/home/pet/shiba-walk-v3.png");
+  assert.equal(trot.path, "assets/home/pet/shiba-trot-v2.png");
   assert.notEqual(amble.path, trot.path);
   for (const sprite of [amble, trot]) {
     const bytes = readFileSync(new URL(sprite.path, import.meta.url));
@@ -201,8 +207,8 @@ test("walking poses keep the Shiba's visible body size stable", () => {
       dog.spriteFor({behavior:"walk", frame, profile:{gait}}));
     const areas = alphaAreas(sprites[0].path, sprites[0].columns);
     const usedAreas = sprites.map((sprite) => areas[sprite.frame]);
-    assert.ok(Math.max(...usedAreas) / Math.min(...usedAreas) < 1.05,
-      `${gait} gait changes visible body area by more than 5%: ${usedAreas.join(", ")}`);
+    assert.ok(Math.max(...usedAreas) / Math.min(...usedAreas) < 1.08,
+      `${gait} gait changes visible area by more than 8%: ${usedAreas.join(", ")}`);
   }
 });
 

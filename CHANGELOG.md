@@ -6,6 +6,16 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-25 - Replace sliding pet gait with four paw phases (v450 test build)
+
+The v449 timing change made each of two visible paw poses last for too much
+ground travel. New four-phase transparent walk strips preserve the calico and
+Shiba painting style and keep the dog's body size steady. Each pose now covers
+about 0.10 body widths (0.08 for the Shiba trot), so the paws change while the
+body advances rather than skating in a held stance. The new strips are cached
+offline. Focused gait tests and rendered mobile yard/room frame sequences were
+checked locally; the live build still needs the user's visual review.
+
 ### 2026-09-25 - Pet gait and shared home capacity (v449 test build)
 
 Cat and Shiba contact poses now advance after more ground travel. A shared

@@ -9,14 +9,25 @@ function load() {
   return context.LanternHomePet;
 }
 
-test("cat contact poses follow about half a body length per cycle", () => {
+test("cat completes four paw phases within half a body length", () => {
   const pet = load();
   const start = {...pet.create("yard", 1), x:17, y:72, anchorId:"yard-shade"};
   let walking = pet.sendTo(start, "yard-path");
-  while (walking.frame < 2 && walking.targetId) walking = pet.step(walking, 16, {});
-  assert.equal(walking.frame, 2);
+  let changes = 0;
+  let previous = walking.frame;
+  let first = null;
+  while (changes < 4 && walking.targetId) {
+    walking = pet.step(walking, 16, {});
+    if (walking.frame !== previous) {
+      changes += 1;
+      previous = walking.frame;
+      if (changes === 1) first = walking.walked / pet.widthAt(walking.y, walking.scene);
+    }
+  }
+  assert.equal(changes, 4);
+  assert.ok(first >= 0.08 && first <= 0.12, `first paw change after ${first} body lengths`);
   const ratio = walking.walked / pet.widthAt(walking.y, walking.scene);
-  assert.ok(ratio >= 0.50 && ratio <= 0.64, `contact cycle traveled ${ratio} body lengths`);
+  assert.ok(ratio >= 0.38 && ratio <= 0.45, `four phases traveled ${ratio} body lengths`);
 });
 
 test("yard and interior expose bounded contextual anchors", () => {
@@ -176,7 +187,7 @@ test("sprite metadata names a sheet and a bounded frame grid", () => {
 test("walking uses the corrected alternating-leg four-key production sheet", () => {
   const pet = load();
   const walk = pet.spriteFor({behavior:"walk", frame:3});
-  assert.equal(walk.path, "assets/home/pet/calico-walk-v3.png");
+  assert.equal(walk.path, "assets/home/pet/calico-walk-v4.png");
   assert.equal(walk.columns, 4);
   assert.equal(walk.rows, 1);
   assert.equal(walk.frame, 3);

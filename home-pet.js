@@ -50,7 +50,7 @@
    * row holds its width to within a few percent, so entry now uses the standing
    * row, which is the steadiest of them at 1%. */
   var SPRITES = {
-    walk: {path:"assets/home/pet/calico-walk-v3.png", columns:4, rows:1, frames:4},
+    walk: {path:"assets/home/pet/calico-walk-v4.png", columns:4, rows:1, frames:4},
     sit: {path:"assets/home/pet/calico-sit-v1.png", columns:4, rows:1, frames:4, loop:false, frameMs:280},
     loaf: {path:"assets/home/pet/calico-loaf-v2.png", columns:4, rows:1, frames:4, frameMs:550},
     "curl-sleep": {path:"assets/home/pet/calico-curl-sleep-v2.png", columns:4, rows:1, frames:4, frameMs:700},
@@ -166,7 +166,7 @@
    * by the ground. The production cycle now has four key poses rather than
    * eight drawings, so each key covers half the old distance. A complete
    * four-key cycle still advances about 0.6 body lengths. */
-  function strideFor(y, scene){ return widthAt(y, scene) * 0.28; }
+  function strideFor(y, scene){ return widthAt(y, scene) * 0.10; }
 
   /* How wide the cat is drawn, measured in each scene rather than guessed once.
    *

@@ -1,6 +1,6 @@
 # Lantern Alley Project Handoff
 
-Last updated: 2026-09-25 (v449 test build)
+Last updated: 2026-09-25 (v450 test build)
 
 A browser game that teaches JLPT N2 Japanese. Vanilla JS, CSS and HTML, no build step, no framework, offline-capable.
 
@@ -19,6 +19,13 @@ A browser game that teaches JLPT N2 Japanese. Vanilla JS, CSS and HTML, no build
 Sections 1, 3, 4, 5, 6, 8, 13, 14 and 15 are reference: what the game is, how it is designed, where the files are, how it ships, and what data it draws on.
 
 ## 0. Current status
+
+**v450 test build (2026-09-25):** the v449 gait still looked like sliding because
+two visible poses were held across long body travel. New four-phase cat and
+Shiba walk sheets and shorter distance-driven pose spacing are in the test
+build. Mobile yard and room animation frames were rendered and inspected using
+a local headless browser; focused tests pass. Do not call the live pet gait
+fixed until the user checks it on their device.
 
 **v449 test build (2026-09-25):** pet gait timing, mixed-species placement,
 two-scene capacity checks and active/owned counts were changed. Focused tests

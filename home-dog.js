@@ -28,13 +28,10 @@
   };
 
   var WALK_SPRITES = {
-    /* The generated sheets contain four poses, but poses 3 and 4 redraw the
-     * dog's torso 12-22% larger. Cycling through them made the whole animal
-     * pulse even though its screen box was stable. Use the two measured,
-     * size-matched poses from each sheet; pace, phase and route still vary per
-     * dog without swapping in a differently proportioned body. */
-    amble:{path:"assets/home/pet/shiba-walk-v2.png", columns:4, rows:1, frames:2, frameOrder:[0,1]},
-    trot:{path:"assets/home/pet/shiba-trot-v1.png", columns:4, rows:1, frames:2, frameOrder:[0,2]}
+    /* Four size-matched leg phases give paws time to lift and plant instead
+     * of dragging a two-pose silhouette across the floor. */
+    amble:{path:"assets/home/pet/shiba-walk-v3.png", columns:4, rows:1, frames:4},
+    trot:{path:"assets/home/pet/shiba-trot-v2.png", columns:4, rows:1, frames:4}
   };
   var SPRITES = {
     walk:WALK_SPRITES.amble,
@@ -175,7 +172,7 @@
     next.walked = (next.walked || 0) + travel;
     var gait = WALK_SPRITES[profile.gait] || WALK_SPRITES.amble;
     next.frame = (profile.phase + Math.floor(next.walked /
-      Math.max(0.5, widthAt(next.y,next.scene) * (profile.gait === "trot" ? 0.22 : 0.28)))) % gait.frames;
+      Math.max(0.2, widthAt(next.y,next.scene) * (profile.gait === "trot" ? 0.08 : 0.10)))) % gait.frames;
     return next;
   }
   function spriteFor(state){
