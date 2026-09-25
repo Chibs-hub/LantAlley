@@ -6,6 +6,16 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-26 - Prepare Episode 1 shift-board guest portraits (art candidates)
+
+The shift-board mock uses emoji guest placeholders. Twelve transparent 512px
+WebP portraits now cover normal, worried and happy expressions for the Tanaka
+couple, Sato, the Yamada family and the tour leader. Each guest keeps the same
+clothing and composition across expressions, following Kon's painted outlines
+and matte texture. A review sheet shows the set at reduced size. This is art
+only: the proposed shift-board UI is not approved or wired, so no app cache
+version changes yet. The optional Yamada child-only portrait remains open.
+
 ### 2026-09-25 - Replace sliding pet gait with four paw phases (v450 test build)
 
 The v449 timing change made each of two visible paw poses last for too much

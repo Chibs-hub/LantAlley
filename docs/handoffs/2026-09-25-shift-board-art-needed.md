@@ -1,6 +1,10 @@
 # Art needed: Inn shift board (guest portraits)
 
-**Written 2026-09-25.** Status: nothing below has been made yet.
+**Written 2026-09-25. Updated 2026-09-26.** The twelve Episode 1 guest
+portraits below now exist as art candidates in `assets/inn/guests/`. They have
+not been approved or wired into the game. The optional child-only portrait
+has not been made. Compare all expressions at board size in
+`assets/inn/guests/guest-portraits-review.png` before integration.
 
 ## What the shift board is
 
@@ -19,7 +23,7 @@ In the mock, guests are emoji placeholders. Building the shift board into the
 game starts with Episode 1 and has not been approved yet, but it needs these
 portraits.
 
-## Needed: guest portraits (Episode 1) - 12 images
+## Guest portraits (Episode 1) - 12 candidate images
 
 - **Format:** 512x512 transparent WebP, head and shoulders.
 - **Style:** the same as the fox art. `assets/fox/*-transparent-v2.webp` is also
