@@ -20,3 +20,13 @@ test("pet stock is unlimited and each purchase creates another owned pet", () =>
   assert.deepEqual(second.ownedPets, ["cat", "cat"]);
   assert.equal(second.money, 100);
 });
+
+test("the Shiba Inu is a normal unlimited shop pet", () => {
+  const shop = pets();
+  const shiba = shop.get("shiba");
+  assert.equal(shiba.name, "Shiba Inu");
+  assert.equal(shop.buy([], shiba.price, "shiba").ownedPets[0], "shiba");
+  const second = shop.buy(["shiba"], shiba.price, "shiba");
+  assert.equal(second.ok, true);
+  assert.deepEqual(second.ownedPets, ["shiba", "shiba"]);
+});

@@ -17,14 +17,12 @@
 <meta name="twitter:description" content="A Japanese story-walk for JLPT N2 action verbs.">
 <meta name="twitter:image" content="https://chibs-hub.github.io/LantAlley/assets/social/lantern-alley-share-v2.jpg">
 <title>Lantern Alley</title>
-<link rel="icon" href="lantern-alley.ico?v=445">
-<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="lantern-alley.ico?v=445"><link rel="manifest" href="manifest.webmanifest">
 <!-- iOS ignores the manifest, so it needs its own tags. -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Lantern Alley">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=445">
-<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=445"><link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- The web fonts are fetched without blocking anything.
 
@@ -41,8 +39,7 @@
 <noscript>
   <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600;800&family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
 </noscript>
-<link rel="stylesheet" href="styles.css?v=445">
-</head>
+<link rel="stylesheet" href="styles.css?v=445"></head>
 <body>
 
 <div class="glow-orb a"></div>
@@ -446,6 +443,7 @@
     <script src="home-garden.js?v=445"></script>
     <script src="home-pet.js?v=445"></script>
     <script src="home-bird.js?v=445"></script>
+    <script src="home-dog.js?v=445"></script>
     <script src="home-pet-spots.js?v=445"></script>
     <script src="home-pets.js?v=445"></script>
     <script src="daily-practice.js?v=445"></script>
@@ -458,8 +456,7 @@
 <script src="n2-inn-episodes.js?v=445"></script>
 <script src="guest-satisfaction.js?v=445"></script>
     <script src="n2-market-episodes.js?v=445"></script>
-    <script src="n2-teahouse-episodes.js?v=445"></script>
-    <!-- The station's episodes were dropped from this list on 2026-09-07, in a
+    <script src="n2-teahouse-episodes.js?v=445"></script>    <!-- The station's episodes were dropped from this list on 2026-09-07, in a
          commit about Inn audio, and nothing said so: the module still built
          itself, the service worker still cached it and the map still offered
          路地駅 as a destination, but the page never loaded the file, so
@@ -468,8 +465,7 @@
     <script src="n2-station-episodes.js?v=445"></script>
     <script src="n2-shrine-episodes.js?v=445"></script>
 <script src="audio-index.js?v=445"></script>
-<script src="lantern-map.js?v=445"></script>
-<!-- Reported as being easy to miss, and it was: a thin bar at the foot of a
+<script src="lantern-map.js?v=445"></script><!-- Reported as being easy to miss, and it was: a thin bar at the foot of a
      page that scrolls, on a phone, competing with the decor tray for the same
      corner. It is a dialog now, in front of everything, because a tester on
      yesterday's build is reporting yesterday's bugs. -->
@@ -489,7 +485,6 @@
 <script src="telemetry.js?v=445"></script>
 <script src="title-message.js?v=445"></script>
 <script src="app.js?v=445"></script>
-
 <script>
   // Service workers need http(s); opening this file directly with file://
   // simply skips registration and the game still runs online.

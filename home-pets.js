@@ -11,7 +11,9 @@
     {id:"cat", name:"Calico cat", price:1200,
       preview:"assets/home/pet/calico-sit-v1.png"},
     {id:"bird", name:"Bush warbler", price:700,
-      preview:"assets/home/pet/uguisu-perch-v1.png"}
+      preview:"assets/home/pet/uguisu-perch-v1.png"},
+    {id:"shiba", name:"Shiba Inu", price:1200,
+      preview:"assets/home/pet/shiba-stand-v1.png"}
   ];
 
   function copy(value){

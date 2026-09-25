@@ -7,8 +7,7 @@
  * Bump CACHE_VERSION whenever any shell file changes, or returning players
  * will keep the old build.
  */
-var CACHE_VERSION = "lantern-alley-v445";
-// Fix: the kotatsu's rear cushions sit behind the table again, as they did before v401.
+var CACHE_VERSION = "lantern-alley-v445";// Fix: the kotatsu's rear cushions sit behind the table again, as they did before v401.
 
 // audio-index.js assigns to `self`, so the worker and the page share one list
 // of clip paths. Importing it here means new lines are cached automatically
@@ -48,6 +47,7 @@ var SHELL = [
   "./home-garden.js",
   "./home-pet.js",
   "./home-bird.js",
+  "./home-dog.js",
   "./home-pet-spots.js",
   "./home-pets.js",
   // The house and yard. A learner who installed the game offline and
@@ -154,6 +154,11 @@ var SHELL = [
   "./assets/home/pet/uguisu-sing-v1.png",
   "./assets/home/pet/uguisu-sleep-v1.png",
   "./assets/home/pet/uguisu-peck-v1.png",
+  "./assets/home/pet/shiba-walk-v1.png",
+  "./assets/home/pet/shiba-stand-v1.png",
+  "./assets/home/pet/shiba-sit-v1.png",
+  "./assets/home/pet/shiba-sniff-v1.png",
+  "./assets/home/pet/shiba-scratch-v1.png",
   "./daily-practice.js",
   "./review-mode.js",
   "./question-renderer.js",

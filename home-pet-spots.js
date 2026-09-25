@@ -22,7 +22,9 @@
   }
 
   function baseBehaviors(species){
-    return species === "bird" ? ["peck", "perch"] : ["loaf", "sit", "groom", "sniff"];
+    if(species === "bird") return ["peck", "perch"];
+    if(species === "shiba") return ["stand", "sit", "sniff"];
+    return ["loaf", "sit", "groom", "sniff"];
   }
 
   function baseSpot(item, species){
@@ -68,7 +70,7 @@
   }
 
   function fromPlants(items, species){
-    if(species !== "bird" && species !== "cat") return [];
+    if(species !== "bird" && species !== "cat" && species !== "shiba") return [];
     var out = [];
     (items || []).forEach(function(item){
       if(!item || !item.id || item.slotId == null) return;

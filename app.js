@@ -5939,7 +5939,8 @@
        might say casually, but this is a game that teaches the language, so
        the shelf should not be the one place that gets a counter wrong. */
     {id:"cat",  nameJp:"三毛猫",   counter:"匹", price:1000, sprite:"assets/home/pet/calico-sit-v1.png"},
-    {id:"bird", nameJp:"うぐいす", counter:"羽", price:1000, sprite:"assets/home/pet/uguisu-perch-v1.png"}
+    {id:"bird", nameJp:"うぐいす", counter:"羽", price:1000, sprite:"assets/home/pet/uguisu-perch-v1.png"},
+    {id:"shiba", nameJp:"柴犬", counter:"匹", price:1200, sprite:"assets/home/pet/shiba-stand-v1.png"}
   ];
 
   /* The calico is the Inn's final reward ("Your cat"). Selling the same cat
@@ -6610,6 +6611,7 @@
 
   function homePetApi(species){
     if(species === "bird" && typeof LanternHomeBird !== "undefined") return LanternHomeBird;
+    if(species === "shiba" && typeof LanternHomeDog !== "undefined") return LanternHomeDog;
     return typeof LanternHomePet !== "undefined" ? LanternHomePet : null;
   }
 
@@ -6696,7 +6698,7 @@
         homePetIdleMs[iid] = 0;
       }
       var ps = homePetStates[iid];
-      var blockers = species === "cat" ? homePetBlockers(scene) : [];
+      var blockers = (species === "cat" || species === "shiba") ? homePetBlockers(scene) : [];
       var currentAnchor = homePetAnchor(pet, scene, ps && (ps.targetId || ps.anchorId), petOptions);
       if(ps && ps.anchorId && currentAnchor &&
           (Math.abs(Number(ps.x) - Number(currentAnchor.x)) > .1 ||
@@ -6797,7 +6799,7 @@
           var dwell = pet.dwellMs ? pet.dwellMs(ps) : 6000;
           if(homePetIdleMs[iid] > dwell){
             ps.seed = (ps.seed * 1664525 + 1013904223) >>> 0;
-            var blockers = species === "cat" ? homePetBlockers(ps.scene) : [];
+            var blockers = (species === "cat" || species === "shiba") ? homePetBlockers(ps.scene) : [];
             // Treat resting siblings as soft blockers so pets avoid each other's spots.
             Object.keys(homePetStates).forEach(function(k){
               if(k === iid) return;
