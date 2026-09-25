@@ -54,7 +54,7 @@ test("Shiba sprite sheets are four-frame transparent PNGs", () => {
   assert.deepEqual([...dog.behaviors()].sort(), ["scratch", "sit", "sniff", "stand", "walk"]);
   for (const behavior of dog.behaviors()) {
     const sprite = dog.spriteFor({behavior, frame:99});
-    assert.match(sprite.path, /^assets\/home\/pet\/shiba-.+-v1\.png$/);
+    assert.match(sprite.path, /^assets\/home\/pet\/shiba-.+-v\d+\.png$/);
     assert.equal(sprite.columns, 4);
     assert.equal(sprite.rows, 1);
     assert.ok(sprite.frame >= 0 && sprite.frame < 4);
@@ -70,4 +70,52 @@ test("Shiba is smaller than a cat indoors and remains readable outdoors", () => 
   assert.ok(dog.widthAt(84, "interior") >= 8 && dog.widthAt(84, "interior") <= 12);
   assert.ok(dog.widthAt(84, "yard") >= 4 && dog.widthAt(84, "yard") <= 7);
   assert.ok(dog.widthAt(84, "interior") > dog.widthAt(84, "yard"));
+});
+
+test("nearby Shiba IDs receive different motion profiles", () => {
+  const dog = load();
+  const profiles = [100, 101, 102, 103].map((seed) => dog.motionProfile(seed));
+  assert.ok(new Set(profiles.map((profile) => profile.phase)).size >= 3,
+    "four dogs must not begin on the same animation frame");
+  assert.ok(new Set(profiles.map((profile) => profile.pace)).size >= 2,
+    "multiple dogs need visibly different walking pace");
+  assert.deepEqual(new Set(profiles.map((profile) => profile.routeDirection)), new Set([-1, 1]),
+    "some dogs should travel the authored route in the opposite direction");
+  assert.deepEqual(new Set(profiles.map((profile) => profile.gait)), new Set(["amble", "trot"]),
+    "multiple dogs need both relaxed and brisk gait artwork");
+});
+
+test("two Shiba do not stay synchronized under the same clock", () => {
+  const dog = load();
+  const base = dog.create("yard", 100);
+  const first = dog.sendTo(base, dog.nextAnchor(base).id);
+  const secondBase = {...dog.create("yard", 101), anchorId:base.anchorId, x:base.x, y:base.y};
+  const second = dog.sendTo(secondBase, dog.nextAnchor(secondBase).id);
+  const movedA = dog.step(first, 600, {});
+  const movedB = dog.step(second, 600, {});
+  assert.notDeepEqual(
+    [movedA.x, movedA.y, dog.spriteFor(movedA).path, dog.spriteFor(movedA).frame],
+    [movedB.x, movedB.y, dog.spriteFor(movedB).path, dog.spriteFor(movedB).frame]
+  );
+});
+
+test("the brisk gait has separate production artwork", () => {
+  const dog = load();
+  const amble = dog.spriteFor({behavior:"walk", frame:1, profile:{gait:"amble"}});
+  const trot = dog.spriteFor({behavior:"walk", frame:1, profile:{gait:"trot"}});
+  assert.equal(amble.path, "assets/home/pet/shiba-walk-v2.png");
+  assert.equal(trot.path, "assets/home/pet/shiba-trot-v1.png");
+  assert.notEqual(amble.path, trot.path);
+  for (const sprite of [amble, trot]) {
+    const bytes = readFileSync(new URL(sprite.path, import.meta.url));
+    assert.equal(bytes.toString("ascii", 1, 4), "PNG");
+    assert.equal(bytes.readUInt32BE(16), bytes.readUInt32BE(20) * sprite.columns);
+    assert.equal(bytes[25], 6);
+  }
+});
+
+test("the live home gives each dog the other dogs' active poses", () => {
+  const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  assert.match(app, /occupiedBehaviors:/);
+  assert.match(app, /iidSpecies\(k\) === species/);
 });

@@ -7,7 +7,7 @@
  * Bump CACHE_VERSION whenever any shell file changes, or returning players
  * will keep the old build.
  */
-var CACHE_VERSION = "lantern-alley-v445";// Fix: the kotatsu's rear cushions sit behind the table again, as they did before v401.
+var CACHE_VERSION = "lantern-alley-v446";// Fix: the kotatsu's rear cushions sit behind the table again, as they did before v401.
 
 // audio-index.js assigns to `self`, so the worker and the page share one list
 // of clip paths. Importing it here means new lines are cached automatically
@@ -155,6 +155,8 @@ var SHELL = [
   "./assets/home/pet/uguisu-sleep-v1.png",
   "./assets/home/pet/uguisu-peck-v1.png",
   "./assets/home/pet/shiba-walk-v1.png",
+  "./assets/home/pet/shiba-walk-v2.png",
+  "./assets/home/pet/shiba-trot-v1.png",
   "./assets/home/pet/shiba-stand-v1.png",
   "./assets/home/pet/shiba-sit-v1.png",
   "./assets/home/pet/shiba-sniff-v1.png",
@@ -166,11 +168,11 @@ var SHELL = [
   "./manifest.webmanifest",
   "./assets/branding/lantern-mark-v2.png",
   "./assets/social/lantern-alley-share-v2.jpg",
-  "./icons/icon-192.png?v=445",
-  "./icons/icon-512.png?v=445",
-  "./icons/icon-192-maskable.png?v=445",
-  "./icons/icon-512-maskable.png?v=445",
-  "./icons/apple-touch-icon.png?v=445",
+  "./icons/icon-192.png?v=446",
+  "./icons/icon-512.png?v=446",
+  "./icons/icon-192-maskable.png?v=446",
+  "./icons/icon-512-maskable.png?v=446",
+  "./icons/apple-touch-icon.png?v=446",
   "./assets/kon/kon-idle.webp",
   "./assets/kon/kon-wave-left.webp",
   "./assets/kon/kon-wave-right.webp",

@@ -6788,9 +6788,14 @@
         if(!pet || !homePetStates[iid]) return;
         var scene = homePetStates[iid].scene;
         var petOptions = homePetAnchorOptions(scene, species);
+        var occupiedBehaviors = Object.keys(homePetStates).filter(function(k){
+          return k !== iid && iidSpecies(k) === species && homePetStates[k]
+            && homePetStates[k].scene === scene && !homePetStates[k].targetId;
+        }).map(function(k){ return homePetStates[k].behavior; });
         homePetStates[iid] = pet.step(homePetStates[iid], elapsed, {
           paused:document.hidden, reducedMotion:reduced,
-          extraAnchors:petOptions.extraAnchors
+          extraAnchors:petOptions.extraAnchors,
+          occupiedBehaviors:occupiedBehaviors
         });
         var ps = homePetStates[iid];
         if(ps) ps._anchorZ = homePetAnchorZ(pet, ps.scene, ps, petOptions);

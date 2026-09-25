@@ -21,8 +21,12 @@
     ]
   };
 
+  var WALK_SPRITES = {
+    amble:{path:"assets/home/pet/shiba-walk-v2.png", columns:4, rows:1, frames:4, frameMs:210},
+    trot:{path:"assets/home/pet/shiba-trot-v1.png", columns:4, rows:1, frames:4, frameMs:155}
+  };
   var SPRITES = {
-    walk:{path:"assets/home/pet/shiba-walk-v1.png", columns:4, rows:1, frames:4, frameMs:180},
+    walk:WALK_SPRITES.amble,
     stand:{path:"assets/home/pet/shiba-stand-v1.png", columns:4, rows:1, frames:4, frameMs:620},
     sit:{path:"assets/home/pet/shiba-sit-v1.png", columns:4, rows:1, frames:4, frameMs:700},
     sniff:{path:"assets/home/pet/shiba-sniff-v1.png", columns:4, rows:1, frames:4, frameMs:420, loop:false},
@@ -35,6 +39,16 @@
   };
 
   function copy(value){ return JSON.parse(JSON.stringify(value)); }
+  function motionProfile(seed){
+    var value = Math.abs(Number(seed) || 1) >>> 0;
+    return {
+      gait:value % 2 ? "amble" : "trot",
+      pace:[0.86, 1, 1.14][value % 3],
+      phase:value % 4,
+      routeDirection:value % 2 ? 1 : -1,
+      restScale:[0.88, 1, 1.16][(value >>> 2) % 3]
+    };
+  }
   function rows(scene, options){
     var result = (SCENES[scene] || []).slice();
     var extras = options && Array.isArray(options.extraAnchors) ? options.extraAnchors : [];
@@ -72,8 +86,10 @@
   function nextAnchor(state, blockers, options){
     var list = rows(state && state.scene, options);
     var index = list.findIndex(function(anchor){ return anchor.id === state.anchorId; });
+    var profile = state && state.profile || motionProfile(state && state.seed);
+    var direction = profile.routeDirection || 1;
     for(var offset = 1; offset < list.length; offset += 1){
-      var candidate = list[(index + offset + list.length) % list.length];
+      var candidate = list[(index + direction * offset + list.length * 2) % list.length];
       if(pointIsClear(candidate, blockers) && routeIsClear(state, candidate, blockers)) return copy(candidate);
     }
     return null;
@@ -92,21 +108,32 @@
     if(!SCENES[scene]) return null;
     var list = rows(scene, options), normalized = Math.abs(Number(seed) || 1) >>> 0;
     var anchor = list[normalized % list.length];
+    var profile = motionProfile(normalized);
     return {scene:scene, anchorId:anchor.id, targetId:null, x:anchor.x, y:anchor.y,
-      facing:1, behavior:anchor.behaviors[normalized % anchor.behaviors.length], frame:0, clock:0, seed:normalized};
+      facing:profile.routeDirection, behavior:anchor.behaviors[normalized % anchor.behaviors.length],
+      frame:profile.phase, clock:profile.phase * 170, seed:normalized, restIndex:0, profile:profile};
   }
   function sendTo(state, anchorId, options){
     var next = copy(state), target = find(next.scene, anchorId, options);
     if(!target) return next;
     next.targetId = target.id; next.anchorId = null; next.facing = target.x < next.x ? -1 : 1;
-    next.behavior = "walk"; next.frame = 0; next.walked = 0;
+    var profile = next.profile || motionProfile(next.seed);
+    next.profile = profile;
+    next.behavior = "walk"; next.frame = profile.phase; next.walked = 0;
     return next;
   }
   function settleAt(state, anchorId, options){
     var next = copy(state), target = find(next.scene, anchorId, options);
     if(!target) return next;
     next.anchorId = target.id; next.targetId = null; next.x = target.x; next.y = target.y;
-    next.behavior = target.behaviors[next.seed % target.behaviors.length]; next.frame = 0; next.clock = 0;
+    var occupied = options && Array.isArray(options.occupiedBehaviors) ? options.occupiedBehaviors : [];
+    var available = target.behaviors.filter(function(behavior){ return occupied.indexOf(behavior) < 0; });
+    if(!available.length) available = target.behaviors;
+    next.restIndex = (Number(next.restIndex) || 0) + 1;
+    next.behavior = available[(next.seed + next.restIndex) % available.length];
+    next.profile = next.profile || motionProfile(next.seed);
+    next.frame = next.profile.phase % (SPRITES[next.behavior] || SPRITES.stand).frames;
+    next.clock = next.profile.phase * 170;
     return next;
   }
   function step(state, elapsedMs, options){
@@ -115,7 +142,7 @@
     if(settings.paused) return copy(state);
     if(settings.reducedMotion){
       var still = settleAt(state, state.targetId || state.anchorId, settings);
-      if(still) still.behavior = "stand";
+      if(still){ still.behavior = "stand"; still.frame = 0; still.clock = 0; }
       return still;
     }
     var next = copy(state), elapsed = Math.max(0, Number(elapsedMs) || 0);
@@ -129,26 +156,36 @@
     var target = find(next.scene, next.targetId, settings);
     if(!target) return next;
     var dx = target.x-next.x, dy = target.y-next.y, distance = Math.hypot(dx,dy);
-    var travel = elapsed * (0.0028 + Math.min(1, distance/12)*0.0012);
+    var profile = next.profile || motionProfile(next.seed);
+    next.profile = profile;
+    var travel = elapsed * (0.0028 + Math.min(1, distance/12)*0.0012) * profile.pace;
     if(distance <= travel || !distance) return settleAt(next, target.id, settings);
     next.x += dx/distance*travel; next.y += dy/distance*travel; next.behavior = "walk";
     next.walked = (next.walked || 0) + travel;
-    next.frame = Math.floor(next.walked / Math.max(0.5, widthAt(next.y,next.scene)*0.13)) % SPRITES.walk.frames;
+    var gait = WALK_SPRITES[profile.gait] || WALK_SPRITES.amble;
+    next.frame = (profile.phase + Math.floor(next.walked /
+      Math.max(0.5, widthAt(next.y,next.scene) * (profile.gait === "trot" ? 0.11 : 0.14)))) % gait.frames;
     return next;
   }
   function spriteFor(state){
-    var sprite = SPRITES[state && state.behavior] || SPRITES.stand;
+    var behavior = state && state.behavior;
+    var profile = state && state.profile || motionProfile(state && state.seed);
+    var sprite = behavior === "walk"
+      ? (WALK_SPRITES[profile.gait] || WALK_SPRITES.amble)
+      : (SPRITES[behavior] || SPRITES.stand);
     return {path:sprite.path, columns:sprite.columns, rows:sprite.rows,
       frame:Math.max(0, Number(state && state.frame) || 0) % sprite.frames};
   }
   function dwellMs(state){
     var behavior = state && state.behavior || "stand", seed = Math.abs(Number(state && state.seed) || 1) >>> 0;
-    if(behavior === "scratch") return 3500 + seed % 1801;
-    if(behavior === "sniff") return 4000 + seed % 2201;
-    if(behavior === "sit") return 7000 + seed % 3501;
-    return 6000 + seed % 3501;
+    var scale = (state && state.profile || motionProfile(seed)).restScale;
+    if(behavior === "scratch") return Math.round((3500 + seed % 1801) * scale);
+    if(behavior === "sniff") return Math.round((4000 + seed % 2201) * scale);
+    if(behavior === "sit") return Math.round((7000 + seed % 3501) * scale);
+    return Math.round((6000 + seed % 3501) * scale);
   }
   root.LanternHomeDog = {anchors:anchors,nextAnchor:nextAnchor,pointIsClear:pointIsClear,
     routeIsClear:routeIsClear,safeAnchor:safeAnchor,widthAt:widthAt,behaviors:function(){ return Object.keys(SPRITES); },
-    create:create,sendTo:sendTo,settleAt:settleAt,step:step,dwellMs:dwellMs,spriteFor:spriteFor};
+    motionProfile:motionProfile,create:create,sendTo:sendTo,settleAt:settleAt,
+    step:step,dwellMs:dwellMs,spriteFor:spriteFor};
 })(typeof self !== "undefined" ? self : this);

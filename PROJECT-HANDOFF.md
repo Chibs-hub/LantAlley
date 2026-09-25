@@ -1,6 +1,6 @@
 # Lantern Alley Project Handoff
 
-Last updated: 2026-09-25 (v445)
+Last updated: 2026-09-25 (v446)
 
 A browser game that teaches JLPT N2 Japanese. Vanilla JS, CSS and HTML, no build step, no framework, offline-capable.
 
@@ -19,6 +19,14 @@ A browser game that teaches JLPT N2 Japanese. Vanilla JS, CSS and HTML, no build
 Sections 1, 3, 4, 5, 6, 8, 13, 14 and 15 are reference: what the game is, how it is designed, where the files are, how it ships, and what data it draws on.
 
 ## 0. Current status
+
+**v446 (2026-09-25):** Shiba movement no longer pulses or synchronizes when
+more than one dog is active. The relaxed walk and brisk trot use fixed-size
+440 x 440 subjects on a shared ground line. Each dog receives a stable profile
+from its instance ID: gait, phase, pace, route direction and rest timing differ,
+and resting dogs avoid copying a sibling's current idle pose when another pose
+is available. Focused home/pet tests cover the two gait assets and multi-dog
+divergence.
 
 **v445 (2026-09-25):** tap (phone) or hover (desktop) on a support word
 shows its reading and meaning on every day and every episode part - Day 1
