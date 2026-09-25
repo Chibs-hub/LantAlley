@@ -3271,7 +3271,8 @@
     if(practiceState.stageCheck){
       // The count is words cleared out of words owed. A missed word is asked
       // again, so counting questions would show a target moving away.
-      $("encounter-progress").textContent = String(Object.keys(practiceState.cleared).length);
+      showTrainingLeft(null);
+    $("encounter-progress").textContent = String(Object.keys(practiceState.cleared).length);
       $("encounter-total").textContent = String(practiceState.words);
     }else{
       $("encounter-progress").textContent = String(practiceState.index + 1);
@@ -3543,6 +3544,7 @@
     var words = practiceState.words;
     // The counter read one short of the total on the panel that says they are
     // all done, because the last word was cleared after the last render.
+    showTrainingLeft(null);
     $("encounter-progress").textContent = String(words);
     $("encounter-total").textContent = String(words);
     var asked = practiceState.cards.length;
@@ -3575,6 +3577,7 @@
     var line = right === total ? "全部できたね。よく覚えている。"
       : right >= Math.ceil(total / 2) ? "いいね。あと少しだ。"
       : "まだ体が覚えていないな。もう一度やろう。";
+    showTrainingLeft(null);
     $("encounter-progress").textContent = String(total);
     $("narration").textContent = "稽古の結果";
     $("feedback-row").classList.remove("show");
@@ -3633,6 +3636,7 @@
       repairQueue: previewState.repair ? previewState.repair.queue.slice() : [],
       // The evening itself: clock, patience and who has been served.
       shift: previewState.shift ? LanternShiftBoard.snapshot(previewState.shift) : null,
+      taughtWords: Object.assign({}, previewState.taughtWords || {}),
       shiftResultShown: !!previewState.shiftResultShown
     };
     saveProgress();
@@ -3669,7 +3673,8 @@
       satisfaction: playing && playing.shift && typeof GuestSatisfaction !== "undefined" ? GuestSatisfaction.create(list.length) : null,
       shiftMode: !!(playing && playing.shift && typeof LanternShiftBoard !== "undefined"),
       shift:null, shiftView:"board",
-      shiftResultShown: !!savedEpisode.shiftResultShown
+      shiftResultShown: !!savedEpisode.shiftResultShown,
+      taughtWords: Object.assign({}, savedEpisode.taughtWords || {})
     };
     if(previewState.shiftMode){
       previewState.shift = LanternShiftBoard.restore(playing.shift, savedEpisode.shift);
@@ -3714,6 +3719,7 @@
 
   function startEpisode(key){
     if(key) state.currentKey = key;
+    showTrainingLeft(null);
     var list = previewQuestions(state.currentKey);
     if(!list.length) return;
     setInnFocusCues(false);
@@ -3860,7 +3866,7 @@
       + '<p class="day-kind">覚えた言葉を本番で使う</p>'
       + '<p class="episode-open-note">' + known + 'つは三日間で練習しました。のこりは今夜が初めてです。</p>'
       + '<ul class="job-board-list">' + items + '</ul>'
-      + '<p class="job-goal">初めての言葉は、間違えても大丈夫です。最後にもう一度出ます。</p>'
+      + '<p class="job-goal">' + (previewState.shiftMode ? '初めての言葉は、その仕事の前にコンが教えます。' : '') + '初めての言葉は、間違えても大丈夫です。最後にもう一度出ます。</p>'
       + '<button class="btn btn-primary" id="btn-words-begin">受付を始めます</button>'
       + '</div></div>';
     $("btn-words-begin").addEventListener("click", function(event){
@@ -3869,6 +3875,9 @@
       // batch resumes it (resumeEpisodeWordsIfNeeded) instead of falling back
       // to the old one-block-at-a-time teaching this board replaced.
       previewState.taughtAll = true;
+      // On the shift board each new word is taught when its guest is first
+      // helped (openShiftJob), not as a block of cards before the evening.
+      if(previewState.shiftMode) previewState.wordsTaught = true;
       rememberEpisode();
       renderPreviewQuestion();
     });
@@ -4110,7 +4119,47 @@
     previewState.index = index;
     previewState.shiftView = "task";
     rememberEpisode();
+    if(teachShiftWordIfNew(previewState.list[index].question)) return;
     renderPreviewQuestion();
+  }
+
+  /* A word the learner has not met is taught right before the job that uses
+   * it, not in a block of five cards before the evening starts: the first
+   * guest used to be about 13 taps away. The evening waits while Kon
+   * teaches. Words from the three days are known already and go straight to
+   * the question. */
+  var SHIFT_TEACH_BLOCK = "\u0000shift-word";
+  function teachShiftWordIfNew(question){
+    var target = question && question.target;
+    var loc = getLocation(state.currentKey);
+    if(!target || !loc || !loc.getTeaching) return false;
+    if(!previewState.taughtWords) previewState.taughtWords = {};
+    if(previewState.taughtWords[target]) return false;
+    var known = (state.masteredByStage || {})[state.currentKey] || [];
+    if(known.indexOf(target) >= 0) return false;
+    var item = typeof LanternCurriculumCatalog !== "undefined" ? LanternCurriculumCatalog.getItem(target) : null;
+    if(!item || !loc.getTeaching(item.canonical)) return false;
+    var job = LanternShiftBoard.byId(previewState.shift, question.id);
+    var who = job && job.lane === "guest" ? shiftWho(job).name : "コン";
+    previewState.shiftView = "teach";
+    stopVoice();
+    showShiftPause(false);
+    screenGame.classList.remove("shift-alarm", "shift-alarm-hi");
+    return startTeaching(loc, [{word:item.canonical, target:target}], {
+      block:SHIFT_TEACH_BLOCK,
+      startIndex:previewState.teaching && previewState.teaching.label === SHIFT_TEACH_BLOCK ? previewState.teaching.index : 0,
+      badge:"あたらしい言葉",
+      recap:false,
+      note:"この言葉を使って、" + who + "の仕事をしましょう。",
+      button:"仕事に戻ります",
+      then:function(){
+        previewState.taughtWords[target] = true;
+        previewState.teaching = null;
+        previewState.shiftView = "task";
+        rememberEpisode();
+        renderPreviewQuestion();
+      }
+    });
   }
 
   // Who else is waiting, shown while a question is open, so the learner can
@@ -4184,7 +4233,7 @@
 
   function shiftTick(){
     if(!shiftOn() || previewState.shiftResultShown || screenGame.style.display === "none"){ stopShiftTimer(); return; }
-    if(previewState.shiftPaused || previewState.repair || shiftCoachOpen) return;
+    if(previewState.shiftPaused || previewState.repair || shiftCoachOpen || previewState.shiftView === "teach") return;
     var shift = previewState.shift, view = previewState.shiftView, current = shiftCurrentId();
     var events = LanternShiftBoard.tick(shift, view, current);
     if(events.tea) shiftToast("🦊 コンがお茶を出しました。皆さん少し長く待てます。", "tea");
@@ -4746,6 +4795,7 @@
     // stagePhase the three days happened to end on.
     $("romaji-toggle").hidden = true;
     $("encounter-status").style.display = "block";
+    showTrainingLeft(null);
     $("encounter-progress").textContent = String(previewState.index + 1);
     $("encounter-total").textContent = String(previewState.list.length);
     // The shift is not asked in order, so its counter is the jobs finished.
@@ -5186,6 +5236,7 @@
     $("btn-skip-stage").hidden = true;
     $("stage-phase-badge").textContent = "間違い直し";
     $("encounter-status").style.display = "block";
+    showTrainingLeft(null);
     $("encounter-progress").textContent = String(previewState.missed.length - repair.queue.length + 1);
     $("encounter-total").textContent = String(previewState.missed.length);
     $("scene-label").textContent = "月見宿 - 間違い直し";
@@ -5698,7 +5749,9 @@
     // Taught nothing - every word already credited - so there is nothing to
     // hand over from and the caller's own next screen comes straight up.
     if(!queued){
-      if(state.teachIndex > 0){ renderTeachingHandover(loc); return; }
+      // A word taught in the middle of a shift goes straight back to the
+      // guest; a recap of one word would be one more tap between them.
+      if(state.teachIndex > 0 && !(teachHandover && teachHandover.recap === false)){ renderTeachingHandover(loc); return; }
       finishTeaching();
       return;
     }
@@ -6130,6 +6183,29 @@
     return announcement + " " + narration;
   }
 
+  /* How far the three days are from Episode 1, beside the day's own counter.
+   * Fifteen tasks is a long way to the first guest, and nothing said how far
+   * along it the learner was. Counts the tasks still to answer, this one
+   * included; a review round (only after misses) counts its own items. */
+  var TRAINING_PHASES = ["learn", "practice", "challenge"];
+  function trainingTasksLeft(loc){
+    if(!loc || loc.key !== "home-inn" || !loc.getPhaseItems || state.stageMastered) return null;
+    var items = state.phaseItems || loc.getPhaseItems(state.stagePhase);
+    var left = Math.max(0, items.length - state.encounterIndex);
+    if(state.stagePhase === "review") return left;
+    var at = TRAINING_PHASES.indexOf(state.stagePhase);
+    if(at < 0) return null;
+    for(var i = at + 1; i < TRAINING_PHASES.length; i++) left += loc.getPhaseItems(TRAINING_PHASES[i]).length;
+    return left;
+  }
+  function showTrainingLeft(loc){
+    var el = $("encounter-to-episode");
+    if(!el) return;
+    var left = loc ? trainingTasksLeft(loc) : null;
+    el.hidden = left === null;
+    el.textContent = left === null ? "" : "・第一話まで あと" + left + "問";
+  }
+
   function renderStagePrompt(loc){
     var prompt = getActivePrompt(loc);
     setAudioReplayControl(state.stagePhase === "challenge");
@@ -6148,6 +6224,7 @@
     $("encounter-status").style.display = "block";
     $("encounter-progress").textContent = String(state.encounterIndex + 1);
     $("encounter-total").textContent = String((state.phaseItems || loc.getPhaseItems(state.stagePhase)).length);
+    showTrainingLeft(loc);
     // Resolve the greeting once. Calling stageNarrationFor twice consumed the
     // resume flag on the first call and produced a different line on the second.
     var storyNarration = stageNarrationFor(loc, prompt);
@@ -6430,6 +6507,7 @@
     var resumedItems = loc.encounters ? (state.phaseItems || loc.getPhaseItems(state.stagePhase)) : null;
     $("encounter-progress").textContent = resumedItems ? String(state.encounterIndex + 1) : "1";
     $("encounter-total").textContent = resumedItems ? String(resumedItems.length) : "1";
+    showTrainingLeft(resumedItems ? loc : null);
     writeStageNarration(loc, prompt, stageNarrationFor(loc, prompt));
     // Day 3 is audio-first, so the written prompt must stay
     $("romaji-line").style.display = state.romajiOn && !isSingleAttemptPhase() ? "block" : "none";
@@ -8883,6 +8961,7 @@
     var result = claimInnReward(id);
     if(!result.granted) return false;
     stopVoice();
+    showTrainingLeft(null);
     var reward = result.reward;
     var finalReward = reward.kind === "cat";
     setInnScene(finalReward ? "courtyard" : "lobby");

@@ -3500,3 +3500,7 @@ body:has(.about-panel:not([hidden])) .feedback-open{visibility:hidden;pointer-ev
 .shift-coach-en{margin:4px 0 10px!important;font-size:12px;line-height:1.45;color:#5d3a22}
 .shift-coach-target{position:relative;z-index:44;outline:3px solid var(--lantern-bright);outline-offset:3px;animation:shift-coach-pulse 1.4s ease-in-out infinite}
 @keyframes shift-coach-pulse{50%{outline-color:rgba(247,200,119,.35)}}
+
+/* 「・第一話まで あと12問」 beside the day's counter during the three days. */
+.to-episode{margin-left:4px;color:var(--lantern-bright);font-weight:700}
+.to-episode[hidden]{display:none}

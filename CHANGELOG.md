@@ -7,6 +7,28 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
 <<<<<<< HEAD
+### 2026-09-26 - A shorter road to the first guest (v454)
+
+The owner found the training too long before the episode. Measured, the
+three days are 15 room tasks on the same five words. Episode 1 then opened
+with a word list and five new-word cards, about 13 more taps before the first
+guest.
+
+- **New words are taught when their guest comes.** On the shift board, the
+  word list leads straight to the difficulty choice. The first time a job
+  uses a word the three days did not teach, Kon's card for it comes first,
+  then the question, with no one-word recap in between. The evening waits
+  while she teaches (mutation-checked: without the pause, the clock moved to
+  18:08 during the card). A word taught once stays taught across a reload
+  (`taughtWords` in the saved episode). Episodes 2-4 still teach up front.
+- **The three days say how far it is.** 「・第一話まで あと15問」 sits beside
+  the day's own counter, and counts down one per task. A review round, which
+  happens only after misses, counts its own items.
+
+Not changed: the number of training tasks. Cutting Day 2 or making Day 3 a
+small shift was proposed and left until a first-time player has been
+watched.
+
 ### 2026-09-26 - Fixes from the owner's play of v452 (v453)
 
 - **The old towel could not be taken out on a phone.** The same was true of

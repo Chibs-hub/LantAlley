@@ -52,7 +52,8 @@ function openShiftQuestion(game, id = "inn-e01-q01", level = "normal") {
   if (choice) { choice.click(); game.clock.advance(300); }
   for (let guard = 0; guard < 120; guard += 1) {
     const tag = game.doc.querySelectorAll(`[data-shift-job="${id}"]`)[0];
-    if (tag) { tag.click(); game.clock.advance(300); return; }
+    // A word the three days did not teach gets Kon's card first.
+    if (tag) { tag.click(); game.clock.advance(300); finishTeachingCards(game); return; }
     game.clock.advance(1000);
   }
   assert.fail(id + " never arrived on the board");
@@ -1127,6 +1128,36 @@ function advanceShift(game, ms) {
   dismissShiftCoach(game);
 }
 
+/* Opens, from the board, the first job whose word the three days did not
+ * teach. Returns its id. */
+function openFirstNewWordJob(game) {
+  const episode = game.context.N2InnEpisodes.episodes[0];
+  const threeDays = new Set(game.context.N2HomeInnStage.encounters.map((item) => item.focusWord));
+  const catalog = game.context.LanternCurriculumCatalog;
+  for (let guard = 0; guard < 120; guard += 1) {
+    dismissShiftCoach(game);
+    const open = game.doc.querySelectorAll("[data-shift-job]").map((b) => b.getAttribute("data-shift-job"));
+    const id = open.find((jobId) => {
+      const q = episode.days.flatMap((d) => d.questions).find((x) => x.id === jobId);
+      return q && !threeDays.has(catalog.getItem(q.target).canonical);
+    });
+    if (id) { game.doc.querySelectorAll(`[data-shift-job="${id}"]`)[0].click(); game.clock.advance(300); return id; }
+    game.clock.advance(1000);
+  }
+  assert.fail("no job with a new word arrived");
+}
+
+function finishTeachingCards(game) {
+  for (let guard = 0; guard < 12 && game.doc.querySelector(".teach-card"); guard += 1) {
+    const next = game.$("btn-teach-next");
+    const done = game.$("btn-teach-done");
+    if (done) done.click();
+    else if (next) next.click();
+    else game.doc.querySelectorAll(".teach-option").find((b) => b.getAttribute("data-correct") === "1").click();
+    game.clock.advance(900);
+  }
+}
+
 // Kon's first-time tips hold the evening until read.
 function dismissShiftCoach(game) {
   for (let guard = 0; guard < 6 && game.$("btn-shift-coach-ok"); guard += 1) {
@@ -1170,6 +1201,7 @@ test("the shift board opens on waiting guests, and a question has the guest's pa
 
   tags[0].click();
   game.clock.advance(300);
+  finishTeachingCards(game);
   assert.ok(game.$("preview-controls").querySelectorAll("button").length >= 2, "the guest's question is asked");
   assert.equal(game.$("preview-timer"), null, "no per-question countdown on the shift board");
   assert.ok(game.$("shift-mine"), "the guest being helped shows their own patience");
@@ -1209,6 +1241,7 @@ test("serving every guest ends the evening with a rank, then the correction roun
   episode.days.forEach((day) => day.questions.forEach((q) => { byId[q.id] = q; }));
   let answered = 0;
   for (let guard = 0; guard < 400 && !game.$("btn-shift-done"); guard += 1) {
+    if (game.doc.querySelector(".teach-card")) { finishTeachingCards(game); continue; }
     if (game.$("next-row").style.display !== "none") { game.$("btn-next").click(); game.clock.advance(600); continue; }
     const job = game.doc.querySelectorAll("[data-shift-job]").filter((b) => b.closest("#scene") && !b.closest("#shift-strip"))[0];
     if (job && game.$("stage-phase-badge").textContent === "今夜の仕事") { job.click(); game.clock.advance(300); continue; }
@@ -3604,6 +3637,32 @@ test("a phone gives compact Inn targets a forgiving tap area and names them afte
     "the recycle-bin label moves below its target instead of overlapping the laundry basket");
 });
 
+test("the three days say how many tasks are left before Episode 1", async () => {
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game);
+  for (let guard = 0; guard < 20 && game.$("encounter-to-episode").hidden; guard += 1) {
+    const go = game.$("scene").querySelectorAll("button").filter(game.visible)[0];
+    if (go) go.click(); else game.tapScreen();
+    game.clock.advance(1500);
+  }
+  const counter = game.$("encounter-to-episode");
+  assert.equal(counter.hidden, false, "the counter shows during the training");
+  const first = Number((counter.textContent.match(/あと(\d+)問/) || [])[1]);
+  assert.ok(first >= 1 && first <= 15, "counts the tasks to the episode: " + counter.textContent);
+  game.$("btn-skip-question").click();
+  game.$("btn-next").click();
+  game.clock.advance(1500);
+  for (let guard = 0; guard < 10 && game.doc.querySelector(".teach-card"); guard += 1) {
+    const next = game.$("btn-teach-next") || game.$("btn-teach-done");
+    if (next) next.click(); else game.doc.querySelectorAll(".teach-option")[0].click();
+    game.clock.advance(900);
+  }
+  const second = Number((game.$("encounter-to-episode").textContent.match(/あと(\d+)問/) || [])[1]);
+  assert.equal(second, first - 1, "one fewer after a task");
+  startEpisodeAfterTraining(game);
+  assert.equal(game.$("encounter-to-episode").hidden, true, "and it is gone once the episode starts");
+});
+
 test("things sitting inside a room spot can still be picked up by a finger", () => {
   // v444 widened thin room spots with an invisible ::after layer. Drawn above
   // the spot's contents, it covered the old towel, bulb and sheet that sit
@@ -3800,44 +3859,39 @@ test("leaving during teaching feedback cancels its pending advance", async () =>
     "an old check must not render a new card after the learner leaves");
 });
 
-test("episode teaching resumes at the last studied card after reload", async () => {
-  // The board's はじめて words are now taught as one batch right after it,
-  // rather than doled out a block at a time during the shift - so a fresh
-  // episode 1 opens on all five words the three days never covered, not two.
+test("a word taught during the evening is not taught again after a reload", async () => {
+  // Episode 1 teaches each new word when its guest is first helped. Taught
+  // once, it stays taught: a reload does not put Kon's card back in front of
+  // the same guest.
   const game = boot(null, "?skip=1");
-  await enterTheInn(game);
-  startEpisodeAfterTraining(game);
-  game.$("btn-episode-begin").click();
-  game.$("btn-brief-begin").click();
-  game.$("btn-words-begin").click();
-  game.$("btn-teach-next").click();
-  game.doc.querySelectorAll(".teach-option")
-    .find((b) => b.getAttribute("data-correct") === "1").click();
-  game.clock.advance(900);
-  const word = game.doc.querySelector(".teach-word").textContent;
+  await openShiftBoard(game);
+  const firstNew = openFirstNewWordJob(game);
+  assert.ok(game.doc.querySelector(".teach-card"), "the new word is taught before its guest's question");
+  finishTeachingCards(game);
+  assert.ok(game.$("preview-controls"), "then the guest's question is asked");
+
   const reloaded = boot(JSON.parse(game.storage.getItem("lanternAlley.v3")), "?skip=1");
-  await openResumedInnScheduleChallenge(reloaded);
-  assert.equal(reloaded.doc.querySelector(".teach-count").textContent, "2 / 5");
-  assert.equal(reloaded.doc.querySelector(".teach-word").textContent, word);
+  reloaded.$("btn-start").click();
+  reloaded.clock.advance(500);
+  reloaded.doc.querySelectorAll(".map-destination").find((b) => b.textContent.includes("月見宿")).click();
+  reloaded.clock.advance(300);
+  if (reloaded.$("map-detail-action")) reloaded.$("map-detail-action").click();
+  reloaded.clock.advance(1500);
+  if (reloaded.$("btn-shift-resume")) reloaded.$("btn-shift-resume").click();
+  dismissShiftCoach(reloaded);
+  reloaded.doc.querySelectorAll(`[data-shift-job="${firstNew}"]`)[0].click();
+  reloaded.clock.advance(300);
+  assert.equal(reloaded.doc.querySelector(".teach-card"), null, "no second lesson for the same word");
+  assert.ok(reloaded.$("preview-controls"), "straight to the question");
 });
 
-test("an episode recap counts every word taught up front, not just one block's worth", async () => {
+test("a word taught mid-shift goes straight back to the guest, with no recap screen", async () => {
   const game = boot(null, "?skip=1");
-  await enterTheInn(game);
-  startEpisodeAfterTraining(game);
-  game.$("btn-episode-begin").click(); game.clock.advance(500);
-  game.$("btn-brief-begin").click(); game.clock.advance(500);
-  game.$("btn-words-begin").click(); game.clock.advance(400);
-  for (let i = 0; i < 20 && !game.$("btn-teach-done"); i++) {
-    const next = game.$("btn-teach-next");
-    if (next) next.click();
-    else game.doc.querySelectorAll(".teach-option")
-      .find((b) => b.getAttribute("data-correct") === "1").click();
-    game.clock.advance(900);
-  }
-  assert.equal(game.doc.querySelectorAll(".teach-recap-word").length, 5);
-  assert.match(game.doc.querySelector(".episode-open-title").textContent, /5/,
-    "the recap must claim all five words the batch actually taught");
+  await openShiftBoard(game);
+  openFirstNewWordJob(game);
+  finishTeachingCards(game);
+  assert.equal(game.doc.querySelectorAll(".teach-recap-word").length, 0, "no one-word recap between Kon and the guest");
+  assert.ok(game.$("preview-controls"), "the guest's question follows the card");
 });
 
 test("Kon wears her portrait from the moment the app boots", () => {
@@ -3918,7 +3972,7 @@ test("the studying ends on a screen that says the day is starting", async () => 
   assert.ok(game.doc.querySelectorAll(".inn-new-word").length);
 });
 
-test("the episode teaches the words its board calls new, before the clock", async () => {
+test("the episode teaches the words its board calls new, when their guest comes, with the evening waiting", async () => {
   const game = boot(null, "?skip=1");
   await enterTheInn(game);
   startEpisodeAfterTraining(game);
@@ -3927,57 +3981,33 @@ test("the episode teaches the words its board calls new, before the clock", asyn
   game.$("btn-brief-begin").click();
   game.clock.advance(500);
   assert.ok(game.$("btn-words-begin"), "the shift opens on its word board");
-
-  /* The board marks five of the ten new and used to hand straight to a timed
-   * question about one of them - reported from play, and admitted in the
-   * board's own comment before that. */
+  assert.match(game.$("scene").textContent, /その仕事の前にコンが教えます/, "the board says when the new words are taught");
   game.$("btn-words-begin").click();
   game.clock.advance(400);
-  const card = game.doc.querySelector(".teach-card");
-  assert.ok(card, "a word the board called new is taught first");
-  /* One of the words the board marked new, and not the one the hour asks
-   * about first: the board lists them in question order, so teaching
-   * straight down that list would recite the opening guest. */
-  const innStage = game.context.N2HomeInnStage;
-  const firstShift = game.context.LanternEpisodeStages["home-inn"].episodes[0];
-  const threeDays = new Set(innStage.encounters.map((item) => item.focusWord));
-  const newWordsOnBoard = [];
-  for (const day of firstShift.days) {
-    for (const question of day.questions) {
-      const item = game.context.LanternCurriculumCatalog.getItem(question.target);
-      if (item && !threeDays.has(item.canonical) && !newWordsOnBoard.includes(item.canonical)) {
-        newWordsOnBoard.push(item.canonical);
-      }
-    }
-  }
-  const shown = innStage.getTeachingWords().filter((word) => card.textContent.includes(word));
-  assert.equal(shown.length, 1, "exactly one word is on the card, saw " + shown.join(" / "));
-  const firstAsked = game.context.LanternCurriculumCatalog
-    .getItem(game.context.LanternEpisodeStages["home-inn"].episodes[0].days[0].questions[0].target).canonical;
-  assert.notEqual(shown[0], firstAsked, "and not the word the first guest asks about");
-  assert.ok(card.querySelector(".teach-focus"), "with the sentence it lives in");
-
-  /* And the wrong answers are not only the other words in this run. Drawn
-   * from the queue alone, five cards offered five glosses and the last was
-   * answerable by elimination; drawn from every word the Inn teaches, they
-   * are not. */
-  game.$("btn-teach-next").click();
+  // No block of five cards before the first guest: the difficulty comes next.
+  assert.equal(game.doc.querySelector(".teach-card"), null, "no cards before the evening");
+  assert.ok(game.doc.querySelectorAll("[data-shift-level]").length, "straight to the difficulty");
+  game.doc.querySelectorAll('[data-shift-level="normal"]')[0].click();
   game.clock.advance(300);
-  const glosses = game.doc.querySelectorAll(".teach-option").map((b) => b.textContent);
-  assert.equal(glosses.length, 4);
-  assert.equal(new Set(glosses).size, 4, "no option is offered twice");
+  dismissShiftCoach(game);
 
-  const glossOf = (word) => {
-    const item = game.context.LanternCurriculumCatalog.getItem(innStage.getTargetId(word));
-    return innStage.getCardSense(word) || (item && item.meanings && item.meanings[0]);
-  };
-  const everyGloss = new Set(innStage.getTeachingWords().map(glossOf));
-  assert.ok(glosses.every((g) => everyGloss.has(g)),
-    "every option is a real gloss from this place, saw " + glosses.join(" / "));
-
-  const boardGlosses = new Set(newWordsOnBoard.map(glossOf));
-  assert.ok(glosses.some((g) => !boardGlosses.has(g)),
-    "at least one wrong answer comes from outside the words being taught, saw " + glosses.join(" / "));
+  const minutes = (text) => { const [h, m] = text.split(":").map(Number); return h * 60 + m; };
+  openFirstNewWordJob(game);
+  const card = game.doc.querySelector(".teach-card");
+  assert.ok(card, "a new word is taught when its job is opened");
+  assert.ok(card.querySelector(".teach-focus"), "with the sentence it lives in");
+  assert.equal(game.$("stage-phase-badge").textContent, "あたらしい言葉");
+  // Read the card slowly: the guests are not kept waiting for it.
+  const before = game.context.LanternShiftBoard;
+  game.clock.advance(15000);
+  finishTeachingCards(game);
+  assert.ok(game.$("preview-controls"), "then the question");
+  game.$("btn-shift-back").click();
+  game.clock.advance(300);
+  dismissShiftCoach(game);
+  assert.ok(minutes(game.$("shift-clock").textContent) <= minutes("18:00") + 3,
+    "the evening barely moved while Kon taught: " + game.$("shift-clock").textContent);
+  assert.ok(before, "the shift board rules are loaded");
 });
 
 
