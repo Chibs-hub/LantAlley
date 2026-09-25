@@ -6,6 +6,17 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-25 - Pet gait and shared home capacity (v449 test build)
+
+Cat and Shiba contact poses now advance after more ground travel. A shared
+allocator gives active cats, birds and Shiba non-overlapping places in both
+home scenes. The pet manager shows active and owned counts, prevents putting
+out more pets than can fit, and preserves purchases in storage when full.
+Legacy excess active IDs are returned to storage without deleting ownership.
+Pet position and depth size now update through a transform instead of
+per-frame layout properties. Unit and DOM tests passed for the focused flows;
+rendered phone and desktop motion has not yet been visually verified.
+
 ### 2026-09-25 - Keep Shiba routes open in a furnished room (v448)
 
 A center piece together with both folding screens blocked every one of the

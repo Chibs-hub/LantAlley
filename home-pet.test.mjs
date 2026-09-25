@@ -9,6 +9,16 @@ function load() {
   return context.LanternHomePet;
 }
 
+test("cat contact poses follow about half a body length per cycle", () => {
+  const pet = load();
+  const start = {...pet.create("yard", 1), x:17, y:72, anchorId:"yard-shade"};
+  let walking = pet.sendTo(start, "yard-path");
+  while (walking.frame < 2 && walking.targetId) walking = pet.step(walking, 16, {});
+  assert.equal(walking.frame, 2);
+  const ratio = walking.walked / pet.widthAt(walking.y, walking.scene);
+  assert.ok(ratio >= 0.50 && ratio <= 0.64, `contact cycle traveled ${ratio} body lengths`);
+});
+
 test("yard and interior expose bounded contextual anchors", () => {
   const pet = load();
   for (const scene of ["yard", "interior"]) {
@@ -250,8 +260,8 @@ test("the live home binds rendered plants to contextual pet anchors", () => {
 
 test("in-flight pet destinations are treated as occupied", () => {
   const app = fs.readFileSync(new URL("./app.js", import.meta.url), "utf8");
-  assert.match(app, /function homePetSiblingBlocker\(pet, species, sibling\)/);
-  assert.match(app, /homePetSiblingBlocker\(pet, species, sib\)/);
+  assert.match(app, /function homePetSiblingBlocker\(pet, species, sibling, siblingSpecies\)/);
+  assert.match(app, /homePetSiblingBlocker\(pet, species, sib, iidSpecies\(k\)\)/);
 });
 
 test("resting poses breathe subtly and respect reduced motion", () => {

@@ -30,3 +30,19 @@ test("the Shiba Inu is a normal unlimited shop pet", () => {
   assert.equal(second.ok, true);
   assert.deepEqual(second.ownedPets, ["shiba", "shiba"]);
 });
+
+test("legacy active duplicates never exceed owned copies", () => {
+  const shop = pets();
+  assert.deepEqual(Array.from(shop.normalizeActivePets(["cat", "cat", "bird"],
+    ["cat-1", "cat-1", "cat-2", "bird-3", "shiba-4"])),
+    ["cat-1", "cat-2", "bird-3"]);
+});
+
+test("activation at capacity leaves active pets unchanged", () => {
+  const shop = pets();
+  const original = ["cat-1"];
+  const result = shop.tryActivate(["cat", "bird"], original, "bird-2", () => false);
+  assert.equal(result.ok, false);
+  assert.deepEqual(Array.from(result.activePets), original);
+  assert.notEqual(result.activePets, original);
+});

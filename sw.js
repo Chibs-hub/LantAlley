@@ -7,7 +7,7 @@
  * Bump CACHE_VERSION whenever any shell file changes, or returning players
  * will keep the old build.
  */
-var CACHE_VERSION = "lantern-alley-v448";// Fix: the kotatsu's rear cushions sit behind the table again, as they did before v401.
+var CACHE_VERSION = "lantern-alley-v449";// Fix: the kotatsu's rear cushions sit behind the table again, as they did before v401.
 
 // audio-index.js assigns to `self`, so the worker and the page share one list
 // of clip paths. Importing it here means new lines are cached automatically
@@ -48,6 +48,7 @@ var SHELL = [
   "./home-pet.js",
   "./home-bird.js",
   "./home-dog.js",
+  "./home-pet-layout.js",
   "./home-pet-spots.js",
   "./home-pets.js",
   // The house and yard. A learner who installed the game offline and
@@ -168,11 +169,11 @@ var SHELL = [
   "./manifest.webmanifest",
   "./assets/branding/lantern-mark-v2.png",
   "./assets/social/lantern-alley-share-v2.jpg",
-  "./icons/icon-192.png?v=448",
-  "./icons/icon-512.png?v=448",
-  "./icons/icon-192-maskable.png?v=448",
-  "./icons/icon-512-maskable.png?v=448",
-  "./icons/apple-touch-icon.png?v=448",
+  "./icons/icon-192.png?v=449",
+  "./icons/icon-512.png?v=449",
+  "./icons/icon-192-maskable.png?v=449",
+  "./icons/icon-512-maskable.png?v=449",
+  "./icons/apple-touch-icon.png?v=449",
   "./assets/kon/kon-idle.webp",
   "./assets/kon/kon-wave-left.webp",
   "./assets/kon/kon-wave-right.webp",

@@ -166,7 +166,7 @@
    * by the ground. The production cycle now has four key poses rather than
    * eight drawings, so each key covers half the old distance. A complete
    * four-key cycle still advances about 0.6 body lengths. */
-  function strideFor(y, scene){ return widthAt(y, scene) * 0.15; }
+  function strideFor(y, scene){ return widthAt(y, scene) * 0.28; }
 
   /* How wide the cat is drawn, measured in each scene rather than guessed once.
    *

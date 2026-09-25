@@ -6615,6 +6615,41 @@
     return typeof LanternHomePet !== "undefined" ? LanternHomePet : null;
   }
 
+  function homePetLayoutInputs(){
+    var inputs = {};
+    ["yard", "interior"].forEach(function(scene){
+      var options = {};
+      ["cat", "bird", "shiba"].forEach(function(species){
+        options[species] = homePetAnchorOptions(scene,species);
+      });
+      inputs[scene] = {blockers:homePetBlockers(scene),options:options};
+    });
+    return inputs;
+  }
+
+  function homePetFits(iids){
+    if(typeof LanternHomePetLayout === "undefined") return {ok:false};
+    return LanternHomePetLayout.fitsBoth(iids.map(function(iid){
+      return {iid:iid,species:iidSpecies(iid),seed:iidSeed(iid)};
+    }),{cat:homePetApi("cat"),bird:homePetApi("bird"),shiba:homePetApi("shiba")},
+    homePetLayoutInputs());
+  }
+
+  function homePetNormalize(){
+    if(typeof LanternHomePets === "undefined") return 0;
+    var before = (state.activePets || []).length;
+    state.activePets = LanternHomePets.normalizeActivePets(state.ownedPets,state.activePets);
+    while(state.activePets.length && !homePetFits(state.activePets).ok) state.activePets.pop();
+    return before-state.activePets.length;
+  }
+
+  function homePetTryActivate(iid){
+    var result = LanternHomePets.tryActivate(state.ownedPets,state.activePets,iid,
+      function(proposed){ return homePetFits(proposed).ok; });
+    if(result.ok) state.activePets = result.activePets;
+    return result;
+  }
+
   function homePetAnchorOptions(scene, species){
     return {extraAnchors:homePetExtraAnchors(scene, species)};
   }
@@ -6630,14 +6665,17 @@
     return anchor && anchor.z != null ? anchor.z : null;
   }
 
-  function homePetSiblingBlocker(pet, species, sibling){
+  function homePetSiblingBlocker(pet, species, sibling, siblingSpecies){
     if(!sibling) return null;
-    var target = sibling.targetId && pet && pet.anchors
-      ? homePetAnchor(pet, sibling.scene, sibling.targetId,
-          homePetAnchorOptions(sibling.scene, species)) : null;
+    siblingSpecies = siblingSpecies || species;
+    var siblingApi = homePetApi(siblingSpecies);
+    var target = sibling.targetId && siblingApi && siblingApi.anchors
+      ? homePetAnchor(siblingApi, sibling.scene, sibling.targetId,
+          homePetAnchorOptions(sibling.scene, siblingSpecies)) : null;
     var point = target || sibling;
     if(!isFinite(Number(point.x)) || !isFinite(Number(point.y))) return null;
-    return {x:Number(point.x), y:Number(point.y), rx:6, ry:4};
+    var width = siblingApi && siblingApi.widthAt ? siblingApi.widthAt(point.y,sibling.scene) : 7.5;
+    return {x:Number(point.x), y:Number(point.y), rx:Math.max(2,width*.65), ry:Math.max(2,width*.55)};
   }
 
   function homePetMarkup(scene){
@@ -6646,6 +6684,8 @@
       return ownedPets.indexOf(iidSpecies(iid)) >= 0;
     });
     if(!activePets.length) return "";
+    var assignment = homePetFits(activePets);
+    var seats = assignment.ok && assignment.assignments[scene].anchors;
     return activePets.map(function(iid){
       var species = iidSpecies(iid);
       var pet = homePetApi(species);
@@ -6653,6 +6693,8 @@
       var prev = homePetStates[iid];
       var seed = iidSeed(iid);
       var petOptions = homePetAnchorOptions(scene, species);
+      var assigned = seats && seats[iid];
+      if(!assigned) return "";
       if(!prev){
         /* create(), not enterScene(), for the same reason the scene switch
          * below stopped using it - and this branch is the one a learner
@@ -6669,20 +6711,7 @@
          * differ from each other, before any of them has taken a step.
          */
         var newPs = pet.create(scene, seed, petOptions);
-        // Spread same-species pets across distinct anchors so they don't overlap.
-        var takenIds = Object.keys(homePetStates)
-          .filter(function(k){ return iidSpecies(k) === species; })
-          .map(function(k){ return homePetStates[k] && homePetStates[k].anchorId; })
-          .filter(Boolean);
-        if(takenIds.indexOf(newPs.anchorId) >= 0 && pet.anchors && pet.settleAt){
-          var open = pet.anchors(scene, petOptions).filter(function(a){
-            return takenIds.indexOf(a.id) < 0 && a.kind !== "door";
-          });
-          // By seed rather than [0], or every collision resolves to the same
-          // spare anchor and a third cat lands where the second one did.
-          var free = open.length ? open[(newPs.seed || 1) % open.length] : null;
-          if(free) newPs = pet.settleAt(newPs, free.id, petOptions);
-        }
+        newPs = pet.settleAt(newPs,assigned.id,petOptions);
         homePetStates[iid] = newPs;
         homePetIdleMs[iid] = 0;
       } else if(prev.scene !== scene){
@@ -6694,10 +6723,14 @@
         // its day. create() already excludes door anchors from its pick, so a
         // fresh ordinary resting spot in the new scene keeps this feeling
         // continuous instead of like a hard reset.
-        homePetStates[iid] = pet.create(scene, seed, petOptions);
+        homePetStates[iid] = pet.settleAt(pet.create(scene, seed, petOptions),assigned.id,petOptions);
         homePetIdleMs[iid] = 0;
       }
       var ps = homePetStates[iid];
+      if(ps && (ps.targetId || ps.anchorId) !== assigned.id){
+        ps = pet.settleAt(ps,assigned.id,petOptions);
+        homePetStates[iid] = ps;
+      }
       var blockers = (species === "cat" || species === "shiba") ? homePetBlockers(scene) : [];
       var currentAnchor = homePetAnchor(pet, scene, ps && (ps.targetId || ps.anchorId), petOptions);
       if(ps && ps.anchorId && currentAnchor &&
@@ -6732,8 +6765,8 @@
         + '" aria-hidden="true" data-pet-species="' + species
         + '" data-pet-iid="' + iid
         + '" data-pet-behavior="' + ps.behavior
-        + '" style="width:' + petWidth + '%;left:' + ps.x
-        + '%;top:' + ps.y + '%;--pet-lamp:'
+        + '" style="transform:' + LanternHomePetLayout.transform(ps.x,ps.y,petWidth,species)
+        + ';--pet-lamp:'
         + (ps.scene === 'yard' ? plantLampProximity(ps) : 1)
         + ';z-index:' + (ps._anchorZ == null ? homeDepthZ(ps.y) : ps._anchorZ)
         + ';--pet-facing:' + ps.facing + '">'
@@ -6754,10 +6787,8 @@
       var row = Math.floor(sprite.frame / sprite.columns);
       var x = sprite.columns > 1 ? column * 100 / (sprite.columns - 1) : 0;
       var y = sprite.rows > 1 ? row * 100 / (sprite.rows - 1) : 0;
-      /* Width every frame, beside position. */
-      if(pet.widthAt) node.style.width = pet.widthAt(ps.y, ps.scene) + "%";
-      node.style.left = ps.x + "%";
-      node.style.top = ps.y + "%";
+      var petWidth = pet.widthAt ? pet.widthAt(ps.y, ps.scene) : 7.5;
+      node.style.transform = LanternHomePetLayout.transform(ps.x,ps.y,petWidth,species);
       node.style.zIndex = ps._anchorZ == null ? homeDepthZ(ps.y) : ps._anchorZ;
       node.style.setProperty("--pet-facing", ps.facing);
       node.style.setProperty("--pet-lamp",
@@ -6805,13 +6836,17 @@
           if(homePetIdleMs[iid] > dwell){
             ps.seed = (ps.seed * 1664525 + 1013904223) >>> 0;
             var blockers = (species === "cat" || species === "shiba") ? homePetBlockers(ps.scene) : [];
-            // Treat resting siblings as soft blockers so pets avoid each other's spots.
+            // All species reserve their current and destination positions.
             Object.keys(homePetStates).forEach(function(k){
               if(k === iid) return;
-              if(iidSpecies(k) !== species) return;
               var sib = homePetStates[k];
-              var siblingBlocker = homePetSiblingBlocker(pet, species, sib);
+              var siblingBlocker = homePetSiblingBlocker(pet, species, sib, iidSpecies(k));
               if(siblingBlocker) blockers.push(siblingBlocker);
+              if(sib && sib.targetId){
+                var currentBlocker = homePetSiblingBlocker(pet,species,
+                  {x:sib.x,y:sib.y,scene:sib.scene},iidSpecies(k));
+                if(currentBlocker) blockers.push(currentBlocker);
+              }
             });
             var destination = pet.nextAnchor
               ? pet.nextAnchor(ps, blockers, petOptions)
@@ -7605,8 +7640,9 @@
         + '<span class="home-pet-manage-name">' + pet.nameJp + '</span>'
         + '<button type="button" class="pet-count-btn" data-dismiss-pet="' + pet.id + '"'
         + (count === 0 ? ' disabled' : '') + '">－預ける</button>'
-        + '<span class="home-pet-manage-count">' + count + '匹</span>'
-        + '<button type="button" class="pet-count-btn" data-recruit-pet="' + pet.id + '">＋飼う</button>'
+        + '<span class="home-pet-manage-count">' + count + ' / ' + ownedPetCount(pet.id) + pet.counter + '</span>'
+        + '<button type="button" class="pet-count-btn" data-recruit-pet="' + pet.id + '"'
+        + (count >= ownedPetCount(pet.id) ? ' disabled' : '') + '>＋出す</button>'
         + '</span>';
     });
     html += '</div>';
@@ -7614,6 +7650,11 @@
   }
 
   function paintHome(){
+    var boardedPets = homePetNormalize();
+    if(boardedPets) {
+      saveProgress();
+      homeNotice = boardedPets + "匹のペットを預けました。この場所はいっぱいです。";
+    }
     rememberHomeSceneCamera();
     // Keep homePetStates in sync: drop any iid that is no longer in activePets
     // so a stale entry cannot hold a rendered position across a dismiss.
@@ -7953,12 +7994,13 @@
       state.money = (state.money || 0) - petEntry.price;
       if(!state.activePets) state.activePets = [];
       var boughtIid = newIid(petId);
-      state.activePets.push(boughtIid);
+      var boughtActivation = homePetTryActivate(boughtIid);
       delete homePetStates[boughtIid]; homePetIdleMs[boughtIid] = 0;
       playCoinSound();
       saveProgress();
       paintHome();
-      homeSay(petEntry.nameJp + "を買いました！");
+      homeSay(petEntry.nameJp + "を買いました！" +
+        (boughtActivation.ok ? "" : " この場所はいっぱいなので、ペットは預かっています。"));
       return;
     }
 
@@ -7967,8 +8009,13 @@
       var recruitSpecies = recruitPet.getAttribute("data-recruit-pet");
       if(!ownsPet(recruitSpecies)) return;
       if(!state.activePets) state.activePets = [];
+      if(activePetCount(recruitSpecies) >= ownedPetCount(recruitSpecies)) return;
       var recruitIid = newIid(recruitSpecies);
-      state.activePets.push(recruitIid);
+      var recruitment = homePetTryActivate(recruitIid);
+      if(!recruitment.ok){
+        homeSay("この場所はいっぱいです。これ以上ペットを出せません。");
+        return;
+      }
       delete homePetStates[recruitIid]; homePetIdleMs[recruitIid] = 0;
       saveProgress();
       paintHome();
@@ -8161,7 +8208,7 @@
       if(!state.ownedPets) state.ownedPets = [];
       if(state.ownedPets.indexOf("cat") < 0) state.ownedPets.push("cat");
       if(!state.activePets) state.activePets = [];
-      if(!isPetActive("cat")) state.activePets.push(newIid("cat"));
+      if(!isPetActive("cat")) homePetTryActivate(newIid("cat"));
     }
     if(reward.coins) state.money = (state.money || 0) + reward.coins;
     saveProgress();

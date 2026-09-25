@@ -175,7 +175,7 @@
     next.walked = (next.walked || 0) + travel;
     var gait = WALK_SPRITES[profile.gait] || WALK_SPRITES.amble;
     next.frame = (profile.phase + Math.floor(next.walked /
-      Math.max(0.5, widthAt(next.y,next.scene) * (profile.gait === "trot" ? 0.11 : 0.14)))) % gait.frames;
+      Math.max(0.5, widthAt(next.y,next.scene) * (profile.gait === "trot" ? 0.22 : 0.28)))) % gait.frames;
     return next;
   }
   function spriteFor(state){

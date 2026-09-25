@@ -35,6 +35,35 @@
     return normalizeOwned(ownedPets).indexOf(id) >= 0;
   }
 
+  function speciesOf(iid){ return String(iid).replace(/-[^-]+$/, ""); }
+
+  function normalizeActivePets(ownedPets, activePets){
+    var remaining = {};
+    normalizeOwned(ownedPets).forEach(function(species){
+      remaining[species] = (remaining[species] || 0) + 1;
+    });
+    var seen = {}, result = [];
+    (Array.isArray(activePets) ? activePets : []).forEach(function(iid){
+      if(typeof iid !== "string" || seen[iid]) return;
+      var species = speciesOf(iid);
+      if(!remaining[species]) return;
+      seen[iid] = true;
+      remaining[species]--;
+      result.push(iid);
+    });
+    return result;
+  }
+
+  function tryActivate(ownedPets, activePets, iid, fits){
+    var normalized = normalizeActivePets(ownedPets,activePets);
+    var proposed = normalizeActivePets(ownedPets,normalized.concat([iid]));
+    if(proposed.length !== normalized.length + 1)
+      return {ok:false,reason:"owned",activePets:normalized};
+    if(typeof fits === "function" && !fits(proposed))
+      return {ok:false,reason:"full",activePets:normalized};
+    return {ok:true,reason:null,activePets:proposed};
+  }
+
   function unchanged(ownedPets, money, reason){
     return {
       ok:false,
@@ -66,6 +95,8 @@
     catalogue:function(){ return copy(PETS); },
     get:get,
     normalizeOwned:normalizeOwned,
+    normalizeActivePets:normalizeActivePets,
+    tryActivate:tryActivate,
     owns:owns,
     buy:buy,
     grant:grant

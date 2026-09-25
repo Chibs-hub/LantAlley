@@ -2656,6 +2656,7 @@ body:has(.about-panel:not([hidden])) .feedback-open{visibility:hidden;pointer-ev
   .home-scene{
     position:relative; width:100%; margin:0;
     aspect-ratio:16/9; overflow:hidden; background:#1b130c;
+    container-type:inline-size;
   }
   @media (min-width:700px) and (max-height:850px){
     .home-stage .home-scene-camera{
@@ -2750,13 +2751,12 @@ body:has(.about-panel:not([hidden])) .feedback-open{visibility:hidden;pointer-ev
      the actual size everywhere, which made the cat a giant against the back
      wall while every object around it shrank with the perspective. */
   .home-pet{
-    position:absolute; z-index:3; width:7.5%; aspect-ratio:1;
-    transform:translate(-50%,-86%); pointer-events:none; line-height:0;
+    position:absolute; left:0; top:0; z-index:3; width:7.5%; aspect-ratio:1;
+    pointer-events:none; line-height:0;
     filter:drop-shadow(0 3px 4px rgba(28,16,8,.48)) saturate(.9) sepia(.08);
   }
   /* Bird sprite feet sit at 90.6% of their square cell. Matching that baseline
      to a painted roof, fence, sill or floor keeps every idle pose supported. */
-  .home-pet.is-bird{transform:translate(-50%,-90.6%)}
   /* The cat is lit by the hour too.
    *
    * It carried one fixed filter for every time of day, so at midday it was

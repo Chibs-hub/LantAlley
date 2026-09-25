@@ -12,6 +12,23 @@ function load() {
   return context.LanternHomeDog;
 }
 
+test("Shiba contact poses follow body travel for both gaits", () => {
+  const dog = load();
+  for (const [seed, minimum, maximum] of [[1, 0.50, 0.64], [2, 0.38, 0.50]]) {
+    const start = {...dog.create("yard", seed), x:21, y:72, anchorId:"yard-dog-shade"};
+    let walking = dog.sendTo(start, "yard-dog-path");
+    let changes = 0;
+    let previous = walking.frame % 2;
+    while (changes < 2 && walking.targetId) {
+      walking = dog.step(walking, 16, {});
+      if (walking.frame !== previous) { changes += 1; previous = walking.frame; }
+    }
+    assert.equal(changes, 2);
+    const ratio = walking.walked / dog.widthAt(walking.y, walking.scene);
+    assert.ok(ratio >= minimum && ratio <= maximum, `${seed} traveled ${ratio} body lengths`);
+  }
+});
+
 function alphaAreas(path, columns) {
   const bytes = readFileSync(new URL(path, import.meta.url));
   const width = bytes.readUInt32BE(16);
@@ -192,5 +209,5 @@ test("walking poses keep the Shiba's visible body size stable", () => {
 test("the live home gives each dog the other dogs' active poses", () => {
   const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
   assert.match(app, /occupiedBehaviors:/);
-  assert.match(app, /iidSpecies\(k\) === species/);
+  assert.match(app, /homePetSiblingBlocker\(pet, species, sib, iidSpecies\(k\)\)/);
 });
