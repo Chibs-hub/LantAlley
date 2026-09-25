@@ -22,8 +22,13 @@
   };
 
   var WALK_SPRITES = {
-    amble:{path:"assets/home/pet/shiba-walk-v2.png", columns:4, rows:1, frames:4, frameMs:210},
-    trot:{path:"assets/home/pet/shiba-trot-v1.png", columns:4, rows:1, frames:4, frameMs:155}
+    /* The generated sheets contain four poses, but poses 3 and 4 redraw the
+     * dog's torso 12-22% larger. Cycling through them made the whole animal
+     * pulse even though its screen box was stable. Use the two measured,
+     * size-matched poses from each sheet; pace, phase and route still vary per
+     * dog without swapping in a differently proportioned body. */
+    amble:{path:"assets/home/pet/shiba-walk-v2.png", columns:4, rows:1, frames:2, frameOrder:[0,1]},
+    trot:{path:"assets/home/pet/shiba-trot-v1.png", columns:4, rows:1, frames:2, frameOrder:[0,2]}
   };
   var SPRITES = {
     walk:WALK_SPRITES.amble,
@@ -173,8 +178,9 @@
     var sprite = behavior === "walk"
       ? (WALK_SPRITES[profile.gait] || WALK_SPRITES.amble)
       : (SPRITES[behavior] || SPRITES.stand);
-    return {path:sprite.path, columns:sprite.columns, rows:sprite.rows,
-      frame:Math.max(0, Number(state && state.frame) || 0) % sprite.frames};
+    var frame = Math.max(0, Number(state && state.frame) || 0) % sprite.frames;
+    if(sprite.frameOrder) frame = sprite.frameOrder[frame];
+    return {path:sprite.path, columns:sprite.columns, rows:sprite.rows, frame:frame};
   }
   function dwellMs(state){
     var behavior = state && state.behavior || "stand", seed = Math.abs(Number(state && state.seed) || 1) >>> 0;

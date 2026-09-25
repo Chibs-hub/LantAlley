@@ -6,6 +6,15 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-25 - Stop Shiba gait frames changing body size (v447)
+
+The v446 sheets had equal outer bounds but not equal dogs: measured opaque body
+area jumped from 55,761 to 67,870 pixels across one walk cycle, so the Shiba
+visibly expanded and contracted at every pose change. Both gaits now use only
+their two size-matched poses while retaining per-dog pace, phase, route and rest
+variation. A PNG-level regression test rejects any active gait whose visible
+body area varies by 5% or more.
+
 ### 2026-09-18 - Give Kon a contextual title-screen message (v423)
 
 The title screen no longer says that Kon remembers without saying what or why.

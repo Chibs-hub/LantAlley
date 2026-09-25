@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
+import { inflateSync } from "node:zlib";
 
 function load() {
   const context = {};
@@ -9,6 +10,53 @@ function load() {
   vm.createContext(context);
   vm.runInContext(readFileSync(new URL("./home-dog.js", import.meta.url), "utf8"), context);
   return context.LanternHomeDog;
+}
+
+function alphaAreas(path, columns) {
+  const bytes = readFileSync(new URL(path, import.meta.url));
+  const width = bytes.readUInt32BE(16);
+  const height = bytes.readUInt32BE(20);
+  const chunks = [];
+  for (let offset = 8; offset < bytes.length;) {
+    const length = bytes.readUInt32BE(offset);
+    const type = bytes.toString("ascii", offset + 4, offset + 8);
+    if (type === "IDAT") chunks.push(bytes.subarray(offset + 8, offset + 8 + length));
+    offset += length + 12;
+  }
+  const packed = inflateSync(Buffer.concat(chunks));
+  const stride = width * 4;
+  const rgba = Buffer.alloc(stride * height);
+  let source = 0;
+  for (let y = 0; y < height; y += 1) {
+    const filter = packed[source++];
+    for (let x = 0; x < stride; x += 1) {
+      const raw = packed[source++];
+      const left = x >= 4 ? rgba[y * stride + x - 4] : 0;
+      const up = y ? rgba[(y - 1) * stride + x] : 0;
+      const upperLeft = y && x >= 4 ? rgba[(y - 1) * stride + x - 4] : 0;
+      let value = raw;
+      if (filter === 1) value += left;
+      else if (filter === 2) value += up;
+      else if (filter === 3) value += Math.floor((left + up) / 2);
+      else if (filter === 4) {
+        const estimate = left + up - upperLeft;
+        const distances = [Math.abs(estimate - left), Math.abs(estimate - up), Math.abs(estimate - upperLeft)];
+        value += distances[0] <= distances[1] && distances[0] <= distances[2]
+          ? left : distances[1] <= distances[2] ? up : upperLeft;
+      }
+      rgba[y * stride + x] = value & 255;
+    }
+  }
+  const frameWidth = width / columns;
+  return Array.from({length: columns}, (_, frame) => {
+    let area = 0;
+    for (let y = 0; y < height; y += 1) {
+      for (let x = frame * frameWidth; x < (frame + 1) * frameWidth; x += 1) {
+        if (rgba[y * stride + x * 4 + 3] > 32) area += 1;
+      }
+    }
+    return area;
+  });
 }
 
 test("Shiba anchors are all grounded and dog actions are realistic", () => {
@@ -111,6 +159,18 @@ test("the brisk gait has separate production artwork", () => {
     assert.equal(bytes.toString("ascii", 1, 4), "PNG");
     assert.equal(bytes.readUInt32BE(16), bytes.readUInt32BE(20) * sprite.columns);
     assert.equal(bytes[25], 6);
+  }
+});
+
+test("walking poses keep the Shiba's visible body size stable", () => {
+  const dog = load();
+  for (const gait of ["amble", "trot"]) {
+    const sprites = [0, 1, 2, 3].map((frame) =>
+      dog.spriteFor({behavior:"walk", frame, profile:{gait}}));
+    const areas = alphaAreas(sprites[0].path, sprites[0].columns);
+    const usedAreas = sprites.map((sprite) => areas[sprite.frame]);
+    assert.ok(Math.max(...usedAreas) / Math.min(...usedAreas) < 1.05,
+      `${gait} gait changes visible body area by more than 5%: ${usedAreas.join(", ")}`);
   }
 });
 
