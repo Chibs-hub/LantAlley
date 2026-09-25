@@ -649,7 +649,9 @@
   function glossHtml(text, mode){
     if(!glossReady()) return null;
     var selectedMode = mode || glossMode;
-    if(selectedMode === "plain") return null;
+    // "plain" drops the furigana, not the meaning: a harder day shows fewer
+    // readings, but a word the learner does not know can still be tapped.
+    // The word being tested and the answer choices are excluded either way.
     return LanternGloss.annotate(text, glossIndex, glossExclusions, selectedMode === "ruby" ? "ruby" : undefined);
   }
 
@@ -675,6 +677,15 @@
     if(marked === null) $("jp-line").textContent = text;
     else $("jp-line").innerHTML = marked;
     return text;
+  }
+
+  /* Kon's scene-setting line gets the same tap hints as her request, under
+   * the same exclusions, so the tested word and the answers stay bare. */
+  function writeStageNarration(stage, prompt, text){
+    prepareStageReading(stage, prompt);
+    var marked = glossHtml(text);
+    if(marked === null) $("narration").textContent = text;
+    else $("narration").innerHTML = marked;
   }
 
   function challengeTranscript(prompt){
@@ -722,11 +733,35 @@
     hideGlossBubble();
   }, true);
 
+  // A mouse can point at a word without clicking it. Tapping still toggles;
+  // hover only applies where the device can hover, so a phone's tap is not
+  // read as a hover followed by a click that closes the bubble again.
+  var canHover = window.matchMedia && window.matchMedia("(hover:hover) and (pointer:fine)").matches;
+  if(canHover){
+    document.addEventListener("mouseover", function(event){
+      var button = event.target && event.target.closest ? event.target.closest(".gloss") : null;
+      if(button && !button.classList.contains("is-open")) showGlossBubble(button);
+    });
+    document.addEventListener("mouseout", function(event){
+      var button = event.target && event.target.closest ? event.target.closest(".gloss") : null;
+      if(!button) return;
+      var to = event.relatedTarget;
+      if(to && button.contains(to)) return;
+      hideGlossBubble();
+    });
+  }
+
   dialogueFlow = LanternAlleyLogic.createDialogueFlow({
     render:function(visible, phase){
       var line = $("jp-line");
-      var marked = phase === "speaking" ? null : glossHtml(visible);
-      // Mid-reveal the line is plain text; finished, it becomes tappable.
+      // Mid-reveal the line is plain text; once every character is on screen
+      // it becomes tappable, even while Kon's voice is still playing. It used
+      // to wait for the audio to end, so a learner who wanted a word's meaning
+      // during the line - or whose phone never reported the audio ending -
+      // found nothing to tap.
+      var typing = phase === "speaking"
+        && visible.length < ((dialogueFlow && dialogueFlow.getText && dialogueFlow.getText()) || "").length;
+      var marked = typing ? null : glossHtml(visible);
       if(marked === null) line.textContent = visible;
       else line.innerHTML = marked;
       dialoguePanel.classList.toggle("dialogue-speaking", phase === "speaking");
@@ -5497,7 +5532,7 @@
       // Prefer the day announcement and drop the resume greeting.
       storyNarration = joinKonLines(loc.getDayAnnouncement(state.stagePhase), prompt.narration);
     }
-    $("narration").textContent = storyNarration;
+    writeStageNarration(loc, prompt, storyNarration);
     var retryFlag = $("retry-flag");
     if(retryFlag){
       retryFlag.hidden = !retryReason;
@@ -5751,7 +5786,7 @@
     var resumedItems = loc.encounters ? (state.phaseItems || loc.getPhaseItems(state.stagePhase)) : null;
     $("encounter-progress").textContent = resumedItems ? String(state.encounterIndex + 1) : "1";
     $("encounter-total").textContent = resumedItems ? String(resumedItems.length) : "1";
-    $("narration").textContent = stageNarrationFor(loc, prompt);
+    writeStageNarration(loc, prompt, stageNarrationFor(loc, prompt));
     // Day 3 is audio-first, so the written prompt must stay
     $("romaji-line").style.display = state.romajiOn && !isSingleAttemptPhase() ? "block" : "none";
     // A switch that cannot change anything should not be offered: Challenge

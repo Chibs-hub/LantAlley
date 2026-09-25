@@ -30,6 +30,16 @@
   // wrong reading teaches the wrong thing, so a lone 来 is left unglossed.
   var AMBIGUOUS_ALONE = {"来": true};
 
+  /* Kanji whose lone catalogue entry is a different word from the one
+   * running text uses. Found when every day's words became tappable:
+   * 空いています was glossed "sky", 分かりました "dividing", 冬の間 "space",
+   * お盆 "Lantern Festival" beside a tray, 角 "horn" for a corner, 方 (a
+   * person) "side". Where contextualReading knows the reading here (空い あ,
+   * 分か わ, 終わ お...) the furigana is still shown, but the word opens no
+   * meaning; anywhere else it is left alone. Compounds are not affected. */
+  var MEANING_UNSAFE_ALONE = {"空": true, "分": true, "方": true, "間": true, "角": true,
+    "盆": true, "上": true, "正": true, "回": true, "終": true, "後": true};
+
   /* Words whose catalog reading is real but is not the one running text takes.
    *
    * Unlike 来, these are not wrong entries - both readings exist, and the
@@ -46,6 +56,9 @@
    * characters, because 今日 is two.
    */
   var AMBIGUOUS_READING = {"今日": true, "中": true};
+
+  // Kana that can follow a noun without making it part of another word.
+  var PARTICLES = "をがはのにでともへやかねよ";
 
   // 時 alone in the catalog is the noun "moment" (あの時), read とき. A digit
   // right before it makes it the o'clock counter instead (14時, 15時), read
@@ -114,10 +127,31 @@
     if(!question) return out;
     var item = catalog && catalog.getItem ? catalog.getItem(question.target) : null;
     if(item && item.canonical) out[item.canonical] = true;
-    var options = (question.answer && question.answer.options) || [];
-    options.forEach(function(option){ out[String(option)] = true; });
+    if(item && item.aliases) item.aliases.forEach(function(alias){ out[alias] = true; });
+    var options = ((question.answer && question.answer.options) || []).map(String);
     if(question.repair && question.repair.options){
-      question.repair.options.forEach(function(option){ out[String(option)] = true; });
+      options = options.concat(question.repair.options.map(String));
+    }
+    options.forEach(function(option){ out[option] = true; });
+    /* A hint must never be the answer. Every catalogue word that appears
+     * anywhere inside a choice is left unglossed in the question too:
+     * glossing 確認 in a line whose right reply is 「確認します。」 would hand
+     * the learner the choice by its meaning. */
+    var items = (catalog && catalog.items) || [];
+    /* Nor may a word inside the tested one: glossing 替える "to exchange"
+     * in 「取り替える」に近い意味はどれですか answered it. */
+    if(item && item.canonical){
+      items.forEach(function(entry){
+        var word = entry && entry.canonical;
+        if(word && word.length > 1 && item.canonical.indexOf(word) >= 0) out[word] = true;
+      });
+    }
+    if(options.length){
+      var joined = options.join("\n");
+      items.forEach(function(entry){
+        var word = entry && entry.canonical;
+        if(word && joined.indexOf(word) >= 0) out[word] = true;
+      });
     }
     return out;
   }
@@ -134,6 +168,7 @@
     var i = 0;
     while(i < source.length){
       var matched = null;
+      var readingOnly = false;
       var maxLen = Math.min(index.longest, source.length - i);
       for(var len = maxLen; len >= 1; len--){
         var candidate = source.substr(i, len);
@@ -152,6 +187,20 @@
           // glosses, because nothing is attached to it.
           var after = i + len < source.length ? source.charAt(i + len) : "";
           if(hasKanji(before) || hasKanji(after)) continue;
+          /* Part of a verb or adjective, not the noun the catalogue holds:
+           * 直して is not 直 "earnestly", 決まりました is not 決まり
+           * "settlement", 切れた電球 is not 切れ "cloth". A lone kanji, or a
+           * headword ending in kana, that runs straight on into kana other
+           * than a particle is a conjugated word, and is left alone. */
+          // Glued to a katakana word: 電子 in 電子レンジ is not "electron".
+          if(hasKanji(candidate.slice(-1)) && /[\u30A1-\u30FA\u30FC]/.test(after)) continue;
+          if(len === 1 && MEANING_UNSAFE_ALONE[candidate]){
+            if(contextualReading(candidate, source, i, null) === null) continue;
+            readingOnly = true;
+          }
+          var endsKana = /[\u3041-\u3096]$/.test(candidate);
+          if(((len === 1 && hasKanji(candidate)) || endsKana)
+              && /[\u3041-\u3096]/.test(after) && PARTICLES.indexOf(after) < 0) readingOnly = true;
           matched = candidate;
           break;
         }
@@ -160,15 +209,24 @@
         if(plain){ out += escapeHtml(plain); plain = ""; }
         var entry = index.byWord[matched];
         var reading = contextualReading(matched, source, i, entry.reading);
-        if(mode === "ruby"){
-          out += '<ruby class="gloss-ruby">' + escapeHtml(matched)
-            + '<rt>' + escapeHtml(reading) + '</rt></ruby>';
-        }else{
-          out += '<button type="button" class="gloss" data-reading="'
-            + escapeHtml(reading) + '" data-meaning="' + escapeHtml(entry.meaning)
-            + '" aria-label="' + escapeHtml(matched + " の読みと意味") + '">'
-            + escapeHtml(matched) + '</button>';
+        // Every glossed word opens its meaning when tapped or hovered. Ruby
+        // mode used to print furigana alone, so on the first day - the one
+        // with the most help - a word could be read but not understood.
+        if(readingOnly){
+          // The reading is right here; the catalogue's meaning is not.
+          out += mode === "ruby" ? '<ruby class="gloss-ruby">' + escapeHtml(matched)
+            + '<rt>' + escapeHtml(reading) + '</rt></ruby>' : escapeHtml(matched);
+          i += matched.length;
+          continue;
         }
+        var face = mode === "ruby"
+          ? '<ruby class="gloss-ruby">' + escapeHtml(matched)
+            + '<rt>' + escapeHtml(reading) + '</rt></ruby>'
+          : escapeHtml(matched);
+        out += '<button type="button" class="gloss' + (mode === "ruby" ? ' gloss-has-ruby' : '')
+          + '" data-reading="' + escapeHtml(reading) + '" data-meaning="' + escapeHtml(entry.meaning)
+          + '" aria-label="' + escapeHtml(matched + " の読みと意味") + '">'
+          + face + '</button>';
         i += matched.length;
       }else{
         plain += source.charAt(i);

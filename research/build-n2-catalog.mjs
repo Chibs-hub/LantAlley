@@ -381,6 +381,16 @@ const SENSE_FIRST = new Map([
   ["w-yukata", ["yukata (light cotton kimono)", "informal summer kimono"]],
   ["w-kigen-2", ["mood", "temper", "humour"]],
   ["w-shitei", ["specifying", "setting (a time or place)", "designation"]],
+  // Support words the Inn's questions gloss on tap, where the first sense
+  // read wrongly: 時刻 "instant" for a clock time, 移す "to remove" for moving
+  // an event to another day, お願い "desire", and a door 札 as "token".
+  ["w-jikoku", ["time (of day)", "moment", "instant"]],
+  ["v-utsusu", ["to move (to another place or day)", "to transfer", "to infect"]],
+  ["w-negai", ["request", "wish", "desire"]],
+  ["w-satsu", ["tag", "label", "ticket", "token"]],
+  ["w-kumi", ["group (of guests)", "set", "class", "team"]],
+  ["w-yousu", ["state", "condition", "appearance", "aspect"]],
+  ["w-annai", ["guidance", "showing the way", "information", "leading"]],
 ]);
 for (const item of items) {
   if (SENSE_FIRST.has(item.id)) item.meanings = SENSE_FIRST.get(item.id);

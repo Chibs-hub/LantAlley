@@ -1,6 +1,6 @@
 # Lantern Alley Project Handoff
 
-Last updated: 2026-09-24 (v444)
+Last updated: 2026-09-25 (v445)
 
 A browser game that teaches JLPT N2 Japanese. Vanilla JS, CSS and HTML, no build step, no framework, offline-capable.
 
@@ -19,6 +19,17 @@ A browser game that teaches JLPT N2 Japanese. Vanilla JS, CSS and HTML, no build
 Sections 1, 3, 4, 5, 6, 8, 13, 14 and 15 are reference: what the game is, how it is designed, where the files are, how it ships, and what data it draws on.
 
 ## 0. Current status
+
+**v445 (2026-09-25):** tap (phone) or hover (desktop) on a support word
+shows its reading and meaning on every day and every episode part - Day 1
+keeps its furigana and adds the tap; harder days drop furigana, not meanings.
+Hints appear as soon as Kon's whole line is on screen, not after her audio
+ends, and Kon's scene-setting line is hinted too. **No hint may give an
+answer:** the tested word, any word inside it (替える in 取り替える), and any
+word inside any answer or correction choice stay bare - a test runs this over
+every Inn question. Wrong-sense hints found on the way (空 "sky", 分
+"dividing", 直 "earnestly", 電子 "electron"...) now show furigana only or
+nothing; seven support words got the sense the Inn uses.
 
 **v444 (2026-09-24):** phone size floor. Every screen from the title through
 all 40 episode questions and the home (yard, room, shop tabs) was measured

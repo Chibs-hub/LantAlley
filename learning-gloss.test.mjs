@@ -38,7 +38,12 @@ test("Learn mode uses ruby only for support words, never the target", () => {
 
   assert.match(html, /<ruby class="gloss-ruby">客間<rt>きゃくま<\/rt><\/ruby>/);
   assert.doesNotMatch(html, /<ruby[^>]*>掃除<rt>/, "the word being taught must stay unreadable");
-  assert.doesNotMatch(html, /<button/, "ruby support is informative, not a second interaction");
+  // Owner's rule (2026-09-25): any support word shows its meaning on tap or
+  // hover, on the furigana day too - only the tested word and the answer
+  // choices stay bare.
+  assert.match(html, /<button type="button" class="gloss gloss-has-ruby" data-reading="きゃくま" data-meaning="[^"]+"[^>]*><ruby class="gloss-ruby">客間/,
+    "a word with furigana also opens its meaning");
+  assert.doesNotMatch(html, /data-reading="そうじ"/, "the word being taught opens nothing");
 });
 
 test("the longest word wins, so 会 is not glossed inside 会計", () => {
@@ -232,4 +237,67 @@ test("Inn sentences use the reading required by their grammatical context", () =
   // The override must be contextual. 品 standing alone is still しな.
   const standalone = gloss.annotate("傷のない品です", index, {}, "ruby");
   assert.match(standalone, /品<rt>しな<\/rt>/);
+});
+
+test("a tap hint never gives away the answer, on any Inn question", () => {
+  // Every word can now be tapped for its meaning, so this is the guard: the
+  // tested word, any word inside it, and any word inside an answer choice
+  // stay bare. 替える inside 取り替える once answered its own repair question.
+  const context = {};
+  context.self = context;
+  vm.createContext(context);
+  for (const file of ["curriculum-catalog.js", "learning-content.js", "learning-gloss.js", "n2-inn-episodes.js",
+    "moonview-inn-interactions.js", "n2-home-inn-stage.js"]) {
+    vm.runInContext(readFileSync(new URL("./" + file, import.meta.url), "utf8"), context);
+  }
+  const { LanternGloss: gloss, LanternCurriculumCatalog: catalog } = context;
+  const index = gloss.buildIndex(catalog);
+  const hinted = (html) => [...html.matchAll(/data-meaning="[^"]*"[^>]*>(?:<ruby class="gloss-ruby">)?([^<]+)/g)].map((m) => m[1]);
+  const check = (id, texts, question, correct) => {
+    const target = catalog.getItem(question.target);
+    const exclusions = gloss.exclusionsFor(question, catalog);
+    for (const mode of ["ruby", undefined]) {
+      for (const text of texts.filter(Boolean)) {
+        for (const word of hinted(gloss.annotate(text, index, exclusions, mode))) {
+          assert.ok(!(target && target.canonical.includes(word)), `${id}: hints the tested word ${word}`);
+          assert.ok(!String(correct).includes(word), `${id}: hints ${word}, which is in the answer`);
+        }
+      }
+    }
+  };
+  let checked = 0;
+  for (const episode of context.N2InnEpisodes.episodes) {
+    for (const day of episode.days) {
+      for (const q of day.questions) {
+        check(q.id, [q.prompt.jp], q, q.answer.options[q.answer.correctIndex]);
+        if (q.repair) check(q.id + " repair", [q.repair.prompt],
+          { target: q.target, answer: { options: q.repair.options } }, q.repair.options[q.repair.correctIndex]);
+        checked += 1;
+      }
+    }
+  }
+  const stage = context.N2HomeInnStage;
+  const items = [...stage.encounters, ...stage.practice, ...stage.challenge];
+  stage.encounters.forEach((item) => {
+    for (let pass = 0; pass < stage.getReviewLadderLength(); pass += 1) items.push(stage.getReviewItem(item.focusWord, pass));
+  });
+  for (const item of items) {
+    const labels = (item.options || []).map((option) => option.label || option);
+    const right = (item.options || []).find((option) => option.key === item.correct);
+    check(`${item.variant} ${item.focusWord}`, [item.jp, item.narration],
+      { target: stage.getTargetId(item.focusWord), answer: { options: labels } }, right ? right.label : "");
+    checked += 1;
+  }
+  assert.ok(checked > 60, `checked ${checked} questions`);
+});
+
+test("a kanji that is part of a verb shows its reading but no noun meaning", () => {
+  const { LanternGloss: gloss, LanternCurriculumCatalog: catalog } = load();
+  const index = gloss.buildIndex(catalog);
+  const vacant = gloss.annotate("二人部屋が三つ空いています。", index, {}, "ruby");
+  assert.match(vacant, /<ruby class="gloss-ruby">空<rt>あ<\/rt><\/ruby>/, "the reading still helps");
+  assert.doesNotMatch(vacant, /data-meaning="sky"/, "空いて is not 'sky'");
+  const tap = gloss.annotate("何が分かりましたか。切れた電球を直してください。", index, {}, undefined);
+  for (const wrong of ["dividing", "cloth", "earnestly"]) assert.doesNotMatch(tap, new RegExp(wrong));
+  assert.doesNotMatch(gloss.annotate("電子レンジで温めます。", index, {}, undefined), /electron/);
 });
