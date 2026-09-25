@@ -87,6 +87,21 @@ test("Shiba walking stays on the floor and lands exactly on its target", () => {
   assert.notEqual(landed.behavior, "walk");
 });
 
+test("a Shiba can leave the center when a kotatsu and both screens are placed", () => {
+  const dog = load();
+  const blockers = [
+    {x:50, y:77.984, rx:10.416, ry:5.04},
+    {x:20, y:81.5, rx:15.4628, ry:7.482},
+    {x:80, y:81.5, rx:15.4628, ry:7.482}
+  ];
+  const center = dog.anchors("interior").find((anchor) => anchor.id === "interior-dog-center");
+  const state = {...dog.create("interior", 1), anchorId:center.id, x:center.x, y:center.y};
+  const destination = dog.nextAnchor(state, blockers);
+  assert.ok(destination, "the furnished room must retain a clear walking route");
+  assert.equal(dog.pointIsClear(destination, blockers), true);
+  assert.equal(dog.routeIsClear(state, destination, blockers), true);
+});
+
 test("reduced motion settles a Shiba without leaving it mid-stride", () => {
   const dog = load();
   const start = dog.create("interior", 3);

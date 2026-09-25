@@ -1,6 +1,6 @@
 # Lantern Alley Project Handoff
 
-Last updated: 2026-09-25 (v447)
+Last updated: 2026-09-25 (v448)
 
 A browser game that teaches JLPT N2 Japanese. Vanilla JS, CSS and HTML, no build step, no framework, offline-capable.
 
@@ -19,6 +19,12 @@ A browser game that teaches JLPT N2 Japanese. Vanilla JS, CSS and HTML, no build
 Sections 1, 3, 4, 5, 6, 8, 13, 14 and 15 are reference: what the game is, how it is designed, where the files are, how it ships, and what data it draws on.
 
 ## 0. Current status
+
+**v448 (2026-09-25):** a Shiba can keep walking when the room contains a
+center piece and both folding screens. That realistic layout blocked all five
+old dog routes and made `nextAnchor()` return null forever. Two front-tatami
+anchors provide a clear grounded lane, protected by a regression test using
+the measured kotatsu and screen footprints.
 
 **v447 (2026-09-25):** corrected the remaining Shiba size pulse in v446.
 The sheets' frame boxes were equal, but the actual opaque dog grew by 22%

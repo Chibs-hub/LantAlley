@@ -6,6 +6,14 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-25 - Keep Shiba routes open in a furnished room (v448)
+
+A center piece together with both folding screens blocked every one of the
+Shiba's five interior routes. The dog could animate but `nextAnchor()` always
+returned null, leaving it permanently in one place. Two grounded anchors on
+the open front tatami edge now preserve a clear walking lane around that common
+layout. A regression test uses the measured kotatsu and screen footprints.
+
 ### 2026-09-25 - Stop Shiba gait frames changing body size (v447)
 
 The v446 sheets had equal outer bounds but not equal dogs: measured opaque body

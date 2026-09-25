@@ -17,7 +17,13 @@
       {id:"interior-dog-window", x:24, y:79, support:"ground", behaviors:["stand","sniff"]},
       {id:"interior-dog-center", x:54, y:86, support:"ground", behaviors:["sit","scratch"]},
       {id:"interior-dog-alcove", x:72, y:80, support:"ground", behaviors:["stand","sniff"]},
-      {id:"interior-dog-lane", x:50, y:74, support:"ground", behaviors:["stand","sit"]}
+      {id:"interior-dog-lane", x:50, y:74, support:"ground", behaviors:["stand","sit"]},
+      /* The front tatami edge remains open when the center piece and both
+       * screens are placed. Without these two anchors every older route was
+       * cut by one of those three footprints, so nextAnchor() returned null
+       * forever in a normally furnished room. */
+      {id:"interior-dog-front-left", x:28, y:96, support:"ground", behaviors:["stand","sniff"]},
+      {id:"interior-dog-front-right", x:72, y:96, support:"ground", behaviors:["stand","sit"]}
     ]
   };
 
