@@ -316,6 +316,19 @@
     setTimeout(once, (fallbackDelay || 2600) + 6000);
   }
 
+  /* Silence Kon when the screen moves on.
+   *
+   * A new line replaced the old one, but a screen with no line of its own -
+   * the word board, the difficulty choice, the shift board, the map - left
+   * the previous clip playing over it. Reported from play: "the voice keeps
+   * talking when already at the next screen". */
+  function stopVoice(){
+    if(currentClip){ try{ currentClip.pause(); }catch(e){} currentClip = null; }
+    try{ if("speechSynthesis" in window) window.speechSynthesis.cancel(); }catch(e){}
+    if(activeFoxEl) activeFoxEl.classList.remove("talking");
+    stopWave();
+  }
+
   function speakWithSynthesis(text, mode){
     mode = mode || "ask";
     if(!state.voiceOn) return;
@@ -390,6 +403,7 @@
         (v3.fixDismissed || []).forEach(function(id){ pendingFixDismissed[id] = true; });
         pendingFixNudgedOn = v3.fixNudgedOn || null;
         pendingShiftBest = v3.shiftBest || {};
+        pendingShiftCoach = v3.shiftCoach || {};
         pendingDaily = {
           dailyPractice: v3.dailyPractice || null,
           streak: v3.streak || 0,
@@ -521,6 +535,7 @@
         fixDismissed: Object.keys(state.fixDismissed || {}),
         fixNudgedOn: state.fixNudgedOn || null,
         shiftBest: state.shiftBest || {},
+        shiftCoach: state.shiftCoach || {},
         dailyPractice: state.dailyPractice || null,
         streak: state.streak || 0,
         freezes: state.freezes || 0,
@@ -848,6 +863,7 @@
   var pendingFixDismissed = {};
   var pendingFixNudgedOn = null;
   var pendingShiftBest = {};
+  var pendingShiftCoach = {};
   var pendingDaily = {dailyPractice:null, streak:0, freezes:0, lastActiveDate:null};
   var migratedFromV2 = false;
   var pendingItemStates = {};
@@ -914,6 +930,7 @@
   state.fixDismissed = pendingFixDismissed;
   state.fixNudgedOn = pendingFixNudgedOn;
   state.shiftBest = pendingShiftBest || {};
+  state.shiftCoach = pendingShiftCoach || {};
 
   /* `?unlockall=1` fills the cupboard so placement can be tested. See
    * unlockEverythingForTesting. Console callers get the same thing by name.
@@ -1964,6 +1981,7 @@
     if(key) startStageCheck(key, null);
   });
   $("btn-next").addEventListener("click", function(){
+    stopVoice();
     if(practiceState){ advancePractice(); return; }
     if(previewState){ advanceEpisodePreview(); return; }
     var loc = getLocation(state.currentKey);
@@ -1976,6 +1994,7 @@
 
 
   function showMap(){
+    stopVoice();
     clearShiftChrome();
     screenCharacter.hidden = true;
     screenTitle.style.display = "none";
@@ -3794,6 +3813,7 @@
    * them they already worked through in the three days.
    */
   function renderEpisodeWordBoard(){
+    stopVoice();
     var seen = {};
     var rows = [];
     previewState.list.forEach(function(entry){
@@ -3825,7 +3845,10 @@
 
     var known = rows.filter(function(row){ return row.known; }).length;
     $("stage-phase-badge").textContent = "今夜の言葉";
-    $("jp-line").textContent = "コン：「今夜使う言葉です。三日間で練習した言葉と、初めての言葉があります。」";
+    // Through the dialogue controller: written straight into #jp-line, the
+    // rules line still being revealed painted itself back over this one.
+    var boardLine = "コン：「今夜使う言葉です。三日間で練習した言葉と、初めての言葉があります。」";
+    if(dialogueFlow) dialogueFlow.start(boardLine, false); else $("jp-line").textContent = boardLine;
     $("romaji-line").textContent = "";
     $("meaning-line").textContent = "";
     $("meaning-line").classList.remove("show");
@@ -3967,6 +3990,7 @@
   }
 
   function renderShiftLevel(){
+    stopVoice();
     setInnScene("lobby");
     stopShiftTimer();
     $("stage-phase-row").style.display = "flex";
@@ -4007,6 +4031,8 @@
   }
 
   function renderShiftBoard(){
+    stopVoice();
+    closeShiftCoach();
     var shift = previewState.shift;
     previewState.shiftView = "board";
     previewState.shiftKey = shiftBoardKey();
@@ -4057,6 +4083,7 @@
     wireShiftJobs($("scene"));
     showShiftPause(true);
     startShiftTimer();
+    showShiftCoach("board");
   }
 
   function wireShiftJobs(root){
@@ -4078,6 +4105,7 @@
   function openShiftJob(id){
     var index = shiftEntryIndex(id);
     if(index < 0) return;
+    closeShiftCoach();
     resumeShift();
     previewState.index = index;
     previewState.shiftView = "task";
@@ -4119,6 +4147,7 @@
   function wireShiftTask(){
     wireShiftJobs($("shift-strip"));
     showShiftPause(true);
+    showShiftCoach("task");
     var back = $("btn-shift-back");
     if(back) back.addEventListener("click", function(event){
       event.stopImmediatePropagation();
@@ -4155,7 +4184,7 @@
 
   function shiftTick(){
     if(!shiftOn() || previewState.shiftResultShown || screenGame.style.display === "none"){ stopShiftTimer(); return; }
-    if(previewState.shiftPaused || previewState.repair) return;
+    if(previewState.shiftPaused || previewState.repair || shiftCoachOpen) return;
     var shift = previewState.shift, view = previewState.shiftView, current = shiftCurrentId();
     var events = LanternShiftBoard.tick(shift, view, current);
     if(events.tea) shiftToast("🦊 コンがお茶を出しました。皆さん少し長く待てます。", "tea");
@@ -4240,8 +4269,58 @@
     }catch(e){}
   }
 
+  /* Kon explains the board the first time each part of it appears, as the
+   * mock did. The evening waits while she talks; each tip shows once. */
+  var SHIFT_COACH = {
+    board:{target:".shift-tag", jp:"お客様の札です。札を押すと、その方の仕事を始めます。",
+      en:"Tap a guest's tag to help them. The bar is how long they will wait - help whoever is running out first."},
+    memo:{target:".shift-memo", jp:"これは私からの帳場の仕事です。時間制限はありません。",
+      en:"Kon's desk jobs have no timer. Do them between guests."},
+    // Only once someone else is actually waiting in the strip.
+    task:{target:".shift-mini", jp:"仕事の間も、ほかのお客様は待っています。",
+      en:"This strip shows who else is waiting while you work. Tap one to switch to them."}
+  };
+  var shiftCoachOpen = null;
+  function showShiftCoach(where){
+    if(shiftCoachOpen || !shiftOn()) return;
+    if(!state.shiftCoach) state.shiftCoach = {};
+    var order = where === "board" ? ["board", "memo"] : ["task"];
+    for(var i = 0; i < order.length; i++){
+      var key = order[i], tip = SHIFT_COACH[key];
+      if(state.shiftCoach[key]) continue;
+      var target = $("scene").querySelector(tip.target) || document.querySelector(tip.target);
+      if(!target) continue;
+      state.shiftCoach[key] = true;
+      saveProgress();
+      target.classList.add("shift-coach-target");
+      var card = document.createElement("div");
+      card.className = "shift-coach";
+      card.id = "shift-coach";
+      card.setAttribute("role", "dialog");
+      card.innerHTML = '<img src="assets/fox/fox-neutral-idle-transparent-v2.webp" alt="コン">'
+        + '<div><p class="shift-coach-jp">' + tip.jp + '</p><p class="shift-coach-en" lang="en">' + tip.en + '</p>'
+        + '<button type="button" class="btn btn-primary" id="btn-shift-coach-ok">わかりました</button></div>';
+      document.body.appendChild(card);
+      shiftCoachOpen = {where:where, target:target};
+      $("btn-shift-coach-ok").addEventListener("click", function(event){
+        event.stopImmediatePropagation();
+        var was = shiftCoachOpen ? shiftCoachOpen.where : where;
+        closeShiftCoach();
+        showShiftCoach(was);
+      });
+      return;
+    }
+  }
+  function closeShiftCoach(){
+    var card = $("shift-coach");
+    if(card) card.remove();
+    if(shiftCoachOpen && shiftCoachOpen.target) shiftCoachOpen.target.classList.remove("shift-coach-target");
+    shiftCoachOpen = null;
+  }
+
   // The pause card, the messages and the red edge belong to the evening only.
   function clearShiftChrome(){
+    closeShiftCoach();
     ["shift-paused", "shift-toasts"].forEach(function(id){ var el = $(id); if(el) el.remove(); });
     showShiftPause(false);
     screenGame.classList.remove("shift-alarm", "shift-alarm-hi");
@@ -4272,6 +4351,8 @@
 
   function renderShiftResults(){
     var shift = previewState.shift, config = shiftConfig();
+    stopVoice();
+    closeShiftCoach();
     stopShiftTimer();
     resumeShift();
     previewState.shiftResultShown = true;
@@ -7338,11 +7419,28 @@
     }).join("");
   }
 
+  /* Pets move every frame, and every frame this used to find each pet by
+   * selector and rewrite all of its styles, its lamp variable and an
+   * attribute, changed or not. Only what changed is written now: while a pet
+   * walks that is its transform, plus the sprite frame about ten times a
+   * second. Main-thread time with three pets out fell about 12% in desktop
+   * Chrome; the stutter reported on a phone was not reproduced here. */
+  var homePetNodes = {};
+  function petWrite(node, key, value, apply){
+    var last = node._petLast || (node._petLast = {});
+    if(last[key] === value) return;
+    last[key] = value;
+    apply(value);
+  }
   function updateHomePetNode(){
     Object.keys(homePetStates).forEach(function(iid){
       var ps = homePetStates[iid];
       var species = iidSpecies(iid);
-      var node = document.querySelector('[data-pet-iid="' + iid + '"]');
+      var node = homePetNodes[iid];
+      if(!node || node.isConnected !== true){
+        node = document.querySelector('[data-pet-iid="' + iid + '"]');
+        homePetNodes[iid] = node;
+      }
       var pet = homePetApi(species);
       if(!node || !ps || !pet) return;
       var sprite = pet.spriteFor(ps);
@@ -7351,17 +7449,19 @@
       var x = sprite.columns > 1 ? column * 100 / (sprite.columns - 1) : 0;
       var y = sprite.rows > 1 ? row * 100 / (sprite.rows - 1) : 0;
       var petWidth = pet.widthAt ? pet.widthAt(ps.y, ps.scene) : 7.5;
-      node.style.transform = LanternHomePetLayout.transform(ps.x,ps.y,petWidth,species);
-      node.style.zIndex = ps._anchorZ == null ? homeDepthZ(ps.y) : ps._anchorZ;
-      node.style.setProperty("--pet-facing", ps.facing);
-      node.style.setProperty("--pet-lamp",
-        ps.scene === "yard" ? plantLampProximity(ps) : 1);
-      node.setAttribute("data-pet-behavior", ps.behavior);
+      petWrite(node, "transform", LanternHomePetLayout.transform(ps.x,ps.y,petWidth,species), function(v){ node.style.transform = v; });
+      petWrite(node, "z", String(ps._anchorZ == null ? homeDepthZ(ps.y) : ps._anchorZ), function(v){ node.style.zIndex = v; });
+      petWrite(node, "facing", String(ps.facing), function(v){ node.style.setProperty("--pet-facing", v); });
+      // The lamp only needs to be as fine as the eye can see: every change to
+      // it re-renders the pet's whole filter chain.
+      var lamp = ps.scene === "yard" ? Math.round(plantLampProximity(ps) * 50) / 50 : 1;
+      petWrite(node, "lamp", String(lamp), function(v){ node.style.setProperty("--pet-lamp", v); });
+      petWrite(node, "behavior", String(ps.behavior), function(v){ node.setAttribute("data-pet-behavior", v); });
       var art = node.firstElementChild;
       if(art){
-        art.style.backgroundImage = "url('" + sprite.path + "')";
-        art.style.backgroundSize = (sprite.columns * 100) + "% " + (sprite.rows * 100) + "%";
-        art.style.backgroundPosition = x + "% " + y + "%";
+        petWrite(art, "image", sprite.path, function(v){ art.style.backgroundImage = "url('" + v + "')"; });
+        petWrite(art, "size", (sprite.columns * 100) + "% " + (sprite.rows * 100) + "%", function(v){ art.style.backgroundSize = v; });
+        petWrite(art, "position", x + "% " + y + "%", function(v){ art.style.backgroundPosition = v; });
       }
     });
   }
@@ -8782,6 +8882,7 @@
   function showInnReward(id){
     var result = claimInnReward(id);
     if(!result.granted) return false;
+    stopVoice();
     var reward = result.reward;
     var finalReward = reward.kind === "cat";
     setInnScene(finalReward ? "courtyard" : "lobby");
@@ -9071,6 +9172,7 @@
     var roomSurface = roomVisual
       ? '<div class="inn-room-composite"><div class="inn-room-viewport"><img class="inn-room-art" src="' + roomVisual.background + '" alt="">'
         + '<div class="inn-scene-zones" id="inn-scene-zones"></div></div>'
+        + '<div class="inn-drop-chips" id="inn-drop-chips" hidden></div>'
         + '<div class="inn-supply-shelf"><div class="inn-tray" id="inn-tray"></div></div></div>'
       // The shoji was decoration for scenes with no illustrated room, but it is
         // absolutely positioned and overlapped whatever those scenes actually
@@ -9205,6 +9307,7 @@
           function(el){ el.classList.remove("selected"); }
         );
         zonesEl.classList.remove("awaiting-drop");
+        showDropChips(false);
 
         if(already){
           roomPick = null;
@@ -9214,12 +9317,43 @@
         roomPick = {kind:kind, item:itemKey};
         button.classList.add("selected");
         zonesEl.classList.add("awaiting-drop");
+        showDropChips(true);
         $("inn-status").textContent = "置く場所を選んでください。";
         // On a phone the destinations can sit off-screen above the tray.
         // "nearest" leaves them alone when they are already visible.
         if(zonesEl.scrollIntoView){
           try{ zonesEl.scrollIntoView({block:"nearest", behavior:"smooth"}); }catch(e){ zonesEl.scrollIntoView(); }
         }
+      }
+
+      /* Every place in the room, named, as a full-size button under it.
+       *
+       * On a phone the painted room is about 340x230px: the stove and the
+       * microwave are a finger apart and the lamp is smaller than a fingertip.
+       * These do exactly what tapping the place in the picture does. They list
+       * every place, right or wrong, so choosing is still the learner's job. */
+      var chipNames = {g1:"左のマット", g2:"右のマット"};
+      function showDropChips(show){
+        var chips = $("inn-drop-chips");
+        if(!chips) return;
+        chips.hidden = !show;
+        if(!show){ chips.innerHTML = ""; return; }
+        chips.innerHTML = '<span class="inn-drop-chips-label">置く場所</span>';
+        allZones().forEach(function(zone){
+          var chip = document.createElement("button");
+          chip.type = "button";
+          chip.className = "inn-drop-chip";
+          chip.textContent = chipNames[zone.dataset.key] || zone.getAttribute("aria-label") || zone.dataset.key;
+          chip.addEventListener("click", function(event){
+            event.stopImmediatePropagation();
+            if(!roomPick) return;
+            var pick = roomPick;
+            roomPick = null;
+            showDropChips(false);
+            dropped(pick.kind, pick.item, zone);
+          });
+          chips.appendChild(chip);
+        });
       }
 
       // Every movable object gets both paths: drag, or tap then tap a place.
@@ -9259,6 +9393,7 @@
           if(!roomPick) return;
           var pick = roomPick;
           roomPick = null;
+          showDropChips(false);
           dropped(pick.kind, pick.item, zone);
         });
       });
@@ -10005,6 +10140,9 @@
       if(state.currentKey !== stage.key || !state.answered) return;
       if(state.stagePhase !== expectedPhase || state.encounterIndex !== expectedIndex) return;
       if($("inn-reward")) return;
+      // Nor once the episode has begun. The last Day 3 answer brought its
+      // 「第一話へ →」 back over the episode's opening card and Kon's rules.
+      if(previewState) return;
       $("next-row").style.display = "block";
     }, delay + 2500);
   }

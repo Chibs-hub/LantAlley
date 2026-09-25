@@ -64,6 +64,8 @@
       episode: null,
       // The shift board's best score per episode and difficulty.
       shiftBest: {},
+      // Which of Kon's shift-board tips have been shown.
+      shiftCoach: {},
       // The daily practice layer. Added here at the same time as saveProgress
       // writes them, because last time that was not done these were silently
       // dropped on every reload.
@@ -190,6 +192,7 @@
       next.stageStarted = (stored.stageStarted || []).slice();
       next.episode = stored.episode ? clone(stored.episode) : null;
       next.shiftBest = clone(stored.shiftBest || {});
+      next.shiftCoach = clone(stored.shiftCoach || {});
       next.reviewProgress = clone(stored.reviewProgress || {});
       next.fixDismissed = (stored.fixDismissed || []).slice();
       next.fixNudgedOn = stored.fixNudgedOn || null;

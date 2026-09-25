@@ -3285,7 +3285,10 @@ body:has(.about-panel:not([hidden])) .feedback-open{visibility:hidden;pointer-ev
   .inn-stage .dialogue-continue{top:8px;bottom:auto;right:6px}
   /* The room's drop spots follow the painting, and a few are thin strips on a
      phone. Each is given room to hit in the direction nothing else is. */
-  .inn-room-illustrated .inn-drop-zone::after{content:"";position:absolute;top:var(--hit-t,0);right:var(--hit-r,0);bottom:var(--hit-b,0);left:var(--hit-l,0)}
+  /* z-index:-1 keeps the widened hit area under the zone's own contents. On
+     top of them (v444-v452) it covered the old towel, bulb and sheet that sit
+     inside their zones, and a finger could no longer pick them up. */
+  .inn-room-illustrated .inn-drop-zone::after{content:"";position:absolute;z-index:-1;top:var(--hit-t,0);right:var(--hit-r,0);bottom:var(--hit-b,0);left:var(--hit-l,0)}
   .inn-room-illustrated .inn-drop-zone[data-key="remove-recycle"]{--hit-r:-19px;--hit-t:-2px}
   .inn-room-illustrated .inn-drop-zone[data-key="stove"]{--hit-t:-27px;--hit-b:-2px}
   .inn-room-illustrated .inn-drop-zone[data-key="microwave"]{--hit-t:-2px;--hit-b:-20px}
@@ -3474,3 +3477,26 @@ body:has(.about-panel:not([hidden])) .feedback-open{visibility:hidden;pointer-ev
   .shift-mine .shift-mood{grid-area:mood}
   .shift-mine .shift-count{grid-area:count}
 }
+
+/* The room's places as named buttons, shown while an object is picked up.
+   On a phone the painted room is about 340x230px: the stove and microwave are
+   a finger apart and the lamp is smaller than a fingertip. */
+.inn-drop-chips{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px 10px;background:rgba(36,24,14,.92);border-top:1px solid rgba(240,169,77,.4)}
+.inn-drop-chips[hidden]{display:none}
+.inn-drop-chips-label{font-size:12px;font-weight:700;color:#f0c98a;margin-right:2px}
+.inn-drop-chip{min-height:44px;padding:0 12px;border:1.5px solid #f0a94d;border-radius:22px;background:#fff6e6;color:#3b2412;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.inn-drop-chip:active{transform:translateY(1px)}
+/* Old things to take away - the towel, the bulb, the sheet - are picked out
+   with a soft glow, and the bulb fills its taller spot. */
+.inn-room-illustrated button.inn-placed-object{box-shadow:0 0 0 2px rgba(255,214,140,.85),0 0 10px rgba(255,200,110,.55)}
+.answer-workspace .inn-room-illustrated .inn-drop-zone[data-key="install-bulb"] > .inn-placed-object{width:100%;max-width:none}
+
+/* Kon's first-time tips on the shift board. */
+.shift-coach{position:fixed;left:12px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:55;display:grid;grid-template-columns:56px 1fr;gap:10px;align-items:start;
+  max-width:460px;margin:0 auto;padding:12px;border-radius:14px;background:var(--washi);color:var(--sumi);box-shadow:0 10px 26px rgba(0,0,0,.55)}
+.shift-coach img{width:56px;height:56px;object-fit:contain}
+.shift-coach p{margin:0}
+.shift-coach-jp{font-size:15px;font-weight:700;line-height:1.55}
+.shift-coach-en{margin:4px 0 10px!important;font-size:12px;line-height:1.45;color:#5d3a22}
+.shift-coach-target{position:relative;z-index:44;outline:3px solid var(--lantern-bright);outline-offset:3px;animation:shift-coach-pulse 1.4s ease-in-out infinite}
+@keyframes shift-coach-pulse{50%{outline-color:rgba(247,200,119,.35)}}

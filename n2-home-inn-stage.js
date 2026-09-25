@@ -492,7 +492,9 @@
         "install-towel":{x:2,y:19,w:19,h:25},
         "remove-laundry":{x:1,y:45,w:18,h:18},
         "remove-recycle":{x:19,y:45,w:8,h:18},
-        "install-bulb":{x:45,y:23,w:11,h:15},
+        // Taller than the fitting itself: the burned-out bulb was drawn at
+        // 28px on a phone, too small to see or pick up.
+        "install-bulb":{x:45,y:19,w:11,h:19},
         stove:{x:56,y:34,w:15,h:8},
         microwave:{x:57,y:45,w:14,h:11},
         "install-sheet":{x:77,y:53,w:23,h:29},

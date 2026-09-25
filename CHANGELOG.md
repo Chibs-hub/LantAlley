@@ -7,6 +7,42 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
 <<<<<<< HEAD
+### 2026-09-26 - Fixes from the owner's play of v452 (v453)
+
+- **The old towel could not be taken out on a phone.** The same was true of
+  the burned-out bulb and the dirty sheet. v444 widened thin room spots with
+  an invisible `::after` layer, and it was drawn above the objects that sit
+  inside those spots, so a finger reached the spot and never the towel. Mouse
+  clicks in the tests went straight to the element, so none of them saw it.
+  The layer now sits underneath (`z-index:-1`). Checked with real touch taps,
+  and pinned by a test.
+- **The stove and microwave were a finger apart.** On a phone the room is
+  about 340x230px. Picking something up now also lists every place in the
+  room as a named button (左のマット, 洗濯かご, コンロ, 電子レンジ...). The
+  list names every place, right or wrong, so choosing is still the
+  learner's job.
+- **The burned-out bulb was too small to see.** Its spot is taller, the bulb
+  fills it (28px to 36px on a phone), and old things to take away have a soft
+  glow.
+- **Kon's explanation looked missing when the episode started.** A fallback
+  timer from the last Day 3 answer brought 「第一話へ →」 back over the
+  episode's opening card and covered the rules list. It no longer fires once
+  the episode has begun; pressing it would also have skipped the opening.
+  The word board's line now goes through the dialogue controller, because
+  the rules line still being revealed painted over it. Kon's first-time tips
+  from the mock are on the board too: the guests' tags, her desk jobs and the
+  waiting strip. Each shows once, and the evening waits while it is open.
+- **The voice kept talking on the next screen.** A screen with no line of its
+  own (the word board, the difficulty choice, the board, the map, the reward)
+  left the last clip playing. `stopVoice()` now runs on those and on every
+  continue button. Checked by tracking play and pause in a browser.
+- **Pets.** The motion loop now writes only what changed each frame, instead
+  of looking up every pet and rewriting all its styles. Main-thread time with
+  three pets out fell about 16% in desktop Chrome. The motion itself measured
+  even there (a walking Shiba moves about 0.55px a frame, with no stalls), so
+  the stutter seen on the phone was **not reproduced**, and this is not
+  claimed as the fix.
+
 ### 2026-09-26 - The shift board shows the painted guest portraits (v452, feature branch)
 
 The twelve portraits the owner painted are now used everywhere a guest

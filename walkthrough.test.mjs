@@ -1118,7 +1118,46 @@ async function openShiftBoard(game, level = "normal") {
   assert.ok(game.$("scene").textContent.includes("難易度"), "the evening starts by choosing a difficulty");
   game.doc.querySelectorAll(`[data-shift-level="${level}"]`)[0].click();
   game.clock.advance(300);
+  dismissShiftCoach(game);
 }
+
+// Lets the evening run, reading Kon's tips as they come up.
+function advanceShift(game, ms) {
+  for (let t = 0; t < ms; t += 1000) { dismissShiftCoach(game); game.clock.advance(1000); }
+  dismissShiftCoach(game);
+}
+
+// Kon's first-time tips hold the evening until read.
+function dismissShiftCoach(game) {
+  for (let guard = 0; guard < 6 && game.$("btn-shift-coach-ok"); guard += 1) {
+    game.$("btn-shift-coach-ok").click();
+    game.clock.advance(100);
+  }
+}
+
+test("Kon explains the board the first time, and the evening waits while she does", async () => {
+  const game = boot();
+  await enterTheInn(game);
+  startEpisodeAfterTraining(game);
+  game.$("btn-episode-begin").click();
+  game.clock.advance(300);
+  game.$("btn-brief-begin").click();
+  game.clock.advance(300);
+  passWordBoard(game, 300);
+  assert.equal(game.$("next-row").style.display, "none", "no leftover continue button over the episode");
+  game.doc.querySelectorAll('[data-shift-level="normal"]')[0].click();
+  game.clock.advance(300);
+  assert.ok(game.$("shift-coach"), "Kon's tip is on screen");
+  assert.match(game.$("shift-coach").textContent, /札/);
+  const clock = game.$("shift-clock").textContent;
+  game.clock.advance(20000);
+  assert.equal(game.$("shift-clock").textContent, clock, "the evening waits while Kon explains");
+  dismissShiftCoach(game);
+  game.clock.advance(6000);
+  assert.notEqual(game.$("shift-clock").textContent, clock, "and runs once the tips are read");
+  const saved = JSON.parse(game.storage.getItem("lanternAlley.v3")).shiftCoach;
+  assert.ok(saved && saved.board, "a tip is shown once and remembered");
+});
 
 test("the shift board opens on waiting guests, and a question has the guest's patience instead of a clock", async () => {
   const game = boot();
@@ -1142,7 +1181,7 @@ test("the shift board opens on waiting guests, and a question has the guest's pa
 test("a guest left waiting turns urgent, is announced, and the screen edge turns red", async () => {
   const game = boot();
   await openShiftBoard(game, "hard");
-  game.clock.advance(34000);
+  advanceShift(game, 34000);
   const first = game.doc.querySelectorAll('[data-shift-job="inn-e01-q01"]')[0];
   assert.ok(first.className.includes("urgent") || first.className.includes("critical"), "the first guest is running out: " + first.className);
   assert.match(first.textContent, /⏳\d+秒|待たせすぎ/, "a countdown in real seconds is shown");
@@ -1204,9 +1243,9 @@ test("a reload during the evening comes back on the board, paused, at the same t
   const storage = new FakeStorage();
   const game = boot(null, "", { storage });
   await openShiftBoard(game);
-  game.clock.advance(20000);
+  advanceShift(game, 20000);
   const clock = game.$("shift-clock").textContent;
-  game.clock.advance(5000);
+  advanceShift(game, 5000);
 
   const again = boot(null, "", { storage });
   again.$("btn-start").click();
@@ -3563,6 +3602,44 @@ test("a phone gives compact Inn targets a forgiving tap area and names them afte
   assert.match(phone,
     /\[data-key="remove-recycle"\] > \.inn-caption\{top:calc\(100% \+ 5px\);bottom:auto\}/,
     "the recycle-bin label moves below its target instead of overlapping the laundry basket");
+});
+
+test("things sitting inside a room spot can still be picked up by a finger", () => {
+  // v444 widened thin room spots with an invisible ::after layer. Drawn above
+  // the spot's contents, it covered the old towel, bulb and sheet that sit
+  // inside their spots: a tap reached the spot, never the towel, so 古いタオル
+  // could not be taken out on a phone. Mouse-style clicks in tests went
+  // straight to the element and never noticed.
+  const css = read("styles.css");
+  assert.match(css, /\.inn-room-illustrated \.inn-drop-zone::after\{content:"";position:absolute;z-index:-1;/,
+    "the widened hit area sits under the spot's own contents");
+});
+
+test("picking up an object lists every place in the room as a named button", async () => {
+  // On a phone the room is about 340x230px; the stove and the microwave are a
+  // finger apart. The named buttons do what tapping the painted place does.
+  const game = boot(null, "?skip=1");
+  await enterTheInn(game);
+  // Past Kon's opening lines to the first room task.
+  for (let guard = 0; guard < 20 && !game.$("inn-tray"); guard += 1) {
+    const go = game.$("scene").querySelectorAll("button").filter(game.visible)[0];
+    if (go) go.click(); else game.tapScreen();
+    game.clock.advance(1500);
+  }
+  const item = game.$("inn-tray") && game.$("inn-tray").querySelectorAll(".inn-object")[0];
+  assert.ok(item, "the room offers something to pick up");
+  assert.equal(game.$("inn-drop-chips").hidden, true, "no place list before anything is picked up");
+  item.click();
+  const chips = game.doc.querySelectorAll(".inn-drop-chip");
+  assert.equal(game.$("inn-drop-chips").hidden, false);
+  const names = chips.map((chip) => chip.textContent);
+  for (const name of ["左のマット", "右のマット", "コンロ", "電子レンジ", "照明", "洗濯かご", "回収箱"]) {
+    assert.ok(names.includes(name), name + " is offered: " + names.join(","));
+  }
+  chips.find((chip) => chip.textContent === "左のマット").click();
+  game.clock.advance(300);
+  assert.match(game.$("inn-status").textContent, /1 \/ 4/, "the cushion went where the button said");
+  assert.deepEqual(game.errors, []);
 });
 
 /* A test build must not thank a tester for a report it threw away.
