@@ -7,7 +7,7 @@
  * Bump CACHE_VERSION whenever any shell file changes, or returning players
  * will keep the old build.
  */
-var CACHE_VERSION = "lantern-alley-v450";// Fix: the kotatsu's rear cushions sit behind the table again, as they did before v401.
+var CACHE_VERSION = "lantern-alley-v451";// Episode 1 is played on the shift board.
 
 // audio-index.js assigns to `self`, so the worker and the page share one list
 // of clip paths. Importing it here means new lines are cached automatically
@@ -28,6 +28,7 @@ var SHELL = [
   "./n2-home-inn-stage.js",
   "./n2-inn-episodes.js",
   "./guest-satisfaction.js",
+  "./inn-shift-board.js",
   "./n2-market-episodes.js",
   "./n2-teahouse-episodes.js",
   "./n2-station-episodes.js",
@@ -172,11 +173,11 @@ var SHELL = [
   "./manifest.webmanifest",
   "./assets/branding/lantern-mark-v2.png",
   "./assets/social/lantern-alley-share-v2.jpg",
-  "./icons/icon-192.png?v=450",
-  "./icons/icon-512.png?v=450",
-  "./icons/icon-192-maskable.png?v=450",
-  "./icons/icon-512-maskable.png?v=450",
-  "./icons/apple-touch-icon.png?v=450",
+  "./icons/icon-192.png?v=451",
+  "./icons/icon-512.png?v=451",
+  "./icons/icon-192-maskable.png?v=451",
+  "./icons/icon-512-maskable.png?v=451",
+  "./icons/apple-touch-icon.png?v=451",
   "./assets/kon/kon-idle.webp",
   "./assets/kon/kon-wave-left.webp",
   "./assets/kon/kon-wave-right.webp",

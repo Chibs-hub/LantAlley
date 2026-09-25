@@ -389,6 +389,7 @@
         pendingFixDismissed = {};
         (v3.fixDismissed || []).forEach(function(id){ pendingFixDismissed[id] = true; });
         pendingFixNudgedOn = v3.fixNudgedOn || null;
+        pendingShiftBest = v3.shiftBest || {};
         pendingDaily = {
           dailyPractice: v3.dailyPractice || null,
           streak: v3.streak || 0,
@@ -519,6 +520,7 @@
         // which is why neither touches reviewProgress.
         fixDismissed: Object.keys(state.fixDismissed || {}),
         fixNudgedOn: state.fixNudgedOn || null,
+        shiftBest: state.shiftBest || {},
         dailyPractice: state.dailyPractice || null,
         streak: state.streak || 0,
         freezes: state.freezes || 0,
@@ -845,6 +847,7 @@
   var pendingReviewProgress = {};
   var pendingFixDismissed = {};
   var pendingFixNudgedOn = null;
+  var pendingShiftBest = {};
   var pendingDaily = {dailyPractice:null, streak:0, freezes:0, lastActiveDate:null};
   var migratedFromV2 = false;
   var pendingItemStates = {};
@@ -910,6 +913,7 @@
   state.reviewProgress = pendingReviewProgress;
   state.fixDismissed = pendingFixDismissed;
   state.fixNudgedOn = pendingFixNudgedOn;
+  state.shiftBest = pendingShiftBest || {};
 
   /* `?unlockall=1` fills the cupboard so placement can be tested. See
    * unlockEverythingForTesting. Console callers get the same thing by name.
@@ -1972,6 +1976,7 @@
 
 
   function showMap(){
+    clearShiftChrome();
     screenCharacter.hidden = true;
     screenTitle.style.display = "none";
     screenGame.style.display = "none";
@@ -3606,7 +3611,10 @@
       taughtAll: !!previewState.taughtAll,
       wordsTaught: !!previewState.wordsTaught,
       inRepair: !!previewState.repair,
-      repairQueue: previewState.repair ? previewState.repair.queue.slice() : []
+      repairQueue: previewState.repair ? previewState.repair.queue.slice() : [],
+      // The evening itself: clock, patience and who has been served.
+      shift: previewState.shift ? LanternShiftBoard.snapshot(previewState.shift) : null,
+      shiftResultShown: !!previewState.shiftResultShown
     };
     saveProgress();
   }
@@ -3638,8 +3646,16 @@
       teaching: savedEpisode.teaching || null,
       taughtAll: !!savedEpisode.taughtAll,
       wordsTaught: !!savedEpisode.wordsTaught,
-      repair: null
+      repair: null,
+      satisfaction: playing && playing.shift && typeof GuestSatisfaction !== "undefined" ? GuestSatisfaction.create(list.length) : null,
+      shiftMode: !!(playing && playing.shift && typeof LanternShiftBoard !== "undefined"),
+      shift:null, shiftView:"board",
+      shiftResultShown: !!savedEpisode.shiftResultShown
     };
+    if(previewState.shiftMode){
+      previewState.shift = LanternShiftBoard.restore(playing.shift, savedEpisode.shift);
+      preloadShiftArt();
+    }
     screenTitle.style.display = "none";
     screenMap.style.display = "none";
     screenGame.style.display = "block";
@@ -3649,6 +3665,14 @@
       list.forEach(function(entry){ byId[entry.question.id] = entry.question; });
       previewState.repair = {queue: (savedEpisode.repairQueue || []).slice(), byId: byId, timer:null, tick:null};
       renderRepairCard();
+      return true;
+    }
+    // A reloaded evening comes back on the board, paused, so the guests do
+    // not start losing patience before the learner has found their place.
+    if(shiftOn()){
+      if(previewState.shiftResultShown){ renderShiftResults(); return true; }
+      renderShiftBoard();
+      pauseShift();
       return true;
     }
     renderPreviewQuestion();
@@ -3675,8 +3699,13 @@
     if(!list.length) return;
     setInnFocusCues(false);
     snapshotMastery(state.currentKey);
+    var playingNow = currentEpisode();
     previewState = {index:0, list:list, answered:false, missed:[], missedTargets:[], repair:null,
-      satisfaction: typeof GuestSatisfaction !== "undefined" ? GuestSatisfaction.create(list.length) : null};
+      satisfaction: typeof GuestSatisfaction !== "undefined" ? GuestSatisfaction.create(list.length) : null,
+      // Played on the shift board when the episode has one (Episode 1).
+      shiftMode: !!(playingNow && playingNow.shift && typeof LanternShiftBoard !== "undefined"),
+      shift:null, shiftView:"board"};
+    if(previewState.shiftMode) preloadShiftArt();
     // The three days' run belongs to the three days. Left on the HUD, Day 3's
     // 「🔥 5 連続」 sat over the episode's opening card before a single episode
     // question had been answered.
@@ -3819,6 +3848,476 @@
       previewState.taughtAll = true;
       rememberEpisode();
       renderPreviewQuestion();
+    });
+  }
+
+  // ---- The shift board (an episode with a `shift`: Episode 1) ----
+  //
+  // The rules live in inn-shift-board.js. Here: the difficulty choice, the
+  // board of waiting guests, the strip of who else is waiting while a question
+  // is open, the warnings, and the evening's result. A guest's question is
+  // still asked by renderPreviewQuestion - the same question, feedback,
+  // rewards and review as before - only without its own countdown: the
+  // guest's patience is the clock now.
+  var shiftTimer = null;
+  var shiftGuestArt = {};
+  var shiftAudio = null;
+
+  function shiftOn(){
+    return !!(previewState && previewState.shiftMode && previewState.shift && !previewState.masteryRound);
+  }
+  function shiftConfig(){
+    var episode = currentEpisode();
+    return episode && episode.shift ? episode.shift : null;
+  }
+  function shiftEntryIndex(id){
+    for(var i = 0; i < previewState.list.length; i++) if(previewState.list[i].question.id === id) return i;
+    return -1;
+  }
+  function shiftCurrentId(){
+    if(!shiftOn() || previewState.shiftView !== "task") return null;
+    var entry = previewState.list[previewState.index];
+    return entry ? entry.question.id : null;
+  }
+  function shiftWho(job){
+    var cast = (shiftConfig() || {}).cast || {};
+    return cast[job.who] || {name:job.who, room:""};
+  }
+  function shiftSpec(id){
+    var jobs = (shiftConfig() || {}).jobs || [];
+    for(var i = 0; i < jobs.length; i++) if(jobs[i].id === id) return jobs[i];
+    return {};
+  }
+
+  // Portraits are not painted yet. Each is looked for once; until it loads the
+  // tag shows the family name in a circle instead.
+  function preloadShiftArt(){
+    var cast = (shiftConfig() || {}).cast || {};
+    if(typeof Image === "undefined") return;
+    Object.keys(cast).forEach(function(who){
+      if(!cast[who].art) return;
+      ["normal", "worried", "happy"].forEach(function(mood){
+        var key = cast[who].art + "-" + mood;
+        if(shiftGuestArt[key] !== undefined) return;
+        shiftGuestArt[key] = false;
+        var img = new Image();
+        img.onload = function(){ shiftGuestArt[key] = true; };
+        img.src = "assets/inn/guests/" + key + ".webp";
+      });
+    });
+  }
+  function shiftFace(job, mood){
+    var who = shiftWho(job);
+    if(job.lane !== "guest") return '<span class="shift-face shift-face-kon" aria-hidden="true"></span>';
+    var key = (who.art || "") + "-" + (mood || "normal");
+    return '<span class="shift-face" aria-hidden="true">' + (shiftGuestArt[key]
+      ? '<img src="assets/inn/guests/' + key + '.webp" alt="">' : (who.mark || who.name.slice(0, 2))) + '</span>';
+  }
+  function shiftMood(job){
+    if(job.lane !== "guest") return {text:"", cls:""};
+    var r = LanternShiftBoard.ratio(job);
+    if(job.left <= 0) return {text:"待たせすぎ", cls:"late"};
+    return r > .5 ? {text:"待っています", cls:"calm"} : r > .2 ? {text:"そわそわ", cls:"restless"} : {text:"もう待てない", cls:"angry"};
+  }
+  function shiftCountdown(job){
+    if(job.lane === "guest" && job.left <= 0) return "待たせすぎ";
+    var secs = LanternShiftBoard.secsLeft(previewState.shift, job, previewState.shiftView, shiftCurrentId());
+    return secs === null ? "" : "⏳" + secs + "秒";
+  }
+
+  function shiftClockMarkup(){
+    var shift = previewState.shift;
+    var lit = Math.min(6, Math.floor(LanternShiftBoard.shownMinute(shift) / 20) + 1), lamps = "";
+    for(var i = 0; i < 6; i++) lamps += '<span' + (i < lit ? ' class="lit"' : '') + '></span>';
+    var served = shift.jobs.filter(function(job){ return job.done; }).length;
+    return '<div class="shift-hud">'
+      + '<span class="shift-clock" id="shift-clock">' + LanternShiftBoard.clockLabel(shift) + '</span>'
+      + '<span class="shift-lamps" id="shift-lamps" aria-hidden="true">' + lamps + '</span>'
+      + '<span class="shift-served">済んだ仕事 <b>' + served + '</b> / ' + shift.jobs.length + '</span>'
+      + '<span class="shift-level">' + LanternShiftBoard.level(shift.level).jp + '</span>'
+      + '</div>';
+  }
+
+  function shiftTagMarkup(job){
+    var who = shiftWho(job), spec = shiftSpec(job.id), mood = shiftMood(job), u = LanternShiftBoard.urgency(job);
+    var pct = Math.round(LanternShiftBoard.ratio(job) * 100);
+    if(job.lane !== "guest"){
+      return '<button type="button" class="shift-memo" data-shift-job="' + job.id + '">'
+        + '<span class="shift-memo-from">コンより</span><span class="shift-memo-text">' + spec.board + '</span></button>';
+    }
+    return '<button type="button" class="shift-tag ' + u + (job.left <= 0 ? ' late' : '') + '" data-shift-job="' + job.id + '">'
+      + '<span class="shift-count">' + shiftCountdown(job) + '</span>'
+      + '<span class="shift-room">' + who.room + '</span>'
+      + '<span class="shift-who">' + shiftFace(job, u ? "worried" : "normal") + '<span>' + who.name + '</span></span>'
+      + (job.phone ? '<span class="shift-slip shift-call">📞 内線が鳴っています</span>'
+        : '<span class="shift-slip">「' + spec.board + '」</span>')
+      + '<span class="shift-bar" aria-label="待てる時間"><i style="width:' + pct + '%"></i></span>'
+      + '<span class="shift-mood ' + mood.cls + '">' + mood.text + '</span></button>';
+  }
+
+  function shiftBoardKey(){
+    return LanternShiftBoard.waiting(previewState.shift).map(function(job){ return job.id; }).join(",")
+      + "|" + LanternShiftBoard.allDone(previewState.shift);
+  }
+
+  function renderShiftLevel(){
+    setInnScene("lobby");
+    stopShiftTimer();
+    $("stage-phase-row").style.display = "flex";
+    $("btn-skip-question").hidden = true;
+    $("btn-skip-stage").hidden = true;
+    $("stage-phase-badge").textContent = "難易度";
+    $("encounter-status").style.display = "none";
+    $("feedback-row").classList.remove("show");
+    $("next-row").style.display = "none";
+    $("romaji-line").textContent = "";
+    $("meaning-line").textContent = "";
+    var line = "コン：「今夜のお客様は、どのくらい待ってくれるでしょうか。」";
+    if(dialogueFlow) dialogueFlow.start(line, false); else $("jp-line").textContent = line;
+    $("scene").innerHTML = '<div class="episode-open"><div class="episode-open-card shift-level-card">'
+      + '<p class="episode-open-kicker">難易度を選んでください</p>'
+      + '<p class="shift-level-en" lang="en">Choose difficulty</p>'
+      + LanternShiftBoard.LEVEL_ORDER.map(function(key){
+          var L = LanternShiftBoard.LEVELS[key];
+          return '<button type="button" class="shift-level-option shift-level-' + key + '" data-shift-level="' + key + '">'
+            + '<b>' + L.jp + '</b><span lang="en">' + L.en + '</span><small>' + L.note + '</small></button>';
+        }).join("")
+      + '<p class="shift-tea-note">待たせすぎたお客様が出たら、コンがみんなにお茶を出します。そのあとは、お客様が少し長く待ってくれます。</p>'
+      + '</div></div>';
+    $("scene").querySelectorAll("[data-shift-level]").forEach(function(button){
+      button.addEventListener("click", function(event){
+        event.stopImmediatePropagation();
+        startShift(button.getAttribute("data-shift-level"));
+      });
+    });
+  }
+
+  function startShift(levelKey){
+    previewState.shift = LanternShiftBoard.create(shiftConfig(), levelKey);
+    previewState.shiftView = "board";
+    previewState.shiftPaused = false;
+    rememberEpisode();
+    renderShiftBoard();
+  }
+
+  function renderShiftBoard(){
+    var shift = previewState.shift;
+    previewState.shiftView = "board";
+    previewState.shiftKey = shiftBoardKey();
+    clearPreviewTimer();
+    setInnScene("lobby");
+    setInnFocusCues(false);
+    setAudioReplayControl(false);
+    renderHud();
+    $("stage-phase-row").style.display = "flex";
+    $("btn-skip-question").hidden = true;
+    $("btn-skip-stage").hidden = true;
+    $("stage-phase-badge").textContent = "今夜の仕事";
+    $("encounter-status").style.display = "none";
+    $("hint-btn").style.display = "none";
+    $("hint-box").classList.remove("show");
+    $("feedback-row").classList.remove("show");
+    $("feedback-text").textContent = "";
+    $("next-row").style.display = "none";
+    $("narration").textContent = "";
+    $("romaji-line").textContent = "";
+    $("meaning-line").textContent = "";
+    $("meaning-line").classList.remove("show");
+    var episode = currentEpisode();
+    $("scene-label").textContent = episode ? "月見宿 - " + episode.title : "月見宿";
+
+    var waiting = LanternShiftBoard.waiting(shift);
+    var guests = waiting.filter(function(job){ return job.lane === "guest"; });
+    var desk = waiting.filter(function(job){ return job.lane !== "guest"; });
+    var urgent = guests.filter(function(job){ return LanternShiftBoard.urgency(job); })[0];
+    var line = urgent ? "コン：「" + shiftWho(urgent).room + "・" + shiftWho(urgent).name + "がお待ちです！」"
+      : guests.length ? "コン：「お客様の札を押して、仕事を始めてください。」"
+      : desk.length ? "コン：「お客様がいない間に、帳場の仕事をお願いします。」"
+      : "コン：「次のお客様を待ちましょう。」";
+    if(dialogueFlow) dialogueFlow.start(line, false); else $("jp-line").textContent = line;
+
+    // Guests first in the markup, the clock bar after it: the bar is drawn on
+    // top by CSS order, and the first thing to reach in reading order is the
+    // work, not the pause button.
+    $("scene").innerHTML = '<div class="shift-board">'
+      + '<section class="shift-section"><h3 class="shift-heading">お客様 <small>待っています</small></h3>'
+      + (guests.length ? '<div class="shift-tags">' + guests.map(shiftTagMarkup).join("") + '</div>'
+        : '<p class="shift-empty">待っているお客様はいません。</p>') + '</section>'
+      + '<section class="shift-section"><h3 class="shift-heading">帳場の仕事 <small>時間制限なし</small></h3>'
+      + (desk.length ? '<div class="shift-memos">' + desk.map(shiftTagMarkup).join("") + '</div>'
+        : '<p class="shift-empty">帳場の仕事はありません。</p>') + '</section>'
+      + shiftClockMarkup()
+      + '</div>';
+    wireShiftJobs($("scene"));
+    showShiftPause(true);
+    startShiftTimer();
+  }
+
+  function wireShiftJobs(root){
+    root.querySelectorAll("[data-shift-job]").forEach(function(button){
+      button.addEventListener("click", function(event){
+        event.stopImmediatePropagation();
+        openShiftJob(button.getAttribute("data-shift-job"));
+      });
+    });
+  }
+  // In the stage row, outside the scene: the work comes first in the board,
+  // and a pause control among the guests' tags is one mis-tap away.
+  function showShiftPause(show){ $("btn-shift-pause").hidden = !show; }
+  $("btn-shift-pause").addEventListener("click", function(event){
+    event.stopImmediatePropagation();
+    pauseShift();
+  });
+
+  function openShiftJob(id){
+    var index = shiftEntryIndex(id);
+    if(index < 0) return;
+    resumeShift();
+    previewState.index = index;
+    previewState.shiftView = "task";
+    rememberEpisode();
+    renderPreviewQuestion();
+  }
+
+  // Who else is waiting, shown while a question is open, so the learner can
+  // see whose patience is running out without leaving the job.
+  function shiftStripMarkup(){
+    var current = shiftCurrentId();
+    var others = LanternShiftBoard.waiting(previewState.shift).filter(function(job){ return job.id !== current; });
+    if(!others.length) return '<p class="shift-strip-empty">ほかに待っている仕事はありません。</p>';
+    return '<span class="shift-strip-label">待っている</span>' + others.map(function(job){
+      var who = shiftWho(job), mood = shiftMood(job), u = LanternShiftBoard.urgency(job);
+      if(job.lane !== "guest") return '<button type="button" class="shift-mini shift-mini-desk" data-shift-job="' + job.id + '"><b>帳場</b><span>コン</span></button>';
+      return '<button type="button" class="shift-mini ' + u + (job.left <= 0 ? ' late' : '') + '" data-shift-job="' + job.id + '">'
+        + '<b>' + who.room + '</b><span class="shift-mood ' + mood.cls + '">' + mood.text + '</span>'
+        + '<span class="shift-count">' + shiftCountdown(job) + '</span>'
+        + '<span class="shift-bar"><i style="width:' + Math.round(LanternShiftBoard.ratio(job) * 100) + '%"></i></span></button>';
+    }).join("");
+  }
+  function shiftMineMarkup(job){
+    if(job.lane !== "guest") return '<div class="shift-mine shift-mine-desk" id="shift-mine"><b>コンより</b><span>帳場の仕事 - 時間制限なし</span></div>';
+    var who = shiftWho(job), mood = shiftMood(job), u = LanternShiftBoard.urgency(job);
+    return '<div class="shift-mine ' + u + (job.left <= 0 ? ' late' : '') + '" id="shift-mine">'
+      + shiftFace(job, u ? "worried" : "normal")
+      + '<b>' + who.room + '・' + who.name + '</b>'
+      + '<span class="shift-bar"><i style="width:' + Math.round(LanternShiftBoard.ratio(job) * 100) + '%"></i></span>'
+      + '<span class="shift-mood ' + mood.cls + '">' + mood.text + '</span>'
+      + '<span class="shift-count">' + shiftCountdown(job) + '</span></div>';
+  }
+  function shiftTaskMarkup(question){
+    var job = LanternShiftBoard.byId(previewState.shift, question.id);
+    return '<div class="shift-strip" id="shift-strip">' + shiftStripMarkup() + '</div>'
+      + shiftMineMarkup(job)
+      + '<button type="button" class="shift-back" id="btn-shift-back">← ボードに戻る</button>';
+  }
+  function wireShiftTask(){
+    wireShiftJobs($("shift-strip"));
+    showShiftPause(true);
+    var back = $("btn-shift-back");
+    if(back) back.addEventListener("click", function(event){
+      event.stopImmediatePropagation();
+      if(previewState.answered) return;
+      clearPreviewTimer();
+      renderShiftBoard();
+    });
+    startShiftTimer();
+  }
+
+  function paintShiftJob(el, job){
+    if(!el) return;
+    var mood = shiftMood(job), u = LanternShiftBoard.urgency(job);
+    var bar = el.querySelector("i");
+    if(bar) bar.style.width = Math.round(LanternShiftBoard.ratio(job) * 100) + "%";
+    var moodEl = el.querySelector(".shift-mood");
+    if(moodEl){ moodEl.textContent = mood.text; moodEl.className = "shift-mood " + mood.cls; }
+    var count = el.querySelector(".shift-count");
+    if(count) count.textContent = shiftCountdown(job);
+    el.classList.toggle("urgent", u === "urgent");
+    el.classList.toggle("critical", u === "critical");
+    el.classList.toggle("late", job.left <= 0);
+  }
+
+  function startShiftTimer(){
+    if(shiftTimer) return;
+    shiftTimer = setInterval(shiftTick, 1000);
+  }
+  function stopShiftTimer(){
+    if(shiftTimer){ clearInterval(shiftTimer); shiftTimer = null; }
+    showShiftPause(false);
+    screenGame.classList.remove("shift-alarm", "shift-alarm-hi");
+  }
+
+  function shiftTick(){
+    if(!shiftOn() || previewState.shiftResultShown || screenGame.style.display === "none"){ stopShiftTimer(); return; }
+    if(previewState.shiftPaused || previewState.repair) return;
+    var shift = previewState.shift, view = previewState.shiftView, current = shiftCurrentId();
+    var events = LanternShiftBoard.tick(shift, view, current);
+    if(events.tea) shiftToast("🦊 コンがお茶を出しました。皆さん少し長く待てます。", "tea");
+    events.warnings.forEach(function(warning){
+      var job = LanternShiftBoard.byId(shift, warning.id), who = shiftWho(job), hot = warning.level === "critical";
+      shiftToast((hot ? "⚠️ " : "🔔 ") + who.room + " " + who.name + (hot ? " もう限界です！" : " お待ちです"), hot ? "hot" : "", "g" + job.id);
+      shiftChime(hot);
+    });
+    // Anyone waiting (other than the guest being helped) near the limit turns
+    // the edge of the screen red, from the board and from inside a question.
+    var near = LanternShiftBoard.waiting(shift).filter(function(job){ return job.id !== current && LanternShiftBoard.urgency(job); });
+    screenGame.classList.toggle("shift-alarm", near.length > 0);
+    screenGame.classList.toggle("shift-alarm-hi", near.some(function(job){ return LanternShiftBoard.urgency(job) === "critical"; }));
+
+    var clock = $("shift-clock");
+    if(clock) clock.textContent = LanternShiftBoard.clockLabel(shift);
+    var lamps = $("shift-lamps");
+    if(lamps){
+      var lit = Math.min(6, Math.floor(LanternShiftBoard.shownMinute(shift) / 20) + 1);
+      lamps.querySelectorAll("span").forEach(function(lamp, i){ lamp.classList.toggle("lit", i < lit); });
+    }
+    if(view === "board"){
+      // Redrawn only when who is waiting changes. Rebuilding it every second
+      // replaced the tag under a finger mid-tap, and the tap was lost.
+      if(shiftBoardKey() !== previewState.shiftKey){ renderShiftBoard(); }
+      else shift.jobs.forEach(function(job){
+        paintShiftJob($("scene").querySelector('[data-shift-job="' + job.id + '"]'), job);
+      });
+    }else{
+      var strip = $("shift-strip");
+      if(strip){
+        var key = LanternShiftBoard.waiting(shift).map(function(job){ return job.id; }).join(",");
+        if(key !== previewState.shiftStripKey){
+          previewState.shiftStripKey = key;
+          strip.innerHTML = shiftStripMarkup();
+          wireShiftJobs(strip);
+        }else shift.jobs.forEach(function(job){
+          paintShiftJob(strip.querySelector('[data-shift-job="' + job.id + '"]'), job);
+        });
+      }
+      var mine = current && LanternShiftBoard.byId(shift, current);
+      if(mine && mine.lane === "guest") paintShiftJob($("shift-mine"), mine);
+    }
+    if(shift.sec % 5 === 0) rememberEpisode();
+  }
+
+  // Messages stack in one column above the answers, at most two, one per guest.
+  function shiftToast(text, kind, key){
+    var box = $("shift-toasts");
+    if(!box){
+      box = document.createElement("div");
+      box.id = "shift-toasts";
+      box.className = "shift-toasts";
+      box.setAttribute("aria-live", "polite");
+      document.body.appendChild(box);
+    }
+    if(key) box.querySelectorAll('[data-key="' + key + '"]').forEach(function(old){ old.remove(); });
+    while(box.children.length >= 2) box.children[0].remove();
+    var toast = document.createElement("div");
+    toast.className = "shift-toast" + (kind ? " " + kind : "");
+    if(key) toast.setAttribute("data-key", key);
+    toast.textContent = text;
+    box.appendChild(toast);
+    setTimeout(function(){ toast.remove(); }, kind === "tea" ? 4200 : 3200);
+    try{ if(navigator.vibrate) navigator.vibrate(kind === "hot" ? [120, 80, 120] : 120); }catch(e){}
+  }
+  // A warning chime made in the page (no sound file), with the voice setting.
+  function shiftChime(hot){
+    if(!state.voiceOn) return;
+    try{
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      if(!Ctx) return;
+      if(!shiftAudio) shiftAudio = new Ctx();
+      if(shiftAudio.state === "suspended") shiftAudio.resume();
+      var t0 = shiftAudio.currentTime;
+      (hot ? [880, 660, 880] : [1320, 990]).forEach(function(f, i){
+        var o = shiftAudio.createOscillator(), g = shiftAudio.createGain(), t = t0 + i * .16;
+        o.type = "sine"; o.frequency.value = f;
+        g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.18, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + .5);
+        o.connect(g); g.connect(shiftAudio.destination); o.start(t); o.stop(t + .55);
+      });
+    }catch(e){}
+  }
+
+  // The pause card, the messages and the red edge belong to the evening only.
+  function clearShiftChrome(){
+    ["shift-paused", "shift-toasts"].forEach(function(id){ var el = $(id); if(el) el.remove(); });
+    showShiftPause(false);
+    screenGame.classList.remove("shift-alarm", "shift-alarm-hi");
+  }
+  function pauseShift(){
+    if(!shiftOn() || previewState.shiftPaused) return;
+    previewState.shiftPaused = true;
+    rememberEpisode();
+    var overlay = document.createElement("div");
+    overlay.className = "shift-paused";
+    overlay.id = "shift-paused";
+    overlay.innerHTML = '<div class="shift-paused-card"><p>休憩中</p><button type="button" class="btn btn-primary" id="btn-shift-resume">仕事に戻る</button></div>';
+    document.body.appendChild(overlay);
+    $("btn-shift-resume").addEventListener("click", function(event){
+      event.stopImmediatePropagation();
+      resumeShift();
+    });
+  }
+  function resumeShift(){
+    if(previewState) previewState.shiftPaused = false;
+    var overlay = $("shift-paused");
+    if(overlay) overlay.remove();
+  }
+  // Leaving the app - a call, a notification - pauses the evening.
+  document.addEventListener("visibilitychange", function(){
+    if(document.hidden && shiftOn() && !previewState.shiftResultShown) pauseShift();
+  });
+
+  function renderShiftResults(){
+    var shift = previewState.shift, config = shiftConfig();
+    stopShiftTimer();
+    resumeShift();
+    previewState.shiftResultShown = true;
+    rememberEpisode();
+    var result = LanternShiftBoard.result(shift);
+    var episode = currentEpisode();
+    if(!state.shiftBest) state.shiftBest = {};
+    var best = state.shiftBest[episode.id] || (state.shiftBest[episode.id] = {});
+    var before = best[shift.level];
+    var record = before === undefined || result.score > before;
+    if(record) best[shift.level] = result.score;
+    saveProgress();
+
+    setInnScene("courtyard");
+    setInnFocusCues(false);
+    setAudioReplayControl(false);
+    $("btn-skip-question").hidden = true;
+    $("stage-phase-badge").textContent = "今夜の結果";
+    $("encounter-status").style.display = "none";
+    $("feedback-row").classList.remove("show");
+    $("next-row").style.display = "none";
+    var line = "コン：「八時です。中庭で花火が上がりました。」";
+    if(dialogueFlow) dialogueFlow.start(line, false); else $("jp-line").textContent = line;
+
+    var voices = (config.ending || []).map(function(end){
+      var job = LanternShiftBoard.byId(shift, end.job);
+      var said = job && job.firstTry ? end.right : end.wrong;
+      return said ? '<p class="shift-voice"><small>' + said[0] + '</small>「' + said[1] + '」</p>' : "";
+    }).join("");
+    var colors = ["#ffd26a", "#ff7d6b", "#8fd3ff", "#c9a2ff", "#9ff0b0"], sky = "";
+    for(var b = 0; b < 6; b++){
+      sky += '<span class="shift-burst" style="left:' + (8 + (b * 37) % 80) + '%;top:' + (8 + (b * 23) % 50) + '%;--burst:' + colors[b % colors.length] + ';animation-delay:' + (b * .45).toFixed(2) + 's"></span>';
+    }
+    var served = shift.jobs.length;
+    $("scene").innerHTML = '<div class="episode-open"><div class="episode-open-card shift-result">'
+      + '<div class="shift-sky" aria-hidden="true">' + sky + '</div>'
+      + '<p class="episode-open-kicker">今夜の結果</p>'
+      + voices
+      + '<div class="shift-rank"><span class="shift-seal">' + result.rank.mark + '</span><div>'
+      + '<b>' + result.rank.label + '　' + result.score + '点</b>'
+      + '<small>待たせすぎ ' + result.late + '人（−' + 20 * result.late + '）・間違い ' + result.missed + '（−' + 10 * result.missed + '）</small>'
+      + '<small>難易度: ' + result.level.jp + '　' + (record ? (before === undefined ? 'はじめての記録' : '🎉 新記録！（前回 ' + before + '点）') : 'ベスト ' + before + '点') + '</small>'
+      + '</div></div>'
+      + '<div class="shift-tally"><div><b>' + served + '/' + served + '</b><span>済んだ仕事</span></div>'
+      + '<div><b>' + result.late + '</b><span>待たせすぎ</span></div><div><b>' + result.missed + '</b><span>間違い</span></div></div>'
+      + (previewState.missed.length ? '<p class="shift-next-note">間違えた仕事を、このあともう一度確認します。</p>' : '')
+      + '<button type="button" class="btn btn-primary" id="btn-shift-done">つづける →</button>'
+      + '</div></div>';
+    $("btn-shift-done").addEventListener("click", function(event){
+      event.stopImmediatePropagation();
+      if(previewState.missed.length){ startRepairLoop(); return; }
+      endEpisodePreview();
     });
   }
 
@@ -4105,6 +4604,13 @@
   function renderPreviewQuestion(){
     if(teachBlockIfNeeded()) return;
     if(resumeEpisodeWordsIfNeeded()) return;
+    // On the shift board the next thing is the difficulty choice, then the
+    // board; a question opens only when its guest is tapped.
+    if(previewState.shiftMode && !previewState.masteryRound){
+      if(!previewState.shift){ renderShiftLevel(); return; }
+      if(previewState.shiftView !== "task"){ renderShiftBoard(); return; }
+    }
+    var inShift = shiftOn();
     var entry = previewState.list[previewState.index];
     var question = entry.question;
     // The episode reuses the Challenge dialogue DOM. Reset its controls for
@@ -4125,6 +4631,11 @@
     // An episode is one evening, not three days, so the badge names the part of
     // the shift the learner is in.
     var dayLabel = (entry.label || "宵の一時間") + "・" + (entry.question.seconds || 8) + "秒";
+    if(inShift){
+      var shiftJob = LanternShiftBoard.byId(previewState.shift, question.id);
+      dayLabel = shiftJob && shiftJob.lane === "guest"
+        ? shiftWho(shiftJob).room + "・" + shiftWho(shiftJob).name : "帳場の仕事";
+    }
 
     $("stage-phase-row").style.display = "flex";
     $("btn-skip-question").hidden = !testingSkipEnabled;
@@ -4149,6 +4660,10 @@
     $("encounter-status").style.display = "block";
     $("encounter-progress").textContent = String(previewState.index + 1);
     $("encounter-total").textContent = String(previewState.list.length);
+    // The shift is not asked in order, so its counter is the jobs finished.
+    if(inShift){
+      $("encounter-status").style.display = "none";
+    }
     /* Not the source note. 「月見宿・第一話「宵の一時間」」 is a citation, and
      * putting it here printed it inside Kon's speech slot, directly above her
      * name tab, as though she were saying it - while the episode-open card
@@ -4176,7 +4691,10 @@
     // is what makes them harder than the days.
     if(question.prompt.audio){
       speak(question.prompt.jp);
-      if(hasClip(question.prompt.jp)){
+      // The guest's patience is the shift's clock; a question has none.
+      if(inShift){
+        // nothing to arm
+      }else if(hasClip(question.prompt.jp)){
         // There is a recording: count from when it stops, so the learner is
         // timed on understanding rather than on listening.
         afterSpeech(function(){ startQuestionClock(question.seconds || 8, token); }, 1200);
@@ -4218,9 +4736,10 @@
     renderStreakBadge(previewState.satisfaction);
     var scene = $("scene");
     scene.innerHTML = '<div class="inn-workspace">'
-      + innShiftProgressMarkup(currentEpisode(), previewState.index, previewState.list.length)
+      + (inShift ? shiftTaskMarkup(question)
+        : innShiftProgressMarkup(currentEpisode(), previewState.index, previewState.list.length))
       + '<p class="inn-instruction" id="inn-instruction"></p>'
-      + '<div class="repair-timer" id="preview-timer"><span class="repair-timer-fill" id="preview-timer-fill"></span><b id="preview-timer-text">…</b></div>'
+      + (inShift ? '' : '<div class="repair-timer" id="preview-timer"><span class="repair-timer-fill" id="preview-timer-fill"></span><b id="preview-timer-text">…</b></div>')
       + docMarkup
       + '<div class="question-controls" id="preview-controls"></div>'
       + '<div class="inn-status" id="inn-status"></div></div>';
@@ -4229,7 +4748,10 @@
     $("inn-instruction").innerHTML = '<span>' + spec.howToInteract + '</span>';
     // Only now that the question is on screen. Starting the clock before the
     // scene was rebuilt counted down against a timer the learner could not see.
-    if(!question.prompt.audio){
+    if(inShift){
+      previewState.shiftStripKey = LanternShiftBoard.waiting(previewState.shift).map(function(job){ return job.id; }).join(",");
+      wireShiftTask();
+    }else if(!question.prompt.audio){
       startQuestionClock(question.seconds || 8, token);
     }else if(pendingClock && pendingClock.token === token){
       var armed = pendingClock;
@@ -4263,13 +4785,29 @@
       // to stop looking like choices. Left live, a learner who answered wrong
       // taps the one they now believe is right and nothing at all happens.
       settlePreviewChoices(value, question.answer.correctIndex);
+      // The guest is served either way: a wrong answer shows the right reply,
+      // and the word comes back in the correction round after the evening.
+      var served = inShift ? LanternShiftBoard.complete(previewState.shift, question.id, correct) : null;
+      if(inShift){
+        var mineNow = $("shift-mine");
+        if(mineNow){
+          mineNow.classList.add(correct ? "served" : "served-miss");
+          // The guest's face answers too: happy when served right, worried
+          // when not - once the portraits are painted.
+          var faceNow = mineNow.querySelector(".shift-face");
+          var artKey = (shiftWho(LanternShiftBoard.byId(previewState.shift, question.id)).art || "") + "-" + (correct ? "happy" : "worried");
+          if(faceNow && shiftGuestArt[artKey]) faceNow.innerHTML = '<img src="assets/inn/guests/' + artKey + '.webp" alt="">';
+        }
+        rememberEpisode();
+      }
       if(!correct && previewState.missed.indexOf(question.id) < 0){
         previewState.missed.push(question.id);
         rememberEpisode();
       }
       if(!correct) rememberMissedTarget(question);
       if(previewState.satisfaction && typeof GuestSatisfaction !== "undefined"){
-        var fast = previewState.timer && previewState.timer.remaining > previewState.timer.total * 0.5;
+        var fast = served ? served.fast
+          : previewState.timer && previewState.timer.remaining > previewState.timer.total * 0.5;
         var prevStreak = previewState.satisfaction.streak;
         GuestSatisfaction.record(previewState.satisfaction, correct, fast);
         updateStreakBadge(previewState.satisfaction, prevStreak);
@@ -4302,6 +4840,8 @@
 
   function advancePreviewLater(isCorrect){
     $("btn-next").textContent = previewState.index >= previewState.list.length - 1 ? "路地へ戻る →" : "次へ →";
+    var shiftNext = shiftOn() && !previewState.shiftResultShown;
+    if(shiftNext) $("btn-next").textContent = LanternShiftBoard.allDone(previewState.shift) ? "今夜の結果へ →" : "ボードに戻る →";
     $("next-row").style.display = "block";
 
     // A correct answer moves on by itself: the first tap finishes Kon's line,
@@ -4309,7 +4849,7 @@
     // explanation of what they chose is the only reason the question was worth
     // getting wrong, and an auto-advance takes it away while they are reading.
     if(isCorrect === false){
-      $("btn-next").textContent = "読みました。次へ →";
+      $("btn-next").textContent = shiftNext ? "読みました。" + $("btn-next").textContent : "読みました。次へ →";
       return;
     }
     var at = previewState.index;
@@ -4320,6 +4860,13 @@
   }
 
   function advanceEpisodePreview(){
+    if(shiftOn() && !previewState.shiftResultShown){
+      if(LanternShiftBoard.allDone(previewState.shift)){ renderShiftResults(); return; }
+      previewState.shiftView = "board";
+      rememberEpisode();
+      renderShiftBoard();
+      return;
+    }
     if(previewState.masteryRound){
       if(previewState.index >= previewState.list.length - 1){
         // Round over. Anything still unproven comes round again; when nothing
@@ -4377,6 +4924,12 @@
   function endEpisodePreview(){
     var finished = currentEpisode();
     var sat = previewState ? previewState.satisfaction : null;
+    // The shift board has already shown the evening's result, and harder
+    // difficulty pays more for it.
+    var shiftPay = previewState && previewState.shift ? LanternShiftBoard.level(previewState.shift.level).pay : 1;
+    var shiftShown = !!(previewState && previewState.shiftResultShown);
+    stopShiftTimer();
+    clearShiftChrome();
     if(finished){
       if(!state.episodesDone) state.episodesDone = {};
       creditGardenFor(finished);
@@ -4387,7 +4940,7 @@
     if(sat && typeof GuestSatisfaction !== "undefined"){
       var satReward = GuestSatisfaction.reward(sat.score);
       if(satReward.coins){
-        state.money = (state.money || 0) + satReward.coins;
+        state.money = (state.money || 0) + Math.round(satReward.coins * shiftPay / 10) * 10;
         saveProgress();
         renderHud();
       }
@@ -4395,7 +4948,7 @@
     previewState = null;
     resetTrainingStreak();
     forgetEpisode();
-    if(sat && typeof GuestSatisfaction !== "undefined"){
+    if(sat && typeof GuestSatisfaction !== "undefined" && !shiftShown){
       showSatisfactionSummary(sat, finished, function(){
         continueAfterEpisode(finished);
       });

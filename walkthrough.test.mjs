@@ -44,6 +44,20 @@ function passWordBoard(game, settle) {
   }
 }
 
+/* Episode 1 is played on the shift board: after the word board comes the
+ * difficulty choice, then the board of waiting guests, and a question opens
+ * when its guest (or Kon's memo) is tapped. Waits for that job to arrive. */
+function openShiftQuestion(game, id = "inn-e01-q01", level = "normal") {
+  const choice = game.doc.querySelectorAll(`[data-shift-level="${level}"]`)[0];
+  if (choice) { choice.click(); game.clock.advance(300); }
+  for (let guard = 0; guard < 120; guard += 1) {
+    const tag = game.doc.querySelectorAll(`[data-shift-job="${id}"]`)[0];
+    if (tag) { tag.click(); game.clock.advance(300); return; }
+    game.clock.advance(1000);
+  }
+  assert.fail(id + " never arrived on the board");
+}
+
 function boot(seed, search, options) {
   const html = read("index.html");
   const body = html.slice(html.indexOf("<body"), html.lastIndexOf("</body>"));
@@ -1075,15 +1089,137 @@ test("a full run through the Inn and into the episode never shows a dead screen"
 
   assert.ok(run.questionsSeen >= 15, "the run answered a real number of questions, saw " + run.questionsSeen);
 
-  // All three days, then the episode. The episode's badges carry their clock,
-  // which is how a timed question is told apart from a practice one.
+  // All three days, then the episode. Episode 1 is played on the shift
+  // board: a difficulty choice, the board of waiting guests, and each
+  // question badged with the guest who asked it.
   const seen = [...run.badges].join(" ");
   assert.ok(seen.includes("\u4e00\u65e5\u76ee"), "day 1 was played");
   assert.ok(seen.includes("\u4e8c\u65e5\u76ee"), "day 2 was played");
   assert.ok(seen.includes("\u4e09\u65e5\u76ee"), "day 3 was played");
-  assert.ok(/\d+\u79d2/.test(seen), "the episode started and ran on the clock: " + seen);
+  assert.ok(seen.includes("今夜の仕事"), "the evening started on the shift board: " + seen);
+  assert.ok(seen.includes("三番・田中様ご夫妻"), "a guest's question was opened: " + seen);
 
   assert.deepEqual(game.errors, [], "nothing threw across the whole run");
+});
+
+/* The shift board, end to end.
+ *
+ * Episode 1 is one evening: the learner picks a difficulty, guests arrive on
+ * the board and wait with a patience that runs down, and each question opens
+ * when its guest is tapped. These drive it the way a player does. */
+async function openShiftBoard(game, level = "normal") {
+  await enterTheInn(game);
+  startEpisodeAfterTraining(game);
+  game.$("btn-episode-begin").click();
+  game.clock.advance(300);
+  game.$("btn-brief-begin").click();
+  game.clock.advance(300);
+  passWordBoard(game, 300);
+  assert.ok(game.$("scene").textContent.includes("難易度"), "the evening starts by choosing a difficulty");
+  game.doc.querySelectorAll(`[data-shift-level="${level}"]`)[0].click();
+  game.clock.advance(300);
+}
+
+test("the shift board opens on waiting guests, and a question has the guest's patience instead of a clock", async () => {
+  const game = boot();
+  await openShiftBoard(game);
+  assert.equal(game.$("stage-phase-badge").textContent, "今夜の仕事");
+  const tags = game.doc.querySelectorAll(".shift-tag");
+  assert.ok(tags.length >= 1, "the first guest is waiting at 18:00");
+  assert.match(game.$("shift-clock").textContent, /^18:0\d$/);
+  assert.equal(game.$("btn-shift-pause").hidden, false, "the evening can be paused");
+
+  tags[0].click();
+  game.clock.advance(300);
+  assert.ok(game.$("preview-controls").querySelectorAll("button").length >= 2, "the guest's question is asked");
+  assert.equal(game.$("preview-timer"), null, "no per-question countdown on the shift board");
+  assert.ok(game.$("shift-mine"), "the guest being helped shows their own patience");
+  assert.ok(game.$("shift-strip"), "who else is waiting stays in view");
+  assert.ok(game.$("btn-shift-back"), "the learner can go back to the board without answering");
+  assert.deepEqual(game.errors, []);
+});
+
+test("a guest left waiting turns urgent, is announced, and the screen edge turns red", async () => {
+  const game = boot();
+  await openShiftBoard(game, "hard");
+  game.clock.advance(34000);
+  const first = game.doc.querySelectorAll('[data-shift-job="inn-e01-q01"]')[0];
+  assert.ok(first.className.includes("urgent") || first.className.includes("critical"), "the first guest is running out: " + first.className);
+  assert.match(first.textContent, /⏳\d+秒|待たせすぎ/, "a countdown in real seconds is shown");
+  assert.ok(game.$("screen-game").className.includes("shift-alarm"), "the edge of the screen pulses red");
+  assert.ok(game.doc.querySelectorAll(".shift-toast").length >= 1, "the guest is announced");
+});
+
+test("the evening can be paused, and nothing waits while it is", async () => {
+  const game = boot();
+  await openShiftBoard(game);
+  game.$("btn-shift-pause").click();
+  const clock = game.$("shift-clock").textContent;
+  game.clock.advance(30000);
+  assert.equal(game.$("shift-clock").textContent, clock, "the clock stands still while paused");
+  game.$("btn-shift-resume").click();
+  game.clock.advance(6000);
+  assert.notEqual(game.$("shift-clock").textContent, clock, "and runs again after 仕事に戻る");
+});
+
+test("serving every guest ends the evening with a rank, then the correction round, then the reward", async () => {
+  const game = boot();
+  await openShiftBoard(game);
+  const episode = game.context.N2InnEpisodes.episodes[0];
+  const byId = {};
+  episode.days.forEach((day) => day.questions.forEach((q) => { byId[q.id] = q; }));
+  let answered = 0;
+  for (let guard = 0; guard < 400 && !game.$("btn-shift-done"); guard += 1) {
+    if (game.$("next-row").style.display !== "none") { game.$("btn-next").click(); game.clock.advance(600); continue; }
+    const job = game.doc.querySelectorAll("[data-shift-job]").filter((b) => b.closest("#scene") && !b.closest("#shift-strip"))[0];
+    if (job && game.$("stage-phase-badge").textContent === "今夜の仕事") { job.click(); game.clock.advance(300); continue; }
+    const choices = game.$("preview-controls") ? game.$("preview-controls").querySelectorAll("button").filter((b) => !b.disabled) : [];
+    if (choices.length) {
+      // Answer the first one wrong on purpose, everything else right.
+      const q = Object.values(byId).find((item) => choices.map((c) => c.textContent).join("|") === item.answer.options.join("|"));
+      const pick = answered === 0 ? (q.answer.correctIndex + 1) % choices.length : q.answer.correctIndex;
+      choices[pick].click();
+      answered += 1;
+      game.clock.advance(3000);
+      continue;
+    }
+    game.clock.advance(1000);
+  }
+  assert.ok(game.$("btn-shift-done"), "the evening reaches its result");
+  assert.equal(answered, 10, "all ten guests and jobs were answered");
+  const text = game.$("scene").textContent;
+  assert.match(text, /[松竹梅]/, "a rank is given");
+  assert.match(text, /間違い 1/, "the miss is counted");
+  assert.match(text, /花火|夕食/, "the guests say something about the evening");
+  const best = JSON.parse(game.storage.getItem("lanternAlley.v3")).shiftBest;
+  assert.ok(best && best["inn-e01"] && typeof best["inn-e01"].normal === "number", "the best score is kept per difficulty");
+
+  game.$("btn-shift-done").click();
+  game.clock.advance(300);
+  assert.equal(game.$("stage-phase-badge").textContent, "間違い直し", "the missed word comes back in the correction round");
+  assert.deepEqual(game.errors, []);
+});
+
+test("a reload during the evening comes back on the board, paused, at the same time", async () => {
+  const storage = new FakeStorage();
+  const game = boot(null, "", { storage });
+  await openShiftBoard(game);
+  game.clock.advance(20000);
+  const clock = game.$("shift-clock").textContent;
+  game.clock.advance(5000);
+
+  const again = boot(null, "", { storage });
+  again.$("btn-start").click();
+  again.clock.advance(500);
+  const inn = again.doc.querySelectorAll(".map-destination").find((b) => b.textContent.includes("月見宿"));
+  inn.click();
+  again.clock.advance(300);
+  if (again.$("map-detail-action")) again.$("map-detail-action").click();
+  again.clock.advance(1500);
+  assert.equal(again.$("stage-phase-badge").textContent, "今夜の仕事", "back on the board");
+  assert.ok(again.$("shift-paused"), "paused until the learner is ready");
+  assert.ok(again.$("shift-clock").textContent >= clock, "the evening kept its time: " + again.$("shift-clock").textContent);
+  assert.deepEqual(again.errors, []);
 });
 
 test("the second episode follows the first, with its own item types", async () => {
@@ -2359,6 +2495,7 @@ test("?skip=1's skip-question control also works inside Episode 1", async () => 
   game.$("btn-brief-begin").click();
   game.clock.advance(500);
   passWordBoard(game, 500);
+  openShiftQuestion(game);
 
   assert.equal(game.$("btn-skip-question").hidden, false,
     "the skip-question control shows once a real episode question is on screen");
@@ -2366,13 +2503,14 @@ test("?skip=1's skip-question control also works inside Episode 1", async () => 
   // than a fixed three-part stage, so there is no single state to jump to.
   assert.equal(game.$("btn-skip-stage").hidden, true);
 
-  const firstEncounter = game.$("encounter-progress").textContent;
   game.$("btn-skip-question").click();
   assert.equal(game.$("next-row").style.display, "block",
     "a correct answer shows the continue control immediately in the episode flow");
   game.$("btn-next").click();
-  assert.notEqual(game.$("encounter-progress").textContent, firstEncounter,
-    "skipping one episode question moves to the next, without answering it");
+  assert.equal(game.$("stage-phase-badge").textContent, "今夜の仕事",
+    "skipping one guest's question goes back to the board, without answering it");
+  assert.equal(game.doc.querySelectorAll('[data-shift-job="inn-e01-q01"]').length, 0,
+    "the guest who was served has left the board");
 });
 
 /* The shop sells only what has been painted - wallpaper included.
@@ -2633,6 +2771,7 @@ test("an episode names its story, not its internal skill taxonomy", async () => 
   // The hour names its ten words before the clock starts - five practised in
   // the three days, five it is about to introduce.
   passWordBoard(game, 300);
+  openShiftQuestion(game);
 
   const label = game.$("scene-label").textContent;
   assert.doesNotMatch(label, /preview/i, "players should not be told they are in a preview");
@@ -2656,6 +2795,7 @@ test("an episode question does not print its citation as Kon's speech", async ()
   // The hour names its ten words before the clock starts - five practised in
   // the three days, five it is about to introduce.
   passWordBoard(game, 300);
+  openShiftQuestion(game);
 
   assert.doesNotMatch(game.$("narration").textContent, /第一話/,
     "the citation belongs on the opening card, not in the character's speech slot");
@@ -2687,21 +2827,11 @@ test("a written Episode document does not inherit the audio replay control", asy
   const game = boot(null, "?skip=1");
   await openFirstEpisodeQuestion(game);
 
-  // Questions 1-5 are audio; question 6 is the first written document.
-  for(let index = 0; index < 5; index += 1){
-    game.$("btn-skip-question").click();
-    game.$("btn-next").click();
-    game.clock.advance(100);
-    // A new work block teaches its words before the next scored question.
-    for(let guard = 0; guard < 24 && game.doc.querySelector(".teach-card"); guard++){
-      const done = game.$("btn-teach-done");
-      const next = game.$("btn-teach-next");
-      if(done) done.click();
-      else if(next) next.click();
-      else game.doc.querySelectorAll(".teach-option")[0].click();
-      game.clock.advance(900);
-    }
-  }
+  // The first guest's request is audio; Kon's notice about the second floor
+  // is the first written document. Back to the board, and open the notice.
+  game.$("btn-shift-back").click();
+  game.clock.advance(300);
+  openShiftQuestion(game, "inn-e01-q06");
 
   assert.ok(game.doc.querySelectorAll(".reading-document").length,
     "the written document is on screen");
@@ -2719,6 +2849,7 @@ async function openFirstEpisodeQuestion(game) {
   game.$("btn-brief-begin").click();
   game.clock.advance(300);
   passWordBoard(game, 300);
+  openShiftQuestion(game);
 }
 
 test("every episode answer names the exact learning word after the attempt", async () => {
@@ -2800,6 +2931,7 @@ test("finishing a stage starts its episode once, not twice", async () => {
   // The hour names its ten words before the clock starts - five practised in
   // the three days, five it is about to introduce.
   passWordBoard(game, 300);
+  openShiftQuestion(game);
   assert.equal(game.doc.querySelectorAll(".episode-open").length, 0, "a question is on screen");
 
   // Let every deferred advance the stage armed run out.
@@ -4080,6 +4212,7 @@ test("a run of correct episode answers shows a streak badge", async () => {
   game.$("btn-brief-begin").click();
   game.clock.advance(300);
   passWordBoard(game, 300);
+  openShiftQuestion(game, "inn-e01-q01");
 
   const day = game.context.N2InnEpisodes.episodes[0].days[0];
   assert.ok(game.$("streak-badge"), "the episode screen carries a streak badge");
@@ -4100,12 +4233,15 @@ test("a run of correct episode answers shows a streak badge", async () => {
   game.$("btn-next").click();
   game.clock.advance(900);
 
-  answerCorrectly(1);
+  // Day 1's third question is the tea, asked by the guest in 五番.
+  openShiftQuestion(game, day.questions[2].id);
+  answerCorrectly(2);
   assert.match(game.$("streak-badge").textContent, /2/,
     "two correct answers in a row show the streak");
 
   game.$("btn-next").click();
   game.clock.advance(900);
+  openShiftQuestion(game, "inn-e01-q06");
   assert.match(game.$("streak-badge").textContent, /2/,
     "the streak survives onto the next question's screen");
 });

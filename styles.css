@@ -3337,3 +3337,136 @@ body:has(.about-panel:not([hidden])) .feedback-open{visibility:hidden;pointer-ev
 /* The running build, shown only in debug mode beside the banner text. */
 .debug-build{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.72rem;
   opacity:.85;white-space:nowrap}
+
+/* ---- The shift board (Episode 1) ----
+   Guests wait as wooden room tags with a patience bar; Kon's desk jobs are
+   paper memos with none. Near the limit a guest turns red and pulses, then
+   shakes, and the edge of the screen pulses red while anyone is close. */
+.shift-board{display:flex;flex-direction:column;gap:14px;padding:12px}
+.shift-board .shift-hud{order:-1}
+.shift-hud{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;padding:10px 14px;border-radius:12px;
+  background:linear-gradient(180deg,#5b3b22,#3c2614);color:var(--washi);box-shadow:0 4px 12px rgba(0,0,0,.35)}
+.shift-clock{font-family:"Shippori Mincho","Hiragino Mincho ProN",serif;font-size:26px;font-weight:800;color:var(--lantern-bright);letter-spacing:.04em}
+.shift-lamps{display:flex;gap:5px}
+.shift-lamps span{width:11px;height:15px;border-radius:5px 5px 4px 4px;background:rgba(255,255,255,.12);box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
+.shift-lamps span.lit{background:radial-gradient(circle at 50% 40%,#fff3c4,var(--lantern) 70%);box-shadow:0 0 8px rgba(247,200,119,.8)}
+.shift-served,.shift-level{font-size:12px;color:#ecd2a2}
+.shift-served b{font-size:15px;color:var(--washi)}
+.shift-level{margin-left:auto;padding:2px 10px;border:1px solid rgba(242,235,221,.35);border-radius:10px}
+.shift-section{display:flex;flex-direction:column;gap:8px}
+.shift-heading{margin:0;font-size:15px;color:var(--washi)}
+.shift-heading small{margin-left:6px;font-size:12px;font-weight:400;color:var(--text-dim)}
+.shift-empty,.shift-strip-empty{margin:0;padding:10px 12px;border-radius:10px;background:rgba(14,24,48,.55);font-size:13px;color:var(--text-dim)}
+.shift-tags{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.shift-tag{position:relative;display:flex;flex-direction:column;align-items:stretch;gap:6px;min-height:150px;padding:16px 10px 10px;border:0;border-radius:10px 10px 14px 14px;
+  background:linear-gradient(180deg,#9a6a40,#744a2b 60%,#5d3a22);color:#fff3dc;text-align:left;font:inherit;cursor:pointer;
+  box-shadow:inset 0 1px 0 rgba(255,225,170,.35),inset 0 -3px 0 rgba(0,0,0,.25),0 6px 14px rgba(0,0,0,.4)}
+.shift-tag::before{content:"";position:absolute;left:50%;top:6px;width:9px;height:9px;margin-left:-4.5px;border-radius:50%;background:var(--ai-indigo-deep)}
+.shift-tag:active{transform:translateY(2px)}
+.shift-room{font-family:"Shippori Mincho","Hiragino Mincho ProN",serif;font-size:22px;font-weight:800;line-height:1}
+.shift-who{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#f6ddb0}
+.shift-face{display:inline-grid;place-items:center;flex:0 0 auto;width:34px;height:34px;overflow:hidden;border-radius:50%;
+  background:radial-gradient(circle at 50% 35%,#6a4630,#3c2614);border:2px solid rgba(247,200,119,.7);font-size:11px;font-weight:800;color:#fff3dc}
+.shift-face img{width:100%;height:100%;object-fit:cover}
+.shift-face-kon{background:url("assets/fox/fox-neutral-idle-transparent-v2.webp") center/cover,#3c2614}
+.shift-slip{flex:1;padding:6px 8px;border-radius:3px;background:var(--washi);color:var(--sumi);font-size:13px;line-height:1.45}
+.shift-call{background:#1f2740;color:#dce8ff;font-weight:700}
+.shift-bar{position:relative;display:block;height:8px;border-radius:4px;background:rgba(0,0,0,.35)}
+.shift-bar i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--moss);transition:width 1s linear}
+.shift-mood{font-size:11px;font-weight:700;color:#bfe0c4}
+.shift-mood.restless{color:#f2c46a}
+.shift-mood.angry,.shift-mood.late{color:#ffb3a0}
+.shift-count{display:none}
+.shift-memos{display:flex;flex-direction:column;gap:8px}
+.shift-memo{display:flex;flex-direction:column;gap:4px;min-height:44px;padding:10px 12px;border:0;border-radius:4px;background:var(--washi);color:var(--sumi);
+  text-align:left;font:inherit;font-size:14px;line-height:1.5;cursor:pointer;box-shadow:0 3px 8px rgba(0,0,0,.35)}
+.shift-memo-from{font-size:11px;font-weight:800;color:var(--momiji)}
+/* Urgent: red and pulsing, with a countdown. Critical: faster, and shaking. */
+.shift-tag.urgent,.shift-mini.urgent,.shift-tag.critical,.shift-mini.critical{background:linear-gradient(180deg,#b0603f,#86402a 60%,#6a2f1e);animation:shift-urgent 1.3s ease-in-out infinite}
+.shift-tag.critical,.shift-mini.critical{animation:shift-urgent .7s ease-in-out infinite,shift-jitter 2.2s ease-in-out infinite}
+.shift-tag.urgent .shift-bar i,.shift-tag.critical .shift-bar i,.shift-mini.urgent .shift-bar i,.shift-mini.critical .shift-bar i,
+.shift-mine.urgent .shift-bar i,.shift-mine.critical .shift-bar i{background:#e0654a;animation:shift-blink .7s steps(2,start) infinite}
+.shift-tag.urgent .shift-count,.shift-tag.critical .shift-count{display:grid;place-items:center;position:absolute;top:-10px;right:-8px;z-index:2;height:32px;padding:0 9px;
+  border-radius:16px;background:#d64d34;color:#fff;font-size:14px;font-weight:900;white-space:nowrap;box-shadow:0 0 0 3px #fff3dc,0 4px 10px rgba(0,0,0,.5)}
+.shift-tag.critical .shift-count{background:#ff2e12;animation:shift-beat .6s ease-in-out infinite}
+.shift-tag.late{box-shadow:0 0 0 2px var(--momiji),0 6px 14px rgba(0,0,0,.4)}
+@keyframes shift-urgent{0%,100%{box-shadow:0 0 0 2px rgba(214,77,52,.9),0 6px 14px rgba(0,0,0,.4)}50%{box-shadow:0 0 0 5px rgba(214,77,52,.35),0 0 22px rgba(214,77,52,.6)}}
+@keyframes shift-jitter{0%,82%,100%{transform:none}86%{transform:rotate(-3deg)}90%{transform:rotate(3deg)}94%{transform:rotate(-2deg)}}
+@keyframes shift-blink{50%{opacity:.25}}
+@keyframes shift-beat{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+#screen-game::after{content:"";position:fixed;inset:0;z-index:38;pointer-events:none;opacity:0;transition:opacity .4s;
+  box-shadow:inset 0 0 0 4px rgba(214,77,52,.9),inset 0 0 60px 10px rgba(214,77,52,.5)}
+#screen-game.shift-alarm::after{opacity:1;animation:shift-edge 1.3s ease-in-out infinite}
+#screen-game.shift-alarm-hi::after{animation-duration:.7s}
+@keyframes shift-edge{50%{opacity:.35}}
+/* While a question is open: who else is waiting, and this guest's own bar. */
+.shift-strip{display:flex;align-items:center;gap:8px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:none}
+.shift-strip::-webkit-scrollbar{display:none}
+.shift-strip-label{flex:0 0 auto;font-size:12px;color:#d9c29a}
+.shift-mini{flex:0 0 auto;display:grid;grid-template-columns:auto 1fr auto;gap:2px 6px;align-items:center;min-width:118px;min-height:44px;padding:6px 8px;border:0;border-radius:8px;
+  background:linear-gradient(180deg,#8a5a35,#5d3a22);color:#fff3dc;text-align:left;font:inherit;cursor:pointer}
+.shift-mini b{font-size:14px}
+.shift-mini .shift-bar{grid-column:1/-1;height:6px}
+.shift-mini.urgent .shift-mood,.shift-mini.critical .shift-mood{display:none}
+.shift-mini.urgent .shift-count,.shift-mini.critical .shift-count{display:inline-block;padding:1px 7px;border-radius:10px;background:#fff3dc;color:#b3261e;font-size:12px;font-weight:900}
+.shift-mini-desk{background:var(--washi);color:var(--sumi)}
+.shift-mini.late{box-shadow:0 0 0 2px var(--momiji)}
+.shift-mine{display:grid;grid-template-columns:auto auto 1fr auto auto;gap:8px;align-items:center;padding:6px 10px;border-radius:8px;background:rgba(14,24,48,.72);color:#fff3dc;font-size:12px}
+.shift-mine b{white-space:nowrap}
+.shift-mine.urgent,.shift-mine.critical{background:rgba(120,30,20,.85);box-shadow:0 0 0 2px #d64d34}
+.shift-mine.urgent .shift-count,.shift-mine.critical .shift-count{display:inline-block;padding:1px 7px;border-radius:10px;background:#fff3dc;color:#b3261e;font-weight:900}
+.shift-mine.served .shift-face{animation:shift-hop .5s ease-out 2}
+.shift-mine.served-miss .shift-face{animation:shift-jitter .6s ease-in-out}
+.shift-mine.shift-mine-desk{display:flex;gap:8px;align-items:center}
+@keyframes shift-hop{50%{transform:translateY(-6px)}}
+.shift-back{align-self:flex-start;min-height:44px;padding:0 14px;border:1px solid rgba(242,235,221,.35);border-radius:22px;background:rgba(14,24,48,.6);color:var(--washi);font:inherit;font-size:13px;cursor:pointer}
+/* Warnings: above the answers, at most two, one per guest. */
+.shift-toasts{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:40;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;max-width:92vw;pointer-events:none}
+.shift-toast{max-width:92vw;padding:8px 14px;border-radius:22px;background:#9c4a2f;color:#fff;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 6px 16px rgba(0,0,0,.4)}
+.shift-toast.hot{background:#b3261e;font-size:14px;animation:shift-beat .6s ease-in-out 3}
+.shift-toast.tea{background:#4f7a5a}
+.shift-paused{position:fixed;inset:0;z-index:60;display:grid;place-items:center;background:rgba(8,15,33,.78)}
+.shift-paused-card{display:grid;gap:14px;justify-items:center;padding:22px 28px;border-radius:14px;background:var(--washi);color:var(--sumi);font-size:18px;font-weight:800}
+.shift-paused-card p{margin:0}
+/* Difficulty, chosen once before the evening starts. */
+.shift-level-card{gap:10px}
+.shift-level-en{margin:-6px 0 4px;font-size:12px;color:#8a5a35}
+.shift-level-option{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:baseline;width:100%;min-height:44px;padding:12px 14px;border:2px solid var(--washi-dim);border-radius:12px;
+  background:#fffaf0;color:var(--sumi);text-align:left;font:inherit;cursor:pointer}
+.shift-level-option b{font-size:19px}
+.shift-level-option span{font-size:12px;color:#8a5a35}
+.shift-level-option small{grid-column:1/-1;font-size:12px;color:#5d3a22}
+.shift-level-hard{border-color:#c8573f}.shift-level-normal{border-color:#e0a33e}.shift-level-easy{border-color:#6f9a78}
+.shift-tea-note{margin:4px 0 0;font-size:12px;line-height:1.55;color:#5d3a22}
+/* The evening's result: fireworks, what the guests said, the rank. */
+.shift-result{position:relative;overflow:hidden}
+.shift-sky{position:absolute;inset:0;pointer-events:none}
+.shift-burst{position:absolute;width:4px;height:4px;border-radius:50%;color:var(--burst);opacity:0;
+  box-shadow:0 -40px 0 1px,28px -28px 0 1px,40px 0 0 1px,28px 28px 0 1px,0 40px 0 1px,-28px 28px 0 1px,-40px 0 0 1px,-28px -28px 0 1px;
+  animation:shift-burst 2.7s ease-out infinite}
+@keyframes shift-burst{0%{transform:scale(.2);opacity:0}15%{opacity:1}70%{opacity:.9}100%{transform:scale(1.4);opacity:0}}
+.shift-voice{position:relative;margin:6px 0;font-size:15px;line-height:1.6;color:var(--sumi)}
+.shift-voice small{display:block;font-size:12px;color:#8a5a35}
+.shift-rank{position:relative;display:flex;align-items:center;gap:14px;margin:12px 0 0;padding:10px 14px;border-radius:12px;background:rgba(255,250,240,.95);color:var(--sumi)}
+.shift-seal{display:grid;place-items:center;flex:0 0 auto;width:54px;height:54px;border:3px solid var(--momiji);border-radius:50%;color:var(--momiji);
+  font-family:"Shippori Mincho","Hiragino Mincho ProN",serif;font-size:26px;font-weight:900;transform:rotate(-8deg)}
+.shift-rank b{display:block;font-size:16px}
+.shift-rank small{display:block;font-size:12px;color:#5d3a22}
+.shift-tally{position:relative;display:flex;justify-content:space-around;margin:12px 0 4px;text-align:center}
+.shift-tally b{display:block;font-size:22px;color:var(--sumi)}
+.shift-tally span{font-size:12px;color:#5d3a22}
+.shift-next-note{position:relative;margin:6px 0;font-size:13px;color:var(--momiji)}
+@media (prefers-reduced-motion:reduce){
+  .shift-tag,.shift-mini,.shift-count,.shift-bar i,.shift-toast,.shift-burst,#screen-game::after{animation:none!important}
+}
+@media(max-width:520px){
+  .shift-tags{grid-template-columns:1fr 1fr;gap:10px}
+  .shift-tag{min-height:140px;padding:14px 8px 8px}
+  .shift-room{font-size:20px}
+  .shift-mine{grid-template-columns:auto 1fr auto;grid-template-areas:"face name count" "bar bar mood"}
+  .shift-mine .shift-face{grid-area:face}
+  .shift-mine b{grid-area:name;overflow:hidden;text-overflow:ellipsis}
+  .shift-mine .shift-bar{grid-area:bar}
+  .shift-mine .shift-mood{grid-area:mood}
+  .shift-mine .shift-count{grid-area:count}
+}

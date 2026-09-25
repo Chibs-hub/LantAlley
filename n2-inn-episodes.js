@@ -39,11 +39,13 @@
     briefing:{
       jp:"コン：「これから一時間、受付を任せます。お客様を待たせないでください。私の話を聞いてから、時間内に答えてください。聞き取れなかったら、スピーカーを押せばもう一度言います。間違えた仕事は、最後にもう一度だけ確認します。」",
       audio:true,
+      // Shown, not spoken. Episode 1 runs on the shift board, so its rules are
+      // the board's: guests wait with a patience, not a per-question clock.
       points:[
-        "お客様は待っています。時間内に答えてください。",
-        "音声は最後まで聞いてから、時間が始まります。",
-        "読む問題の制限時間は二分です。音声の問題は五秒から十二秒です。",
-        "もう一度聞きたいときは、スピーカーを押してください。",
+        "お客様の札を押すと、その方の仕事を始めます。",
+        "札の線は、お客様が待てる時間です。短くなった方から助けましょう。",
+        "仕事をしている間も、ほかのお客様は待っています。",
+        "コンの帳場の仕事には、時間制限がありません。",
         "間違えた仕事は、一時間の最後にもう一度出ます。"
       ]
     },
@@ -735,6 +737,46 @@
       });
     });
   });
+
+  /* Episode 1 is played on the shift board (inn-shift-board.js): the same ten
+   * questions, each asked by the person who would really ask it, arriving
+   * over the evening. Guests wait with a patience (seconds of full-speed
+   * waiting); Kon's desk jobs have none. `after` + `gap` means "this many
+   * minutes after that job was done" - dinner comes after arriving.
+   * `board` is what the guest's tag or Kon's memo shows on the board.
+   * Patience was tuned by simulating fast, slow and very slow players: a
+   * player who helps the most impatient guest first keeps everyone waiting
+   * at ふつう. Portraits come from assets/inn/guests/<art>-<mood>.webp once
+   * they are painted (docs/handoffs/2026-09-25-shift-board-art-needed.md). */
+  episode1.shift = {
+    cast:{
+      tanaka:{name:"田中様ご夫妻", room:"三番", art:"tanaka", mark:"田中"},
+      sato:{name:"佐藤様", room:"五番", art:"sato", mark:"佐藤"},
+      yamada:{name:"山田様ご家族", room:"二番", art:"yamada", mark:"山田"},
+      group:{name:"団体の幹事", room:"玄関", art:"group", mark:"幹事"},
+      kon:{name:"コン", room:"帳場"}
+    },
+    jobs:[
+      {id:"inn-e01-q01", who:"tanaka", patience:40, at:0, board:"二人ですが、部屋はありますか。"},
+      {id:"inn-e01-q06", who:"kon", lane:"desk", at:3, board:"【二階のお知らせ】を読んで、今から掃除する部屋を選ぶ"},
+      {id:"inn-e01-q03", who:"sato", phone:true, patience:50, at:6, board:"このお茶、冷めてしまいました。"},
+      {id:"inn-e01-q05", who:"yamada", patience:70, at:14, board:"座布団の大きさがばらばらです。"},
+      {id:"inn-e01-q02", who:"tanaka", phone:true, patience:55, after:"inn-e01-q01", gap:6, board:"そろそろ夕食をお願いしたいのですが。"},
+      {id:"inn-e01-q04", who:"sato", patience:80, after:"inn-e01-q03", gap:8, board:"タオルが濡れています。"},
+      {id:"inn-e01-q07", who:"kon", lane:"desk", after:"inn-e01-q02", gap:3, board:"【今夜のご案内】を見て、三番の夕食の時間を決める"},
+      {id:"inn-e01-q08", who:"kon", lane:"desk", after:"inn-e01-q07", gap:6, board:"三番のお客様の、明日の朝食のこと"},
+      {id:"inn-e01-q09", who:"kon", lane:"desk", after:"inn-e01-q08", gap:5, board:"明日の朝の仕事の相談"},
+      {id:"inn-e01-q10", who:"group", patience:50, at:38, board:"今から十人、泊まれますか。"}
+    ],
+    // The fireworks at eight, and what the guests say about the evening.
+    // A line depends on whether its job was right the first time.
+    ending:[
+      {job:"inn-e01-q07", right:["田中様", "夕食もお風呂も済んで、花火をゆっくり見られました。"], wrong:["田中様", "花火の始まりに少し遅れましたが、きれいでした。"]},
+      {job:"inn-e01-q09", right:["田中様", "明日の朝、駅まで送ってくださるんですね。心強いです。"], wrong:["田中様", "明日の朝、駅まで送ってくださるんですね。心強いです。"]},
+      {job:"inn-e01-q05", right:["山田様のお子様", "ざぶとん、そろってる！"], wrong:["山田様", "座布団、きれいになりました。"]},
+      {job:"inn-e01-q10", right:["団体の幹事", "近くの宿を紹介していただいて、助かりました。"], wrong:null}
+    ]
+  };
 
   root.N2InnEpisodes = {
     key:"home-inn",

@@ -6,6 +6,53 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+### 2026-09-25 - Episode 1 is played on the shift board (v451, feature branch)
+
+Every shift asked its ten questions one after another, each against its own
+countdown, which the owner found repetitive: it felt like being quizzed, not
+like running an inn. Episode 1 is now one evening, 18:00-20:00, on a board.
+The format was tried as a standalone mock first and tuned with the owner.
+
+- **Who asks.** Each question belongs to the person who would really ask it:
+  a guest, or Kon at the desk (`episode1.shift` in n2-inn-episodes.js).
+- **When.** Guests arrive over the evening, and follow-ups come only after the
+  job they follow (dinner after checking in).
+- **The clock.** Guests wait with a patience; the learner chooses whom to
+  help. Patience runs at full speed at the board, half speed while the learner
+  helps someone else, and a third for the guest being helped. The
+  per-question countdown is gone on the board.
+- **Warnings.** Below 30% patience a guest's tag turns red, pulses and shows a
+  countdown in real seconds; below 12% it also shakes. A message, a chime
+  (with the voice setting) and a red screen edge announce it.
+- **Kon's tea.** If anyone waits too long, Kon serves everyone tea and they
+  wait more patiently.
+- **Difficulty.** Chosen before the evening: むずかしい/ふつう/やさしい. Guests
+  wait ×1.35/×1/×0.65, and the satisfaction reward pays ×1.5/×1/×0.8.
+- **Pause.** In the stage row, outside the board, so it is not one mis-tap
+  away from a guest; leaving the app also pauses.
+- **The questions themselves.** Unchanged: same text, clips, option notes,
+  rewards, spaced review and streak. A wrong answer still serves the guest
+  (the right reply is shown), and the word comes back in the existing
+  correction round after the evening.
+- **The end.** Fireworks, what the guests say (depends on first-try jobs), and
+  a rank: 100 points, −20 per guest kept too long, −10 per miss; 松 85+,
+  竹 60+, 梅 below. The best score is kept per difficulty (`shiftBest` in the
+  save).
+- **Reload.** A reload mid-evening resumes on the board, paused, at the same
+  time.
+
+Rules are in inn-shift-board.js (no DOM, unit-tested); app.js draws the
+board and reuses renderPreviewQuestion for each job. Patience values come
+from simulating fast, slow and very slow players in the mock.
+
+Episodes 2-4 keep the old flow until their questions are assigned to
+characters. Guest portraits are not painted yet: the tags show a family-name
+badge until `assets/inn/guests/<who>-<mood>.webp` exist (see
+docs/handoffs/2026-09-25-shift-board-art-needed.md).
+
+Tests: `node --test` runs 714. With the new file committed, all pass except
+the four that need the 21 unrecorded audio clips.
+
 ### 2026-09-25 - Replace sliding pet gait with four paw phases (v450 test build)
 
 The v449 timing change made each of two visible paw poses last for too much

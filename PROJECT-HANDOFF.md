@@ -1,6 +1,6 @@
 # Lantern Alley Project Handoff
 
-Last updated: 2026-09-25 (v450 test build)
+Last updated: 2026-09-25 (v451, shift board on feature branch)
 
 A browser game that teaches JLPT N2 Japanese. Vanilla JS, CSS and HTML, no build step, no framework, offline-capable.
 
@@ -19,6 +19,18 @@ A browser game that teaches JLPT N2 Japanese. Vanilla JS, CSS and HTML, no build
 Sections 1, 3, 4, 5, 6, 8, 13, 14 and 15 are reference: what the game is, how it is designed, where the files are, how it ships, and what data it draws on.
 
 ## 0. Current status
+
+**v451 shift board (2026-09-25, branch `claude/app-project-access-iyvxk2`,
+not deployed):** Episode 1 is played as one evening on a board of waiting
+guests instead of ten questions in a row. See CHANGELOG. Still to do:
+- **Portraits:** paint the guest portraits
+  (docs/handoffs/2026-09-25-shift-board-art-needed.md).
+- **Other episodes:** assign Episodes 2-4's questions to characters so they
+  can use the board too.
+- **Tuning:** play-test the patience values and the 松/竹/梅 cut-offs with real
+  players.
+- **Deploy:** merge into `codex/inn-learning-redesign` to deploy, with the
+  owner's say-so.
 
 **v450 test build (2026-09-25):** the v449 gait still looked like sliding because
 two visible poses were held across long body travel. New four-phase cat and

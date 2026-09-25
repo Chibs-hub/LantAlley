@@ -1,6 +1,9 @@
 # Art needed: Inn shift board (guest portraits)
 
-**Written 2026-09-25.** Status: nothing below has been made yet.
+**Written 2026-09-25.** Status: nothing below has been made yet. The shift
+board itself is built (v451, `inn-shift-board.js`). Until these portraits
+exist, each tag shows the guest's family name in a circle. Drop the files in
+and they appear with no code change.
 
 ## What the shift board is
 
@@ -15,9 +18,9 @@ questions one after another. The shift board is played as one evening shift
 The playable mock covers Episode 1 only. It is not in the repo; the owner has
 the link (a private claude.ai artifact).
 
-In the mock, guests are emoji placeholders. Building the shift board into the
-game starts with Episode 1 and has not been approved yet, but it needs these
-portraits.
+The game uses these portraits on the board, on the waiting strip and on the
+guest being helped. `worried` shows when a guest's patience is below 30% or
+after a wrong answer, and `happy` after a right one.
 
 ## Needed: guest portraits (Episode 1) - 12 images
 
