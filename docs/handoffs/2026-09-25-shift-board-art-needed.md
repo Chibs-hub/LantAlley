@@ -1,9 +1,11 @@
 # Art needed: Inn shift board (guest portraits)
 
-**Written 2026-09-25.** Status: nothing below has been made yet. The shift
-board itself is built (v451, `inn-shift-board.js`). Until these portraits
-exist, each tag shows the guest's family name in a circle. Drop the files in
-and they appear with no code change.
+**Written 2026-09-25. Updated 2026-09-26.** The twelve Episode 1 guest
+portraits below are painted (`assets/inn/guests/`) and used by the shift board
+(v452). The game shows 192px copies from `assets/inn/guests/small/`, made by
+`make-guest-thumbs.py`; re-run it after changing a portrait. The optional
+child-only portrait has not been made. `guest-portraits-review.png` compares
+all expressions at board size.
 
 ## What the shift board is
 
@@ -22,7 +24,7 @@ The game uses these portraits on the board, on the waiting strip and on the
 guest being helped. `worried` shows when a guest's patience is below 30% or
 after a wrong answer, and `happy` after a right one.
 
-## Needed: guest portraits (Episode 1) - 12 images
+## Guest portraits (Episode 1) - 12 candidate images
 
 - **Format:** 512x512 transparent WebP, head and shoulders.
 - **Style:** the same as the fox art. `assets/fox/*-transparent-v2.webp` is also

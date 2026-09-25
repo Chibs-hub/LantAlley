@@ -769,12 +769,13 @@
       {id:"inn-e01-q10", who:"group", patience:50, at:38, board:"今から十人、泊まれますか。"}
     ],
     // The fireworks at eight, and what the guests say about the evening.
-    // A line depends on whether its job was right the first time.
+    // A line depends on whether its job was right the first time; `who` is
+    // the speaker, whose portrait is shown beside it.
     ending:[
-      {job:"inn-e01-q07", right:["田中様", "夕食もお風呂も済んで、花火をゆっくり見られました。"], wrong:["田中様", "花火の始まりに少し遅れましたが、きれいでした。"]},
-      {job:"inn-e01-q09", right:["田中様", "明日の朝、駅まで送ってくださるんですね。心強いです。"], wrong:["田中様", "明日の朝、駅まで送ってくださるんですね。心強いです。"]},
-      {job:"inn-e01-q05", right:["山田様のお子様", "ざぶとん、そろってる！"], wrong:["山田様", "座布団、きれいになりました。"]},
-      {job:"inn-e01-q10", right:["団体の幹事", "近くの宿を紹介していただいて、助かりました。"], wrong:null}
+      {job:"inn-e01-q07", who:"tanaka", right:["田中様", "夕食もお風呂も済んで、花火をゆっくり見られました。"], wrong:["田中様", "花火の始まりに少し遅れましたが、きれいでした。"]},
+      {job:"inn-e01-q09", who:"tanaka", right:["田中様", "明日の朝、駅まで送ってくださるんですね。心強いです。"], wrong:["田中様", "明日の朝、駅まで送ってくださるんですね。心強いです。"]},
+      {job:"inn-e01-q05", who:"yamada", right:["山田様のお子様", "ざぶとん、そろってる！"], wrong:["山田様", "座布団、きれいになりました。"]},
+      {job:"inn-e01-q10", who:"group", right:["団体の幹事", "近くの宿を紹介していただいて、助かりました。"], wrong:null}
     ]
   };
 

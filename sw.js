@@ -7,7 +7,7 @@
  * Bump CACHE_VERSION whenever any shell file changes, or returning players
  * will keep the old build.
  */
-var CACHE_VERSION = "lantern-alley-v451";// Episode 1 is played on the shift board.
+var CACHE_VERSION = "lantern-alley-v452";// The shift board shows the painted guest portraits.
 
 // audio-index.js assigns to `self`, so the worker and the page share one list
 // of clip paths. Importing it here means new lines are cached automatically
@@ -173,11 +173,11 @@ var SHELL = [
   "./manifest.webmanifest",
   "./assets/branding/lantern-mark-v2.png",
   "./assets/social/lantern-alley-share-v2.jpg",
-  "./icons/icon-192.png?v=451",
-  "./icons/icon-512.png?v=451",
-  "./icons/icon-192-maskable.png?v=451",
-  "./icons/icon-512-maskable.png?v=451",
-  "./icons/apple-touch-icon.png?v=451",
+  "./icons/icon-192.png?v=452",
+  "./icons/icon-512.png?v=452",
+  "./icons/icon-192-maskable.png?v=452",
+  "./icons/icon-512-maskable.png?v=452",
+  "./icons/apple-touch-icon.png?v=452",
   "./assets/kon/kon-idle.webp",
   "./assets/kon/kon-wave-left.webp",
   "./assets/kon/kon-wave-right.webp",
@@ -192,6 +192,19 @@ var SHELL = [
   "./assets/inn/scenes/hallway.jpg",
   "./assets/inn/scenes/office.jpg",
   "./assets/inn/scenes/courtyard.jpg",
+  // The shift board's guest portraits (192px copies, about 160 KB in all).
+  "./assets/inn/guests/small/tanaka-normal.webp",
+  "./assets/inn/guests/small/tanaka-worried.webp",
+  "./assets/inn/guests/small/tanaka-happy.webp",
+  "./assets/inn/guests/small/sato-normal.webp",
+  "./assets/inn/guests/small/sato-worried.webp",
+  "./assets/inn/guests/small/sato-happy.webp",
+  "./assets/inn/guests/small/yamada-normal.webp",
+  "./assets/inn/guests/small/yamada-worried.webp",
+  "./assets/inn/guests/small/yamada-happy.webp",
+  "./assets/inn/guests/small/group-normal.webp",
+  "./assets/inn/guests/small/group-worried.webp",
+  "./assets/inn/guests/small/group-happy.webp",
   "./assets/inn/scenes/lobby-day.jpg",
   "./assets/inn/scenes/hallway-day.jpg",
   "./assets/inn/scenes/guest-room-day.jpg",

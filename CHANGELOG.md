@@ -6,6 +6,25 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
+<<<<<<< HEAD
+### 2026-09-26 - The shift board shows the painted guest portraits (v452, feature branch)
+
+The twelve portraits the owner painted are now used everywhere a guest
+appears:
+- on the board's tags (52px), with the worried face below 30% patience;
+- on the bar for the guest being helped, turning happy after a right answer
+  and worried after a wrong one;
+- beside each line at the end of the evening.
+
+The ending lines name their own speaker (`who`), because two of them belong to
+Kon's desk jobs and at first showed Kon's face for 田中様's words.
+
+The board shows 192px copies (`assets/inn/guests/small/`, about 160 KB for all
+twelve, pre-cached offline) instead of the 512px originals (about 3 MB), made
+by `make-guest-thumbs.py`. Re-run it after changing a portrait. A face swaps
+in as soon as its file loads; until then, or if it never loads, the family
+name shows in the circle.
+
 ### 2026-09-25 - Episode 1 is played on the shift board (v451, feature branch)
 
 Every shift asked its ten questions one after another, each against its own
@@ -52,6 +71,17 @@ docs/handoffs/2026-09-25-shift-board-art-needed.md).
 
 Tests: `node --test` runs 714. With the new file committed, all pass except
 the four that need the 21 unrecorded audio clips.
+=======
+### 2026-09-26 - Prepare Episode 1 shift-board guest portraits (art candidates)
+
+The shift-board mock uses emoji guest placeholders. Twelve transparent 512px
+WebP portraits now cover normal, worried and happy expressions for the Tanaka
+couple, Sato, the Yamada family and the tour leader. Each guest keeps the same
+clothing and composition across expressions, following Kon's painted outlines
+and matte texture. A review sheet shows the set at reduced size. This is art
+only: the proposed shift-board UI is not approved or wired, so no app cache
+version changes yet. The optional Yamada child-only portrait remains open.
+>>>>>>> origin/codex/inn-learning-redesign
 
 ### 2026-09-25 - Replace sliding pet gait with four paw phases (v450 test build)
 

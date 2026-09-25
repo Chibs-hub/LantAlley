@@ -3889,8 +3889,11 @@
     return {};
   }
 
-  // Portraits are not painted yet. Each is looked for once; until it loads the
-  // tag shows the family name in a circle instead.
+  // The guests' portraits: the 192px copies make-guest-thumbs.py writes. Each
+  // is loaded once; until it has loaded (or if it never does) the face shows
+  // the family name in a circle, and it is swapped in wherever it is drawn.
+  var SHIFT_ART_DIR = "assets/inn/guests/small/";
+  function shiftArtImg(key){ return '<img src="' + SHIFT_ART_DIR + key + '.webp" alt="">'; }
   function preloadShiftArt(){
     var cast = (shiftConfig() || {}).cast || {};
     if(typeof Image === "undefined") return;
@@ -3901,8 +3904,11 @@
         if(shiftGuestArt[key] !== undefined) return;
         shiftGuestArt[key] = false;
         var img = new Image();
-        img.onload = function(){ shiftGuestArt[key] = true; };
-        img.src = "assets/inn/guests/" + key + ".webp";
+        img.onload = function(){
+          shiftGuestArt[key] = true;
+          document.querySelectorAll('.shift-face[data-art="' + key + '"]').forEach(function(face){ face.innerHTML = shiftArtImg(key); });
+        };
+        img.src = SHIFT_ART_DIR + key + ".webp";
       });
     });
   }
@@ -3910,8 +3916,8 @@
     var who = shiftWho(job);
     if(job.lane !== "guest") return '<span class="shift-face shift-face-kon" aria-hidden="true"></span>';
     var key = (who.art || "") + "-" + (mood || "normal");
-    return '<span class="shift-face" aria-hidden="true">' + (shiftGuestArt[key]
-      ? '<img src="assets/inn/guests/' + key + '.webp" alt="">' : (who.mark || who.name.slice(0, 2))) + '</span>';
+    return '<span class="shift-face" data-art="' + key + '" aria-hidden="true">'
+      + (shiftGuestArt[key] ? shiftArtImg(key) : (who.mark || who.name.slice(0, 2))) + '</span>';
   }
   function shiftMood(job){
     if(job.lane !== "guest") return {text:"", cls:""};
@@ -4293,7 +4299,8 @@
     var voices = (config.ending || []).map(function(end){
       var job = LanternShiftBoard.byId(shift, end.job);
       var said = job && job.firstTry ? end.right : end.wrong;
-      return said ? '<p class="shift-voice"><small>' + said[0] + '</small>「' + said[1] + '」</p>' : "";
+      return said ? '<div class="shift-voice">' + shiftFace({lane:"guest", who:end.who}, job.firstTry ? "happy" : "worried")
+        + '<p><small>' + said[0] + '</small>「' + said[1] + '」</p></div>' : "";
     }).join("");
     var colors = ["#ffd26a", "#ff7d6b", "#8fd3ff", "#c9a2ff", "#9ff0b0"], sky = "";
     for(var b = 0; b < 6; b++){
@@ -4796,7 +4803,10 @@
           // when not - once the portraits are painted.
           var faceNow = mineNow.querySelector(".shift-face");
           var artKey = (shiftWho(LanternShiftBoard.byId(previewState.shift, question.id)).art || "") + "-" + (correct ? "happy" : "worried");
-          if(faceNow && shiftGuestArt[artKey]) faceNow.innerHTML = '<img src="assets/inn/guests/' + artKey + '.webp" alt="">';
+          if(faceNow){
+            faceNow.setAttribute("data-art", artKey);
+            if(shiftGuestArt[artKey]) faceNow.innerHTML = shiftArtImg(artKey);
+          }
         }
         rememberEpisode();
       }

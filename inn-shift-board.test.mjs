@@ -35,6 +35,10 @@ test("Episode 1's shift covers each of its ten questions exactly once", () => {
     if ((job.lane || "guest") === "guest") assert.ok(job.patience > 0, job.id + " waits with a patience");
     if (job.after) assert.ok(episode.shift.jobs.some((j) => j.id === job.after), job.id + " follows a real job");
   }
+  for (const end of episode.shift.ending) {
+    const cast = episode.shift.cast[end.who];
+    assert.ok(cast && cast.art, end.job + "'s ending line is said by a guest with a portrait");
+  }
 });
 
 test("a guest arrives on time, and a follow-up only after the job it follows", () => {
