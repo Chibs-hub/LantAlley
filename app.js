@@ -3636,7 +3636,6 @@
       repairQueue: previewState.repair ? previewState.repair.queue.slice() : [],
       // The evening itself: clock, patience and who has been served.
       shift: previewState.shift ? LanternShiftBoard.snapshot(previewState.shift) : null,
-      taughtWords: Object.assign({}, previewState.taughtWords || {}),
       shiftResultShown: !!previewState.shiftResultShown
     };
     saveProgress();
@@ -3673,8 +3672,7 @@
       satisfaction: playing && playing.shift && typeof GuestSatisfaction !== "undefined" ? GuestSatisfaction.create(list.length) : null,
       shiftMode: !!(playing && playing.shift && typeof LanternShiftBoard !== "undefined"),
       shift:null, shiftView:"board",
-      shiftResultShown: !!savedEpisode.shiftResultShown,
-      taughtWords: Object.assign({}, savedEpisode.taughtWords || {})
+      shiftResultShown: !!savedEpisode.shiftResultShown
     };
     if(previewState.shiftMode){
       previewState.shift = LanternShiftBoard.restore(playing.shift, savedEpisode.shift);
@@ -3832,8 +3830,12 @@
       var known = ((state.masteredByStage || {})[state.currentKey] || []).indexOf(id) >= 0;
       var loc = getLocation(state.currentKey);
       var override = loc && loc.getCardSense ? loc.getCardSense(item.canonical) : null;
+      // On the shift board this list is where the new words are taught, so a
+      // new word carries its example sentence (the teaching card's) as well.
+      var teaching = !known && previewState.shiftMode && loc && loc.getTeaching ? loc.getTeaching(item.canonical) : null;
       rows.push({id:id, word:item.canonical, reading:item.reading,
-        sense:override || (item.meanings && item.meanings[0]) || "", known:known});
+        sense:override || (item.meanings && item.meanings[0]) || "", known:known,
+        example:teaching ? teaching.sentence : "", focus:teaching ? (teaching.focus || item.canonical) : ""});
     });
 
     if(!rows.length){ renderPreviewQuestion(); return; }
@@ -3844,6 +3846,8 @@
         + '<span class="job-text">'
         + '<span class="job-word"><ruby>' + row.word + '<rt>' + row.reading + '</rt></ruby></span>'
         + '<span class="job-gloss" lang="en">' + row.sense + '</span>'
+        + (row.example ? '<span class="job-example"><span class="job-example-text">' + row.example.replace(row.focus, '<b>' + row.focus + '</b>') + '</span>'
+          + '<button type="button" class="job-say" data-say="' + row.example + '" aria-label="例文を聞く">🔊</button></span>' : '')
         + '</span>'
         + '<span class="job-state">' + (row.known ? "練習ずみ" : "はじめて") + '</span>'
         + '</li>';
@@ -3866,17 +3870,27 @@
       + '<p class="day-kind">覚えた言葉を本番で使う</p>'
       + '<p class="episode-open-note">' + known + 'つは三日間で練習しました。のこりは今夜が初めてです。</p>'
       + '<ul class="job-board-list">' + items + '</ul>'
-      + '<p class="job-goal">' + (previewState.shiftMode ? '初めての言葉は、その仕事の前にコンが教えます。' : '') + '初めての言葉は、間違えても大丈夫です。最後にもう一度出ます。</p>'
+      + '<p class="job-goal">' + (previewState.shiftMode
+        ? '初めての言葉は、例文を読んで🔊で聞いてから始めましょう。間違えても大丈夫です。最後にもう一度出ます。'
+        : '初めての言葉は、間違えても大丈夫です。最後にもう一度出ます。') + '</p>'
       + '<button class="btn btn-primary" id="btn-words-begin">受付を始めます</button>'
       + '</div></div>';
+    $("scene").querySelectorAll("[data-say]").forEach(function(button){
+      button.addEventListener("click", function(event){
+        event.stopImmediatePropagation();
+        speak(button.getAttribute("data-say"));
+      });
+    });
     $("btn-words-begin").addEventListener("click", function(event){
       event.stopImmediatePropagation();
       // Marked here, before the first card renders, so a reload during the
       // batch resumes it (resumeEpisodeWordsIfNeeded) instead of falling back
       // to the old one-block-at-a-time teaching this board replaced.
       previewState.taughtAll = true;
-      // On the shift board each new word is taught when its guest is first
-      // helped (openShiftJob), not as a block of cards before the evening.
+      /* On the shift board this list has already taught the new words, each
+       * with its example. Cards in the middle of the evening (v454) stopped
+       * the rush five times - half the jobs, the first guest included - and a
+       * block of cards before it was thirteen taps from the first guest. */
       if(previewState.shiftMode) previewState.wordsTaught = true;
       rememberEpisode();
       renderPreviewQuestion();
@@ -4119,47 +4133,7 @@
     previewState.index = index;
     previewState.shiftView = "task";
     rememberEpisode();
-    if(teachShiftWordIfNew(previewState.list[index].question)) return;
     renderPreviewQuestion();
-  }
-
-  /* A word the learner has not met is taught right before the job that uses
-   * it, not in a block of five cards before the evening starts: the first
-   * guest used to be about 13 taps away. The evening waits while Kon
-   * teaches. Words from the three days are known already and go straight to
-   * the question. */
-  var SHIFT_TEACH_BLOCK = "\u0000shift-word";
-  function teachShiftWordIfNew(question){
-    var target = question && question.target;
-    var loc = getLocation(state.currentKey);
-    if(!target || !loc || !loc.getTeaching) return false;
-    if(!previewState.taughtWords) previewState.taughtWords = {};
-    if(previewState.taughtWords[target]) return false;
-    var known = (state.masteredByStage || {})[state.currentKey] || [];
-    if(known.indexOf(target) >= 0) return false;
-    var item = typeof LanternCurriculumCatalog !== "undefined" ? LanternCurriculumCatalog.getItem(target) : null;
-    if(!item || !loc.getTeaching(item.canonical)) return false;
-    var job = LanternShiftBoard.byId(previewState.shift, question.id);
-    var who = job && job.lane === "guest" ? shiftWho(job).name : "コン";
-    previewState.shiftView = "teach";
-    stopVoice();
-    showShiftPause(false);
-    screenGame.classList.remove("shift-alarm", "shift-alarm-hi");
-    return startTeaching(loc, [{word:item.canonical, target:target}], {
-      block:SHIFT_TEACH_BLOCK,
-      startIndex:previewState.teaching && previewState.teaching.label === SHIFT_TEACH_BLOCK ? previewState.teaching.index : 0,
-      badge:"あたらしい言葉",
-      recap:false,
-      note:"この言葉を使って、" + who + "の仕事をしましょう。",
-      button:"仕事に戻ります",
-      then:function(){
-        previewState.taughtWords[target] = true;
-        previewState.teaching = null;
-        previewState.shiftView = "task";
-        rememberEpisode();
-        renderPreviewQuestion();
-      }
-    });
   }
 
   // Who else is waiting, shown while a question is open, so the learner can
@@ -4233,7 +4207,7 @@
 
   function shiftTick(){
     if(!shiftOn() || previewState.shiftResultShown || screenGame.style.display === "none"){ stopShiftTimer(); return; }
-    if(previewState.shiftPaused || previewState.repair || shiftCoachOpen || previewState.shiftView === "teach") return;
+    if(previewState.shiftPaused || previewState.repair || shiftCoachOpen) return;
     var shift = previewState.shift, view = previewState.shiftView, current = shiftCurrentId();
     var events = LanternShiftBoard.tick(shift, view, current);
     if(events.tea) shiftToast("🦊 コンがお茶を出しました。皆さん少し長く待てます。", "tea");
@@ -5749,9 +5723,7 @@
     // Taught nothing - every word already credited - so there is nothing to
     // hand over from and the caller's own next screen comes straight up.
     if(!queued){
-      // A word taught in the middle of a shift goes straight back to the
-      // guest; a recap of one word would be one more tap between them.
-      if(state.teachIndex > 0 && !(teachHandover && teachHandover.recap === false)){ renderTeachingHandover(loc); return; }
+      if(state.teachIndex > 0){ renderTeachingHandover(loc); return; }
       finishTeaching();
       return;
     }

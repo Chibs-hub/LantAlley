@@ -3504,3 +3504,10 @@ body:has(.about-panel:not([hidden])) .feedback-open{visibility:hidden;pointer-ev
 /* 「・第一話まで あと12問」 beside the day's counter during the three days. */
 .to-episode{margin-left:4px;color:var(--lantern-bright);font-weight:700}
 .to-episode[hidden]{display:none}
+
+/* Episode 1's word list teaches its new words: each has its example sentence
+   and a button to hear it. */
+.job-example{display:flex;align-items:center;gap:6px;margin-top:4px;font-size:13px;line-height:1.5;color:var(--sumi)}
+.job-example-text{flex:1;min-width:0}
+.job-example b{color:var(--momiji)}
+.job-say{flex:0 0 auto;min-width:44px;min-height:44px;border:1px solid #d8c29a;border-radius:22px;background:#fffaf0;font-size:16px;cursor:pointer}

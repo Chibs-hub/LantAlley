@@ -7,6 +7,23 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
 <<<<<<< HEAD
+### 2026-09-26 - New words taught on the word list, not mid-evening (v455)
+
+v454 taught each new word when its guest was first helped. The owner pointed
+out what that does to the game: 5 of Episode 1's 10 jobs, the first guest
+included, opened with a card and a check. The clock paused, so no one lost
+patience, but the rush stopped and started five times.
+
+Episode 1's word list now teaches them. Each of the five new words carries its
+example sentence, with the word marked and a 🔊 button to hear it, and the
+list leads straight to the difficulty choice. That is one screen, where the
+old block of cards took about 13 taps, and nothing interrupts the evening. The
+check after each card is gone. Each word is still tested by its guest, and a
+miss comes back in the correction round.
+
+The five example sentences have no recorded clips yet, so 🔊 uses the
+device's voice. They belong in the next audio batch.
+
 ### 2026-09-26 - A shorter road to the first guest (v454)
 
 The owner found the training too long before the episode. Measured, the
