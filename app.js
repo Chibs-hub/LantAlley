@@ -9028,6 +9028,20 @@
       + ' style="--sprite-col:' + cell.col + ';--sprite-row:' + cell.row
       + ';--sprite-rotate:' + (cell.rotate || 0) + 'deg;--sprite-zoom:' + (cell.zoom || 1.2) + '"></span>';
   }
+  /* On a phone the room is drawn half as large again and swipes sideways
+   * (styles: "The room on a phone"). It opens on the part of the room the
+   * request is about: the towel rack for the towel, the stove and microwave
+   * for a dish, the mats for the cushions. */
+  function centerRoomOnTask(viewport, interaction, visual){
+    if(!viewport || !(viewport.scrollWidth > viewport.clientWidth)) return;
+    var spots = visual.hotspots || {}, spot = null;
+    if(interaction.verb === "replace") spot = spots["install-" + interaction.target];
+    else if(interaction.verb === "warm") spot = {x:56, w:15};
+    else spot = {x:19, w:54};
+    var focus = spot ? (spot.x + spot.w / 2) / 100 : 0.5;
+    viewport.scrollLeft = Math.max(0, focus * viewport.scrollWidth - viewport.clientWidth / 2);
+  }
+
   function positionRoomHotspot(room, zone, key){
     var spot = room.visual && room.visual.hotspots[key];
     if(!spot) return;
@@ -9221,9 +9235,9 @@
     var isObjectRoom = prompt.mechanic === "arrange" || prompt.mechanic === "replace" || prompt.mechanic === "warm";
     var roomVisual = isObjectRoom && interaction.room && interaction.room.visual;
     var roomSurface = roomVisual
-      ? '<div class="inn-room-composite"><div class="inn-room-viewport"><img class="inn-room-art" src="' + roomVisual.background + '" alt="">'
-        + '<div class="inn-scene-zones" id="inn-scene-zones"></div></div>'
-        + '<div class="inn-drop-chips" id="inn-drop-chips" hidden></div>'
+      ? '<div class="inn-room-composite"><div class="inn-room-viewport"><div class="inn-room-canvas"><img class="inn-room-art" src="' + roomVisual.background + '" alt="">'
+        + '<div class="inn-scene-zones" id="inn-scene-zones"></div></div></div>'
+        + '<p class="inn-room-swipe" aria-hidden="true">← 左右にスワイプして部屋を見る →</p>'
         + '<div class="inn-supply-shelf"><div class="inn-tray" id="inn-tray"></div></div></div>'
       // The shoji was decoration for scenes with no illustrated room, but it is
         // absolutely positioned and overlapped whatever those scenes actually
@@ -9252,6 +9266,10 @@
       );
       var roomLightState = MoonviewInnInteractions.getRoomLightState(innInteractionState, interaction.target);
       scene.querySelector(".inn-room-viewport").classList.add("room-light-" + roomLightState);
+      // Once the room is built: focusing its first control scrolls the
+      // painting to that control, which undid a centring done any earlier.
+      var roomViewport = scene.querySelector(".inn-room-viewport");
+      setTimeout(function(){ centerRoomOnTask(roomViewport, interaction, roomVisual); }, 0);
     }
     var work = $("inn-content");
     var zonesEl = $("inn-scene-zones");
@@ -9358,7 +9376,6 @@
           function(el){ el.classList.remove("selected"); }
         );
         zonesEl.classList.remove("awaiting-drop");
-        showDropChips(false);
 
         if(already){
           roomPick = null;
@@ -9368,43 +9385,16 @@
         roomPick = {kind:kind, item:itemKey};
         button.classList.add("selected");
         zonesEl.classList.add("awaiting-drop");
-        showDropChips(true);
         $("inn-status").textContent = "置く場所を選んでください。";
         // On a phone the destinations can sit off-screen above the tray.
         // "nearest" leaves them alone when they are already visible.
-        if(zonesEl.scrollIntoView){
-          try{ zonesEl.scrollIntoView({block:"nearest", behavior:"smooth"}); }catch(e){ zonesEl.scrollIntoView(); }
+        // The room's frame, not the painting: on a phone the painting is wider
+        // than the screen, and bringing its edge into view swiped the room
+        // back to its left end.
+        var roomFrame = (zonesEl.closest && zonesEl.closest(".inn-room-viewport")) || zonesEl;
+        if(roomFrame.scrollIntoView){
+          try{ roomFrame.scrollIntoView({block:"nearest", inline:"nearest", behavior:"smooth"}); }catch(e){ roomFrame.scrollIntoView(); }
         }
-      }
-
-      /* Every place in the room, named, as a full-size button under it.
-       *
-       * On a phone the painted room is about 340x230px: the stove and the
-       * microwave are a finger apart and the lamp is smaller than a fingertip.
-       * These do exactly what tapping the place in the picture does. They list
-       * every place, right or wrong, so choosing is still the learner's job. */
-      var chipNames = {g1:"左のマット", g2:"右のマット"};
-      function showDropChips(show){
-        var chips = $("inn-drop-chips");
-        if(!chips) return;
-        chips.hidden = !show;
-        if(!show){ chips.innerHTML = ""; return; }
-        chips.innerHTML = '<span class="inn-drop-chips-label">置く場所</span>';
-        allZones().forEach(function(zone){
-          var chip = document.createElement("button");
-          chip.type = "button";
-          chip.className = "inn-drop-chip";
-          chip.textContent = chipNames[zone.dataset.key] || zone.getAttribute("aria-label") || zone.dataset.key;
-          chip.addEventListener("click", function(event){
-            event.stopImmediatePropagation();
-            if(!roomPick) return;
-            var pick = roomPick;
-            roomPick = null;
-            showDropChips(false);
-            dropped(pick.kind, pick.item, zone);
-          });
-          chips.appendChild(chip);
-        });
       }
 
       // Every movable object gets both paths: drag, or tap then tap a place.
@@ -9444,7 +9434,6 @@
           if(!roomPick) return;
           var pick = roomPick;
           roomPick = null;
-          showDropChips(false);
           dropped(pick.kind, pick.item, zone);
         });
       });

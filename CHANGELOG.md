@@ -7,6 +7,29 @@ Every change and the reason for it, newest first. Lifted out of PROJECT-HANDOFF.
 **Adding an entry:** newest at the top, as a `###` heading. A `##` heading makes a new section of this document, which is not what a change note is.
 
 <<<<<<< HEAD
+### 2026-09-26 - A bigger room on a phone instead of place buttons (v456)
+
+The owner preferred seeing the room better to v453's row of named place
+buttons, and the used towel still did not read as used.
+
+- **Bigger room.** On a phone the painting is drawn half as large again and
+  swipes sideways. The empty ceiling and foreground floor are cropped, so it
+  is no taller on screen. It opens on the part of the room the request is
+  about (`centerRoomOnTask`), and a hint under it says it can be swiped. The
+  room's light moves with the painting. Picking something up now scrolls the
+  room's frame into view, not the painting, which would have swiped the room
+  back to its left end.
+- **Stove and microwave.** Their spots reach into the wall above the stove
+  and the shelf below the microwave (3% apart, as the test requires). On a
+  390px phone they went from 51x18 and 48x25px to 77x45 and 77x51px.
+- **Old things.** The old towel, the burned-out bulb and the dirty sheet carry
+  their names on them all the time, and the used towel is tinted so it reads
+  as used. Its painted stains vanished at phone size.
+- **Named place buttons removed** (added in v453).
+
+Checked in a browser at 390px and at 1280px. The towel was taken out, and the
+soup warmed on the stove, with real touch taps.
+
 ### 2026-09-26 - New words taught on the word list, not mid-evening (v455)
 
 v454 taught each new word when its guest was first helped. The owner pointed

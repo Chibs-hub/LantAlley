@@ -3646,6 +3646,20 @@ test("the three days say how many tasks are left before Episode 1", async () => 
   assert.equal(game.$("encounter-to-episode").hidden, true, "and it is gone once the episode starts");
 });
 
+test("on a phone the room is drawn larger and swipes, and old things say what they are", () => {
+  // At 390px the whole room was about 340x230px: the stove and microwave a
+  // finger apart and the used towel's stains invisible.
+  const css = read("styles.css");
+  assert.match(css, /\.inn-room-illustrated \.inn-room-viewport\{[^}]*overflow-x:auto/, "the room swipes sideways on a phone");
+  assert.match(css, /\.inn-room-illustrated \.inn-room-canvas\{[^}]*width:150%/, "at half as large again");
+  assert.match(css, /button\.inn-placed-object > \.inn-caption\{opacity:1/, "the old towel, bulb and sheet are labelled");
+  const app = read("app.js");
+  assert.match(app, /function centerRoomOnTask/, "the room opens on the part the request is about");
+  const stage = read("n2-home-inn-stage.js");
+  assert.match(stage, /stove:\{x:56,y:29,w:15,h:13\}/);
+  assert.match(stage, /microwave:\{x:56,y:45,w:15,h:15\}/);
+});
+
 test("things sitting inside a room spot can still be picked up by a finger", () => {
   // v444 widened thin room spots with an invisible ::after layer. Drawn above
   // the spot's contents, it covered the old towel, bulb and sheet that sit
@@ -3655,33 +3669,6 @@ test("things sitting inside a room spot can still be picked up by a finger", () 
   const css = read("styles.css");
   assert.match(css, /\.inn-room-illustrated \.inn-drop-zone::after\{content:"";position:absolute;z-index:-1;/,
     "the widened hit area sits under the spot's own contents");
-});
-
-test("picking up an object lists every place in the room as a named button", async () => {
-  // On a phone the room is about 340x230px; the stove and the microwave are a
-  // finger apart. The named buttons do what tapping the painted place does.
-  const game = boot(null, "?skip=1");
-  await enterTheInn(game);
-  // Past Kon's opening lines to the first room task.
-  for (let guard = 0; guard < 20 && !game.$("inn-tray"); guard += 1) {
-    const go = game.$("scene").querySelectorAll("button").filter(game.visible)[0];
-    if (go) go.click(); else game.tapScreen();
-    game.clock.advance(1500);
-  }
-  const item = game.$("inn-tray") && game.$("inn-tray").querySelectorAll(".inn-object")[0];
-  assert.ok(item, "the room offers something to pick up");
-  assert.equal(game.$("inn-drop-chips").hidden, true, "no place list before anything is picked up");
-  item.click();
-  const chips = game.doc.querySelectorAll(".inn-drop-chip");
-  assert.equal(game.$("inn-drop-chips").hidden, false);
-  const names = chips.map((chip) => chip.textContent);
-  for (const name of ["左のマット", "右のマット", "コンロ", "電子レンジ", "照明", "洗濯かご", "回収箱"]) {
-    assert.ok(names.includes(name), name + " is offered: " + names.join(","));
-  }
-  chips.find((chip) => chip.textContent === "左のマット").click();
-  game.clock.advance(300);
-  assert.match(game.$("inn-status").textContent, /1 \/ 4/, "the cushion went where the button said");
-  assert.deepEqual(game.errors, []);
 });
 
 /* A test build must not thank a tester for a report it threw away.

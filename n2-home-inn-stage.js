@@ -495,8 +495,11 @@
         // Taller than the fitting itself: the burned-out bulb was drawn at
         // 28px on a phone, too small to see or pick up.
         "install-bulb":{x:45,y:19,w:11,h:19},
-        stove:{x:56,y:34,w:15,h:8},
-        microwave:{x:57,y:45,w:14,h:11},
+        // Taller than the appliances themselves, into the wall above the
+        // stove and the shelf below the microwave: on a phone they were 18px
+        // and 25px high, and a finger apart.
+        stove:{x:56,y:29,w:15,h:13},
+        microwave:{x:56,y:45,w:15,h:15},
         "install-sheet":{x:77,y:53,w:23,h:29},
         g1:{x:19,y:63,w:26,h:16},
         g2:{x:48,y:63,w:25,h:16}

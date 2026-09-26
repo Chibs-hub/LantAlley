@@ -3478,14 +3478,6 @@ body:has(.about-panel:not([hidden])) .feedback-open{visibility:hidden;pointer-ev
   .shift-mine .shift-count{grid-area:count}
 }
 
-/* The room's places as named buttons, shown while an object is picked up.
-   On a phone the painted room is about 340x230px: the stove and microwave are
-   a finger apart and the lamp is smaller than a fingertip. */
-.inn-drop-chips{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px 10px;background:rgba(36,24,14,.92);border-top:1px solid rgba(240,169,77,.4)}
-.inn-drop-chips[hidden]{display:none}
-.inn-drop-chips-label{font-size:12px;font-weight:700;color:#f0c98a;margin-right:2px}
-.inn-drop-chip{min-height:44px;padding:0 12px;border:1.5px solid #f0a94d;border-radius:22px;background:#fff6e6;color:#3b2412;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
-.inn-drop-chip:active{transform:translateY(1px)}
 /* Old things to take away - the towel, the bulb, the sheet - are picked out
    with a soft glow, and the bulb fills its taller spot. */
 .inn-room-illustrated button.inn-placed-object{box-shadow:0 0 0 2px rgba(255,214,140,.85),0 0 10px rgba(255,200,110,.55)}
@@ -3511,3 +3503,32 @@ body:has(.about-panel:not([hidden])) .feedback-open{visibility:hidden;pointer-ev
 .job-example-text{flex:1;min-width:0}
 .job-example b{color:var(--momiji)}
 .job-say{flex:0 0 auto;min-width:44px;min-height:44px;border:1px solid #d8c29a;border-radius:22px;background:#fffaf0;font-size:16px;cursor:pointer}
+
+/* ---- The room on a phone ----
+   Drawn to fit a 390px screen, the whole room was about 340x230px: the stove
+   and microwave a finger apart, the burned-out bulb smaller than a fingertip
+   and the used towel's stains invisible. On a phone the painting is shown half
+   as large again and swipes sideways; the empty ceiling and the foreground
+   floor are cropped, so it is no taller than before. It opens on the part of
+   the room the request is about (centerRoomOnTask). */
+.inn-room-canvas{position:absolute;inset:0}
+.inn-room-swipe{display:none}
+@media(max-width:520px){
+  .inn-room-illustrated .inn-room-viewport{aspect-ratio:137/100;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;overscroll-behavior-x:contain}
+  .inn-room-illustrated .inn-room-viewport::-webkit-scrollbar{display:none}
+  /* 150% wide and 3:2, showing its middle 73% from 12% down. */
+  .inn-room-illustrated .inn-room-canvas{inset:auto;left:0;top:-16.438%;width:150%;height:136.986%}
+  /* The room's light moves with the painting, not the window onto it. */
+  .inn-room-illustrated .inn-room-viewport::before,.inn-room-illustrated .inn-room-viewport::after{display:none}
+  .inn-room-illustrated .inn-room-canvas::before,.inn-room-illustrated .inn-room-canvas::after{content:"";position:absolute;inset:0;z-index:1;opacity:0;pointer-events:none}
+  .inn-room-illustrated .inn-room-canvas::before{background:rgba(7,15,29,.48);transition:opacity .5s cubic-bezier(.22,1,.36,1)}
+  .inn-room-illustrated .inn-room-canvas::after{background:radial-gradient(circle at 50.5% 22%,rgba(255,226,143,.72) 0,rgba(248,188,82,.34) 9%,rgba(248,177,60,.08) 24%,transparent 42%)}
+  .room-light-dim .inn-room-canvas::before{opacity:1}
+  .room-light-bright .inn-room-canvas::after{animation:room-light-warm .65s cubic-bezier(.22,1,.36,1) forwards}
+  .inn-room-swipe{display:block;margin:0;padding:4px 10px;background:rgba(36,24,14,.92);color:#f0c98a;font-size:11px;text-align:center}
+}
+/* Old things to take away say what they are without being picked up first,
+   and the used towel looks used: its painted stains vanished at phone size. */
+.inn-room-illustrated button.inn-placed-object{overflow:visible}
+.inn-room-illustrated button.inn-placed-object > .inn-caption{opacity:1;z-index:3;top:auto;bottom:2px;transform:translate(-50%,0);background:rgba(43,28,16,.86);color:#fff3dc;white-space:nowrap}
+.inn-room-illustrated button.inn-placed-object .inn-sprite-towelUsed{filter:sepia(.55) saturate(1.25) brightness(.8) contrast(1.15)}
